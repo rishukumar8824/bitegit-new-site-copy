@@ -3243,11 +3243,11 @@ app.get('/admin-login', (req, res) => {
 });
 
 app.get('/admin/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'bitegit-admin-login.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
 });
 
 app.get('/bitegit-admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'bitegit-admin-login.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
 });
 
 app.get('/admin', async (req, res) => {
@@ -3278,7 +3278,7 @@ app.get('/admin', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'gate-home.html'));
 });
 app.get('/markets', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'markets.html'));
