@@ -11,8 +11,6 @@
     <header class="auth-topbar">
       <a class="auth-brand" href="/home">BITEGIT</a>
       <div class="auth-top-actions">
-        <button id="authTopModeBtn" type="button" class="auth-top-primary">Log In</button>
-        <button id="authThemeToggle" type="button" class="auth-icon-btn" aria-label="Toggle theme">🌙</button>
         <button id="authMenuToggle" type="button" class="auth-icon-btn" aria-label="Open menu" aria-controls="authNavDrawer" aria-expanded="false">☰</button>
       </div>
     </header>
@@ -29,22 +27,9 @@
         <a href="/trade/spot/BTCUSDT">Spot</a>
         <a href="/trade/perp/BTCUSDT">Futures</a>
         <a href="/p2p">P2P</a>
-        <a href="/home#crypto-for-everyone">Earn</a>
-        <a href="/home#events">ICO</a>
         <a href="/home#support">Support</a>
         <a href="/assets">Assets</a>
       </nav>
-      <div class="auth-nav-extra">
-        <button id="authDrawerThemeToggle" type="button" class="auth-theme-row">🌙 Theme</button>
-        <label class="auth-lang-row" for="authLanguageSelect">
-          <span>Language</span>
-          <select id="authLanguageSelect">
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-          </select>
-        </label>
-        <a href="/home#app-download" class="auth-download-row">Download App</a>
-      </div>
     </aside>
 
     <main class="auth-main">
@@ -88,7 +73,9 @@
           <label for="passwordInput">Password</label>
           <div class="auth-password-wrap">
             <input id="passwordInput" name="password" type="password" autocomplete="current-password" placeholder="Enter Password" required minlength="6" />
-            <button id="togglePasswordBtn" type="button" class="auth-password-toggle" aria-label="Toggle password visibility">👁</button>
+            <button id="togglePasswordBtn" type="button" class="auth-password-toggle" aria-label="Toggle password visibility">
+              <svg id="eyeIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
           </div>
           <p id="passwordError" class="auth-error hidden">Password must be at least 6 characters.</p>
 
@@ -106,9 +93,15 @@
 
         <div class="auth-social-divider"><span>Or continue with</span></div>
         <div class="auth-social-row">
-          <button id="socialGoogleBtn" type="button" aria-label="Login with Google">G</button>
-          <button id="socialAppleBtn" type="button" aria-label="Login with Apple"></button>
-          <button id="socialQrBtn" type="button" aria-label="Login with QR">QR</button>
+          <button id="socialGoogleBtn" type="button" aria-label="Login with Google">
+            <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          </button>
+          <button id="socialAppleBtn" type="button" aria-label="Login with Apple">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.56-1.32 3.1-2.54 4zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+          </button>
+          <button id="socialQrBtn" type="button" aria-label="Login with QR">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="5" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="16" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="5" y="16" width="3" height="3" fill="currentColor" stroke="none"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/></svg>
+          </button>
         </div>
       </section>
     </main>
@@ -127,5 +120,20 @@
 
     <script src="/theme.js?v=20260301b"></script>
     <script src="/auth.js?v=20260302a"></script>
+    <script>
+    // Eye toggle: show slash when password visible
+    (function(){
+      var btn = document.getElementById('togglePasswordBtn');
+      var inp = document.getElementById('passwordInput');
+      if(!btn || !inp) return;
+      var eyeOpen = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      var eyeOff  = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+      btn.addEventListener('click', function(){
+        var isHidden = inp.type === 'password';
+        inp.type = isHidden ? 'text' : 'password';
+        btn.innerHTML = isHidden ? eyeOff : eyeOpen;
+      });
+    })();
+    </script>
   </body>
 </html>

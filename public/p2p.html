@@ -11,7 +11,7 @@
 
     <!-- App mount guard: hide raw HTML until JS initializes -->
     <div id="appInitLoader" style="position:fixed;inset:0;background:#0b0e11;z-index:99999;display:flex;align-items:center;justify-content:center;">
-      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#a8ff3e;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
+      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#00e5ff;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
     </div>
     <style>@keyframes _apl_spin{to{transform:rotate(360deg)}} body{visibility:hidden!important;} body.app-ready{visibility:visible!important;}</style>
     <script>
@@ -166,7 +166,7 @@
 
         <!-- Alert -->
         <div class="p2p-alert-bar">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a8ff3e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span>Do not share personal contact details. Always verify payment information independently.</span>
         </div>
 
@@ -321,7 +321,7 @@
 
       <!-- Main tabs: Pending | Ended -->
       <div id="ordMainTabs" style="display:flex;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;">
-        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #a8ff3e;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
+        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #00e5ff;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
         <button id="ordTabEnded" data-ord-main="ended" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.4);font-size:14px;font-weight:500;cursor:pointer;touch-action:manipulation;">Ended</button>
       </div>
 
@@ -374,7 +374,7 @@
             <span class="mob-verify-chip" id="profileIdentityTagMobile">✓ Identity</span>
           </div>
           <div id="profileRatingRow" style="margin-top:6px;font-size:13px;color:rgba(255,255,255,0.5);display:none;">
-            <span id="profileAvgStars" style="color:#a8ff3e;font-size:15px;">★</span>
+            <span id="profileAvgStars" style="color:#00e5ff;font-size:15px;">★</span>
             <span id="profileAvgStarsVal">—</span>
             <span id="profileRatingCount" style="color:rgba(255,255,255,0.35);font-size:12px;margin-left:4px;"></span>
           </div>
@@ -855,7 +855,7 @@
           <h2 id="orderTitle" style="margin:0 0 0.3rem;font-size:1.05rem;font-weight:700;line-height:1.4;color:#fff;">Waiting for seller to release crypto</h2>
           <p style="margin:0;font-size:0.81rem;color:rgba(255,255,255,0.45);">
             <span id="orderTimerLabel" style="margin-right:4px;">Pay before timer expires</span>
-            <strong id="orderTimer" style="color:#a8ff3e;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
+            <strong id="orderTimer" style="color:#00e5ff;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
           </p>
         </div>
 
@@ -863,11 +863,11 @@
         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;margin-bottom:0.85rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
-              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#a8ff3e;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
+              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#00e5ff;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
               <div>
                 <div style="display:flex;align-items:center;gap:0.35rem;">
                   <h3 id="orderMerchant" style="margin:0;font-size:0.88rem;font-weight:700;color:#fff;"></h3>
-                  <span style="color:#a8ff3e;font-size:0.75rem;">⚡</span>
+                  <span style="color:#00e5ff;font-size:0.75rem;">⚡</span>
                 </div>
                 <p id="orderCounterpartyMeta" style="margin:0;font-size:0.72rem;color:rgba(255,255,255,0.4);"></p>
               </div>
@@ -1042,7 +1042,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:50%;height:100%;background:linear-gradient(90deg,#7fe83a,#d6ff78);border-radius:99px;"></div>
+          <div style="width:50%;height:100%;background:linear-gradient(90deg,#00e5ff,#00b8d4);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1089,6 +1089,9 @@
         </button>
 
         <p class="mob-kyc-fp-note">🔒 Your data is encrypted and used only for verification</p>
+        <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
+          Powered by <span style="color:#00e5ff;font-weight:700;">Sumsub</span>
+        </p>
       </div>
     </div>
 
@@ -1105,7 +1108,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:100%;height:100%;background:linear-gradient(90deg,#7fe83a,#d6ff78);border-radius:99px;"></div>
+          <div style="width:100%;height:100%;background:linear-gradient(90deg,#00e5ff,#00b8d4);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1187,6 +1190,9 @@
         </button>
 
         <p class="mob-kyc-fp-note">🔒 Review takes 24–48 hours. You'll be notified on approval.</p>
+        <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
+          Powered by <span style="color:#00e5ff;font-weight:700;">Sumsub</span>
+        </p>
       </div>
     </div>
 
