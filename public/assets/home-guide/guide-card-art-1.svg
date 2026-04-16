@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-label="Create account card">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#07111F"/>
+      <stop offset="1" stop-color="#031D32"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="180" y1="90" x2="710" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00FFD6"/>
+      <stop offset="1" stop-color="#1495FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="520" rx="42" fill="url(#bg)"/>
+  <circle cx="730" cy="95" r="155" fill="#00B4D8" opacity=".12"/>
+  <circle cx="164" cy="430" r="132" fill="#00FFD6" opacity=".1"/>
+  <rect x="105" y="92" width="690" height="336" rx="34" fill="#071727" stroke="#123D62" stroke-width="2"/>
+  <circle cx="250" cy="218" r="66" fill="url(#accent)" opacity=".92"/>
+  <circle cx="250" cy="199" r="25" fill="#02101C"/>
+  <path d="M198 280c13-31 90-31 104 0" fill="none" stroke="#02101C" stroke-width="20" stroke-linecap="round"/>
+  <rect x="365" y="165" width="305" height="30" rx="15" fill="#E8F7FF" opacity=".9"/>
+  <rect x="365" y="222" width="245" height="24" rx="12" fill="#6EEBFF" opacity=".48"/>
+  <rect x="365" y="276" width="184" height="56" rx="28" fill="url(#accent)"/>
+  <path d="M705 290h70m-35-35v70" stroke="#00D4FF" stroke-width="18" stroke-linecap="round"/>
+</svg>

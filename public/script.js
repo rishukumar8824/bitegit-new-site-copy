@@ -1,4 +1,4 @@
-const BITEGIT_API = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
+const BITEGIT_API = (window.BITEGIT_API_BASE || '/api/v1');
 function bgFetch(path, opts) {
   var token = localStorage.getItem('bitegit_token') || '';
   opts = opts || {};

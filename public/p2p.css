@@ -900,7 +900,7 @@ body.p2p-theme-light .pay-chip {
 .mobile-orders-tab.active {
   background: #202c42;
   color: #f4f8ff;
-  border-color: rgba(141, 251, 0, 0.3);
+  border-color: rgba(0, 180, 216, 0.3);
 }
 
 .mobile-orders-list {

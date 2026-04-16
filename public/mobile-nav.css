@@ -2,7 +2,7 @@
   --mn-bg: rgba(8, 11, 17, 0.95);
   --mn-line: rgba(255, 255, 255, 0.1);
   --mn-text: #8f9ab0;
-  --mn-active: #8dfb00;
+  --mn-active: #00B4D8;
   --mn-shadow: 0 18px 38px rgba(0, 0, 0, 0.48);
 }
 
@@ -62,8 +62,8 @@
 
   .mobile-app-nav a.active,
   .mobile-app-nav a[aria-current='page'] {
-    color: #091108;
+    color: #031015;
     background: var(--mn-active);
-    box-shadow: 0 6px 18px rgba(141, 251, 0, 0.28);
+    box-shadow: 0 6px 18px rgba(0, 180, 216, 0.3);
   }
 }
