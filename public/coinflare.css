@@ -1067,7 +1067,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 .coin-pepe {
   left: 1rem;
   bottom: 1rem;
-  background: linear-gradient(145deg, #2dc46a, #0f5d35);
+  background: linear-gradient(145deg, var(--cf-brand), var(--cf-brand-2));
 }
 
 .coin-ada {
@@ -1227,7 +1227,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 }
 
 .cf-exchange-ticker-item.up em {
-  color: #93ff48;
+  color: var(--cf-brand);
 }
 
 .cf-exchange-ticker-item.down em {
@@ -2012,8 +2012,8 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   height: 96px;
   border-radius: 18px;
   transform: rotate(-16deg);
-  background: linear-gradient(135deg, #f5ffb8, #99f500 50%, #22a21a);
-  box-shadow: 0 16px 42px rgba(120, 255, 53, 0.25);
+  background: var(--cf-brand-grad);
+  box-shadow: 0 16px 42px rgba(20, 231, 217, 0.25);
   animation: cf-float 4s ease-in-out infinite;
 }
 
@@ -2624,7 +2624,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 
 .cf-copy-chart polyline {
   fill: none;
-  stroke: #1fd8a4;
+  stroke: var(--cf-brand);
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
