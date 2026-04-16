@@ -9,8 +9,8 @@
   --p2p-muted: #6b7a99;
   --p2p-green: #19d27f;
   --p2p-red: #ff5f82;
-  --p2p-accent: #a8ff3e;
-  --p2p-brand: #a8ff3e;
+  --p2p-accent: #00e5ff;
+  --p2p-brand: #00e5ff;
   --p2p-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
@@ -370,7 +370,7 @@ body.p2p-kyc-open { overflow: hidden; }
 .merch-badge { font-size: 1rem; }
 .merch-badge-cert { color: #00c2b2; }
 .merch-badge-blue { color: #2563eb; }
-.merch-badge-crown { color: #a8ff3e; }
+.merch-badge-crown { color: #00e5ff; }
 .merch-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
 .merch-list li { font-size: 0.78rem; color: #8a97ae; padding-left: 1.2rem; position: relative; line-height: 1.5; }
 .merch-list li::before { content: '✓'; position: absolute; left: 0; color: #00c2b2; font-size: 0.7rem; }
@@ -1293,7 +1293,7 @@ body.p2p-kyc-open { overflow: hidden; }
 .my-ad-asset { font-size: 0.85rem; font-weight: 700; color: #fff; }
 .my-ad-status { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
 .my-ad-status.active { background: rgba(0,194,178,0.12); color: #00c2b2; }
-.my-ad-status.paused { background: rgba(168,255,62,0.12); color: #a8ff3e; }
+.my-ad-status.paused { background: rgba(168,255,62,0.12); color: #00e5ff; }
 .my-ad-price { font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0.1rem 0; }
 .my-ad-cur { font-size: 0.75rem; color: #6b7690; font-weight: 500; }
 .my-ad-row { display: flex; justify-content: space-between; font-size: 0.76rem; color: #8a97ae; }
@@ -1301,7 +1301,7 @@ body.p2p-kyc-open { overflow: hidden; }
 .my-ad-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 .my-ad-btn { flex: 1; height: 30px; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: 'Manrope', sans-serif; -webkit-tap-highlight-color: transparent; }
 .my-ad-edit { background: rgba(0,194,178,0.15); color: #00c2b2; }
-.my-ad-pause { background: rgba(168,255,62,0.12); color: #a8ff3e; }
+.my-ad-pause { background: rgba(168,255,62,0.12); color: #00e5ff; }
 .my-ad-delete { background: rgba(246,70,93,0.12); color: #f6465d; }
 
 /* Edit Ad Modal */
@@ -1311,7 +1311,7 @@ body.p2p-kyc-open { overflow: hidden; }
 .edit-ad-head h3 { font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0; }
 .edit-ad-close { background: none; border: none; color: #8a97ae; font-size: 1.1rem; cursor: pointer; padding: 0; }
 .edit-ad-body { padding: 0.8rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
-.edit-ad-label { font-size: 0.72rem; color: #a8ff3e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.edit-ad-label { font-size: 0.72rem; color: #00e5ff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
 .edit-ad-input { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.85rem; padding: 0.55rem 0.8rem; font-family: 'Manrope', sans-serif; outline: none; width: 100%; box-sizing: border-box; }
 .edit-ad-input:focus { border-color: #00c2b2; }
 
@@ -1507,7 +1507,7 @@ body.p2p-kyc-open { overflow: hidden; }
 
 /* Release mode — seller releasing crypto: gold/green highlight like Bybit */
 #markPaidBtn.release-mode {
-  background: linear-gradient(96deg, #7fe83a, #a8ff3e);
+  background: linear-gradient(96deg, #00e5ff, #00e5ff);
   color: #fff;
   border-color: transparent;
   font-weight: 700;
@@ -3295,7 +3295,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .mob-kyc-fp-label {
   font-size: 0.73rem;
   font-weight: 600;
-  color: #a8ff3e;
+  color: #00e5ff;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -3317,7 +3317,7 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 
 .mob-kyc-fp-input:focus {
-  border-color: #a8ff3e;
+  border-color: #00e5ff;
   background: #161618;
 }
 .mob-kyc-fp-input option { background: #111114; color: #fff; }
@@ -3327,7 +3327,7 @@ body.mob-screen-open .p2p-secondary-nav {
   min-height: 54px;
   border: 0;
   border-radius: 14px;
-  background: linear-gradient(96deg,#7fe83a,#d6ff78);
+  background: linear-gradient(96deg,#00e5ff,#00b8d4);
   color: #000;
   font-size: 1.02rem;
   font-weight: 800;
@@ -3377,7 +3377,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .mob-kyc-fp-consent input {
   margin-top: 3px;
   flex-shrink: 0;
-  accent-color: #a8ff3e;
+  accent-color: #00e5ff;
   width: 16px;
   height: 16px;
 }
@@ -3438,7 +3438,7 @@ body.mob-screen-open .p2p-secondary-nav {
   border-radius: 8px;
   background: rgba(240,185,11,0.15);
   border: 1.5px solid rgba(240,185,11,0.4);
-  color: #a8ff3e;
+  color: #00e5ff;
   font-size: 0.8rem;
   font-weight: 700;
   display: flex;

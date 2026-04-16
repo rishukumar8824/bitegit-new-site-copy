@@ -7,7 +7,7 @@
   --auth-text: #101826;
   --auth-muted: #6c7c95;
   --auth-danger: #ff5073;
-  --auth-accent: #c6ff00;
+  --auth-accent: #00e5ff;
 }
 
 [data-theme='dark'] {
@@ -20,6 +20,16 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* remove browser focus outline on all inputs & buttons */
+input:focus,
+button:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: rgba(0, 229, 255, 0.4);
 }
 
 html,
@@ -94,22 +104,22 @@ body.auth-page {
 }
 
 .auth-main {
-  width: min(540px, calc(100% - 1.2rem));
+  width: min(310px, calc(100% - 2rem));
   margin: 0 auto;
-  padding: 1rem 0 1.2rem;
+  padding: 0.5rem 0 1rem;
 }
 
 .auth-card {
   border: 1px solid var(--auth-line);
-  border-radius: 20px;
-  padding: 1.2rem;
+  border-radius: 16px;
+  padding: 0.75rem;
   background: color-mix(in srgb, var(--auth-panel) 92%, transparent);
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.32);
 }
 
 .auth-card h1 {
-  margin: 0 0 0.95rem;
-  font-size: clamp(1.8rem, 8vw, 2.2rem);
+  margin: 0 0 0.6rem;
+  font-size: clamp(1.15rem, 5vw, 1.35rem);
   line-height: 1.1;
 }
 
@@ -117,20 +127,21 @@ body.auth-page {
 .auth-channel-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  margin-bottom: 0.9rem;
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
 }
 
 .auth-mode-tabs button,
 .auth-channel-tabs button {
-  min-height: 54px;
-  border-radius: 16px;
+  min-height: 32px;
+  border-radius: 6px;
   border: 1px solid var(--auth-line);
-  background: color-mix(in srgb, var(--auth-panel) 86%, transparent);
+  background: transparent;
   color: var(--auth-muted);
-  font-size: 1.02rem;
-  font-weight: 800;
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: none;
 }
 
 .auth-mode-tabs button.hidden,
@@ -141,13 +152,13 @@ body.auth-page {
 .auth-mode-tabs button.active,
 .auth-channel-tabs button.active {
   background: var(--auth-accent);
-  color: #12190a;
+  color: #000;
   border-color: color-mix(in srgb, var(--auth-accent) 75%, #000 25%);
 }
 
 .auth-form {
   display: grid;
-  gap: 0.52rem;
+  gap: 0.32rem;
 }
 
 .auth-form label {
@@ -157,13 +168,13 @@ body.auth-page {
 
 .auth-form input {
   width: 100%;
-  min-height: 62px;
-  border-radius: 16px;
+  min-height: 36px;
+  border-radius: 8px;
   border: 1px solid var(--auth-line);
   background: #070b12;
   color: var(--auth-text);
-  font-size: 1.45rem;
-  padding: 0 1rem;
+  font-size: 0.84rem;
+  padding: 0 0.7rem;
 }
 
 [data-theme='light'] .auth-form input {
@@ -210,16 +221,20 @@ body.auth-page {
 
 .auth-password-toggle {
   position: absolute;
-  right: 0.58rem;
+  right: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: 1px solid var(--auth-line);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
   background: transparent;
   color: var(--auth-muted);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .auth-error {
@@ -243,13 +258,13 @@ body.auth-page {
 }
 
 .auth-submit {
-  margin-top: 0.55rem;
-  min-height: 58px;
-  border-radius: 15px;
+  margin-top: 0.25rem;
+  min-height: 38px;
+  border-radius: 50px;
   border: 0;
   background: var(--auth-accent);
-  color: #12190a;
-  font-size: 1.8rem;
+  color: #000;
+  font-size: 1rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -275,7 +290,7 @@ body.auth-page {
 }
 
 .auth-switch-copy {
-  margin: 1rem 0 0;
+  margin: 0.5rem 0 0;
   text-align: center;
   color: var(--auth-muted);
   font-size: 0.94rem;
@@ -290,7 +305,7 @@ body.auth-page {
 }
 
 .auth-social-divider {
-  margin: 1rem 0 0.55rem;
+  margin: 0.55rem 0 0.4rem;
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -312,35 +327,38 @@ body.auth-page {
 }
 
 .auth-social-row button {
-  min-height: 56px;
+  min-height: 38px;
   border-radius: 999px;
   border: 1px solid var(--auth-line);
   background: transparent;
   color: var(--auth-text);
-  font-size: 1.18rem;
+  font-size: 0.88rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 body.auth-signup-mode .auth-card h1,
 body.auth-forgot-mode .auth-card h1 {
-  font-size: clamp(1.5rem, 5.4vw, 1.9rem);
+  font-size: clamp(1.1rem, 4.5vw, 1.3rem);
 }
 
 body.auth-signup-mode .auth-form label,
 body.auth-forgot-mode .auth-form label {
-  font-size: 0.96rem;
+  font-size: 0.8rem;
 }
 
 body.auth-signup-mode .auth-form input,
 body.auth-forgot-mode .auth-form input {
-  min-height: 56px;
-  font-size: 1.06rem;
+  min-height: 36px;
+  font-size: 0.84rem;
 }
 
 body.auth-signup-mode .auth-submit,
 body.auth-forgot-mode .auth-submit {
-  min-height: 52px;
-  font-size: 1.22rem;
+  min-height: 38px;
+  font-size: 0.9rem;
 }
 
 .auth-qr-modal {

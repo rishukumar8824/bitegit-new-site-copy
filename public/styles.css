@@ -5,8 +5,8 @@
   --muted: #95a2b5;
   --success: #1fd07b;
   --danger: #f44762;
-  --primary: #f4ab34;
-  --primary-hover: #df9927;
+  --primary: #00e5ff;
+  --primary-hover: #00b8d4;
   --whatsapp: #24d366;
   --whatsapp-hover: #1ebe57;
 }
@@ -92,7 +92,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: rgba(244, 171, 52, 0.7);
-  box-shadow: 0 0 0 2px rgba(244, 171, 52, 0.2);
+  box-shadow: 0 0 0 2px rgba(0,229,255,0.2);
 }
 
 button,
@@ -224,7 +224,7 @@ button:hover,
 }
 
 .hero-sub strong {
-  color: #f4ab34;
+  color: #00e5ff;
   font-weight: 700;
 }
 
@@ -304,9 +304,9 @@ button:hover,
 }
 
 .secondary-btn.soft {
-  background: rgba(244, 171, 52, 0.12);
-  border-color: rgba(244, 171, 52, 0.32);
-  color: #ffd89a;
+  background: rgba(0,229,255,0.12);
+  border-color: rgba(0,229,255,0.32);
+  color: #00e5ff;
 }
 
 .whatsapp-btn {
@@ -391,9 +391,9 @@ button:hover,
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(244, 171, 52, 0.18);
-  border: 1px solid rgba(244, 171, 52, 0.45);
-  color: #ffd58f;
+  background: rgba(0,229,255,0.18);
+  border: 1px solid rgba(0,229,255,0.45);
+  color: #00e5ff;
   font-weight: 700;
 }
 
@@ -421,13 +421,13 @@ button:hover,
   border-radius: 10px;
   padding: 9px 12px;
   width: 100%;
-  background: rgba(244, 171, 52, 0.2);
-  border: 1px solid rgba(244, 171, 52, 0.35);
-  color: #ffd18a;
+  background: rgba(0,229,255,0.2);
+  border: 1px solid rgba(0,229,255,0.35);
+  color: #00e5ff;
 }
 
 .coin-trade-btn:hover {
-  background: rgba(244, 171, 52, 0.34);
+  background: rgba(0,229,255,0.34);
 }
 
 .landing-chart-card {
@@ -481,8 +481,8 @@ button:hover,
 
 .pair-btn.active {
   background: rgba(244, 171, 52, 0.25);
-  border-color: rgba(244, 171, 52, 0.45);
-  color: #ffd89a;
+  border-color: rgba(0,229,255,0.45);
+  color: #00e5ff;
 }
 
 .chart-wrap {
@@ -618,8 +618,8 @@ button:hover,
 }
 
 .side-tab.active {
-  background: rgba(255, 183, 52, 0.25);
-  color: #ffd88d;
+  background: rgba(0,229,255,0.2);
+  color: #00e5ff;
 }
 
 .p2p-filters {
@@ -867,7 +867,7 @@ button:hover,
 
 .p2p-price {
   font-weight: 800;
-  color: #ffd48f !important;
+  color: #00e5ff !important;
 }
 
 .pay-chip {
@@ -893,7 +893,7 @@ button:hover,
 }
 
 .buy-offer-btn {
-  background: #f8b449;
+  background: #00e5ff;
   color: #1f1710;
 }
 
@@ -984,7 +984,7 @@ button:hover,
 
 .status-open {
   background: rgba(248, 180, 73, 0.22);
-  color: #ffd48f;
+  color: #00e5ff;
 }
 
 .status-paid {
@@ -1371,7 +1371,7 @@ th {
 }
 
 .p2p-top-actions .cta-mini {
-  background: #f4ab34;
+  background: #00e5ff;
   color: #161821;
 }
 
@@ -1397,7 +1397,7 @@ th {
 }
 
 .p2p-subnav a.active {
-  color: #f4ab34;
+  color: #00e5ff;
   font-weight: 700;
 }
 
@@ -1519,8 +1519,8 @@ th {
 }
 
 .asset-chip.active {
-  background: #fff2da;
-  color: #cc8520;
+  background: rgba(0,229,255,0.1);
+  color: #00b8d4;
 }
 
 .p2p-filter-row {
@@ -2567,8 +2567,8 @@ th {
 }
 
 .p2p-bybit .p2p-subnav a.active {
-  color: #f0a941;
-  border-bottom: 2px solid #f0a941;
+  color: #00e5ff;
+  border-bottom: 2px solid #00e5ff;
   padding-bottom: 16px;
 }
 
@@ -2669,7 +2669,7 @@ th {
 }
 
 .p2p-bybit .asset-chip.active {
-  color: #f0a941;
+  color: #00e5ff;
   font-weight: 700;
 }
 
@@ -2697,7 +2697,7 @@ th {
 .p2p-bybit .filter-btn {
   border: none;
   background: transparent;
-  color: #f0a941;
+  color: #00e5ff;
   font-weight: 600;
 }
 
@@ -2708,7 +2708,7 @@ th {
   border-radius: 999px;
   align-items: center;
   justify-content: center;
-  background: #f0a941;
+  background: #00e5ff;
   color: #fff;
   font-size: 10px;
   margin-left: 5px;
