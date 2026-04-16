@@ -284,39 +284,51 @@
     .ch-tp-transfer-row{display:flex;gap:.5rem;padding:.5rem 1rem;border-top:1px solid rgba(255,255,255,.06)}
     .ch-tp-transfer-btn{flex:1;background:#1a1a1a;border:none;border-radius:8px;color:#f4f8ff;font-family:'Manrope',sans-serif;font-size:.8rem;font-weight:600;padding:.5rem;cursor:pointer}
 
-    /* Float Trade button */
-    .ch-float-trade{
-      position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));right:1rem;
-      background:#fff;color:#000;font-weight:800;font-size:.95rem;
-      padding:.65rem 2rem;border:none;border-radius:25px;cursor:pointer;
-      z-index:80;box-shadow:0 4px 18px rgba(0,0,0,.35);
-    }
-    /* Bottom action row (More/Futures/Bot/Margin) */
-    .ch-bottom-actions{
-      position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:0;
-      display:flex;gap:1.2rem;padding:.5rem 1rem;background:#000;
+    /* Bottom bar Gate.io style */
+    .ch-bottom-bar{
+      position:fixed;bottom:calc(64px + env(safe-area-inset-bottom));left:0;right:0;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:.5rem 1rem;background:#000;
       border-top:1px solid rgba(255,255,255,.07);
+      z-index:80;
     }
-    .ch-ba-btn{background:none;border:none;color:#8a9bb5;font-family:'Manrope',sans-serif;font-size:.7rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:.1rem .3rem}
-    .ch-ba-btn svg,.ch-ba-btn .ico{font-size:1rem;color:#8a9bb5}
+    .ch-bottom-tabs{display:flex;gap:0;}
+    .ch-bottom-tab{background:none;border:none;color:#8a9bb5;font-family:'Manrope',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;padding:.3rem .75rem;border-bottom:2px solid transparent;white-space:nowrap;}
+    .ch-bottom-tab.active{color:#f4f8ff;border-bottom-color:#f4f8ff;}
+    .ch-float-trade{
+      background:#fff;color:#000;font-weight:800;font-size:.92rem;
+      padding:.55rem 1.8rem;border:none;border-radius:25px;cursor:pointer;
+      box-shadow:0 4px 18px rgba(0,0,0,.35);flex-shrink:0;
+    }
+    /* legacy - keep for compat */
+    .ch-bottom-actions{ display:none; }
+    .ch-ba-btn{display:none;}
   </style>
 <script src="/app-nav.js?v=20260416c" defer></script></head>
 <body class="has-mobile-nav">
 
   <!-- ── HEADER ── -->
   <header class="ch-header" id="chHeader">
-    <a href="javascript:history.back()" class="ch-back">&#8592;</a>
+    <a href="javascript:history.back()" class="ch-back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    </a>
     <div class="ch-pair-col">
-      <div class="ch-pair-name" id="chPairName">BTC/USDT <span>&#9660;</span></div>
+      <div class="ch-pair-name" id="chPairName">BTC/USDT <span style="font-size:.72rem;background:rgba(255,255,255,.1);padding:1px 6px;border-radius:4px;color:#aaa;font-weight:500;margin-left:2px">Perp</span> <span style="font-size:.7rem;color:#8a9bb5">&#9660;</span></div>
       <div class="ch-pair-sub">
-        <span class="ch-pair-price" id="chHeaderPrice">--</span>
-        <span class="ch-pair-chg dn" id="chHeaderChg">--</span>
+        <span class="ch-pair-price up" id="chHeaderPrice">--</span>
+        <span class="ch-pair-chg up" id="chHeaderChg">--</span>
       </div>
     </div>
     <div class="ch-hicons">
-      <button class="ch-hico" id="chFavBtn">&#9733;</button>
-      <button class="ch-hico">&#9776;</button>
-      <button class="ch-hico">&#8599;</button>
+      <button class="ch-hico" id="chFavBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </button>
+      <button class="ch-hico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <button class="ch-hico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>
     </div>
   </header>
 
@@ -330,20 +342,28 @@
 
   <!-- ══════════════ CHART TAB ══════════════ -->
   <div id="tabChart">
-    <!-- Price stats -->
+    <!-- Price stats Gate.io style -->
     <div class="ch-price-row">
       <div class="ch-price-left">
-        <div class="ch-price-big" id="chPriceBig">--</div>
+        <div style="font-size:.72rem;color:#8a9bb5;margin-bottom:3px;display:flex;align-items:center;gap:4px">Last Price <span style="font-size:.6rem">▼</span></div>
+        <div class="ch-price-big up" id="chPriceBig">--</div>
         <div class="ch-price-sub">
           <span class="usd" id="chPriceUsd">≈$--</span>
-          <span class="dn" id="chPriceChg">--</span>
+          <span class="up" id="chPriceChg">--</span>
+        </div>
+        <div style="font-size:.72rem;color:#8a9bb5;margin-top:4px">Mark Price: <span id="chMarkPrice" style="color:#f4f8ff">--</span></div>
+        <div style="font-size:.72rem;margin-top:3px;display:flex;align-items:center;gap:6px">
+          <span style="color:#f4f8ff">BTC/USDT</span>
+          <span id="chSpotPrice" style="color:#2dc08e">--</span>
+          <span id="chSpotChg" style="color:#2dc08e">--</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8a9bb5" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
       </div>
       <div class="ch-price-right">
         <div class="ch-stat"><span>24h High</span><strong id="chHigh">--</strong></div>
         <div class="ch-stat"><span>24h Low</span><strong id="chLow">--</strong></div>
-        <div class="ch-stat"><span>24h Vol</span><strong id="chVol">--</strong></div>
-        <div class="ch-stat"><span>Turnover</span><strong id="chTurnover">--</strong></div>
+        <div class="ch-stat"><span>24h Vol (BTC)</span><strong id="chVol">--</strong></div>
+        <div class="ch-stat"><span>24h Turnover (USDT)</span><strong id="chTurnover">--</strong></div>
       </div>
     </div>
 
@@ -354,6 +374,7 @@
       <button class="ch-ivl" data-ivl="1h">1h</button>
       <button class="ch-ivl" data-ivl="4h">4h</button>
       <button class="ch-ivl" data-ivl="1d">1D</button>
+      <button class="ch-ivl" style="display:flex;align-items:center;gap:2px">More <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
       <div class="ch-ivl-sep"></div>
       <div class="ch-tools">
         <button class="ch-tool" id="chCandleTypeBtn" title="Candle type">
@@ -584,8 +605,15 @@
     </div>
   </div>
 
-  <!-- Float Trade button -->
-  <button class="ch-float-trade" id="chFloatTrade">Trade</button>
+  <!-- Gate.io style bottom bar: Spot/Margin/Bots + Trade -->
+  <div class="ch-bottom-bar">
+    <div class="ch-bottom-tabs">
+      <button class="ch-bottom-tab active">Spot</button>
+      <button class="ch-bottom-tab">Margin</button>
+      <button class="ch-bottom-tab">Bots</button>
+    </div>
+    <button class="ch-float-trade" id="chFloatTrade">Trade</button>
+  </div>
 
   <!-- Bottom nav -->
   <nav class="mobile-app-nav" aria-label="App navigation">
@@ -621,7 +649,7 @@
   // ══════════════════════════════════════════════════════
   //  PURE CANVAS CHART — MA/EMA/BOLL toggle, price drag
   // ══════════════════════════════════════════════════════
-  const UP='#00d4b3', DN='#ff5f82', BGCOL='#000';
+  const UP='#2dc08e', DN='#f6465d', BGCOL='#000';
   const PRICE_W=74, TIME_H=26, TOP_PAD=12;
   let allCandles=[], viewOffset=0, viewCount=80;
   let candleType='candle'; // 'candle' | 'line' | 'bar'
@@ -966,11 +994,26 @@
       hchg.className = 'ch-pair-chg '+cls;
 
       // Chart tab
-      document.getElementById('chPriceBig').textContent = fmtP(price);
+      const priceBig = document.getElementById('chPriceBig');
+      priceBig.textContent = fmtP(price);
+      priceBig.className = 'ch-price-big '+cls;
       document.getElementById('chPriceUsd').textContent = '≈$'+fmtP(price);
       const pchg = document.getElementById('chPriceChg');
       pchg.textContent = sign+chg.toFixed(2)+'%';
       pchg.className = cls;
+      // Mark price (approx same as last)
+      const mp = document.getElementById('chMarkPrice');
+      if(mp) mp.textContent = fmtP(price);
+      // Spot row
+      const sp = document.getElementById('chSpotPrice');
+      const sc = document.getElementById('chSpotChg');
+      if(sp) { sp.textContent = fmtP(price); sp.className = cls; }
+      if(sc) { sc.textContent = sign+chg.toFixed(2)+'%'; sc.className = cls; }
+      // Header color
+      const hp = document.getElementById('chHeaderPrice');
+      if(hp) hp.className = 'ch-pair-price '+cls;
+      const hc = document.getElementById('chHeaderChg');
+      if(hc) hc.className = 'ch-pair-chg '+cls;
       document.getElementById('chHigh').textContent = fmtP(d.highPrice);
       document.getElementById('chLow').textContent = fmtP(d.lowPrice);
       document.getElementById('chVol').textContent = fmtV(d.volume);
