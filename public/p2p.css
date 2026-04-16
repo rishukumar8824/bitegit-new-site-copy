@@ -7,9 +7,9 @@
   --p2p-line: rgba(189, 205, 231, 0.18);
   --p2p-text: #edf3ff;
   --p2p-muted: #8e9db8;
-  --p2p-green: #19ca7b;
+  --p2p-green: #00C2B2;
   --p2p-red: #f15a6a;
-  --p2p-accent: #f7a723;
+  --p2p-accent: #00B4D8;
   --p2p-shadow: 0 18px 46px rgba(0, 0, 0, 0.35);
 }
 
@@ -30,7 +30,7 @@ body.p2p-page {
   font-family: 'Manrope', 'Segoe UI', sans-serif;
   color: var(--p2p-text);
   background: radial-gradient(circle at 8% 0%, rgba(24, 118, 255, 0.2), transparent 44%),
-    radial-gradient(circle at 88% 0%, rgba(142, 255, 10, 0.1), transparent 40%), var(--p2p-bg);
+    radial-gradient(circle at 88% 0%, rgba(20, 231, 217, 0.12), transparent 40%), var(--p2p-bg);
 }
 
 body.p2p-nav-open,
@@ -159,7 +159,7 @@ body.p2p-theme-light .p2p-menu-btn {
 }
 
 .p2p-brand {
-  color: #91f70d;
+  color: #00D4FF;
   text-decoration: none;
   font-size: clamp(1.3rem, 2.8vw, 2rem);
   font-weight: 800;
@@ -373,7 +373,7 @@ body.p2p-theme-light .p2p-drawer-links a:hover {
 
 .p2p-secondary-left a.active {
   color: var(--p2p-accent);
-  background: rgba(247, 167, 35, 0.14);
+  background: rgba(0, 180, 216, 0.14);
 }
 
 .p2p-main {
@@ -538,8 +538,8 @@ body.p2p-theme-light .side-tab {
 
 .asset-chip.active {
   color: var(--p2p-accent);
-  border-color: rgba(247, 167, 35, 0.5);
-  background: rgba(247, 167, 35, 0.12);
+  border-color: rgba(0, 180, 216, 0.5);
+  background: rgba(0, 180, 216, 0.12);
 }
 
 .asset-support {
@@ -596,7 +596,7 @@ body.p2p-theme-light #dealPaymentSelect {
   min-width: 18px;
   height: 18px;
   border-radius: 999px;
-  background: rgba(247, 167, 35, 0.24);
+  background: rgba(0, 180, 216, 0.24);
   color: var(--p2p-accent);
   font-size: 0.72rem;
   display: inline-flex;
@@ -646,7 +646,7 @@ body.p2p-theme-light #dealPaymentSelect {
   margin-top: 0.7rem;
   border: 1px solid var(--p2p-line);
   border-radius: 10px;
-  background: rgba(247, 167, 35, 0.12);
+  background: rgba(0, 180, 216, 0.12);
   padding: 0.6rem 0.7rem;
 }
 
@@ -1001,8 +1001,8 @@ body.p2p-theme-light .pay-chip {
   min-height: 40px;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(95deg, #16c784, #36da96);
-  color: #07150d;
+  background: linear-gradient(95deg, #00C2B2, #00D4FF);
+  color: #031015;
   font-weight: 800;
   font-size: 0.9rem;
 }
@@ -1224,7 +1224,7 @@ body.p2p-theme-light .profile-identity-tag.verified {
   border-radius: 999px;
   background: rgba(22, 199, 132, 0.15);
   border: 1px solid rgba(22, 199, 132, 0.35);
-  color: #16c784;
+  color: #00C2B2;
 }
 
 /* Profile tabs bar */
@@ -1251,7 +1251,7 @@ body.p2p-theme-light .profile-identity-tag.verified {
 
 .profile-tab.active {
   color: #f4f8ff;
-  border-bottom-color: #16c784;
+  border-bottom-color: #00C2B2;
 }
 
 /* Profile tab panels */
@@ -1327,7 +1327,7 @@ body.p2p-theme-light .profile-identity-tag.verified {
 .kyc-status-badge.done {
   background: rgba(22, 199, 132, 0.15);
   border-color: rgba(22, 199, 132, 0.35);
-  color: #16c784;
+  color: #00C2B2;
 }
 
 /* KYC Inline Panel */
@@ -1394,7 +1394,7 @@ body.p2p-theme-light .profile-identity-tag.verified {
   padding: 2px 8px;
   border-radius: 6px;
   background: rgba(22, 199, 132, 0.2);
-  color: #16c784;
+  color: #00C2B2;
   margin-bottom: 0.2rem;
 }
 
@@ -1427,7 +1427,7 @@ body.p2p-theme-light .profile-identity-tag.verified {
 }
 
 .kyc-level-status.done {
-  color: #16c784;
+  color: #00C2B2;
 }
 
 .kyc-level-form {
@@ -1487,7 +1487,7 @@ body.p2p-theme-light .profile-identity-tag.verified {
   min-height: 42px;
   border: 0;
   border-radius: 10px;
-  background: linear-gradient(96deg, #16c784, #0ea86e);
+  background: linear-gradient(96deg, #00C2B2, #0096C7);
   color: #fff;
   font-size: 0.88rem;
   font-weight: 800;
@@ -1726,7 +1726,7 @@ body.p2p-theme-light .profile-identity-tag.verified {
 #loginBtn,
 #chatForm button,
 #markPaidBtn {
-  background: #f7a723;
+  background: #00B4D8;
   border-color: transparent;
   color: #201500;
 }
@@ -1884,7 +1884,7 @@ body.p2p-theme-light .p2p-kyc-field input[type='file'] {
   min-height: 42px;
   border-radius: 10px;
   border: 1px solid transparent;
-  background: #f7a723;
+  background: #00B4D8;
   color: #201500;
   font-size: 0.9rem;
   font-weight: 700;
@@ -2008,7 +2008,7 @@ body.p2p-theme-light .chat-item {
 
 .chat-system {
   width: 100%;
-  background: rgba(247, 167, 35, 0.18);
+  background: rgba(0, 180, 216, 0.18);
 }
 
 .chat-sender,
@@ -2678,7 +2678,7 @@ body.p2p-theme-light .chat-item {
   }
 
   .p2p-offer-card .buy-offer-btn {
-    background: #16c784;
+    background: #00C2B2;
     color: #06140b;
   }
 
@@ -2889,7 +2889,7 @@ body.p2p-cancel-open {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: #16c784;
+  background: #00C2B2;
   box-shadow: 0 0 0 3px rgba(22, 199, 132, 0.2);
 }
 
@@ -2928,7 +2928,7 @@ body.p2p-cancel-open {
 
 .countdown-timer strong {
   display: block;
-  color: #f7a723;
+  color: #00B4D8;
   font-size: 1.18rem;
   line-height: 1;
 }
@@ -2982,8 +2982,8 @@ body.p2p-cancel-open {
 .escrow-notice {
   margin-top: 0.65rem;
   border-radius: 10px;
-  border: 1px solid rgba(247, 167, 35, 0.4);
-  background: rgba(247, 167, 35, 0.12);
+  border: 1px solid rgba(0, 180, 216, 0.4);
+  background: rgba(0, 180, 216, 0.12);
   padding: 0.52rem 0.62rem;
 }
 
@@ -3047,7 +3047,7 @@ body.p2p-cancel-open {
 }
 
 .payment-panel-head span {
-  color: #f7a723;
+  color: #00B4D8;
   font-size: 0.9rem;
   font-weight: 700;
 }
@@ -3087,7 +3087,7 @@ body.p2p-cancel-open {
   min-height: 42px;
   border-radius: 999px;
   border: 0;
-  background: #16c784;
+  background: #00C2B2;
   color: #072114;
   font-size: 0.92rem;
   font-weight: 700;
@@ -3172,7 +3172,7 @@ body.p2p-cancel-open {
 .order-chat-column .chat-item.chat-self {
   margin-left: auto;
   margin-right: 0;
-  border-color: rgba(247, 167, 35, 0.82) !important;
+  border-color: rgba(0, 180, 216, 0.82) !important;
   background: linear-gradient(145deg, #4a3410 0%, #33260f 100%) !important;
 }
 
@@ -3191,7 +3191,7 @@ body.p2p-cancel-open {
 
 .order-chat-column .chat-item.chat-buyer.chat-self,
 .order-chat-column .chat-item.chat-seller.chat-self {
-  border-color: rgba(247, 167, 35, 0.82);
+  border-color: rgba(0, 180, 216, 0.82);
   background: linear-gradient(145deg, #4a3410 0%, #33260f 100%);
 }
 
@@ -3312,8 +3312,8 @@ body.p2p-cancel-open {
 
 #chatInput:focus {
   outline: none;
-  border-color: rgba(247, 167, 35, 0.82);
-  box-shadow: 0 0 0 2px rgba(247, 167, 35, 0.2);
+  border-color: rgba(0, 180, 216, 0.82);
+  box-shadow: 0 0 0 2px rgba(0, 180, 216, 0.2);
 }
 
 .order-chat-column .chat-form button {
@@ -3321,7 +3321,7 @@ body.p2p-cancel-open {
   min-height: 40px;
   border-radius: 10px;
   border: 0;
-  background: linear-gradient(145deg, #ffc14e 0%, #f7a723 100%);
+  background: linear-gradient(145deg, #00D4FF 0%, #00B4D8 100%);
   color: #1d1609;
   font-weight: 700;
 }
@@ -3354,8 +3354,8 @@ body.p2p-cancel-open {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  border: 2px solid rgba(247, 167, 35, 0.25);
-  border-top-color: #f7a723;
+  border: 2px solid rgba(0, 180, 216, 0.25);
+  border-top-color: #00B4D8;
   animation: chat-upload-spin 0.7s linear infinite;
 }
 
@@ -3380,7 +3380,7 @@ body.p2p-theme-light .order-chat-column .chat-item.chat-other {
 
 body.p2p-theme-light .order-chat-column .chat-item.chat-self {
   background: linear-gradient(145deg, #4a3410 0%, #33260f 100%) !important;
-  border-color: rgba(247, 167, 35, 0.82) !important;
+  border-color: rgba(0, 180, 216, 0.82) !important;
 }
 
 @keyframes chat-upload-spin {
@@ -3413,8 +3413,8 @@ body.p2p-theme-light .order-chat-column .chat-item.chat-self {
 }
 
 .order-pay-btn.release-mode {
-  background: #16c784;
-  border-color: #16c784;
+  background: #00C2B2;
+  border-color: #00C2B2;
   color: #052112;
 }
 
@@ -3789,7 +3789,7 @@ body[data-mobile-tab='profile'] .p2p-header {
 
 .kyc-fp-prog-fill {
   height: 100%;
-  background: linear-gradient(90deg, #f0b90b, #f8d041);
+  background: linear-gradient(90deg, #00C2B2, #00D4FF);
   border-radius: 99px;
   transition: width 0.4s ease;
 }
@@ -3806,8 +3806,8 @@ body[data-mobile-tab='profile'] .p2p-header {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  background: rgba(240,185,11,0.07);
-  border: 1px solid rgba(240,185,11,0.18);
+  background: rgba(0,180,216,0.07);
+  border: 1px solid rgba(0,180,216,0.18);
   border-radius: 12px;
   padding: 0.85rem;
 }
@@ -3816,7 +3816,7 @@ body[data-mobile-tab='profile'] .p2p-header {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: rgba(240,185,11,0.12);
+  background: rgba(0,180,216,0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3876,7 +3876,7 @@ body[data-mobile-tab='profile'] .p2p-header {
 }
 
 .kyc-fp-input:focus {
-  border-color: rgba(240,185,11,0.5);
+  border-color: rgba(0,180,216,0.5);
 }
 
 .kyc-fp-input option {
@@ -3892,7 +3892,7 @@ body[data-mobile-tab='profile'] .p2p-header {
   min-height: 50px;
   border: 0;
   border-radius: 12px;
-  background: linear-gradient(96deg, #f0b90b, #e0a800);
+  background: linear-gradient(96deg, #00C2B2, #00B4D8);
   color: #000;
   font-size: 0.96rem;
   font-weight: 800;
@@ -3915,7 +3915,7 @@ body[data-mobile-tab='profile'] .p2p-header {
 }
 
 .kyc-fp-hint.error { color: #f6465d; }
-.kyc-fp-hint.success { color: #16c784; }
+.kyc-fp-hint.success { color: #00C2B2; }
 
 .kyc-fp-secure-note {
   display: flex;
@@ -3954,7 +3954,7 @@ body[data-mobile-tab='profile'] .p2p-header {
   width: 40px;
   height: 40px;
   border-radius: 9px;
-  background: rgba(240,185,11,0.1);
+  background: rgba(0,180,216,0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3986,9 +3986,9 @@ body[data-mobile-tab='profile'] .p2p-header {
   min-height: 32px;
   padding: 0 0.8rem;
   border-radius: 8px;
-  background: rgba(240,185,11,0.15);
-  border: 1px solid rgba(240,185,11,0.3);
-  color: #f0b90b;
+  background: rgba(0,180,216,0.15);
+  border: 1px solid rgba(0,180,216,0.3);
+  color: #00B4D8;
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
@@ -4021,7 +4021,7 @@ body[data-mobile-tab='profile'] .p2p-header {
 .kyc-fp-consent input[type="checkbox"] {
   margin-top: 2px;
   flex-shrink: 0;
-  accent-color: #f0b90b;
+  accent-color: #00B4D8;
   width: 15px;
   height: 15px;
 }

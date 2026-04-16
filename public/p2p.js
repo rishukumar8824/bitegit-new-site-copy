@@ -1286,10 +1286,10 @@ async function loadProfilePanel(options = {}) {
   if (kycBadge) {
     if (currentKycStatus === 'VERIFIED') {
       kycBadge.textContent = 'Verified';
-      kycBadge.style.cssText = 'font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(22,199,132,0.15);border:1px solid rgba(22,199,132,0.35);color:#16c784;margin-left:6px;';
+      kycBadge.style.cssText = 'font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,194,178,0.15);border:1px solid rgba(0,194,178,0.35);color:#00C2B2;margin-left:6px;';
     } else if (currentKycStatus === 'PENDING_REVIEW') {
       kycBadge.textContent = 'Under Review';
-      kycBadge.style.cssText = 'font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(240,185,11,0.12);border:1px solid rgba(240,185,11,0.3);color:#f0b90b;margin-left:6px;';
+      kycBadge.style.cssText = 'font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,180,216,0.12);border:1px solid rgba(0,180,216,0.3);color:#00B4D8;margin-left:6px;';
     } else if (currentKycStatus === 'REJECTED') {
       kycBadge.textContent = 'Rejected';
       kycBadge.style.cssText = 'font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(246,70,93,0.15);border:1px solid rgba(246,70,93,0.3);color:#f6465d;margin-left:6px;cursor:pointer;';
@@ -3032,7 +3032,7 @@ function renderMobileActiveOrders() {
         '<span class="status-pill ' + statusCls + '">' + statusTxt + '</span>' +
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 1rem;font-size:0.87rem;margin-bottom:0.75rem;">' +
-        '<div><span style="color:rgba(255,255,255,0.45);">Type</span><br/><strong style="color:' + (sideLabel==='BUY'?'#16a34a':'#f0b90b') + ';">' + sideLabel + ' ' + escapeHtml(order.asset || 'USDT') + '</strong></div>' +
+        '<div><span style="color:rgba(255,255,255,0.45);">Type</span><br/><strong style="color:' + (sideLabel==='BUY'?'#00C2B2':'#00B4D8') + ';">' + sideLabel + ' ' + escapeHtml(order.asset || 'USDT') + '</strong></div>' +
         '<div><span style="color:rgba(255,255,255,0.45);">Amount</span><br/><strong>' + amtLabel + '</strong></div>' +
         '<div><span style="color:rgba(255,255,255,0.45);">Price</span><br/><strong>₹' + formatNumber(order.price || 0) + '</strong></div>' +
         '<div><span style="color:rgba(255,255,255,0.45);">Payment</span><br/><strong>' + escapeHtml(order.paymentMethod || '--') + '</strong></div>' +
@@ -3081,7 +3081,7 @@ async function loadMobileOrderHistory() {
           '<span class="status-pill ' + statusCls + '">' + statusTxt + '</span>' +
         '</div>' +
         '<div style="display:flex;justify-content:space-between;font-size:0.87rem;">' +
-          '<span><strong style="color:' + (sideLabel==='BUY'?'#16a34a':'#f0b90b') + ';">' + sideLabel + '</strong> ₹' + formatNumber(order.amountInr || 0) + '</span>' +
+          '<span><strong style="color:' + (sideLabel==='BUY'?'#00C2B2':'#00B4D8') + ';">' + sideLabel + '</strong> ₹' + formatNumber(order.amountInr || 0) + '</span>' +
           '<span style="color:rgba(255,255,255,0.4);">' + date + '</span>' +
         '</div>' +
       '</article>';
@@ -3116,8 +3116,8 @@ function switchMobileOrderTab(tab) {
   if (tabs) {
     tabs.querySelectorAll('[data-order-filter]').forEach(function(btn) {
       var isActive = btn.dataset.orderFilter === tab;
-      btn.style.color = isActive ? '#f0b90b' : 'rgba(255,255,255,0.5)';
-      btn.style.borderBottom = isActive ? '2px solid #f0b90b' : '2px solid transparent';
+      btn.style.color = isActive ? '#00B4D8' : 'rgba(255,255,255,0.5)';
+      btn.style.borderBottom = isActive ? '2px solid #00B4D8' : '2px solid transparent';
       btn.style.fontWeight = isActive ? '600' : '400';
     });
   }
@@ -3179,7 +3179,7 @@ function _ordCard(order) {
     '</div>'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">'+
       '<span style="font-size:13px;color:rgba(255,255,255,0.65);">'+counterparty+'</span>'+
-      '<a href="'+chatUrl+'" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;-webkit-tap-highlight-color:rgba(240,185,11,0.15);">'+
+      '<a href="'+chatUrl+'" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;-webkit-tap-highlight-color:rgba(0,180,216,0.15);">'+
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+
         'Chat'+
       '</a>'+
@@ -3238,12 +3238,12 @@ function switchOrdMain(tab) {
   var tabPend = document.getElementById('ordTabPending');
   var tabEnd = document.getElementById('ordTabEnded');
   if (tabPend) {
-    tabPend.style.borderBottomColor = tab === 'pending' ? '#f0b90b' : 'transparent';
+    tabPend.style.borderBottomColor = tab === 'pending' ? '#00B4D8' : 'transparent';
     tabPend.style.color = tab === 'pending' ? '#fff' : 'rgba(255,255,255,0.4)';
     tabPend.style.fontWeight = tab === 'pending' ? '700' : '500';
   }
   if (tabEnd) {
-    tabEnd.style.borderBottomColor = tab === 'ended' ? '#f0b90b' : 'transparent';
+    tabEnd.style.borderBottomColor = tab === 'ended' ? '#00B4D8' : 'transparent';
     tabEnd.style.color = tab === 'ended' ? '#fff' : 'rgba(255,255,255,0.4)';
     tabEnd.style.fontWeight = tab === 'ended' ? '700' : '500';
   }
@@ -3323,7 +3323,7 @@ function loadBybitorOrders() {
         '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">' +
         '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>' +
         '<p style="color:rgba(255,255,255,0.45);font-size:14px;margin:0;text-align:center;">Login to view your orders</p>' +
-        '<button onclick="requireLoginNotice()" style="background:#f0b90b;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Login</button>' +
+        '<button onclick="requireLoginNotice()" style="background:#00B4D8;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Login</button>' +
         '</div>';
     }
   }
@@ -3542,7 +3542,7 @@ if (refreshOffers) {
     try {
       var res = await fetch('/api/p2p/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
       var data = await res.json();
-      if (forgotMsg) { forgotMsg.style.color = res.ok ? '#16c784' : '#f6465d'; forgotMsg.textContent = data.message || 'Code sent.'; }
+      if (forgotMsg) { forgotMsg.style.color = res.ok ? '#00C2B2' : '#f6465d'; forgotMsg.textContent = data.message || 'Code sent.'; }
       if (res.ok) { _resetEmail = email; showStep('reset'); if (resetMsg) resetMsg.textContent = ''; }
     } catch(e) { if (forgotMsg) { forgotMsg.style.color='#f6465d'; forgotMsg.textContent = 'Network error.'; } }
     finally { sendResetCodeBtn.disabled = false; sendResetCodeBtn.textContent = 'Send Code'; }
@@ -3560,7 +3560,7 @@ if (refreshOffers) {
     try {
       var res = await fetch('/api/p2p/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: _resetEmail, code, newPassword: newPass }) });
       var data = await res.json();
-      if (resetMsg) { resetMsg.style.color = res.ok ? '#16c784' : '#f6465d'; resetMsg.textContent = data.message; }
+      if (resetMsg) { resetMsg.style.color = res.ok ? '#00C2B2' : '#f6465d'; resetMsg.textContent = data.message; }
       if (res.ok) { setTimeout(function(){ showStep('login'); if (emailInput) emailInput.value = _resetEmail; }, 1800); }
     } catch(e) { if (resetMsg) { resetMsg.style.color='#f6465d'; resetMsg.textContent = 'Network error.'; } }
     finally { doResetBtn.disabled = false; doResetBtn.textContent = 'Reset Password'; }
@@ -4245,7 +4245,7 @@ function submitKycBasicAndNext() {
   if(!phone) { _kycHint('kycBasicHint','Please enter your phone number.','error'); return; }
   // Update badge
   var badge = document.getElementById('kycStatusBadge');
-  if(badge){ badge.textContent='Lv.1 Done'; badge.style.cssText='font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(22,199,132,0.15);border:1px solid rgba(22,199,132,0.35);color:#16c784;margin-left:6px;'; }
+  if(badge){ badge.textContent='Lv.1 Done'; badge.style.cssText='font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,194,178,0.15);border:1px solid rgba(0,194,178,0.35);color:#00C2B2;margin-left:6px;'; }
   // Go to step 2
   document.getElementById('kycBasicScreen').style.display = 'none';
   document.getElementById('kycAdvanceScreen').style.setProperty('display','flex','important');
@@ -4322,7 +4322,7 @@ function submitKycAdvance() {
     if (result.ok) {
       _kycHint('kycAdvHint','✅ Documents submitted! Review takes 24–48 hrs.','success');
       var badge = document.getElementById('kycStatusBadge');
-      if(badge){ badge.textContent='Under Review'; badge.style.cssText='font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(240,185,11,0.12);border:1px solid rgba(240,185,11,0.3);color:#f0b90b;margin-left:6px;'; }
+      if(badge){ badge.textContent='Under Review'; badge.style.cssText='font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,180,216,0.12);border:1px solid rgba(0,180,216,0.3);color:#00B4D8;margin-left:6px;'; }
       if(btn){ btn.textContent='Submitted for Review ✓'; }
       setTimeout(closeKycScreens, 2500);
     } else {
@@ -5086,7 +5086,7 @@ window.deleteMobAd = async function(offerId) {
         // Header
         '<div id="bfChatHeader" style="display:flex;align-items:center;padding:0.85rem 1rem;gap:0.75rem;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.07);background:#111;">',
           '<button id="bfChatBackBtn" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0.2rem 0.4rem;line-height:1;">←</button>',
-          '<div id="bfChatAvatar" style="width:34px;height:34px;border-radius:50%;background:#f0b90b;color:#000;font-weight:800;font-size:0.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>',
+          '<div id="bfChatAvatar" style="width:34px;height:34px;border-radius:50%;background:#00B4D8;color:#000;font-weight:800;font-size:0.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>',
           '<div style="flex:1;min-width:0;">',
             '<div id="bfChatName" style="font-weight:700;font-size:0.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>',
             '<div style="font-size:0.72rem;color:rgba(255,255,255,0.4);">P2P Order Chat</div>',

@@ -688,9 +688,9 @@ body.app-shell {
   min-width: min(84vw, 340px);
   min-height: 42px;
   border-radius: 999px;
-  border: 1px solid rgba(139, 243, 0, 0.34);
-  background: rgba(13, 22, 12, 0.92);
-  color: #d8fcb8;
+  border: 1px solid rgba(0, 180, 216, 0.34);
+  background: rgba(6, 18, 28, 0.92);
+  color: #b8f3ff;
   font-size: 0.86rem;
   font-weight: 700;
   display: inline-flex;

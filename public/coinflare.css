@@ -2320,7 +2320,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 .cf-app-phone {
   border-radius: 20px;
   border: 1px solid rgba(0, 180, 216, 0.52);
-  background: linear-gradient(140deg, rgba(0, 180, 216, 0.96), rgba(95, 192, 0, 0.9));
+  background: linear-gradient(140deg, rgba(0, 180, 216, 0.96), rgba(20, 149, 255, 0.9));
   min-height: 250px;
   display: grid;
   place-items: center;
@@ -3680,7 +3680,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   }
 
   .cf-neon-strip p {
-    color: #b7ff35;
+    color: #00D4FF;
     background: none;
     -webkit-text-fill-color: currentColor;
     text-shadow: 0 0 22px rgba(0, 180, 216, 0.34);
