@@ -3324,9 +3324,12 @@ app.get('/markets', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'markets.html'));
 });
 app.get('/assets', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'assets.html'));
+  res.sendFile(path.join(__dirname, 'public', 'assets', 'index.html'));
 });
 app.get('/chart', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chart.html'));
+});
+app.get('/chart.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chart.html'));
 });
 app.get('/auth', (req, res) => {

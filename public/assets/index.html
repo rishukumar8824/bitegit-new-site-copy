@@ -1,553 +1,1140 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Bitegit Assets</title>
-    <script src="/bitegit-config.js"></script>
-    <link rel="stylesheet" href="/mobile-nav.css?v=20260303b" />
-    <style>
-      :root {
-        --assets-bg: #0b0f18;
-        --assets-panel: #121826;
-        --assets-panel-2: #171f30;
-        --assets-line: rgba(255, 255, 255, 0.12);
-        --assets-text: #ecf1fb;
-        --assets-muted: #95a2b9;
-        --assets-accent: #8dfb00;
-        --assets-danger: #ff6b7c;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#05070b" />
+  <title>Assets | Bitegit</title>
+  <link rel="stylesheet" href="/mobile-nav.css?v=20260416c" />
+  <style>
+    :root {
+      --bg: #05070b;
+      --surface: #0c1118;
+      --surface-2: #121924;
+      --surface-3: #151f2e;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f5f7fb;
+      --muted: #8f9bb0;
+      --muted-2: #6f7b90;
+      --accent: #00e5c4;
+      --accent-2: #3da5ff;
+      --danger: #ff6b6b;
+      --success: #41d18b;
+      --warning: #ffbf47;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      --radius: 22px;
+    }
 
-      * {
-        box-sizing: border-box;
-      }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        min-height: 100%;
-        overflow-x: hidden;
-      }
+    html,
+    body {
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(0, 229, 196, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(61, 165, 255, 0.12), transparent 24%),
+        linear-gradient(180deg, #04060a 0%, #09101a 100%);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
 
-      body.assets-page {
-        background: radial-gradient(circle at 10% 0%, rgba(17, 145, 224, 0.15), transparent 40%), var(--assets-bg);
-        color: var(--assets-text);
-        font-family: 'Manrope', 'Segoe UI', sans-serif;
-      }
+    body {
+      padding-bottom: calc(88px + env(safe-area-inset-bottom));
+    }
 
-      .hidden {
-        display: none !important;
-      }
+    button,
+    input,
+    select {
+      font: inherit;
+    }
 
-      .assets-header {
-        position: sticky;
-        top: 0;
-        z-index: 30;
-        background: rgba(11, 15, 24, 0.92);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid var(--assets-line);
-      }
+    button {
+      border: none;
+      cursor: pointer;
+    }
 
-      .assets-header-inner {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 0.9rem 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.8rem;
-      }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
 
-      .assets-brand {
-        color: var(--assets-accent);
-        text-decoration: none;
-        font-weight: 800;
-        letter-spacing: 0.04em;
-      }
+    img {
+      display: block;
+      max-width: 100%;
+    }
 
-      .assets-nav {
-        display: flex;
-        gap: 0.8rem;
-      }
+    .hidden {
+      display: none !important;
+    }
 
-      .assets-nav a {
-        color: var(--assets-muted);
-        text-decoration: none;
-        font-size: 0.92rem;
-      }
+    .assets-shell {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 22px 16px 0;
+    }
 
-      .assets-nav a.active {
-        color: var(--assets-text);
-        font-weight: 700;
-      }
+    .assets-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
 
-      .assets-main {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 1rem 1rem calc(110px + env(safe-area-inset-bottom));
-      }
+    .assets-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
 
+    .assets-brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .assets-brand-copy strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .assets-brand-copy span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .assets-live-pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 229, 196, 0.24);
+      background: rgba(0, 229, 196, 0.08);
+      color: #b3fff1;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      padding: 24px 20px;
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(0, 229, 196, 0.14), rgba(61, 165, 255, 0.08)),
+        linear-gradient(180deg, rgba(11, 17, 24, 0.96), rgba(9, 14, 20, 0.98));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -30px -70px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 229, 196, 0.18), transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero-copy {
+      display: grid;
+      gap: 10px;
+      max-width: 680px;
+    }
+
+    .hero-eyebrow {
+      color: #b7fff4;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .hero-copy h1 {
+      font-size: clamp(2rem, 6vw, 3.25rem);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
+    }
+
+    .hero-copy p {
+      color: #d5deea;
+      font-size: 0.96rem;
+      line-height: 1.65;
+      max-width: 620px;
+    }
+
+    .assets-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      min-height: 36px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 229, 196, 0.18);
+      background: rgba(0, 229, 196, 0.08);
+      color: #ccfff8;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .assets-status.error {
+      border-color: rgba(255, 107, 107, 0.24);
+      background: rgba(255, 107, 107, 0.1);
+      color: #ffd3d3;
+    }
+
+    .assets-message {
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .balance-board {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr;
+      margin-top: 6px;
+    }
+
+    .balance-main {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .balance-main span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .balance-main strong {
+      display: block;
+      margin-top: 10px;
+      font-size: clamp(2rem, 7vw, 3rem);
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .balance-strip {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .balance-mini {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .balance-mini span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .balance-mini strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.02rem;
+      font-weight: 800;
+    }
+
+    .action-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 18px;
+    }
+
+    .action-btn {
+      min-height: 56px;
+      padding: 0 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(135deg, rgba(0, 229, 196, 0.18), rgba(61, 165, 255, 0.2));
+      border-color: rgba(0, 229, 196, 0.24);
+    }
+
+    .action-btn:active {
+      transform: translateY(1px);
+    }
+
+    .action-btn svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .tabs-card {
+      margin-top: 18px;
+      padding: 6px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: grid;
+      gap: 6px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .tab-btn {
+      min-height: 44px;
+      border-radius: 14px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(0, 229, 196, 0.16), rgba(61, 165, 255, 0.18));
+      color: #ecffff;
+    }
+
+    .panel-stack {
+      margin-top: 18px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .assets-panel {
+      padding: 20px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(12, 17, 24, 0.96), rgba(13, 19, 27, 0.98));
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .panel-head p {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .panel-head h2 {
+      margin-top: 8px;
+      font-size: 1.2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .panel-note {
+      max-width: 280px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.55;
+      text-align: right;
+    }
+
+    .stat-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 18px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .stat-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .stat-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .asset-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .asset-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .asset-row-main {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .asset-row-icon {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .asset-row-icon img {
+      position: relative;
+      z-index: 1;
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+    }
+
+    .asset-row-fallback {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .asset-row-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .asset-row-copy strong {
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .asset-row-copy small {
+      color: var(--muted);
+      font-size: 0.75rem;
+      line-height: 1.45;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .asset-row-side {
+      text-align: right;
+      display: grid;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .asset-row-amount {
+      font-size: 0.94rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .asset-row-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .asset-row-badge.live {
+      background: rgba(0, 229, 196, 0.12);
+      color: #b3fff1;
+    }
+
+    .asset-row-badge.held {
+      background: rgba(65, 209, 139, 0.14);
+      color: #c2ffde;
+    }
+
+    .asset-row-badge.watch {
+      background: rgba(255, 255, 255, 0.08);
+      color: #d7dfed;
+    }
+
+    .asset-empty {
+      padding: 20px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      font-size: 0.84rem;
+      text-align: center;
+    }
+
+    .assets-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: end center;
+      padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    }
+
+    .assets-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+    }
+
+    .assets-modal-card {
+      position: relative;
+      z-index: 1;
+      width: min(620px, 100%);
+      max-height: min(92vh, 900px);
+      overflow: auto;
+      border-radius: 28px;
+      padding: 22px 20px 20px;
+      background:
+        linear-gradient(135deg, rgba(0, 229, 196, 0.08), rgba(61, 165, 255, 0.06)),
+        #0b1118;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text);
+    }
+
+    .modal-eyebrow {
+      color: #b7fff4;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .modal-title {
+      margin-top: 10px;
+      font-size: 1.5rem;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+    }
+
+    .modal-copy {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .modal-field {
+      margin-top: 18px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .modal-field label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .field-input,
+    .field-select,
+    .field-inline {
+      width: 100%;
+      min-height: 52px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      padding: 0 16px;
+      outline: none;
+    }
+
+    .field-input::placeholder {
+      color: var(--muted-2);
+    }
+
+    .field-inline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px 12px 16px;
+      min-height: 64px;
+    }
+
+    .field-inline code {
+      flex: 1;
+      min-width: 0;
+      color: #e8f0ff;
+      font-size: 0.84rem;
+      line-height: 1.5;
+      word-break: break-all;
+      white-space: normal;
+    }
+
+    .inline-action {
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(0, 229, 196, 0.9), rgba(61, 165, 255, 0.9));
+      color: #03131a;
+      font-size: 0.8rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .inline-action:disabled {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .qr-card {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+    }
+
+    .qr-box {
+      width: 210px;
+      height: 210px;
+      border-radius: 22px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      place-items: center;
+    }
+
+    .qr-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .qr-copy {
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    .info-grid {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .info-card {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      display: grid;
+      gap: 8px;
+    }
+
+    .info-card span {
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .info-card strong,
+    .info-card code {
+      color: var(--text);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .network-warning {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 191, 71, 0.1);
+      border: 1px solid rgba(255, 191, 71, 0.18);
+      color: #ffe6b0;
+      font-size: 0.8rem;
+      line-height: 1.55;
+    }
+
+    .scanner-card {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      display: grid;
+      gap: 12px;
+    }
+
+    .scanner-card video {
+      width: 100%;
+      border-radius: 18px;
+      background: #020406;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+    }
+
+    .scanner-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .scanner-row p {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .secondary-btn {
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .submit-btn {
+      margin-top: 18px;
+      width: 100%;
+      min-height: 54px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(0, 229, 196, 0.94), rgba(61, 165, 255, 0.92));
+      color: #03131a;
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .submit-btn:disabled {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .assets-summary-line {
+      margin-top: 12px;
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .assets-summary-line.error {
+      color: #ffc1c1;
+    }
+
+    .assets-summary-line.success {
+      color: #bdf8d4;
+    }
+
+    @media (min-width: 820px) {
       .assets-shell {
-        background: var(--assets-panel);
-        border: 1px solid var(--assets-line);
-        border-radius: 16px;
-        padding: 1rem;
-        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.38);
+        padding-top: 28px;
       }
 
-      .assets-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        margin-bottom: 0.8rem;
-        flex-wrap: wrap;
+      .hero-card {
+        padding: 28px;
       }
 
-      .assets-head h1 {
-        margin: 0;
-        font-size: 1.3rem;
+      .balance-board {
+        grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr);
+        align-items: stretch;
       }
 
-      .assets-status {
-        margin: 0;
-        color: var(--assets-muted);
-        font-size: 0.9rem;
-      }
-
-      .assets-status.error {
-        color: var(--assets-danger);
-      }
-
-      .assets-tabs {
-        display: inline-grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        width: 100%;
-        max-width: 420px;
-      }
-
-      .assets-tab {
-        min-height: 42px;
-        border-radius: 12px;
-        border: 1px solid var(--assets-line);
-        background: var(--assets-panel-2);
-        color: var(--assets-muted);
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      .assets-tab.active {
-        background: var(--assets-accent);
-        color: #061004;
-        border-color: transparent;
-      }
-
-      .assets-balance-card {
-        border: 1px solid var(--assets-line);
-        background: #0f1522;
-        border-radius: 14px;
-        padding: 1rem;
-        margin-top: 0.8rem;
-      }
-
-      .assets-balance-card p {
-        margin: 0;
-        color: var(--assets-muted);
-      }
-
-      .assets-balance-value {
-        margin-top: 0.5rem;
-        font-size: 1.7rem;
-        font-weight: 800;
-        color: var(--assets-accent);
-      }
-
-      .assets-summary-line {
-        margin-top: 0.6rem;
-        color: var(--assets-muted);
-        font-size: 0.88rem;
-      }
-
-      .assets-actions {
-        margin-top: 1rem;
-        display: flex;
-        gap: 0.6rem;
-        flex-wrap: wrap;
-      }
-
-      .assets-btn {
-        min-height: 42px;
-        padding: 0 16px;
-        border-radius: 10px;
-        border: 1px solid var(--assets-line);
-        background: var(--assets-panel-2);
-        color: var(--assets-text);
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      .assets-btn.primary {
-        background: var(--assets-accent);
-        color: #061004;
-        border-color: transparent;
-      }
-
-      .assets-msg {
-        margin-top: 0.8rem;
-        color: var(--assets-muted);
-        min-height: 1.2rem;
+      .action-grid {
+        margin-top: 0;
+        align-self: end;
       }
 
       .assets-modal {
-        position: fixed;
-        inset: 0;
-        z-index: 150;
-        display: grid;
         place-items: center;
-        padding: 1rem;
+        padding-bottom: 18px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .assets-shell {
+        padding-left: 12px;
+        padding-right: 12px;
       }
 
-      .assets-modal-backdrop {
-        position: absolute;
-        inset: 0;
-        background: rgba(6, 8, 14, 0.78);
-      }
-
+      .hero-card,
+      .assets-panel,
       .assets-modal-card {
-        position: relative;
-        width: min(430px, 100%);
-        border-radius: 14px;
-        border: 1px solid var(--assets-line);
-        background: #121a28;
-        padding: 1rem;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.42);
+        border-radius: 24px;
       }
 
-      .assets-modal-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.8rem;
+      .action-grid,
+      .stat-grid,
+      .info-grid {
+        grid-template-columns: 1fr;
       }
 
-      .assets-modal-head h2 {
-        margin: 0;
-        font-size: 1.1rem;
+      .asset-row {
+        align-items: flex-start;
       }
 
-      .assets-modal-close {
-        min-width: 34px;
-        min-height: 34px;
-        border-radius: 8px;
-        border: 1px solid var(--assets-line);
-        background: #1a2436;
-        color: #fff;
-        cursor: pointer;
+      .asset-row-side {
+        min-width: 72px;
       }
-
-      .assets-note {
-        color: var(--assets-muted);
-        margin-top: 0.5rem;
-        margin-bottom: 0.65rem;
-        font-size: 0.9rem;
-      }
-
-      .assets-select {
-        width: 100%;
-        min-height: 40px;
-        border-radius: 10px;
-        border: 1px solid var(--assets-line);
-        background: #0f1522;
-        color: var(--assets-text);
-        padding: 0 0.72rem;
-      }
-
-      .assets-address-box {
-        margin-top: 0.75rem;
-        border: 1px solid var(--assets-line);
-        border-radius: 10px;
-        background: #0f1522;
-        padding: 0.75rem;
-      }
-
-      .assets-field-label {
-        margin: 0 0 0.45rem;
-        color: var(--assets-muted);
-        font-size: 0.86rem;
-      }
-
-      .assets-address-row {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-      }
-
-      .assets-address-code {
-        flex: 1;
-        min-width: 0;
-        border: 1px solid var(--assets-line);
-        border-radius: 8px;
-        background: #111a2a;
-        padding: 0.55rem;
-        font-size: 0.83rem;
-        color: var(--assets-text);
-        word-break: break-all;
-      }
-
-      .assets-copy-btn {
-        min-height: 34px;
-        padding: 0 0.78rem;
-        border-radius: 8px;
-        border: 1px solid var(--assets-line);
-        background: #1a2436;
-        color: var(--assets-text);
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      .assets-copy-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      .assets-qr-wrap {
-        margin-top: 0.75rem;
-        border: 1px solid var(--assets-line);
-        border-radius: 10px;
-        background: #0f1522;
-        padding: 0.75rem;
-        display: grid;
-        place-items: center;
-        gap: 0.45rem;
-      }
-
-      .assets-qr-img {
-        width: 190px;
-        height: 190px;
-        border-radius: 10px;
-        border: 1px solid var(--assets-line);
-        background: #fff;
-        object-fit: contain;
-      }
-
-      .assets-qr-meta {
-        margin: 0;
-        font-size: 0.8rem;
-        color: var(--assets-muted);
-        text-align: center;
-      }
-
-      .assets-withdraw-form {
-        margin-top: 0.45rem;
-        display: grid;
-        gap: 0.62rem;
-      }
-
-      .assets-inline-row {
-        display: flex;
-        gap: 0.55rem;
-        flex-wrap: wrap;
-      }
-
-      .assets-inline-row .assets-input {
-        flex: 1;
-      }
-
-      .assets-inline-row .assets-btn {
-        min-width: 130px;
-      }
-
-      .assets-scanner {
-        margin-top: 0.4rem;
-        border: 1px dashed var(--assets-line);
-        border-radius: 10px;
-        padding: 0.65rem;
-        background: rgba(9, 14, 24, 0.75);
-      }
-
-      .assets-scanner video {
-        width: 100%;
-        border-radius: 10px;
-        border: 1px solid var(--assets-line);
-        background: #000;
-      }
-
-      .assets-scanner-actions {
-        margin-top: 0.6rem;
-        display: flex;
-        justify-content: flex-end;
-      }
-
-      .assets-input {
-        min-height: 42px;
-        border-radius: 10px;
-        border: 1px solid var(--assets-line);
-        background: #0f1522;
-        color: var(--assets-text);
-        padding: 0 0.72rem;
-      }
-
-      .assets-summary-line.error {
-        color: var(--assets-danger);
-      }
-
-      .assets-summary-line.success {
-        color: var(--assets-accent);
-      }
-
-      @media (max-width: 768px) {
-        .assets-nav {
-          display: none;
-        }
-
-        .assets-main {
-          padding-top: 0.75rem;
-        }
-      }
-    </style>
-  </head>
-  <body class="assets-page has-mobile-nav">
+    }
+  </style>
+  <script src="/app-nav.js?v=20260416c" defer></script>
+  <script src="/assets.js?v=20260416c" defer></script>
+</head>
+<body class="has-mobile-nav">
+  <main class="assets-shell">
     <header class="assets-header">
-      <div class="assets-header-inner">
-        <a class="assets-brand" href="/">BITEGIT</a>
-        <nav class="assets-nav" aria-label="Assets navigation">
-          <a href="/">Home</a>
-          <a href="/markets.html">Markets</a>
-          <a href="/trade/spot/BTCUSDT">Trade</a>
-          <a href="/assets" class="active" aria-current="page">Assets</a>
-          <a href="/p2p">P2P</a>
-        </nav>
-      </div>
+      <a class="assets-brand" href="/">
+        <span class="assets-brand-mark">
+          <img src="/assets/bitegit-brand-mark.png?v=20260416c" alt="" aria-hidden="true" />
+        </span>
+        <span class="assets-brand-copy">
+          <strong>Bitegit Assets</strong>
+          <span>Wallet UI with live admin deposit routing</span>
+        </span>
+      </a>
+      <span class="assets-live-pill">Live Wallet</span>
     </header>
 
-    <main class="assets-main">
-      <section class="assets-shell">
-        <div class="assets-head">
-          <h1>Assets</h1>
-          <p id="assetsStatus" class="assets-status">Loading balances...</p>
+    <section class="hero-card">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <span class="hero-eyebrow">Wallet Center</span>
+          <h1>Major coins visible, real deposit flow wired.</h1>
+          <p>
+            Wallet balances, admin-set deposit address, QR, and withdrawal request flow
+            are all connected here. Major assets like USDT, BTC, ETH, BNB, SOL, XRP,
+            DOGE, SHIB, LINK, UNI and more are shown with real logos.
+          </p>
+          <p id="assetsStatus" class="assets-status">Connecting wallet data...</p>
+          <p id="assetsActionMessage" class="assets-message"></p>
         </div>
 
-        <div class="assets-tabs" role="tablist" aria-label="Wallet sections">
-          <button type="button" class="assets-tab active" data-assets-tab="overview" aria-selected="true">Overview</button>
-          <button type="button" class="assets-tab" data-assets-tab="spot" aria-selected="false">Spot</button>
-          <button type="button" class="assets-tab" data-assets-tab="funding" aria-selected="false">Funding</button>
-        </div>
-
-        <section id="assetsPanelOverview" class="assets-balance-card" data-assets-panel="overview">
-          <p>Total Balance</p>
-          <div id="assetsTotalBalance" class="assets-balance-value">0.00 USDT</div>
-          <p class="assets-summary-line">Spot: <span id="assetsSpotInline">0.00 USDT</span> | Funding: <span id="assetsFundingInline">0.00 USDT</span></p>
-        </section>
-
-        <section id="assetsPanelSpot" class="assets-balance-card hidden" data-assets-panel="spot">
-          <p>Spot Wallet Balance</p>
-          <div id="assetsSpotBalance" class="assets-balance-value">0.00 USDT</div>
-          <p class="assets-summary-line">Available for spot trading.</p>
-        </section>
-
-        <section id="assetsPanelFunding" class="assets-balance-card hidden" data-assets-panel="funding">
-          <p>Funding Wallet Balance</p>
-          <div id="assetsFundingBalance" class="assets-balance-value">0.00 USDT</div>
-          <p class="assets-summary-line">Used for deposits, withdrawals, and P2P settlement.</p>
-        </section>
-
-        <div class="assets-actions">
-          <button id="assetsDepositBtn" type="button" class="assets-btn primary">Deposit</button>
-          <button id="assetsWithdrawBtn" type="button" class="assets-btn">Withdraw</button>
-          <button id="assetsTransferBtn" type="button" class="assets-btn">Transfer</button>
-        </div>
-
-        <p id="assetsActionMessage" class="assets-msg"></p>
-      </section>
-    </main>
-
-    <nav class="mobile-app-nav" aria-label="App navigation">
-      <a href="/">
-        <span class="nav-icon">⌂</span>
-        <span class="nav-label">Home</span>
-      </a>
-      <a href="/markets.html">
-        <span class="nav-icon">◍</span>
-        <span class="nav-label">Markets</span>
-      </a>
-      <a href="/trade/spot/BTCUSDT">
-        <span class="nav-icon">⇅</span>
-        <span class="nav-label">Trade</span>
-      </a>
-      <a href="/assets" class="active" aria-current="page">
-        <span class="nav-icon">◔</span>
-        <span class="nav-label">Assets</span>
-      </a>
-    </nav>
-
-    <section id="depositModal" class="assets-modal hidden" aria-hidden="true">
-      <div class="assets-modal-backdrop" data-modal-close="depositModal"></div>
-      <article class="assets-modal-card" role="dialog" aria-modal="true" aria-labelledby="depositModalTitle">
-        <div class="assets-modal-head">
-          <h2 id="depositModalTitle">Deposit</h2>
-          <button type="button" class="assets-modal-close" data-modal-close="depositModal" aria-label="Close deposit">✕</button>
-        </div>
-        <p class="assets-note">Select network and deposit only USDT on that exact chain.</p>
-        <label class="assets-field-label" for="assetsDepositNetwork">Deposit Network</label>
-        <select id="assetsDepositNetwork" class="assets-select">
-          <option value="TRC20">USDT - TRC20</option>
-          <option value="ERC20">USDT - ERC20</option>
-          <option value="BEP20">USDT - BEP20</option>
-        </select>
-        <div class="assets-address-box">
-          <p class="assets-field-label">Deposit Address</p>
-          <div class="assets-address-row">
-            <code id="assetsDepositAddressValue" class="assets-address-code">Admin will provide deposit address shortly.</code>
-            <button id="assetsDepositCopyBtn" type="button" class="assets-copy-btn" disabled>Copy</button>
-          </div>
-          <p id="assetsDepositNetworkWarning" class="assets-summary-line">Send only USDT on selected network to this address.</p>
-          <p id="assetsDepositConfirmations" class="assets-summary-line">Required confirmations: -</p>
-        </div>
-        <div class="assets-qr-wrap">
-          <img id="assetsDepositQrImage" class="assets-qr-img" alt="Deposit QR Code" />
-          <p id="assetsDepositQrMeta" class="assets-qr-meta">QR will appear after address is configured.</p>
-        </div>
-      </article>
-    </section>
-
-    <section id="withdrawModal" class="assets-modal hidden" aria-hidden="true">
-      <div class="assets-modal-backdrop" data-modal-close="withdrawModal"></div>
-      <article class="assets-modal-card" role="dialog" aria-modal="true" aria-labelledby="withdrawModalTitle">
-        <div class="assets-modal-head">
-          <h2 id="withdrawModalTitle">Withdraw</h2>
-          <button type="button" class="assets-modal-close" data-modal-close="withdrawModal" aria-label="Close withdraw">✕</button>
-        </div>
-        <p class="assets-note">Choose network and paste/scan destination address.</p>
-        <form id="assetsWithdrawForm" class="assets-withdraw-form">
-          <label class="assets-field-label" for="assetsWithdrawNetwork">Withdraw Network</label>
-          <select id="assetsWithdrawNetwork" class="assets-select">
-            <option value="TRC20">USDT - TRC20</option>
-            <option value="ERC20">USDT - ERC20</option>
-            <option value="BEP20">USDT - BEP20</option>
-          </select>
-          <label class="assets-field-label" for="assetsWithdrawAddress">Recipient Address</label>
-          <div class="assets-inline-row">
-            <input id="assetsWithdrawAddress" class="assets-input" type="text" placeholder="T... / 0x..." autocomplete="off" required />
-            <button id="assetsWithdrawScanBtn" type="button" class="assets-btn">Scan QR</button>
-          </div>
-          <div id="assetsWithdrawScanner" class="assets-scanner hidden" aria-hidden="true">
-            <video id="assetsWithdrawScannerVideo" autoplay muted playsinline></video>
-            <p id="assetsWithdrawScannerHint" class="assets-summary-line">Point camera to address QR code.</p>
-            <div class="assets-scanner-actions">
-              <button id="assetsWithdrawScannerCloseBtn" type="button" class="assets-btn">Stop Scan</button>
+        <div class="balance-board">
+          <div class="balance-main">
+            <span>Total Portfolio</span>
+            <strong id="assetsTotalBalance">0.00 USDT</strong>
+            <div class="balance-strip">
+              <div class="balance-mini">
+                <span>Spot Ready</span>
+                <strong id="assetsSpotInline">0.00 USDT</strong>
+              </div>
+              <div class="balance-mini">
+                <span>Funding Ready</span>
+                <strong id="assetsFundingInline">0.00 USDT</strong>
+              </div>
             </div>
           </div>
-          <label class="assets-field-label" for="assetsWithdrawAmount">Amount (USDT)</label>
-          <input id="assetsWithdrawAmount" class="assets-input" type="number" min="0.000001" step="0.000001" placeholder="0.00" required />
-          <button id="assetsWithdrawSubmitBtn" type="submit" class="assets-btn primary">Submit Withdrawal</button>
-          <p id="assetsWithdrawResult" class="assets-summary-line"></p>
-        </form>
-      </article>
+
+          <div class="action-grid">
+            <button type="button" class="action-btn primary" id="assetsDepositBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3v12" />
+                <path d="m7 10 5 5 5-5" />
+                <path d="M5 19h14" />
+              </svg>
+              Deposit
+            </button>
+            <button type="button" class="action-btn" id="assetsWithdrawBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 21V9" />
+                <path d="m17 14-5-5-5 5" />
+                <path d="M5 5h14" />
+              </svg>
+              Withdraw
+            </button>
+            <button type="button" class="action-btn" id="assetsTransferBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 3h5v5" />
+                <path d="M21 3 8 16" />
+                <path d="M8 21H3v-5" />
+                <path d="M3 21 16 8" />
+              </svg>
+              Transfer
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <script src="/assets.js?v=20260303c"></script>
-  </body>
+    <section class="tabs-card" role="tablist" aria-label="Asset views">
+      <button type="button" class="tab-btn active" data-assets-tab="overview" aria-selected="true">Overview</button>
+      <button type="button" class="tab-btn" data-assets-tab="spot" aria-selected="false">Spot</button>
+      <button type="button" class="tab-btn" data-assets-tab="funding" aria-selected="false">Funding</button>
+    </section>
+
+    <div class="panel-stack">
+      <section class="assets-panel" data-assets-panel="overview">
+        <div class="panel-head">
+          <div>
+            <p>Synced Snapshot</p>
+            <h2>Wallet totals + live asset watchlist</h2>
+          </div>
+          <div class="panel-note">
+            Deposit modal shows the exact address configured by admin for the selected network.
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <span>Spot Balance</span>
+            <strong id="assetsSpotBalance">0.00 USDT</strong>
+          </div>
+          <div class="stat-card">
+            <span>Funding Balance</span>
+            <strong id="assetsFundingBalance">0.00 USDT</strong>
+          </div>
+          <div class="stat-card">
+            <span>Route Priority</span>
+            <strong>/api/wallet/summary</strong>
+          </div>
+        </div>
+
+        <div class="asset-list" id="assetsCoinListOverview"></div>
+      </section>
+
+      <section class="assets-panel hidden" data-assets-panel="spot">
+        <div class="panel-head">
+          <div>
+            <p>Spot Wallet</p>
+            <h2>Connected market balances</h2>
+          </div>
+          <div class="panel-note">
+            Major coin icons stay visible even when a balance is zero, so the wallet looks complete.
+          </div>
+        </div>
+
+        <div class="asset-list" id="assetsCoinListSpot"></div>
+      </section>
+
+      <section class="assets-panel hidden" data-assets-panel="funding">
+        <div class="panel-head">
+          <div>
+            <p>Funding Wallet</p>
+            <h2>Transfer-ready wallet view</h2>
+          </div>
+          <div class="panel-note">
+            Withdraw requests use the same network choice shown here so the user sees a consistent flow.
+          </div>
+        </div>
+
+        <div class="asset-list" id="assetsCoinListFunding"></div>
+      </section>
+    </div>
+  </main>
+
+  <div class="assets-modal hidden" id="depositModal" aria-hidden="true">
+    <button type="button" class="assets-modal-backdrop" data-modal-close="depositModal" aria-label="Close deposit modal"></button>
+    <div class="assets-modal-card" role="dialog" aria-modal="true" aria-labelledby="depositModalTitle">
+      <button type="button" class="modal-close" data-modal-close="depositModal" aria-label="Close deposit modal">×</button>
+      <p class="modal-eyebrow">Deposit</p>
+      <h2 class="modal-title" id="depositModalTitle">Admin-configured USDT address</h2>
+      <p class="modal-copy">
+        Select the correct network before sending funds. The QR and address below are pulled
+        from the wallet summary response so the user sees the admin-managed deposit address.
+      </p>
+
+      <div class="modal-field">
+        <label for="assetsDepositNetwork">Transfer network</label>
+        <select class="field-select" id="assetsDepositNetwork"></select>
+      </div>
+
+      <div class="qr-card">
+        <div class="qr-box">
+          <img id="assetsDepositQrImage" alt="Deposit QR code" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" />
+        </div>
+        <p class="qr-copy" id="assetsDepositQrMeta">QR will appear after address is configured.</p>
+      </div>
+
+      <div class="modal-field">
+        <label>Deposit address</label>
+        <div class="field-inline">
+          <code id="assetsDepositAddressValue">Admin will provide deposit address shortly.</code>
+          <button type="button" class="inline-action" id="assetsDepositCopyBtn">Copy</button>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <span>Confirmations</span>
+          <strong id="assetsDepositConfirmations">Required confirmations: 1</strong>
+        </div>
+        <div class="info-card">
+          <span>USDT Contract</span>
+          <code id="assetsDepositContractValue">Contract information unavailable.</code>
+        </div>
+      </div>
+
+      <p class="network-warning" id="assetsDepositNetworkWarning">
+        Send only USDT on the selected network to this address.
+      </p>
+    </div>
+  </div>
+
+  <div class="assets-modal hidden" id="withdrawModal" aria-hidden="true">
+    <button type="button" class="assets-modal-backdrop" data-modal-close="withdrawModal" aria-label="Close withdraw modal"></button>
+    <div class="assets-modal-card" role="dialog" aria-modal="true" aria-labelledby="withdrawModalTitle">
+      <button type="button" class="modal-close" data-modal-close="withdrawModal" aria-label="Close withdraw modal">×</button>
+      <p class="modal-eyebrow">Withdraw</p>
+      <h2 class="modal-title" id="withdrawModalTitle">Submit USDT withdrawal request</h2>
+      <p class="modal-copy">
+        The withdrawal request is validated against the selected network before it is sent to the backend.
+      </p>
+
+      <form id="assetsWithdrawForm">
+        <div class="modal-field">
+          <label for="assetsWithdrawNetwork">Transfer network</label>
+          <select class="field-select" id="assetsWithdrawNetwork"></select>
+        </div>
+
+        <div class="modal-field">
+          <label for="assetsWithdrawAddress">Withdrawal address</label>
+          <input class="field-input" id="assetsWithdrawAddress" placeholder="Enter wallet address" autocomplete="off" />
+        </div>
+
+        <div class="modal-field">
+          <label for="assetsWithdrawAmount">Amount</label>
+          <input class="field-input" id="assetsWithdrawAmount" type="number" inputmode="decimal" min="0" step="0.0001" placeholder="Minimum 10 USDT" />
+        </div>
+
+        <div class="modal-field">
+          <button type="button" class="secondary-btn" id="assetsWithdrawScanBtn">Scan QR / Paste</button>
+        </div>
+
+        <div class="scanner-card hidden" id="assetsWithdrawScanner" aria-hidden="true">
+          <video id="assetsWithdrawScannerVideo" playsinline muted></video>
+          <div class="scanner-row">
+            <p id="assetsWithdrawScannerHint">Point camera to address QR code.</p>
+            <button type="button" class="secondary-btn" id="assetsWithdrawScannerCloseBtn">Close Scanner</button>
+          </div>
+        </div>
+
+        <div class="assets-summary-line" id="assetsWithdrawResult"></div>
+        <button type="submit" class="submit-btn" id="assetsWithdrawSubmitBtn">Submit Withdrawal</button>
+      </form>
+    </div>
+  </div>
+
+  <nav class="mobile-app-nav">
+    <a href="/">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
+      </span>
+      <span class="nav-label">Home</span>
+    </a>
+    <a href="/markets">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 15h2v5H4v-5zm4-5h2v10H8V10zm4-4h2v14h-2V6zm4 7h2v7h-2v-7z"></path></svg>
+      </span>
+      <span class="nav-label">Market</span>
+    </a>
+    <a href="/trade?symbol=BTCUSDT">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9zm9-4.5A4.5 4.5 0 117.5 12a4.5 4.5 0 019 0z"></path></svg>
+      </span>
+      <span class="nav-label">Trade</span>
+    </a>
+    <a href="/p2p">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 7h16v10H4z" opacity=".35"></path><path d="M4 10h16v2H4zm4 4h4v2H8z"></path></svg>
+      </span>
+      <span class="nav-label">P2P</span>
+    </a>
+    <a href="/assets" class="active" aria-current="page">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" opacity=".3"></rect><rect x="2" y="7" width="20" height="5" rx="2"></rect><circle cx="17" cy="16" r="2.5"></circle></svg>
+      </span>
+      <span class="nav-label">Assets</span>
+    </a>
+  </nav>
+</body>
 </html>

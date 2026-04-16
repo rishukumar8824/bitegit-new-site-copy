@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Bitegit | Crypto Exchange</title>
     <link rel="stylesheet" href="/styles.css?v=20260303x" />
-    <link rel="stylesheet" href="/coinflare.css?v=20260416b" />
-    <link rel="stylesheet" href="/mobile-nav.css?v=20260416b" />
-  </head>
+    <link rel="stylesheet" href="/coinflare.css?v=20260416c" />
+    <link rel="stylesheet" href="/mobile-nav.css?v=20260416c" />
+  <script src="/app-nav.js?v=20260416c" defer></script></head>
   <body class="coinflare-page has-mobile-nav">
     <div class="cf-bg-grid" aria-hidden="true"></div>
 
     <header class="cf-header" id="homeHeader">
       <div class="cf-header-inner">
         <a href="/" class="cf-brand">
-          <img src="/logos/bitegit-b.png?v=20260416b" class="cf-brand-logo-svg" alt="Bitegit" width="22" height="22">
+          <img class="cf-brand-logo" src="/assets/bitegit-brand-mark.png?v=20260416c" alt="" aria-hidden="true" />
           <span class="cf-brand-word">Bitegit</span>
         </a>
 
         <nav class="cf-nav" aria-label="Primary navigation">
           <a href="/" class="active-link">Buy Crypto</a>
-          <a href="/markets">Markets</a>
+          <a href="/markets.html">Markets</a>
           <a href="/p2p">P2P</a>
           <a href="/chart.html?symbol=BTCUSDT">Derivatives</a>
           <a href="/">Earn</a>
@@ -28,9 +28,9 @@
         </nav>
 
         <div class="cf-actions">
-          <a id="topLoginBtn" class="cf-login" href="/auth?mode=login" data-auth-guest-only>Login</a>
-          <a id="topSignupBtn" class="cf-signup" href="/auth?mode=signup" data-auth-guest-only>Register</a>
-          <a id="topAssetsBtn" href="/assets/" class="cf-login hidden" data-auth-user-only>Assets</a>
+          <a id="topLoginBtn" class="cf-login" href="/auth.html" data-auth-guest-only>Log In</a>
+          <a id="topSignupBtn" href="/auth.html?mode=signup" class="cf-signup" data-auth-guest-only>Register</a>
+          <a id="topAssetsBtn" href="/assets" class="cf-login hidden" data-auth-user-only>Assets</a>
           <button id="topLogoutBtn" type="button" class="cf-login hidden" data-auth-user-only>Logout</button>
           <button id="homeNavToggle" class="cf-nav-toggle" type="button" aria-label="Open navigation" aria-controls="homeNavDrawer" aria-expanded="false">
             <span></span>
@@ -46,25 +46,31 @@
     <aside id="homeNavDrawer" class="cf-nav-drawer" aria-hidden="true">
       <div class="cf-nav-drawer-head">
         <strong class="cf-drawer-brand">
-          <img src="/logos/bitegit-b.png?v=20260416b" class="cf-brand-logo-svg" alt="Bitegit" width="22" height="22">
+          <img class="cf-brand-logo" src="/assets/bitegit-brand-mark.png?v=20260416c" alt="" aria-hidden="true" />
           <span>Bitegit</span>
         </strong>
         <button id="homeNavClose" type="button" aria-label="Close navigation">✕</button>
       </div>
       <nav class="cf-nav-drawer-links" aria-label="Mobile navigation">
         <a href="/">Buy Crypto</a>
-        <a href="/markets">Markets</a>
+        <a href="/markets.html">Markets</a>
         <a href="/chart.html?symbol=BTCUSDT">Spot</a>
         <a href="/chart.html?symbol=BTCUSDT">Futures</a>
         <a href="/p2p">P2P</a>
+        <a href="/">Event Contract</a>
+        <a href="/">Alpha Pass</a>
+        <a href="/">Alpha Pool</a>
+        <a href="/">Benefits Center</a>
+        <a href="/">US Stocks RWA</a>
         <a href="/">Earn</a>
+        <a href="/">ICO</a>
         <a href="/">Support</a>
-        <a href="/assets/">Assets</a>
+        <a href="/assets">Assets</a>
       </nav>
       <div class="cf-nav-drawer-actions">
-        <a id="drawerLoginLink" href="/auth" class="cf-login" data-auth-guest-only>Log In</a>
-        <a id="drawerSignupLink" href="/auth?mode=signup" class="cf-signup-link" data-auth-guest-only>Register</a>
-        <a id="drawerAssetsLink" href="/assets/" class="cf-login hidden" data-auth-user-only>Assets</a>
+        <a id="drawerLoginLink" href="/auth.html" class="cf-login" data-auth-guest-only>Log In</a>
+        <a id="drawerSignupLink" href="/auth.html?mode=signup" class="cf-signup-link" data-auth-guest-only>Register</a>
+        <a id="drawerAssetsLink" href="/assets" class="cf-login hidden" data-auth-user-only>Assets</a>
         <button id="drawerLogoutBtn" type="button" class="cf-login hidden" data-auth-user-only>Logout</button>
       </div>
     </aside>
@@ -121,71 +127,21 @@
 
             <div class="cf-social-row">
               <span>Or continue with</span>
-              <a class="social-pill" data-provider="google" href="/auth?mode=signup&via=google">G</a>
-              <a class="social-pill" data-provider="apple" href="/auth?mode=signup&via=apple">A</a>
-              <a class="social-pill" data-provider="qr" href="/auth?mode=signup&via=qr">QR</a>
+              <a class="social-pill" data-provider="google" href="/auth.html?mode=signup&via=google">G</a>
+              <a class="social-pill" data-provider="apple" href="/auth.html?mode=signup&via=apple">A</a>
+              <a class="social-pill" data-provider="qr" href="/auth.html?mode=signup&via=qr">QR</a>
             </div>
           </div>
 
-          <div id="heroUserPanel" class="hidden" data-auth-user-only style="background:#000;border-radius:18px;padding:1.4rem 1.2rem 1.2rem;margin-top:-0.5rem;">
-
-            <!-- hidden elements needed by JS -->
-            <h2 id="heroUserName" style="display:none;"></h2>
-            <p id="heroUserMeta" style="display:none;"></p>
-            <button id="heroLogoutBtn" type="button" style="display:none;"></button>
-
-            <!-- Diamond progress stepper — blue-teal -->
-            <div style="display:flex;align-items:center;margin-bottom:0.45rem;">
-              <svg width="13" height="13" viewBox="0 0 14 14" style="flex-shrink:0;"><polygon points="7,1 13,7 7,13 1,7" fill="#00E5C4"/></svg>
-              <div style="flex:1;height:2px;background:#00E5C4;"></div>
-              <svg width="13" height="13" viewBox="0 0 14 14" style="flex-shrink:0;"><polygon points="7,1 13,7 7,13 1,7" fill="#00E5C4"/></svg>
-              <div style="flex:1;height:2px;background:#1e3a42;"></div>
-              <svg width="13" height="13" viewBox="0 0 14 14" style="flex-shrink:0;"><polygon points="7,1 13,7 7,13 1,7" fill="#1e3a42"/></svg>
+          <div id="heroUserPanel" class="cf-user-panel hidden" data-auth-user-only>
+            <span class="cf-user-badge">Signed in</span>
+            <h2 id="heroUserName">Bitegit User</h2>
+            <p id="heroUserMeta">Your account is ready for markets, P2P and assets.</p>
+            <div class="cf-user-actions">
+              <a href="/p2p" class="cf-signup">Open P2P</a>
+              <a href="/assets" class="cf-login">View Assets</a>
             </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:1.1rem;">
-              <span style="font-size:0.7rem;color:#00E5C4;font-weight:600;">Verify identity</span>
-              <span style="font-size:0.7rem;color:#00E5C4;font-weight:600;">Deposit</span>
-              <span style="font-size:0.7rem;color:#2e5a66;font-weight:500;">Start trading</span>
-            </div>
-
-            <!-- Heading -->
-            <h3 style="font-size:1.35rem;font-weight:800;color:#fff;margin:0 0 1rem;line-height:1.2;">Deposit and start trading</h3>
-
-            <!-- Deposit button — blue-teal pill -->
-            <a href="/assets/" style="display:block;width:100%;padding:0.85rem;background:linear-gradient(135deg,#14e7d9 0%,#1495ff 100%);color:#041018;font-size:0.95rem;font-weight:700;border-radius:50px;text-decoration:none;text-align:center;box-sizing:border-box;margin-bottom:1.2rem;">Deposit</a>
-
-            <!-- 4 Quick-action icon tiles -->
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
-
-              <a href="/rewards" style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;text-decoration:none;">
-                <div style="width:56px;height:56px;border-radius:14px;background:#0a1a1f;border:1px solid #1e3a42;display:flex;align-items:center;justify-content:center;">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M20 12V22H4V12" stroke="#00B4D8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 7H2v5h20V7z" stroke="#00B4D8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 22V7" stroke="#00B4D8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" stroke="#00B4D8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" stroke="#00B4D8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
-                <span style="font-size:0.68rem;color:#aad6df;font-weight:500;">Rewards</span>
-              </a>
-
-              <a href="/p2p" style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;text-decoration:none;">
-                <div style="width:56px;height:56px;border-radius:14px;background:#0a1a1f;border:1px solid #1e3a42;display:flex;align-items:center;justify-content:center;">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="8" height="8" rx="2" stroke="#00B4D8" stroke-width="1.8"/><rect x="14" y="3" width="8" height="8" rx="2" stroke="#00B4D8" stroke-width="1.8"/><rect x="2" y="13" width="8" height="8" rx="2" stroke="#00B4D8" stroke-width="1.8"/><rect x="14" y="13" width="8" height="8" rx="2" stroke="#00B4D8" stroke-width="1.8"/></svg>
-                </div>
-                <span style="font-size:0.68rem;color:#aad6df;font-weight:500;">P2P</span>
-              </a>
-
-              <a href="/assets/" style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;text-decoration:none;">
-                <div style="width:56px;height:56px;border-radius:14px;background:#0a1a1f;border:1px solid #1e3a42;display:flex;align-items:center;justify-content:center;">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#00B4D8" stroke-width="1.8"/><path d="M8 12l4 4 4-4" stroke="#00B4D8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8v8" stroke="#00B4D8" stroke-width="1.8" stroke-linecap="round"/></svg>
-                </div>
-                <span style="font-size:0.68rem;color:#aad6df;font-weight:500;">Deposit</span>
-              </a>
-
-              <a href="/trade" style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;text-decoration:none;">
-                <div style="width:56px;height:56px;border-radius:14px;background:#0a1a1f;border:1px solid #1e3a42;display:flex;align-items:center;justify-content:center;">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#00B4D8" stroke-width="1.8"/><path d="M12 8v8M8 12h8" stroke="#00B4D8" stroke-width="1.8" stroke-linecap="round"/></svg>
-                </div>
-                <span style="font-size:0.68rem;color:#aad6df;font-weight:500;">Buy</span>
-              </a>
-
-            </div>
+            <button id="heroLogoutBtn" type="button" class="cf-user-logout">Logout</button>
           </div>
 
           <p id="message" class="message" role="status" aria-live="polite"></p>
@@ -295,7 +251,6 @@
         </div>
       </section>
 
-
       <!-- ── Market Section ── -->
       <section class="cf-fullmkt cf-reveal is-visible" aria-label="Live markets">
         <div class="cf-fullmkt-inner">
@@ -330,7 +285,7 @@
                 <tr class="cf-fullmkt-loading"><td colspan="3"><span class="cf-fullmkt-spinner"></span>Loading markets…</td></tr>
               </tbody>
             </table>
-            <a class="cf-fullmkt-viewall" href="/markets">View More &rsaquo;</a>
+            <a class="cf-fullmkt-viewall" href="/markets.html">View More &rsaquo;</a>
           </div>
 
         </div>
@@ -531,9 +486,9 @@
       <section class="cf-trading-exp cf-reveal" aria-label="New user guide cards">
         <div class="cf-guide-grid">
           <article class="cf-guide-card cf-guide-card--register cf-reveal">
-            <a href="/auth?mode=signup" class="cf-guide-card-link" aria-label="Register now">
+            <a href="/auth.html?mode=signup" class="cf-guide-card-link" aria-label="Register now">
               <div class="cf-guide-card-visual">
-                <img src="/assets/home-guide/guide-card-art-1.svg?v=20260416a" alt="Create account card" loading="lazy" />
+                <img src="/assets/home-guide/guide-card-art-1.png?v=20260416c" alt="Create account card" loading="lazy" />
               </div>
               <span class="cf-guide-cta">Register Now</span>
             </a>
@@ -542,16 +497,16 @@
           <article class="cf-guide-card cf-guide-card--funds cf-reveal">
             <a href="/p2p" class="cf-guide-card-link" aria-label="Go to buy coins">
               <div class="cf-guide-card-visual">
-                <img src="/assets/home-guide/guide-card-art-2.svg?v=20260416a" alt="Deposit funds card" loading="lazy" />
+                <img src="/assets/home-guide/guide-card-art-2.png?v=20260416c" alt="Deposit funds card" loading="lazy" />
               </div>
               <span class="cf-guide-cta">Go to Buy Coins</span>
             </a>
           </article>
 
           <article class="cf-guide-card cf-guide-card--trade cf-reveal">
-            <a href="/chart.html?symbol=BTCUSDT" class="cf-guide-card-link" aria-label="Go to trading">
+            <a href="/trade/spot/BTCUSDT" class="cf-guide-card-link" aria-label="Go to trading">
               <div class="cf-guide-card-visual">
-                <img src="/assets/home-guide/guide-card-art-3.svg?v=20260416a" alt="Start trading card" loading="lazy" />
+                <img src="/assets/home-guide/guide-card-art-3.png?v=20260416c" alt="Start trading card" loading="lazy" />
               </div>
               <span class="cf-guide-cta">Go to Trading</span>
             </a>
@@ -562,10 +517,11 @@
       <section class="cf-app-block cf-mobile-promo-video cf-reveal" aria-label="Mobile app promo">
         <div class="cf-mobile-promo-video-shell">
           <video class="cf-mobile-video" autoplay muted loop playsinline preload="metadata">
-            <source src="/videos/mobile.mp4" type="video/mp4" />
+            <source src="/videos/mobile.mp4?v=20260416c" type="video/mp4" />
           </video>
         </div>
       </section>
+
 
       <section class="cf-testimonials cf-copy-section cf-reveal" aria-label="Copy trading">
         <h2>Copy Top Traders - Earn <span>Passive Income</span></h2>
@@ -702,7 +658,10 @@
     <footer class="cf-footer cf-reveal">
       <div class="cf-footer-mobile" aria-label="Mobile footer">
         <div class="cf-footer-mobile-head">
-          <a href="/" class="cf-footer-mobile-brand">Bitegit</a>
+          <a href="/" class="cf-footer-mobile-brand">
+            <img class="cf-brand-logo" src="/assets/bitegit-brand-mark.png?v=20260416c" alt="" aria-hidden="true" />
+            <span>Bitegit</span>
+          </a>
           <p>Unlock the gateway to your cryptocurrency universe</p>
         </div>
 
@@ -755,7 +714,7 @@
               <a href="/chart.html?symbol=BTCUSDT">Spot Trading</a>
               <a href="/chart.html?symbol=BTCUSDT">Futures</a>
               <a href="/p2p">P2P</a>
-              <a href="/assets/">Assets</a>
+              <a href="/assets">Assets</a>
             </div>
           </details>
         </div>
@@ -822,7 +781,7 @@
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
         <span class="nav-label">Home</span>
       </a>
-      <a href="/markets">
+      <a href="/markets.html">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 15h2v5H4v-5zm4-5h2v10H8V10zm4-4h2v14h-2V6zm4 7h2v7h-2v-7z"/></svg></span>
         <span class="nav-label">Market</span>
       </a>
@@ -834,7 +793,7 @@
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="14" rx="2" opacity=".3"/><rect x="3" y="5" width="18" height="4" rx="2"/><rect x="6" y="13" width="5" height="2" rx="1"/></svg></span>
         <span class="nav-label">Futures</span>
       </a>
-      <a href="/assets/">
+      <a href="/assets">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" opacity=".3"/><rect x="2" y="7" width="20" height="5" rx="2"/><circle cx="17" cy="16" r="2.5"/></svg></span>
         <span class="nav-label">Assets</span>
       </a>
@@ -923,7 +882,7 @@
       </div>
     </section>
 
-    <script src="/script.js?v=20260304e"></script>
+    <script src="/script.js?v=20260416c"></script>
   <script>
   (function(){
     var track = document.getElementById('gpPromoTrack');

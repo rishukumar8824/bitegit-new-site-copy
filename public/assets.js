@@ -1,5 +1,3 @@
-const BITEGIT_API = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
-
 const assetsStatus = document.getElementById('assetsStatus');
 const assetsActionMessage = document.getElementById('assetsActionMessage');
 
@@ -8,6 +6,9 @@ const spotBalanceEl = document.getElementById('assetsSpotBalance');
 const fundingBalanceEl = document.getElementById('assetsFundingBalance');
 const spotInlineEl = document.getElementById('assetsSpotInline');
 const fundingInlineEl = document.getElementById('assetsFundingInline');
+const overviewCoinListEl = document.getElementById('assetsCoinListOverview');
+const spotCoinListEl = document.getElementById('assetsCoinListSpot');
+const fundingCoinListEl = document.getElementById('assetsCoinListFunding');
 
 const tabs = Array.from(document.querySelectorAll('[data-assets-tab]'));
 const panels = Array.from(document.querySelectorAll('[data-assets-panel]'));
@@ -25,6 +26,7 @@ const depositConfirmationsEl = document.getElementById('assetsDepositConfirmatio
 const depositQrImageEl = document.getElementById('assetsDepositQrImage');
 const depositQrMetaEl = document.getElementById('assetsDepositQrMeta');
 const depositCopyBtn = document.getElementById('assetsDepositCopyBtn');
+const depositContractValueEl = document.getElementById('assetsDepositContractValue');
 
 const withdrawNetworkSelect = document.getElementById('assetsWithdrawNetwork');
 const withdrawForm = document.getElementById('assetsWithdrawForm');
@@ -38,20 +40,55 @@ const withdrawAmountInput = document.getElementById('assetsWithdrawAmount');
 const withdrawResultEl = document.getElementById('assetsWithdrawResult');
 const withdrawSubmitBtn = document.getElementById('assetsWithdrawSubmitBtn');
 
-const WALLET_ENDPOINTS = [BITEGIT_API + '/wallet/balances', BITEGIT_API + '/wallet/balances', BITEGIT_API + '/wallet/balances'];
+const WALLET_ENDPOINTS = ['/api/wallet/summary', '/api/wallet', '/api/p2p/wallet'];
 const WITHDRAW_ENDPOINTS = [
   {
-    url: BITEGIT_API + '/wallet/withdraw',
+    url: '/api/withdrawals',
     buildBody: (amount, address, network) => ({
       amount,
       currency: 'USDT',
       address,
       network
     })
+  },
+  {
+    url: '/api/withdraw/request',
+    buildBody: (amount, address, network) => ({
+      amount,
+      coin: 'USDT',
+      to_address: address,
+      network
+    })
   }
 ];
 
 const SUPPORTED_USDT_NETWORKS = ['TRC20', 'ERC20', 'BEP20'];
+const NETWORK_LABELS = {
+  TRC20: 'TRON (TRC20)',
+  ERC20: 'Ethereum (ERC20)',
+  BEP20: 'BNB Smart Chain (BEP20)'
+};
+const USDT_CONTRACT_ADDRESSES = {
+  TRC20: 'TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj',
+  ERC20: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  BEP20: '0x55d398326f99059fF775485246999027B319795'
+};
+const MAJOR_ASSET_CATALOG = [
+  { symbol: 'USDT', name: 'Tether', icon: 'usdt', accent: '#26a17b' },
+  { symbol: 'BTC', name: 'Bitcoin', icon: 'btc', accent: '#f7931a' },
+  { symbol: 'ETH', name: 'Ethereum', icon: 'eth', accent: '#627eea' },
+  { symbol: 'BNB', name: 'BNB', icon: 'bnb', accent: '#f3ba2f' },
+  { symbol: 'TRX', name: 'TRON', icon: 'trx', accent: '#eb0029' },
+  { symbol: 'USDC', name: 'USD Coin', icon: 'usdc', accent: '#2775ca' },
+  { symbol: 'SOL', name: 'Solana', icon: 'sol', accent: '#14f195' },
+  { symbol: 'DOGE', name: 'Dogecoin', icon: 'doge', accent: '#c2a633' },
+  { symbol: 'XRP', name: 'XRP', icon: 'xrp', accent: '#23292f' },
+  { symbol: 'SHIB', name: 'Shiba Inu', icon: 'shib', accent: '#f15a29' },
+  { symbol: 'LINK', name: 'Chainlink', icon: 'link', accent: '#2a5ada' },
+  { symbol: 'GALA', name: 'GALA', icon: 'gala', accent: '#00d4ff' },
+  { symbol: 'UNI', name: 'Uniswap', icon: 'uni', accent: '#ff007a' },
+  { symbol: 'SAND', name: 'The Sandbox', icon: 'sand', accent: '#00adef' }
+];
 
 const state = {
   activeTab: 'overview',
@@ -68,6 +105,10 @@ const state = {
     spot: 0,
     funding: 0
   },
+  assetBalances: {
+    USDT: 0
+  },
+  depositWallets: [],
   scanner: {
     active: false,
     stream: null,
@@ -137,13 +178,15 @@ function normalizeDepositNetworks(rawNetworks = []) {
     const address = normalizeNetworkAddress(candidate?.address);
     const confirmations = Math.max(1, Number.parseInt(String(candidate?.minConfirmations || candidate?.confirmations || 1), 10) || 1);
     const enabled = candidate?.enabled !== undefined ? Boolean(candidate.enabled) : Boolean(address);
+    const qrCodeUrl = pickString(candidate?.qrCodeUrl, candidate?.qrUrl, candidate?.qr);
 
     if (!result.some((item) => item.network === network)) {
       result.push({
         network,
         address,
         minConfirmations: confirmations,
-        enabled
+        enabled,
+        qrCodeUrl
       });
     }
   }
@@ -154,12 +197,71 @@ function normalizeDepositNetworks(rawNetworks = []) {
         network,
         address: '',
         minConfirmations: network === 'TRC20' ? 20 : network === 'ERC20' ? 12 : 15,
-        enabled: false
+        enabled: false,
+        qrCodeUrl: ''
       });
     }
   }
 
   return result;
+}
+
+function normalizeAssetBalances(...candidates) {
+  const result = {};
+
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+      continue;
+    }
+
+    Object.entries(candidate).forEach(([symbol, value]) => {
+      const normalizedSymbol = String(symbol || '').trim().toUpperCase();
+      if (!normalizedSymbol) {
+        return;
+      }
+      result[normalizedSymbol] = toNumber(value);
+    });
+  }
+
+  return result;
+}
+
+function normalizeDepositWalletCatalog(rawCatalog = [], fallbackWallet = null) {
+  const source = Array.isArray(rawCatalog) ? rawCatalog : [];
+  const result = source
+    .map((item) => {
+      const coin = String(item?.coin || item?.token || '').trim().toUpperCase();
+      if (!coin) {
+        return null;
+      }
+
+      const networks = normalizeDepositNetworks(item?.networks);
+      const activeNetwork =
+        networks.find((networkItem) => networkItem.enabled && networkItem.address) || {
+          network: normalizeNetwork(item?.defaultNetwork) || 'TRC20',
+          address: '',
+          minConfirmations: 1,
+          enabled: false,
+          qrCodeUrl: ''
+        };
+
+      return {
+        coin,
+        token: coin,
+        depositsEnabled: item?.depositsEnabled !== false,
+        defaultNetwork: normalizeNetwork(item?.defaultNetwork) || activeNetwork.network,
+        networks,
+        activeNetwork,
+        depositAddress: normalizeNetworkAddress(item?.depositAddress || activeNetwork.address || '')
+      };
+    })
+    .filter(Boolean);
+
+  if (fallbackWallet && !result.some((item) => item.coin === fallbackWallet.coin)) {
+    result.unshift(fallbackWallet);
+  }
+
+  return result.length ? result : (fallbackWallet ? [fallbackWallet] : []);
 }
 
 function findNetworkConfig(network) {
@@ -191,8 +293,30 @@ function buildQrUrl(payload) {
   return `https://quickchart.io/qr?size=240&margin=1&text=${encodeURIComponent(text)}`;
 }
 
+function getNetworkLabel(network) {
+  const normalized = normalizeNetwork(network);
+  return NETWORK_LABELS[normalized] || normalized || 'Unknown network';
+}
+
 function formatUsdt(value) {
   return `${toNumber(value).toFixed(2)} USDT`;
+}
+
+function formatAssetAmount(value) {
+  const normalized = toNumber(value);
+  const digits = normalized >= 1000 ? 2 : normalized >= 1 ? 4 : 6;
+  return normalized.toLocaleString('en-US', {
+    minimumFractionDigits: normalized === 0 ? 2 : 0,
+    maximumFractionDigits: digits
+  });
+}
+
+function getAssetIconUrl(iconKey) {
+  const normalized = String(iconKey || '').trim().toLowerCase();
+  if (!normalized) {
+    return '';
+  }
+  return `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/${normalized}.svg`;
 }
 
 function setStatus(text, type = '') {
@@ -317,16 +441,49 @@ function normalizeWalletPayload(payload) {
     }
   }
 
+  const activeNetwork =
+    normalizedNetworks.find((item) => item.network === defaultNetwork && item.enabled && item.address) ||
+    normalizedNetworks.find((item) => item.enabled && item.address) || {
+      network: defaultNetwork,
+      address: '',
+      minConfirmations: 1,
+      enabled: false,
+      qrCodeUrl: ''
+    };
+
+  const fallbackWallet = {
+    coin: 'USDT',
+    token: 'USDT',
+    depositsEnabled: true,
+    defaultNetwork,
+    networks: normalizedNetworks,
+    activeNetwork,
+    depositAddress: normalizeNetworkAddress(activeNetwork.address || legacyAddress)
+  };
+
+  const assetBalances = normalizeAssetBalances(
+    summary.asset_balances,
+    summary.assetBalances,
+    wallet.asset_balances,
+    wallet.assetBalances
+  );
+
+  if (!Object.keys(assetBalances).length || !Number.isFinite(assetBalances.USDT)) {
+    assetBalances.USDT = toNumber(spot);
+  }
+
   return {
     balances: {
       total: toNumber(total),
       spot: toNumber(spot),
       funding: toNumber(funding)
     },
+    assetBalances,
     depositConfig: {
       defaultNetwork,
       networks: normalizedNetworks
-    }
+    },
+    depositWallets: normalizeDepositWalletCatalog(root?.depositWallets || payload?.depositWallets, fallbackWallet)
   };
 }
 
@@ -343,23 +500,141 @@ function renderDepositAddress() {
   }
 
   if (depositNetworkWarningEl) {
-    depositNetworkWarningEl.textContent = `Send only USDT on ${current.network} network to this address.`;
+    depositNetworkWarningEl.textContent = `Send only USDT on ${getNetworkLabel(current.network)} to this address.`;
   }
   if (depositConfirmationsEl) {
     depositConfirmationsEl.textContent = `Required confirmations: ${current.minConfirmations}`;
   }
+  if (depositContractValueEl) {
+    depositContractValueEl.textContent =
+      USDT_CONTRACT_ADDRESSES[current.network] || 'Contract information unavailable.';
+  }
 
   if (depositQrImageEl) {
-    const qrPayload = hasAddress ? `${current.address}` : '';
-    const qrUrl = buildQrUrl(qrPayload);
+    const qrUrl = hasAddress ? (pickString(current.qrCodeUrl) || buildQrUrl(current.address)) : '';
     depositQrImageEl.src = qrUrl || 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
     depositQrImageEl.style.opacity = hasAddress ? '1' : '0.45';
   }
   if (depositQrMetaEl) {
     depositQrMetaEl.textContent = hasAddress
-      ? `Scan QR in your wallet app (${current.network})`
+      ? `Scan QR in your wallet app for ${getNetworkLabel(current.network)}`
       : 'QR will appear after address is configured.';
   }
+}
+
+function renderNetworkSelectOptions() {
+  const networks = Array.isArray(state.depositConfig.networks) && state.depositConfig.networks.length
+    ? state.depositConfig.networks
+    : normalizeDepositNetworks([]);
+
+  const optionsMarkup = networks
+    .map((item) => `<option value="${item.network}">${getNetworkLabel(item.network)}</option>`)
+    .join('');
+
+  [depositNetworkSelect, withdrawNetworkSelect].forEach((selectEl) => {
+    if (!selectEl) {
+      return;
+    }
+    selectEl.innerHTML = optionsMarkup;
+  });
+
+  if (depositNetworkSelect) {
+    state.selectedDepositNetwork =
+      normalizeNetwork(state.selectedDepositNetwork) || state.depositConfig.defaultNetwork || networks[0]?.network || 'TRC20';
+    depositNetworkSelect.value = state.selectedDepositNetwork;
+  }
+
+  if (withdrawNetworkSelect) {
+    state.selectedWithdrawNetwork =
+      normalizeNetwork(state.selectedWithdrawNetwork) || state.depositConfig.defaultNetwork || networks[0]?.network || 'TRC20';
+    withdrawNetworkSelect.value = state.selectedWithdrawNetwork;
+  }
+}
+
+function resolveAssetRows() {
+  const rows = [];
+  const seen = new Set();
+  const depositEnabledCoins = new Set(
+    (Array.isArray(state.depositWallets) ? state.depositWallets : [])
+      .filter((wallet) => Boolean(wallet?.depositAddress))
+      .map((wallet) => String(wallet.coin || '').trim().toUpperCase())
+  );
+
+  const pushRow = (entry, order) => {
+    const symbol = String(entry?.symbol || entry?.coin || '').trim().toUpperCase();
+    if (!symbol || seen.has(symbol)) {
+      return;
+    }
+    seen.add(symbol);
+    rows.push({
+      symbol,
+      name: entry?.name || symbol,
+      accent: entry?.accent || '#1f6feb',
+      icon: entry?.icon || symbol.toLowerCase(),
+      order,
+      balance: toNumber(state.assetBalances[symbol]),
+      hasDeposit: depositEnabledCoins.has(symbol)
+    });
+  };
+
+  MAJOR_ASSET_CATALOG.forEach((entry, index) => pushRow(entry, index));
+
+  Object.keys(state.assetBalances)
+    .sort()
+    .forEach((symbol) => pushRow({ symbol, name: symbol, icon: symbol.toLowerCase(), accent: '#1f6feb' }, MAJOR_ASSET_CATALOG.length + rows.length));
+
+  return rows.sort((left, right) => left.order - right.order);
+}
+
+function renderAssetList(container, panelKey) {
+  if (!container) {
+    return;
+  }
+
+  const rows = resolveAssetRows();
+  if (!rows.length) {
+    container.innerHTML = '<div class="asset-empty">No assets available yet.</div>';
+    return;
+  }
+
+  container.innerHTML = rows.map((item) => {
+    const balance = panelKey === 'funding' && item.symbol === 'USDT'
+      ? toNumber(state.balances.funding)
+      : item.balance;
+    const badgeLabel = item.hasDeposit ? 'Live' : balance > 0 ? 'Held' : 'Watch';
+    const badgeTone = item.hasDeposit ? 'live' : balance > 0 ? 'held' : 'watch';
+    const subtitle =
+      item.hasDeposit
+        ? 'Admin deposit ready'
+        : panelKey === 'funding'
+          ? 'Funding wallet preview'
+          : 'Market asset';
+
+    return `
+      <div class="asset-row">
+        <div class="asset-row-main">
+          <span class="asset-row-icon" style="background:${item.accent}18;border-color:${item.accent}40;">
+            <img src="${getAssetIconUrl(item.icon)}" alt="${item.symbol}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
+            <span class="asset-row-fallback">${item.symbol.slice(0, 4)}</span>
+          </span>
+          <span class="asset-row-copy">
+            <strong>${item.symbol}</strong>
+            <small>${item.name} • ${subtitle}</small>
+          </span>
+        </div>
+        <div class="asset-row-side">
+          <span class="asset-row-amount">${formatAssetAmount(balance)}</span>
+          <span class="asset-row-badge ${badgeTone}">${badgeLabel}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAssetLists() {
+  renderAssetList(overviewCoinListEl, 'overview');
+  renderAssetList(spotCoinListEl, 'spot');
+  renderAssetList(fundingCoinListEl, 'funding');
 }
 
 function renderBalances() {
@@ -378,6 +653,8 @@ function renderBalances() {
   if (fundingInlineEl) {
     fundingInlineEl.textContent = formatUsdt(state.balances.funding);
   }
+  renderNetworkSelectOptions();
+  renderAssetLists();
   renderDepositAddress();
 }
 
@@ -436,12 +713,10 @@ function closeAllModals() {
 }
 
 async function requestJson(url, options = {}) {
-  const token = localStorage.getItem('bitegit_token') || '';
   const response = await fetch(url, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
       ...(options.headers || {})
     },
     ...options
@@ -483,7 +758,9 @@ async function loadWalletSummary() {
       const normalized = normalizeWalletPayload(payload);
       state.walletApiEndpoint = endpoint;
       state.balances = normalized.balances;
+      state.assetBalances = normalized.assetBalances;
       state.depositConfig = normalized.depositConfig;
+      state.depositWallets = normalized.depositWallets;
       state.selectedDepositNetwork =
         normalizeNetwork(state.selectedDepositNetwork) ||
         normalized.depositConfig.defaultNetwork ||
