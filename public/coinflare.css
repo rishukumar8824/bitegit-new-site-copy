@@ -44,18 +44,18 @@
 .coinflare-page .cf-gate-market-tabs button.active,
 .coinflare-page .cf-mode-switch button.active,
 .coinflare-page .cf-fullmkt-subtabs button.active {
-  background: #00B4D8 !important;
+  background: linear-gradient(135deg, #00FFD6 0%, #00D4FF 100%) !important;
   color: #000 !important;
   border-color: transparent !important;
-  box-shadow: 0 0 12px rgba(0,180,216,0.4), 0 2px 8px rgba(0,0,0,0.25) !important;
+  box-shadow: 0 0 12px rgba(0,255,214,0.4), 0 2px 8px rgba(0,0,0,0.25) !important;
   font-weight: 800 !important;
 }
 
 .coinflare-page .cf-fullmkt-viewall {
-  background: #00B4D8 !important;
+  background: linear-gradient(135deg, #00FFD6 0%, #00D4FF 100%) !important;
   color: #000 !important;
   border-color: transparent !important;
-  box-shadow: 0 0 12px rgba(0,180,216,0.35) !important;
+  box-shadow: 0 0 12px rgba(0,255,214,0.35) !important;
   font-weight: 800 !important;
   border-radius: 999px !important;
   padding: 0.5rem 1.5rem !important;
@@ -489,9 +489,9 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 }
 
 .cf-signup-modal-actions button:first-child {
-  background: #00B4D8;
+  background: linear-gradient(135deg, #00FFD6 0%, #00D4FF 100%);
   color: #000;
-  box-shadow: 0 0 14px rgba(0,180,216,0.45), 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 0 14px rgba(0,255,214,0.45), 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .cf-signup-modal-actions button.secondary {
@@ -818,20 +818,20 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   min-height: 52px;
   border: 0;
   border-radius: 999px;
-  background: #00B4D8;
+  background: linear-gradient(135deg, #00FFD6 0%, #00D4FF 100%);
   color: #000;
   font-weight: 800;
   font-size: 1rem;
   cursor: pointer;
   letter-spacing: 0.01em;
-  box-shadow: 0 0 18px rgba(0,180,216,0.5), 0 4px 14px rgba(0,0,0,0.3);
+  box-shadow: 0 0 18px rgba(0,255,214,0.5), 0 4px 14px rgba(0,0,0,0.3);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .cf-lead-form button:hover,
 .cf-otp-row button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 28px rgba(0,180,216,0.65), 0 6px 20px rgba(0,0,0,0.35);
+  box-shadow: 0 0 28px rgba(0,255,214,0.65), 0 6px 20px rgba(0,0,0,0.35);
 }
 
 .cf-otp-row {
