@@ -887,8 +887,8 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   align-items: center;
   min-height: 26px;
   border-radius: 8px;
-  background: rgba(156, 255, 0, 0.2);
-  color: #cbff7b;
+  background: rgba(20, 231, 217, 0.2);
+  color: var(--cf-brand);
   font-size: 0.74rem;
   font-weight: 700;
   padding: 0 0.55rem;
@@ -1314,8 +1314,8 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 }
 
 .cf-hot-market-tabs button.active {
-  color: #d9ff8c;
-  border-bottom-color: #d9ff8c;
+  color: var(--cf-brand);
+  border-bottom-color: var(--cf-brand);
 }
 
 .cf-hot-market-head {
@@ -1478,9 +1478,9 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 }
 
 .cf-market-tabs button.active {
-  border-color: rgba(143, 252, 0, 0.38);
-  background: rgba(143, 252, 0, 0.14);
-  color: #d8ff9a;
+  border-color: rgba(20, 231, 217, 0.38);
+  background: rgba(20, 231, 217, 0.14);
+  color: var(--cf-brand);
 }
 
 .bnx-market-row {
@@ -2029,7 +2029,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 .cf-obj-candles span {
   width: 20px;
   border-radius: 8px;
-  background: linear-gradient(180deg, #89f500, #ff4fd8);
+  background: linear-gradient(180deg, var(--cf-brand), #ff4fd8);
   animation: cf-candle 2.6s ease-in-out infinite;
 }
 
@@ -2057,8 +2057,8 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   width: 136px;
   height: 74px;
   border-radius: 999px;
-  border: 3px solid #c6ff44;
-  background: linear-gradient(90deg, #ff54c1, #93f800);
+  border: 3px solid var(--cf-brand);
+  background: linear-gradient(90deg, #ff54c1, var(--cf-brand));
   transform: rotate(-38deg);
   animation: cf-spin-soft 8s linear infinite;
 }
@@ -2073,8 +2073,8 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #d8ff5a, #3cc90f);
-  box-shadow: 0 10px 18px rgba(95, 255, 45, 0.26);
+  background: linear-gradient(180deg, var(--cf-brand), var(--cf-brand-2));
+  box-shadow: 0 10px 18px rgba(20, 231, 217, 0.26);
   animation: cf-float 3.4s ease-in-out infinite;
 }
 
@@ -2172,7 +2172,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   font-weight: 700 !important;
   font-size: 0.95rem !important;
   color: #000000 !important;
-  background: linear-gradient(135deg, #00f5f5 0%, #00c8ff 100%) !important;
+  background: var(--cf-brand-grad) !important;
   padding: 0.6rem 0 !important;
   position: static !important;
   transform: none !important;
@@ -2656,8 +2656,8 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   font-weight: 800;
   line-height: 0.95;
   letter-spacing: -0.04em;
-  color: #b7ff35;
-  text-shadow: 0 0 18px rgba(0, 180, 216, 0.26);
+  color: var(--cf-brand);
+  text-shadow: 0 0 18px rgba(20, 231, 217, 0.26);
   background: none;
   -webkit-text-fill-color: currentColor;
 }
@@ -3147,7 +3147,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
     padding: 0 0.9rem;
     font-size: 0.78rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #00f5f5 0%, #00c8ff 100%) !important;
+    background: var(--cf-brand-grad) !important;
   }
 
   .cf-user-panel {
