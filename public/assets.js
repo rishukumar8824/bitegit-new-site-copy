@@ -597,7 +597,20 @@ function renderAssetList(container, panelKey) {
     return;
   }
 
-  container.innerHTML = rows.map((item) => {
+  // Only show coins with balance > 0 (or deposit configured)
+  const visibleRows = rows.filter((item) => {
+    const balance = panelKey === 'funding' && item.symbol === 'USDT'
+      ? toNumber(state.balances.funding)
+      : item.balance;
+    return balance > 0 || item.hasDeposit;
+  });
+
+  if (!visibleRows.length) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = visibleRows.map((item) => {
     const balance = panelKey === 'funding' && item.symbol === 'USDT'
       ? toNumber(state.balances.funding)
       : item.balance;

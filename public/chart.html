@@ -93,6 +93,11 @@
     .ch-ivl-sep{width:1px;height:14px;background:rgba(255,255,255,.12);margin:.1rem .3rem;flex-shrink:0}
     .ch-tools{display:flex;gap:.1rem;margin-left:auto;flex-shrink:0}
     .ch-tool{background:none;border:none;color:#8a9bb5;font-size:.95rem;cursor:pointer;padding:.2rem .3rem}
+    .ch-candle-menu{position:absolute;top:100%;right:0;z-index:500;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:4px;min-width:130px;box-shadow:0 8px 24px rgba(0,0,0,.6);}
+    .ch-candle-menu button{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;color:#f4f8ff;font-size:.82rem;font-weight:600;padding:7px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;}
+    .ch-candle-menu button:hover{background:rgba(255,255,255,.08);}
+    .ch-candle-menu button.active{color:#00d4b3;}
+    .ch-tools{position:relative;}
 
     /* MA Row */
     .ch-ma-row{
@@ -351,7 +356,19 @@
       <button class="ch-ivl" data-ivl="1d">1D</button>
       <div class="ch-ivl-sep"></div>
       <div class="ch-tools">
-        <button class="ch-tool">&#9724;</button>
+        <button class="ch-tool" id="chCandleTypeBtn" title="Candle type">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <rect x="5" y="4" width="3" height="8" rx="0.5"/>
+            <rect x="6" y="1" width="1" height="3"/>
+            <rect x="6" y="12" width="1" height="3"/>
+            <rect x="10" y="3" width="3" height="6" rx="0.5"/>
+            <rect x="11" y="1" width="1" height="2"/>
+            <rect x="11" y="9" width="1" height="2"/>
+            <rect x="1" y="5" width="3" height="5" rx="0.5"/>
+            <rect x="2" y="2" width="1" height="3"/>
+            <rect x="2" y="10" width="1" height="3"/>
+          </svg>
+        </button>
         <button class="ch-tool">&#9998;</button>
         <button class="ch-tool">&#9776;</button>
       </div>
@@ -607,6 +624,7 @@
   const UP='#00d4b3', DN='#ff5f82', BGCOL='#000';
   const PRICE_W=74, TIME_H=26, TOP_PAD=12;
   let allCandles=[], viewOffset=0, viewCount=80;
+  let candleType='candle'; // 'candle' | 'line' | 'bar'
   let indCache={};
   let priceZoom=1.0; // Y-scale only, changed by price-scale drag
 
@@ -741,20 +759,32 @@
       ctx.fillText(currentIvl==='1d'||currentIvl==='1w'?(d.getMonth()+1)+'/'+(d.getDate()):d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'),x,H-7);
     });
 
-    // ── candles ──
-    visible.forEach((c,i)=>{
-      const x=(i+0.5)*cw, col=c.c>=c.o?UP:DN;
-      ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=1;
-      // wick
-      ctx.beginPath();
-      ctx.moveTo(Math.round(x)+.5,Math.round(pY(c.h)));
-      ctx.lineTo(Math.round(x)+.5,Math.round(pY(c.l)));
+    // ── candles / bar / line ──
+    if(candleType==='line'){
+      ctx.beginPath(); ctx.strokeStyle=UP; ctx.lineWidth=1.5;
+      visible.forEach((c,i)=>{ const x=(i+0.5)*cw, y=pY(c.c); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
       ctx.stroke();
-      // body
-      const oY=pY(c.o), cY=pY(c.c);
-      const top=Math.min(oY,cY), bh=Math.max(1.5,Math.abs(cY-oY));
-      ctx.fillRect(Math.round(x-bw/2), Math.round(top), bw, Math.ceil(bh));
-    });
+    } else if(candleType==='bar'){
+      visible.forEach((c,i)=>{
+        const x=Math.round((i+0.5)*cw), col=c.c>=c.o?UP:DN;
+        ctx.strokeStyle=col; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(x,pY(c.h)); ctx.lineTo(x,pY(c.l)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x-3,pY(c.o)); ctx.lineTo(x,pY(c.o)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x,pY(c.c)); ctx.lineTo(x+3,pY(c.c)); ctx.stroke();
+      });
+    } else {
+      visible.forEach((c,i)=>{
+        const x=(i+0.5)*cw, col=c.c>=c.o?UP:DN;
+        ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=1;
+        ctx.beginPath();
+        ctx.moveTo(Math.round(x)+.5,Math.round(pY(c.h)));
+        ctx.lineTo(Math.round(x)+.5,Math.round(pY(c.l)));
+        ctx.stroke();
+        const oY=pY(c.o), cY=pY(c.c);
+        const top=Math.min(oY,cY), bh=Math.max(1.5,Math.abs(cY-oY));
+        ctx.fillRect(Math.round(x-bw/2), Math.round(top), bw, Math.ceil(bh));
+      });
+    }
 
     // ── MA ──
     if(IND.ma){
@@ -1051,6 +1081,39 @@
       document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('hidden', t!==tab);
     });
   });
+
+  // ── Candle type selector ──
+  (function(){
+    const btn = document.getElementById('chCandleTypeBtn');
+    if(!btn) return;
+    const types = [
+      {key:'candle', label:'Candlestick', svg:'<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="5" y="4" width="3" height="8" rx="0.5"/><rect x="6" y="1" width="1" height="3"/><rect x="6" y="12" width="1" height="3"/></svg>'},
+      {key:'bar',    label:'Bar chart',   svg:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="5" y1="5" x2="8" y2="5"/><line x1="8" y1="10" x2="11" y2="10"/></svg>'},
+      {key:'line',   label:'Line chart',  svg:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,12 6,7 10,9 14,3"/></svg>'},
+    ];
+    let menu = null;
+    function closeMenu(){ if(menu){ menu.remove(); menu=null; } }
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(menu){ closeMenu(); return; }
+      menu = document.createElement('div');
+      menu.className = 'ch-candle-menu';
+      types.forEach(t=>{
+        const b = document.createElement('button');
+        b.innerHTML = t.svg + ' ' + t.label;
+        if(t.key===candleType) b.classList.add('active');
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          candleType = t.key;
+          closeMenu();
+          schedDraw();
+        });
+        menu.appendChild(b);
+      });
+      btn.closest('.ch-tools').appendChild(menu);
+    });
+    document.addEventListener('click', closeMenu);
+  })();
 
   // ── Interval switching ──
   document.getElementById('chIntervals').addEventListener('click',function(e){
