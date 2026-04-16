@@ -2335,6 +2335,46 @@ app.get('/api/p2p/exchange-ticker', async (req, res) => {
   }
 });
 
+// API v1 ticker endpoint - used by frontend market pages
+app.get('/api/v1/market/tickers', async (req, res) => {
+  const requestedSymbols = String(req.query.symbols || '')
+    .split(',')
+    .map((item) => item.trim().toUpperCase())
+    .filter((item) => /^[A-Z0-9]{5,12}$/.test(item))
+    .slice(0, 10);
+  const symbols = requestedSymbols.length > 0 ? requestedSymbols : DEFAULT_TICKER_SYMBOLS;
+  const encodedSymbols = encodeURIComponent(JSON.stringify(symbols));
+
+  try {
+    const response = await fetch(
+      `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodedSymbols}`
+    );
+    const data = await response.json();
+
+    if (!response.ok || !Array.isArray(data)) {
+      throw new Error('Exchange API unavailable');
+    }
+
+    const ticker = data.map((item) => ({
+      symbol: item.symbol,
+      lastPrice: Number(item.lastPrice),
+      change24h: Number(item.priceChangePercent)
+    }));
+
+    return res.json({
+      source: 'binance',
+      updatedAt: new Date().toISOString(),
+      ticker
+    });
+  } catch (error) {
+    return res.json({
+      source: 'fallback',
+      updatedAt: new Date().toISOString(),
+      ticker: createFallbackTickerSnapshot(symbols)
+    });
+  }
+});
+
 app.get('/api/p2p/market-depth', async (req, res) => {
   const symbol = normalizeMarketSymbol(req.query.symbol);
 
