@@ -84,6 +84,12 @@ const ENABLE_DEV_TEST_ROUTES = String(process.env.ENABLE_DEV_TEST_ROUTES || '')
 const p2pOrderStreams = new Map();
 // Per-user SSE streams: userId → Set of res objects
 const p2pUserStreams = new Map();
+// Admin support SSE clients
+const adminSupportSseClients = new Set();
+function broadcastAdminSupportEvent(payload) {
+  const msg = `data: ${JSON.stringify(payload)}\n\n`;
+  adminSupportSseClients.forEach(res => { try { res.write(msg); } catch(e) {} });
+}
 function getUserStreams(userId) {
   if (!p2pUserStreams.has(userId)) p2pUserStreams.set(userId, new Set());
   return p2pUserStreams.get(userId);
@@ -3276,6 +3282,66 @@ app.get('/api/p2p/me/stream', requiresP2PUser, (req, res) => {
     streams.delete(res);
     if (streams.size === 0) p2pUserStreams.delete(userId);
   });
+});
+
+// ── Admin Support SSE — live notify ──────────────────────────────────────────
+app.get('/api/admin/support/live-notify', async (req, res) => {
+  // Allow admin cookie or skip auth in dev
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+  adminSupportSseClients.add(res);
+  res.write(': connected\n\n');
+  const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
+  req.on('close', () => { clearInterval(ping); adminSupportSseClients.delete(res); });
+});
+
+// ── Public Support Chat — user submits message ────────────────────────────────
+app.post('/api/support/chat', async (req, res) => {
+  try {
+    const { message, topic, email, name } = req.body || {};
+    if (!message || !String(message).trim()) {
+      return res.status(400).json({ message: 'Message is required.' });
+    }
+    const ticketData = {
+      id: `tkt_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      userId: email || 'guest',
+      subject: topic ? `[${topic}] ${String(message).slice(0, 60)}` : String(message).slice(0, 80),
+      status: 'OPEN',
+      priority: 'MEDIUM',
+      assignedTo: '',
+      email: email || '',
+      name: name || 'User',
+      messages: [{
+        id: `tmsg_${Date.now()}`,
+        sender: 'user',
+        senderName: name || 'User',
+        text: String(message).trim(),
+        createdAt: new Date()
+      }],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    // Save to DB if adminStore is ready
+    let savedId = ticketData.id;
+    if (adminStore && typeof adminStore.createSupportTicket === 'function') {
+      const saved = await adminStore.createSupportTicket(ticketData);
+      if (saved && saved.id) savedId = saved.id;
+    }
+    // Notify admin via SSE
+    broadcastAdminSupportEvent({
+      ticketId: savedId,
+      subject: ticketData.subject,
+      agentName: name || 'User',
+      email: email || 'guest',
+      message: String(message).trim().slice(0, 100)
+    });
+    return res.json({ success: true, ticketId: savedId, message: 'Support request submitted.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to submit support request.' });
+  }
 });
 
 app.get('/admin-login', (req, res) => {

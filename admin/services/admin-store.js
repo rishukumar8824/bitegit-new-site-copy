@@ -1842,6 +1842,11 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return { page, limit, total, tickets: rows };
   }
 
+  async function createSupportTicket(data) {
+    await adminSupportTickets.insertOne(data);
+    return data;
+  }
+
   async function ensureDemoSupportTicket() {
     const count = await adminSupportTickets.countDocuments({});
     if (count > 0) {
@@ -2039,6 +2044,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     listSupportTickets,
     getSupportTicket,
     ensureDemoSupportTicket,
+    createSupportTicket,
     replySupportTicket,
     updateSupportTicketStatus,
     assignSupportTicket,
