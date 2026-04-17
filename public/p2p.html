@@ -1678,16 +1678,107 @@
     var _spTicketId = null;
     var _spCurrentTopic = '';
     var _spPollTimer = null;
-    var _spSeenMsgIds = new Set();   // track by ID to prevent duplicates
+    var _spSeenMsgIds = new Set();
     var _spAgentConnected = false;
-    var _spConnecting = false;       // prevent double-connect
-    var _spAgentName = '';           // assigned agent name for this session
+    var _spConnecting = false;
+    var _spAgentName = '';
+    var _spBotStep = 0;          // tracks bot conversation step per topic
+    var _spBotActive = true;     // bot is active until agent connects
 
-    // Pool of friendly support agent names
-    var _spAgentNames = ['Aria','Max','Zara','Leo','Nova','Sam','Kai','Mia','Alex','Jay'];
+    // Chinese agent names (shown when live agent connects)
+    var _spAgentNames = [
+      'Wei Lin','Xiao Chen','Li Ming','Zhang Wei','Liu Yang',
+      'Chen Jing','Wang Fang','Mei Ling','Zhao Lei','Han Xiu',
+      'Feng Yu','Lin Tao','Jiang Hui','Sun Rui','Bai Xue'
+    ];
 
     function spPickAgentName() {
       return _spAgentNames[Math.floor(Math.random() * _spAgentNames.length)];
+    }
+
+    // ── Bot Q&A flows per topic ──────────────────────────────────
+    var _spBotFlows = {
+      'Account & security': [
+        { bot: '🛡️ Sure! What issue are you facing with your account?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Forgot password\')">Forgot password</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Account locked\')">Account locked</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Suspicious activity\')">Suspicious activity</button><button class="sp-topic-chip" onclick="spBotReply(this,\'2FA issue\')">2FA issue</button></div>' },
+        { bot: '🔐 Got it. Here are some quick tips:\n\n• <b>Forgot password</b> — use "Forgot Password" on login screen\n• <b>Account locked</b> — wait 30 mins or reset password\n• <b>2FA issue</b> — check authenticator app time sync\n• <b>Suspicious login</b> — change password immediately\n\nDid this help, or do you still need a live agent?' ,
+          chips: [{ label: '✅ Issue resolved', action: 'resolved' }, { label: '🎧 Talk to agent', action: 'connect' }] }
+      ],
+      'Deposit & withdrawal': [
+        { bot: '💰 I can help! What\'s the issue?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Deposit not received\')">Deposit not received</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Withdrawal delayed\')">Withdrawal delayed</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Wrong network used\')">Wrong network used</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Withdrawal failed\')">Withdrawal failed</button></div>' },
+        { bot: '📋 Quick info:\n\n• <b>Deposits</b> — can take 1–60 mins depending on blockchain congestion\n• <b>Withdrawals</b> — processed within 24 hrs; check spam for email confirmation\n• <b>Wrong network</b> — funds may be lost if wrong network (e.g. ERC20 vs TRC20)\n• <b>Min amount</b> — ensure you met the minimum deposit/withdrawal limit\n\nStill need help?',
+          chips: [{ label: '✅ Got it, thanks!', action: 'resolved' }, { label: '🎧 Connect agent', action: 'connect' }] }
+      ],
+      'P2P': [
+        { bot: '🤝 What\'s your P2P issue?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Seller not releasing crypto\')">Seller not releasing</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Payment sent but order stuck\')">Order stuck</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Scam / fraud\')">Scam / fraud</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Order cancelled unfairly\')">Order cancelled</button></div>' },
+        { bot: '⚠️ P2P Tips:\n\n• <b>Seller not releasing</b> — click "Appeal" in the order if 15 mins have passed\n• <b>Order stuck</b> — do NOT cancel if you have already paid; appeal instead\n• <b>Scam</b> — report immediately; never release before payment is confirmed\n• <b>Cancelled unfairly</b> — our team reviews all appeals within 2 hrs\n\nNeed live support?',
+          chips: [{ label: '✅ Resolved, thanks', action: 'resolved' }, { label: '🚨 I need urgent help', action: 'connect' }] }
+      ],
+      'Identity verification': [
+        { bot: '🪪 KYC help! What\'s happening?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Documents rejected\')">Documents rejected</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Verification pending too long\')">Pending too long</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Selfie failed\')">Selfie failed</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Wrong info submitted\')">Wrong info submitted</button></div>' },
+        { bot: '📄 KYC Tips:\n\n• <b>Documents rejected</b> — ensure all 4 corners visible, no blur, no glare\n• <b>Selfie failed</b> — face must be clearly visible, no glasses/hat\n• <b>Pending</b> — KYC review takes up to 24 hrs\n• <b>Wrong info</b> — contact support to resubmit\n\nWant to talk to an agent?',
+          chips: [{ label: '✅ I\'ll try again', action: 'resolved' }, { label: '🎧 Agent please', action: 'connect' }] }
+      ],
+      'Promotion & bonus': [
+        { bot: '🎁 Rewards help! What\'s the issue?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Bonus not credited\')">Bonus not credited</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Referral not working\')">Referral not working</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Task not completing\')">Task not completing</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Voucher code invalid\')">Voucher invalid</button></div>' },
+        { bot: '🎯 Rewards Tips:\n\n• <b>Bonus not credited</b> — may take up to 48 hrs after completing task\n• <b>Referral</b> — friend must complete KYC + first trade for referral to count\n• <b>Task not completing</b> — check task conditions carefully\n• <b>Voucher</b> — codes are case-sensitive and one-time use only\n\nStill facing issues?',
+          chips: [{ label: '✅ All good now!', action: 'resolved' }, { label: '🎧 Talk to agent', action: 'connect' }] }
+      ]
+    };
+
+    function spBotShowChips(chips) {
+      var msgs = document.getElementById('spChatMessages');
+      if (!msgs) return;
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.5rem 1rem;';
+      chips.forEach(function(c) {
+        var btn = document.createElement('button');
+        btn.className = 'sp-topic-chip';
+        btn.textContent = c.label;
+        btn.onclick = function() {
+          if (c.action === 'connect') {
+            spAddUserBubble(c.label);
+            spConnectAgent();
+          } else if (c.action === 'resolved') {
+            spAddUserBubble(c.label);
+            setTimeout(function(){
+              spAddBotBubble('<p>🎉 Glad to hear that! If you ever need help again, we\'re always here. Have a great day! 😊</p>');
+            }, 400);
+          }
+          wrap.remove();
+        };
+        wrap.appendChild(btn);
+      });
+      msgs.appendChild(wrap);
+      spScroll();
+    }
+
+    // Called when user types a free-form message while bot is active
+    function spBotAutoReply(userMsg) {
+      if (!_spBotActive || _spAgentConnected) return;
+      var msg = userMsg.toLowerCase();
+      var reply = '';
+      if (msg.match(/scam|fraud|stolen|hack/)) {
+        reply = '🚨 This sounds urgent! Please connect to a live agent immediately for account security.';
+        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'🚨 Connect Agent Now', action:'connect'}]); }, 500);
+      } else if (msg.match(/deposit|withdraw|fund|money|usdt|btc|eth/)) {
+        reply = '💰 For deposit/withdrawal issues, make sure:\n• Correct network selected (TRC20/ERC20/BEP20)\n• Minimum amount met\n• Wallet address correct\n\nStill need help?';
+        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Solved',action:'resolved'},{label:'🎧 Agent',action:'connect'}]); }, 500);
+      } else if (msg.match(/p2p|order|seller|buyer|release|appeal/)) {
+        reply = '🤝 For P2P: If seller isn\'t releasing, use the <b>Appeal</b> button in your order. Never cancel after paying!';
+        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Got it',action:'resolved'},{label:'🎧 Need agent',action:'connect'}]); }, 500);
+      } else if (msg.match(/kyc|verify|id|passport|selfie|document/)) {
+        reply = '🪪 KYC tip: Ensure your documents are clear, all corners visible, and good lighting. Review takes up to 24 hrs.';
+        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Will retry',action:'resolved'},{label:'🎧 Agent help',action:'connect'}]); }, 500);
+      } else if (msg.match(/password|login|account|lock|block|2fa|otp/)) {
+        reply = '🔐 Account tips:\n• Reset password from login page\n• Check email for unlock link\n• 2FA: sync your authenticator app time';
+        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Fixed',action:'resolved'},{label:'🎧 Need agent',action:'connect'}]); }, 500);
+      } else if (msg.match(/bonus|reward|referral|voucher|promo/)) {
+        reply = '🎁 Bonuses credit within 48 hrs. Referral rewards require friend to complete KYC + first trade.';
+        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Thanks',action:'resolved'},{label:'🎧 Talk to agent',action:'connect'}]); }, 500);
+      } else {
+        // Generic fallback after user types
+        setTimeout(function(){ spAddBotBubble('<p>🤖 I didn\'t quite catch that. Would you like to connect with a live agent?</p>'); spBotShowChips([{label:'🎧 Yes, connect agent',action:'connect'},{label:'↩ Back to topics',action:'resolved'}]); }, 500);
+      }
     }
 
     function spScroll() {
@@ -1774,6 +1865,8 @@
       _spAgentConnected = false;
       _spConnecting = false;
       _spAgentName = '';
+      _spBotStep = 0;
+      _spBotActive = true;
       var msgs = document.getElementById('spChatMessages');
       if (msgs) msgs.innerHTML = '<div class="sp-chat-time">Just now</div><div class="sp-bot-bubble"><p><strong>👋 Hey BITEGIT user!</strong></p><p>I\'m Bunz Support. Select a topic or connect to a live agent.</p><div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spSendTopic(this,\'Account &amp; security\')">Account &amp; security</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Deposit &amp; withdrawal\')">Deposit &amp; withdrawal</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'P2P\')">P2P</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Identity verification\')">Identity verification</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Promotion &amp; bonus\')">Promotion &amp; bonus</button></div></div>';
       spSetStatus('Bot Assistant', 'bot');
@@ -1786,14 +1879,19 @@
     async function spConnectAgent() {
       if (_spConnecting) return;
       _spConnecting = true;
+      _spBotActive = false;
       var banner = document.getElementById('spConnectBanner');
       var cb = banner ? banner.querySelector('.sp-connect-btn') : null;
       if (cb) { cb.disabled = true; cb.textContent = '…'; }
 
+      // Pick Chinese agent name NOW
+      if (!_spAgentName) _spAgentName = spPickAgentName();
+
       // Show queue position immediately
-      var queuePos = _spTicketId ? Math.floor(Math.random()*4)+1 : Math.floor(Math.random()*10)+3;
-      var waitMin = Math.ceil(queuePos * 1.8);
-      spAddBotBubble('<p>🎧 <strong>Connecting to live support…</strong></p><p style="font-size:0.82rem;opacity:0.75;">Your position in queue: <strong style="color:#00e5ff;">#' + queuePos + '</strong><br>Estimated wait: ~' + waitMin + ' min</p>');
+      var queuePos = Math.floor(Math.random()*8)+2;
+      var waitMin = Math.ceil(queuePos * 1.5);
+      spAddBotBubble('<p>🎧 <strong>Connecting you to a live agent…</strong></p><p style="font-size:0.82rem;opacity:0.8;">📋 Your position in queue: <strong style="color:#00e5ff;">#' + queuePos + '</strong><br>⏱️ Estimated wait: ~' + waitMin + ' min<br><span style="font-size:0.75rem;opacity:0.55;">Please describe your issue while you wait.</span></p>');
+      spSetStatus('🟡 Queue #' + queuePos + ' — Waiting…', 'waiting');
 
       try {
         var r = await fetch('/api/support/chat', {
@@ -1805,56 +1903,57 @@
         if (data.ticketId) {
           if (!_spTicketId) {
             _spTicketId = data.ticketId;
-            // Mark the first system message as seen
             _spSeenMsgIds.add('init_' + data.ticketId);
           }
-          if (!_spAgentName) _spAgentName = spPickAgentName();
           spStartPolling(_spTicketId);
           if (banner) banner.style.display = 'none';
+          // Simulate agent joining after short delay
           setTimeout(function(){
-            spAddBotBubble('<p>✅ <strong>Agent ' + _spAgentName + ' has been notified!</strong><br><span style="font-size:0.78rem;opacity:0.6;">Type your issue below and they\'ll respond shortly.</span></p>');
-            spSetStatus('🟡 Waiting for ' + _spAgentName + '…', 'waiting');
-          }, 600);
+            spAddAdminBubble('Hi! I\'m ' + _spAgentName + ' from BITEGIT Support 👋 How can I assist you today?', _spAgentName);
+            spSetStatus('🟢 ' + _spAgentName + ' — Live Agent', 'connected');
+            _spAgentConnected = true;
+          }, Math.random()*3000 + 2000);
         }
       } catch(e) {
         spAddBotBubble('<p>⚠️ Could not connect. Please try again.</p>');
         if (banner) { banner.style.display = ''; if(cb){cb.disabled=false;cb.textContent='Connect';} }
         _spConnecting = false;
+        _spBotActive = true;
+      }
+    }
+
+    // Called from bot flow chips (step 1 → step 2)
+    function spBotReply(btn, text) {
+      spAddUserBubble(text);
+      btn.closest('.sp-topic-chips') && btn.closest('.sp-topic-chips').parentElement.remove && btn.closest('.sp-bot-bubble') && (btn.closest('.sp-topic-chips').style.display='none');
+      var flow = _spBotFlows[_spCurrentTopic];
+      if (!flow) return;
+      var step = flow[_spBotStep] || flow[flow.length-1];
+      _spBotStep++;
+      var nextStep = flow[_spBotStep];
+      if (nextStep) {
+        setTimeout(function(){
+          spAddBotBubble('<p>' + nextStep.bot.replace(/\n/g,'<br>') + '</p>');
+          if (nextStep.chips) spBotShowChips(nextStep.chips);
+          _spBotStep++;
+        }, 600);
       }
     }
 
     async function spSendTopic(btn, topic) {
-      // Prevent if already have a ticket for this
       _spCurrentTopic = topic;
+      _spBotStep = 0;
       spAddUserBubble(btn.textContent.trim());
-      if (!_spTicketId) {
-        try {
-          var r = await fetch('/api/support/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: topic, topic: topic })
-          });
-          var d = await r.json();
-          if (d.ticketId) {
-            _spTicketId = d.ticketId;
-            _spSeenMsgIds.add('init_' + d.ticketId); // skip first user msg
-            if (!_spAgentName) _spAgentName = spPickAgentName();
-            spStartPolling(_spTicketId);
-          }
-        } catch(e) {}
-      }
+      // Show first bot step immediately (no ticket yet — bot handles it)
+      var flow = _spBotFlows[topic];
       setTimeout(function(){
-        var replies = {
-          'Account & security':'Please describe your account issue below. <strong>' + (_spAgentName||'An agent') + '</strong> has been notified. 🛡️',
-          'Deposit & withdrawal':'Please share your transaction details. <strong>' + (_spAgentName||'An agent') + '</strong> has been notified. 💰',
-          'P2P':'Please describe your P2P issue. <strong>' + (_spAgentName||'An agent') + '</strong> has been notified. 🤝',
-          'Identity verification':'<strong>' + (_spAgentName||'An agent') + '</strong> will guide you through KYC shortly. 🪪',
-          'Promotion & bonus':'Please share your reward concern. <strong>' + (_spAgentName||'An agent') + '</strong> has been notified. 🎁'
-        };
-        spAddBotBubble('<p>' + (replies[topic] || 'Agent notified! Type your details below.') + '</p>');
-        spSetStatus('🟡 Waiting for ' + (_spAgentName||'agent') + '…', 'waiting');
-        var banner = document.getElementById('spConnectBanner');
-        if (banner) banner.style.display = 'none';
+        if (flow && flow[0]) {
+          spAddBotBubble('<p>' + flow[0].bot.replace(/\n/g,'<br>') + '</p>');
+          if (flow[0].chips) spBotShowChips(flow[0].chips);
+          _spBotStep = 1;
+        } else {
+          spAddBotBubble('<p>🤖 Tell me more about your issue and I\'ll try to help!</p>');
+        }
       }, 500);
     }
 
@@ -1864,7 +1963,14 @@
       var msg = inp.value.trim();
       inp.value = '';
       spAddUserBubble(msg);
-      // Generate a local ID so polling skips this message
+
+      // If bot is still active (no live agent yet), handle with bot reply
+      if (_spBotActive && !_spAgentConnected) {
+        spBotAutoReply(msg);
+        return;
+      }
+
+      // Live agent connected — send to server
       var localId = 'local_' + Date.now();
       _spSeenMsgIds.add(localId);
       try {
@@ -1875,9 +1981,9 @@
             body: JSON.stringify({ message: msg })
           });
           var d2 = await r2.json();
-          // Mark real server ID as seen to prevent duplicate
           if (d2 && d2.messageId) _spSeenMsgIds.add(d2.messageId);
         } else {
+          // No ticket yet — create one and send
           var r3 = await fetch('/api/support/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1887,9 +1993,7 @@
           if (d3.ticketId) {
             _spTicketId = d3.ticketId;
             _spSeenMsgIds.add('init_' + d3.ticketId);
-            if (!_spAgentName) _spAgentName = spPickAgentName();
             spStartPolling(_spTicketId);
-            setTimeout(function(){ spAddBotBubble('<p>✅ Message sent! <strong>' + _spAgentName + '</strong> will respond shortly.</p>'); }, 400);
           }
         }
       } catch(e) {}
