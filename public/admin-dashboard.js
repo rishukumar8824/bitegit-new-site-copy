@@ -2308,30 +2308,50 @@ async function loadUpLogins() {
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${logs.slice(0,50).map(log => {
-          const isSuccess = log.success === true || log.success === 'true' || log.status === 'SUCCESS' || (log.action === 'user_login' && log.success !== false);
-          const isFailed  = log.success === false || log.status === 'FAILED' || log.action === 'login_failed';
-          const ip        = log.ip || log.ipAddress || log.ipAddr || log.metadata?.ip || '-';
-          const country   = log.country || log.location || log.metadata?.country || log.geo?.country || '';
-          const city      = log.city || log.metadata?.city || log.geo?.city || '';
-          const device    = log.userAgent || log.deviceInfo || log.device || log.metadata?.userAgent || '';
-          const time      = log.createdAt || log.timestamp || log.loginAt || log.time;
+          const isSuccess = log.success === true || log.action === 'login_success';
+          const isFailed  = log.success === false || log.action === 'login_failed';
           const isSignup  = log.action === 'register_success';
-          const icon      = isSignup ? '🆕' : isSuccess ? '✅' : isFailed ? '❌' : '🔵';
-          const color     = isSignup ? '#a78bfa' : isSuccess ? 'var(--green)' : isFailed ? 'var(--red)' : 'var(--text-2)';
-          const label     = isSignup ? 'Account Created' : isSuccess ? 'Login Success' : isFailed ? 'Login Failed' : (log.action || 'Activity');
-          const mapsUrl = log.mapsUrl || (log.gps && log.gps.lat ? `https://www.google.com/maps?q=${log.gps.lat},${log.gps.lng}` : null);
-          const gpsLabel = log.gps && log.gps.accuracy ? `±${Math.round(log.gps.accuracy)}m` : '';
+          const ip        = log.ip || '-';
+          const country   = log.country || '';
+          const city      = log.city    || '';
+          const region    = log.region  || '';
+          const timezone  = log.timezone || '';
+          const browser   = log.browser || '';
+          const device    = log.device  || '';
+          const ua        = log.userAgent || '';
+          const time      = log.createdAt;
+          const mapsUrl   = log.mapsUrl || '';
+
+          // Country flag emoji from code
+          const flag = country && country.length === 2
+            ? String.fromCodePoint(...[...country.toUpperCase()].map(c => 0x1F1E0 - 65 + c.charCodeAt(0)))
+            : '';
+
+          const locationParts = [city, region, country].filter(Boolean);
+          const locationStr   = locationParts.join(', ');
+
+          const icon  = isSignup ? '🆕' : isSuccess ? '✅' : isFailed ? '❌' : '🔵';
+          const color = isSignup ? '#a78bfa' : isSuccess ? 'var(--green)' : isFailed ? 'var(--red)' : 'var(--text-2)';
+          const label = isSignup ? 'Account Created' : isSuccess ? 'Login Success' : isFailed ? 'Login Failed' : (log.action || 'Activity');
+
+          const deviceStr = [device, browser].filter(Boolean).join(' • ');
+
           return `<div class="up-login-row">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-              <span style="font-weight:600;font-size:12px;color:${color};">${icon} ${label}</span>
+              <span style="font-weight:700;font-size:12px;color:${color};">${icon} ${label}</span>
               <span style="font-size:10px;color:var(--text-2);white-space:nowrap;">${formatDate(time)}</span>
             </div>
-            <div style="display:flex;gap:16px;margin-top:5px;flex-wrap:wrap;align-items:center;">
-              <span style="font-size:11px;color:var(--text-2);">🌐 <span style="color:var(--text-1);font-family:monospace;">${ip}</span></span>
-              ${country ? `<span style="font-size:11px;color:var(--text-2);">📍 ${[city,country].filter(Boolean).join(', ')}</span>` : ''}
-              ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" style="font-size:11px;color:#00e5ff;text-decoration:none;display:flex;align-items:center;gap:3px;">🗺️ Live Location${gpsLabel ? ' <span style=\'font-size:10px;opacity:.7;\'>'+gpsLabel+'</span>' : ''}</a>` : ''}
+            <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:11px;color:var(--text-2);">🌐 <span style="color:#00e5ff;font-family:monospace;font-size:11px;">${ip}</span></span>
+              ${locationStr
+                ? `<span style="font-size:11px;color:var(--text-2);">${flag} <span style="color:var(--text-1);">${locationStr}</span></span>`
+                : '<span style="font-size:11px;color:rgba(255,255,255,0.2);">📍 Location unavailable</span>'}
+              ${timezone ? `<span style="font-size:10px;color:rgba(255,255,255,0.35);">🕐 ${timezone}</span>` : ''}
             </div>
-            ${device ? `<div style="font-size:10px;color:var(--text-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.7;">${device}</div>` : ''}
+            <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;align-items:center;">
+              ${deviceStr ? `<span style="font-size:10px;color:rgba(255,255,255,0.4);">📱 ${deviceStr}</span>` : ''}
+              ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="font-size:10px;color:#00e5ff;text-decoration:none;">🗺️ View on Map</a>` : ''}
+            </div>
           </div>`;
         }).join('')}
       </div>`;

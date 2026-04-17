@@ -1,6 +1,8 @@
 require('dotenv').config();
 
 const crypto = require('crypto');
+let geoip = null;
+try { geoip = require('geoip-lite'); } catch(e) { /* optional */ }
 const { localFaceMatch } = require('./services/local-face-match');
 const express = require('express');
 const path = require('path');
@@ -966,6 +968,22 @@ function getRequestIp(req) {
   const forwardedRaw = String(req.headers['x-forwarded-for'] || '').trim();
   const firstForwarded = forwardedRaw.split(',')[0].trim();
   return firstForwarded || String(req.ip || req.connection?.remoteAddress || 'unknown');
+}
+
+function getGeoInfo(ip) {
+  if (!geoip || !ip || ip === 'unknown') return {};
+  try {
+    const cleanIp = ip.replace(/^::ffff:/, '');
+    const geo = geoip.lookup(cleanIp);
+    if (!geo) return {};
+    return {
+      country: geo.country || '',
+      region: geo.region || '',
+      city: geo.city || '',
+      timezone: geo.timezone || '',
+      ll: geo.ll || []
+    };
+  } catch(e) { return {}; }
 }
 
 const loginAttemptLimiter = createIpAttemptLimiter({

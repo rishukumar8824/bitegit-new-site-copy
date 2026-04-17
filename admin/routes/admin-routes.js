@@ -201,9 +201,30 @@ function registerAdminRoutes(app, deps) {
         else if (/Edg\/(\d+)/i.test(ua))      browser = 'Edge';
         else if (/OPR\/(\d+)/i.test(ua))      browser = 'Opera';
 
-        const gps = d.metadata && d.metadata.gps;
-        const mapsUrl = gps && gps.lat && gps.lng
-          ? `https://www.google.com/maps?q=${gps.lat},${gps.lng}`
+        // Geo from stored metadata
+        let country = (d.metadata && d.metadata.country) || '';
+        let city    = (d.metadata && d.metadata.city)    || '';
+        let region  = (d.metadata && d.metadata.region)  || '';
+        let timezone = (d.metadata && d.metadata.timezone) || '';
+
+        // Fallback: geoip-lite lookup for old records without stored geo
+        if (!country && d.ipAddress) {
+          try {
+            const geoipMod = require('geoip-lite');
+            const cleanIp = d.ipAddress.replace(/^::ffff:/, '');
+            const geo = geoipMod.lookup(cleanIp);
+            if (geo) {
+              country  = geo.country  || '';
+              region   = geo.region   || '';
+              city     = geo.city     || '';
+              timezone = geo.timezone || '';
+            }
+          } catch(e) {}
+        }
+
+        // Google Maps search link from city+country
+        const mapsSearchUrl = (city || country)
+          ? `https://www.google.com/maps/search/${encodeURIComponent([city, region, country].filter(Boolean).join(', '))}`
           : null;
 
         return {
@@ -211,13 +232,14 @@ function registerAdminRoutes(app, deps) {
           success: d.action === 'login_success',
           action: d.action,
           ip: d.ipAddress || '',
-          country: (d.metadata && d.metadata.country) || '',
-          city: (d.metadata && d.metadata.city) || '',
+          country,
+          city,
+          region,
+          timezone,
           device,
           browser,
           userAgent: ua,
-          gps: gps || null,
-          mapsUrl,
+          mapsUrl: mapsSearchUrl,
           createdAt: d.createdAt
         };
       });
