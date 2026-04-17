@@ -3155,7 +3155,7 @@ body.mob-screen-open .p2p-secondary-nav {
 
   /* HIDE desktop table, SHOW mobile cards */
   .p2p-table-wrap { display: none; }
-  .p2p-cards { display: grid !important; }
+  .p2p-cards { display: flex !important; flex-direction: column; }
   .p2p-table-meta { display: none; }
 }
 
