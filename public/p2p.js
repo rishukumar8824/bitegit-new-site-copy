@@ -4200,7 +4200,6 @@ function bindOfferActionDelegation(container) {
     if (offer) {
       cacheSelectedOffer(offer);
     }
-    prefetchOrderFlowAssets();
   }
 
   container.addEventListener('mouseenter', primeOfferNavigation, true);
@@ -7998,20 +7997,9 @@ window.deleteMobAd = async function(offerId) {
       return;
     }
     var orderId = String(target.getAttribute('data-order-id') || '').trim();
-    var openChat = target.getAttribute('data-open-chat') === '1';
-    var url = orderOpenUrl(target);
-    if (!url) {
-      return;
-    }
+    if (!orderId) return;
     _ordPrimeOrderOpen(orderId);
-    if (typeof prefetchOrderFlowAssets === 'function') {
-      prefetchOrderFlowAssets();
-    }
-    if (typeof window._p2pNavSafe === 'function') {
-      window._p2pNavSafe(url, openChat ? 'Opening chat...' : 'Opening order...');
-      return;
-    }
-    window.location.href = url;
+    openOrderById(orderId);
   }
 
   document.addEventListener('click', function(event) {
@@ -8029,9 +8017,6 @@ window.deleteMobAd = async function(offerId) {
       return;
     }
     _ordPrimeOrderOpen(target.getAttribute('data-order-id'));
-    if (typeof prefetchOrderFlowAssets === 'function') {
-      prefetchOrderFlowAssets();
-    }
   }, { passive: true });
 
   document.addEventListener('keydown', function(event) {
@@ -8047,112 +8032,7 @@ window.deleteMobAd = async function(offerId) {
   });
 })();
 
-(function() {
-  var _navLockTs = 0;
-  var _navOverlay = null;
-  var _navFailSafeTimer = null;
-
-  function hideNavOverlay(resetLock) {
-    if (_navFailSafeTimer) {
-      clearTimeout(_navFailSafeTimer);
-      _navFailSafeTimer = null;
-    }
-    if (_navOverlay) {
-      _navOverlay.style.opacity = '0';
-      _navOverlay.style.pointerEvents = 'none';
-    }
-    if (resetLock !== false) {
-      _navLockTs = 0;
-    }
-  }
-
-  function ensureNavOverlay() {
-    if (_navOverlay && document.body.contains(_navOverlay)) {
-      return _navOverlay;
-    }
-    var overlay = document.createElement('div');
-    overlay.id = 'p2pNavOverlayFast';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.16s ease;';
-    overlay.innerHTML =
-      '<div style="display:flex;flex-direction:column;align-items:center;gap:12px;color:#fff;font-family:Manrope,sans-serif;">' +
-      '<div style="width:28px;height:28px;border:2px solid rgba(255,255,255,0.18);border-top-color:#a8ff3e;border-radius:50%;animation:ord-spin 0.7s linear infinite;"></div>' +
-      '<div data-nav-label style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.88);">Opening order...</div>' +
-      '</div>';
-    document.body.appendChild(overlay);
-    _navOverlay = overlay;
-    return overlay;
-  }
-
-  function _navSafe(url, label) {
-    var now = Date.now();
-    if (now - _navLockTs < 800) { console.log('[navSafe] blocked duplicate nav'); return; }
-    _navLockTs = now;
-    var overlay = ensureNavOverlay();
-    if (overlay) {
-      var labelEl = overlay.querySelector('[data-nav-label]');
-      if (labelEl) {
-        labelEl.textContent = label || 'Opening order...';
-      }
-      overlay.style.opacity = '1';
-      overlay.style.pointerEvents = 'auto';
-    }
-    _navFailSafeTimer = setTimeout(function() {
-      hideNavOverlay(true);
-    }, 1600);
-    if (typeof window.requestAnimationFrame === 'function') {
-      window.requestAnimationFrame(function() {
-        window.location.assign(url);
-      });
-      return;
-    }
-    window.location.assign(url);
-  }
-
-  window.addEventListener('pageshow', function() {
-    hideNavOverlay(true);
-  });
-  window.addEventListener('pagehide', function() {
-    hideNavOverlay(true);
-  });
-  window.addEventListener('popstate', function() {
-    hideNavOverlay(true);
-  });
-  document.addEventListener('visibilitychange', function() {
-    if (!document.hidden) {
-      hideNavOverlay(true);
-    }
-  });
-  window.fillDealModal = function(offer) {
-    if (offer && offer.id) {
-      cacheSelectedOffer(offer);
-      _navSafe(_buildOrderFlowUrl({ adId: offer.id, source: 'ad' }), 'Opening buy flow...');
-    }
-  };
-  window._p2pNavSafe = _navSafe; // expose for openOrder override below
-})();
-
-// ── Redirect all order opens to new order flow page ──────────────
-(function() {
-  var _navSafe = window._p2pNavSafe || function(url) { window.location.href = url; };
-
-  var _origOpenOrder = openOrder;
-  openOrder = function(order) {
-    if (order && order.id) {
-      _navSafe(_buildOrderFlowUrl({ orderId: order.id, source: 'orders' }), 'Opening order...');
-      return;
-    }
-    _origOpenOrder.call(this, order);
-  };
-
-  var _origOpenOrderById = openOrderById;
-  openOrderById = async function(orderId) {
-    if (orderId) {
-      _navSafe(_buildOrderFlowUrl({ orderId: orderId, source: 'orders' }), 'Opening order...');
-      return;
-    }
-    return _origOpenOrderById.call(this, orderId);
-  };
-})();
+// Buy flow and order opens handled in-page (bfBuyScreen / orderModal)
 
 // ── Real-time user SSE stream — instant new order notification ───
 (function() {
