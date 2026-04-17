@@ -2315,9 +2315,10 @@ async function loadUpLogins() {
           const city      = log.city || log.metadata?.city || log.geo?.city || '';
           const device    = log.userAgent || log.deviceInfo || log.device || log.metadata?.userAgent || '';
           const time      = log.createdAt || log.timestamp || log.loginAt || log.time;
-          const icon      = isSuccess ? '✅' : isFailed ? '❌' : '🔵';
-          const color     = isSuccess ? 'var(--green)' : isFailed ? 'var(--red)' : 'var(--text-2)';
-          const label     = isSuccess ? 'Login Success' : isFailed ? 'Login Failed' : (log.action || 'Activity');
+          const isSignup  = log.action === 'register_success';
+          const icon      = isSignup ? '🆕' : isSuccess ? '✅' : isFailed ? '❌' : '🔵';
+          const color     = isSignup ? '#a78bfa' : isSuccess ? 'var(--green)' : isFailed ? 'var(--red)' : 'var(--text-2)';
+          const label     = isSignup ? 'Account Created' : isSuccess ? 'Login Success' : isFailed ? 'Login Failed' : (log.action || 'Activity');
           return `<div class="up-login-row">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
               <span style="font-weight:600;font-size:12px;color:${color};">${icon} ${label}</span>

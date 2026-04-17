@@ -4051,7 +4051,8 @@ async function boot() {
       adminStore,
       adminAuthMiddleware,
       adminControllers,
-      auditLogService
+      auditLogService,
+      collections
     });
 
     const extendedStore = createAdminExtendedStore({ collections });

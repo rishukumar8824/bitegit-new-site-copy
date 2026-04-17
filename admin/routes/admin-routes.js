@@ -15,7 +15,7 @@ function safeString(value, fallback = '') {
 }
 
 function registerAdminRoutes(app, deps) {
-  const { adminStore, adminAuthMiddleware, adminControllers, auditLogService } = deps;
+  const { adminStore, adminAuthMiddleware, adminControllers, auditLogService, collections } = deps;
 
   const router = express.Router();
 
@@ -159,6 +159,68 @@ function registerAdminRoutes(app, deps) {
   // -------------------------
   router.get('/users', protect(ROLE_GROUPS.ALL), withLogging({ module: 'users', action: 'list_users' }, adminControllers.listUsers));
   router.get('/users/:userId', protect(ROLE_GROUPS.ALL), withLogging({ module: 'users', action: 'get_user' }, adminControllers.getUser));
+
+  // ── Login History ──────────────────────────────────────────────────────────
+  router.get('/users/:userId/login-history', protect(ROLE_GROUPS.ALL), async (req, res) => {
+    try {
+      const userId = safeString(req.params.userId);
+      const limit  = Math.min(parseInt(req.query.limit) || 50, 100);
+      const auditLogs = collections && collections.auditLogs;
+      if (!auditLogs) return res.json({ history: [], total: 0 });
+
+      const docs = await auditLogs
+        .find({
+          userId,
+          action: { $in: ['login_success', 'login_failed', 'register_success'] }
+        })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .toArray();
+
+      const total = await auditLogs.countDocuments({
+        userId,
+        action: { $in: ['login_success', 'login_failed', 'register_success'] }
+      });
+
+      const history = docs.map(function(d) {
+        const ua = d.metadata && d.metadata.userAgent ? d.metadata.userAgent : (d.userAgent || '');
+        // Parse device type from userAgent
+        let device = 'Unknown';
+        if (ua) {
+          if (/iPhone|iPad|iPod/i.test(ua))        device = 'iOS';
+          else if (/Android/i.test(ua))             device = 'Android';
+          else if (/Windows/i.test(ua))             device = 'Windows PC';
+          else if (/Mac OS X/i.test(ua))            device = 'Mac';
+          else if (/Linux/i.test(ua))               device = 'Linux';
+        }
+        // Parse browser
+        let browser = '';
+        if (/Chrome\/(\d+)/i.test(ua) && !/Edg|OPR/i.test(ua)) browser = 'Chrome';
+        else if (/Firefox\/(\d+)/i.test(ua))  browser = 'Firefox';
+        else if (/Safari\/(\d+)/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+        else if (/Edg\/(\d+)/i.test(ua))      browser = 'Edge';
+        else if (/OPR\/(\d+)/i.test(ua))      browser = 'Opera';
+
+        return {
+          id: d._id,
+          success: d.action === 'login_success',
+          action: d.action,
+          ip: d.ipAddress || '',
+          country: (d.metadata && d.metadata.country) || '',
+          city: (d.metadata && d.metadata.city) || '',
+          device,
+          browser,
+          userAgent: ua,
+          createdAt: d.createdAt
+        };
+      });
+
+      return res.json({ history, total });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   router.patch('/users/:userId/status', protect(ROLE_GROUPS.OPS), withLogging({ module: 'users', action: 'set_user_status' }, adminControllers.setUserStatus));
   router.post('/users/:userId/reset-password', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'users', action: 'reset_user_password' }, adminControllers.resetUserPassword));
   router.post('/users/:userId/adjust-balance', protect(ROLE_GROUPS.FINANCE), withLogging({ module: 'users', action: 'adjust_user_balance' }, adminControllers.adjustUserBalance));
