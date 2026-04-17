@@ -856,7 +856,7 @@ async function loadSupport() {
 
     // User avatar (first letter of userId or email)
     const avatarChar = (userLabel[0] || '?').toUpperCase();
-    const avatarColors = ['#f0b90b','#02c076','#4263eb','#f6465d','#a855f7'];
+    const avatarColors = ['#00e5ff','#02c076','#4263eb','#f6465d','#a855f7'];
     const avatarColor = avatarColors[avatarChar.charCodeAt(0) % avatarColors.length];
 
     return `<div class="support-ticket-item${isActive ? ' active' : ''}"
@@ -956,8 +956,8 @@ async function renderTicketChat(ticketId, silent = false) {
             const text = String(msg.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             return `<div style="display:flex;flex-direction:column;max-width:80%;
                     ${isAdmin ? 'align-self:flex-end;align-items:flex-end;' : 'align-self:flex-start;align-items:flex-start;'}">
-              <div style="background:${isAdmin ? 'rgba(240,185,11,0.13)' : 'var(--bg-card2)'};
-                           border:1px solid ${isAdmin ? 'rgba(240,185,11,0.3)' : 'var(--border)'};
+              <div style="background:${isAdmin ? 'rgba(0,229,255,0.10)' : 'var(--bg-card2)'};
+                           border:1px solid ${isAdmin ? 'rgba(0,229,255,0.25)' : 'var(--border)'};
                            border-radius:${isAdmin ? '14px 14px 2px 14px' : '14px 14px 14px 2px'};
                            padding:9px 14px;">
                 <p style="font-size:11px;font-weight:700;margin:0 0 4px;color:${isAdmin ? 'var(--accent)' : 'var(--green)'};">${senderName}</p>
@@ -2744,7 +2744,7 @@ function showSupportNotification(info) {
     padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
     box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:320px;`;
 
-  const avatarColor = '#f0b90b';
+  const avatarColor = '#00e5ff';
   n.innerHTML = `
     <div style="width:38px;height:38px;border-radius:50%;background:${avatarColor}20;border:2px solid ${avatarColor}40;
                 display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎧</div>

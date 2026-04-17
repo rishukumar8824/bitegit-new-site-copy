@@ -2161,6 +2161,13 @@ body.p2p-kyc-open { overflow: hidden; }
   padding-bottom: calc(76px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
+  /* GPU compositing — prevents scroll/keyboard-open repaints */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* Never let viewport resize cause layout shift */
+  contain: layout style;
 }
 
 .mob-screen::-webkit-scrollbar {
@@ -4186,24 +4193,33 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 .sp-send-btn:active { color: #00c2b2; }
 
-/* ── Chat screen — internal scroll + no-shake fix ── */
+/* ── Chat screen — fully static, no keyboard shake ── */
 #mobSupportChatScreen {
   overflow: hidden;
   padding-bottom: 0;
-  /* Prevent layout reflow when mobile keyboard opens */
-  will-change: transform;
+  /* Lock height so keyboard open doesn't reflow the screen */
+  height: 100%;
+  max-height: 100%;
+  /* GPU layer — stops repaint flicker */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 #mobSupportChatScreen .sp-chat-input-area {
-  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom) + 76px);
-  /* Lock input to bottom — no jump */
-  position: sticky;
-  bottom: 0;
+  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom));
   flex-shrink: 0;
+  /* Stick to bottom of flex container, not viewport */
+  position: relative;
+  bottom: auto;
 }
-/* Prevent scroll jump on input focus */
+/* Prevent rubber-band scroll causing layout jump */
 #mobSupportChatScreen .sp-chat-body {
   overscroll-behavior: none;
+  overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
+  /* Prevent iOS bounce that causes shake */
+  touch-action: pan-y;
 }
 
 /* ── Agent status badge ── */
