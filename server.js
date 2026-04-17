@@ -3759,7 +3759,7 @@ async function boot() {
     });
 
     const userCenterConfig = readUserCenterConfig();
-    if (userCenterConfig.mysql.enabled) {
+    if (userCenterConfig.mysql && userCenterConfig.mysql.enabled) {
       try {
         userCenterStore = createUserCenterStore(userCenterConfig.mysql);
         await userCenterStore.initialize();
@@ -3796,7 +3796,7 @@ async function boot() {
       console.warn(`[social-feed] ${reason}. Using in-memory fallback store for live feed APIs.`);
     }
 
-    if (socialFeedConfig.mysql.enabled) {
+    if (socialFeedConfig.mysql && socialFeedConfig.mysql.enabled) {
       try {
         socialFeedStore = createSocialFeedStore(socialFeedConfig.mysql);
         await socialFeedStore.initialize();
