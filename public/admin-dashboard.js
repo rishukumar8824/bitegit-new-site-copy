@@ -2739,10 +2739,10 @@ function showSupportNotification(info) {
   const userLabel = isObj ? (info.email || 'User') : '';
 
   const n = document.createElement('div');
-  n.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;
+  n.style.cssText = `position:fixed;top:18px;right:18px;z-index:9999;
     background:var(--bg-card);border:1px solid var(--accent);border-radius:14px;
     padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
-    box-shadow:0 8px 32px rgba(0,0,0,0.6);animation:slideInRight 0.35s ease;max-width:320px;`;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:320px;`;
 
   const avatarColor = '#f0b90b';
   n.innerHTML = `

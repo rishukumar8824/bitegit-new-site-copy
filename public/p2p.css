@@ -4181,13 +4181,24 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 .sp-send-btn:active { color: #00c2b2; }
 
-/* ── Chat screen — internal scroll fix ── */
+/* ── Chat screen — internal scroll + no-shake fix ── */
 #mobSupportChatScreen {
   overflow: hidden;
   padding-bottom: 0;
+  /* Prevent layout reflow when mobile keyboard opens */
+  will-change: transform;
 }
 #mobSupportChatScreen .sp-chat-input-area {
   padding-bottom: calc(0.6rem + env(safe-area-inset-bottom) + 76px);
+  /* Lock input to bottom — no jump */
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
+}
+/* Prevent scroll jump on input focus */
+#mobSupportChatScreen .sp-chat-body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Agent status badge ── */
@@ -4204,6 +4215,10 @@ body.mob-screen-open .p2p-secondary-nav {
 .sp-agent-status.active {
   background: rgba(0,229,255,0.12);
   color: #00e5ff;
+}
+.sp-agent-status.waiting {
+  background: rgba(240,185,11,0.1);
+  color: #f0b90b;
 }
 
 /* ── Connect to Agent banner ── */

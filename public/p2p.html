@@ -1674,25 +1674,33 @@
     });
     </script>
     <script>
-    // ── Support Chat Logic ─────────────────────────────
     // ── Support Chat System ──────────────────────────────────────
     var _spTicketId = null;
     var _spCurrentTopic = '';
     var _spPollTimer = null;
-    var _spLastMsgCount = 0;
+    var _spSeenMsgIds = new Set();   // track by ID to prevent duplicates
     var _spAgentConnected = false;
+    var _spConnecting = false;       // prevent double-connect
+    var _spAgentName = '';           // assigned agent name for this session
+
+    // Pool of friendly support agent names
+    var _spAgentNames = ['Aria','Max','Zara','Leo','Nova','Sam','Kai','Mia','Alex','Jay'];
+
+    function spPickAgentName() {
+      return _spAgentNames[Math.floor(Math.random() * _spAgentNames.length)];
+    }
 
     function spScroll() {
       var msgs = document.getElementById('spChatMessages');
-      if (msgs) msgs.scrollTop = msgs.scrollHeight;
+      if (msgs) requestAnimationFrame(function(){ msgs.scrollTop = msgs.scrollHeight; });
     }
 
     function spAddUserBubble(text) {
       var msgs = document.getElementById('spChatMessages');
       if (!msgs) return;
       var ub = document.createElement('div');
-      ub.style.cssText = 'display:flex;justify-content:flex-end;margin:0.5rem 1rem 0.5rem;';
-      ub.innerHTML = '<span style="background:#00c2b2;color:#fff;border-radius:14px 14px 2px 14px;padding:0.5rem 0.9rem;font-size:0.85rem;font-weight:600;max-width:78%;display:inline-block;word-break:break-word;">' + text + '</span>';
+      ub.style.cssText = 'display:flex;justify-content:flex-end;margin:0.35rem 1rem;';
+      ub.innerHTML = '<span style="background:#00c2b2;color:#fff;border-radius:14px 14px 2px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;font-weight:600;max-width:78%;display:inline-block;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</span>';
       msgs.appendChild(ub);
       spScroll();
     }
@@ -1710,15 +1718,27 @@
     function spAddAdminBubble(text, senderName) {
       var msgs = document.getElementById('spChatMessages');
       if (!msgs) return;
+      var name = senderName || _spAgentName || 'Support Agent';
       var wrap = document.createElement('div');
-      wrap.style.cssText = 'margin:0.5rem 1rem;';
-      wrap.innerHTML = '<div style="font-size:0.68rem;color:#00c2b2;font-weight:700;margin-bottom:3px;">🎧 ' + (senderName || 'Support Agent') + '</div>'
-        + '<div style="background:rgba(0,194,178,0.1);border:1px solid rgba(0,194,178,0.25);border-radius:2px 14px 14px 14px;padding:0.5rem 0.9rem;font-size:0.85rem;color:#fff;max-width:78%;word-break:break-word;">' + text + '</div>';
+      wrap.style.cssText = 'margin:0.35rem 1rem;';
+      wrap.innerHTML = '<div style="font-size:0.68rem;color:#00c2b2;font-weight:700;margin-bottom:3px;">🎧 ' + name + '</div>'
+        + '<div style="background:rgba(0,194,178,0.1);border:1px solid rgba(0,194,178,0.25);border-radius:2px 14px 14px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;color:#fff;max-width:78%;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</div>';
       msgs.appendChild(wrap);
       spScroll();
     }
 
-    // Poll for admin replies
+    function spSetStatus(text, type) {
+      // type: 'bot' | 'waiting' | 'connected'
+      var st = document.getElementById('spAgentStatus');
+      if (!st) return;
+      st.textContent = text;
+      st.classList.remove('active', 'waiting');
+      st.style.color = '';
+      if (type === 'waiting') { st.classList.add('waiting'); }
+      else if (type === 'connected') { st.classList.add('active'); }
+    }
+
+    // Poll for admin replies — uses message IDs to prevent duplicates
     function spStartPolling(ticketId) {
       if (_spPollTimer) clearInterval(_spPollTimer);
       _spPollTimer = setInterval(async function() {
@@ -1726,43 +1746,53 @@
           var r = await fetch('/api/support/ticket/' + ticketId + '/messages');
           if (!r.ok) return;
           var data = await r.json();
-          var msgs = data.messages || [];
-          // Show only new admin messages
-          for (var i = _spLastMsgCount; i < msgs.length; i++) {
-            var m = msgs[i];
+          var allMsgs = data.messages || [];
+          var gotNewAdmin = false;
+          for (var i = 0; i < allMsgs.length; i++) {
+            var m = allMsgs[i];
+            var mid = m.id || (m.sender + '_' + i);
+            if (_spSeenMsgIds.has(mid)) continue;
+            _spSeenMsgIds.add(mid);
             if (m.sender !== 'user') {
-              spAddAdminBubble(m.text, m.senderName || 'Support Agent');
-              if (!_spAgentConnected) {
-                _spAgentConnected = true;
-                var st = document.getElementById('spAgentStatus');
-                if (st) { st.textContent = '🟢 Agent Connected'; st.classList.add('active'); }
-              }
+              spAddAdminBubble(m.text, m.senderName || _spAgentName || 'Support Agent');
+              gotNewAdmin = true;
             }
           }
-          _spLastMsgCount = msgs.length;
+          if (gotNewAdmin && !_spAgentConnected) {
+            _spAgentConnected = true;
+            spSetStatus('🟢 ' + (_spAgentName || 'Agent') + ' Connected', 'connected');
+          }
         } catch(e) {}
-      }, 3000);
+      }, 1500);  // fast 1.5s polling
     }
 
     function spLeaveChat() {
       if (_spPollTimer) clearInterval(_spPollTimer);
       _spPollTimer = null;
       _spTicketId = null;
-      _spLastMsgCount = 0;
+      _spSeenMsgIds = new Set();
       _spAgentConnected = false;
-      // Reset chat UI
+      _spConnecting = false;
+      _spAgentName = '';
       var msgs = document.getElementById('spChatMessages');
       if (msgs) msgs.innerHTML = '<div class="sp-chat-time">Just now</div><div class="sp-bot-bubble"><p><strong>👋 Hey BITEGIT user!</strong></p><p>I\'m Bunz Support. Select a topic or connect to a live agent.</p><div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spSendTopic(this,\'Account &amp; security\')">Account &amp; security</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Deposit &amp; withdrawal\')">Deposit &amp; withdrawal</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'P2P\')">P2P</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Identity verification\')">Identity verification</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Promotion &amp; bonus\')">Promotion &amp; bonus</button></div></div>';
-      var st = document.getElementById('spAgentStatus');
-      if (st) { st.textContent = 'Bot Assistant'; st.classList.remove('active'); }
+      spSetStatus('Bot Assistant', 'bot');
       var banner = document.getElementById('spConnectBanner');
-      if (banner) banner.style.display = '';
+      if (banner) { banner.style.display = ''; var cb = banner.querySelector('.sp-connect-btn'); if(cb){cb.disabled=false;cb.textContent='Connect';} }
     }
 
     async function spConnectAgent() {
+      if (_spConnecting) return;
+      _spConnecting = true;
       var banner = document.getElementById('spConnectBanner');
-      if (banner) banner.style.display = 'none';
-      spAddBotBubble('<p>🔄 <strong>Connecting you to a live agent…</strong></p>');
+      var cb = banner ? banner.querySelector('.sp-connect-btn') : null;
+      if (cb) { cb.disabled = true; cb.textContent = '…'; }
+
+      // Show queue position immediately
+      var queuePos = _spTicketId ? Math.floor(Math.random()*4)+1 : Math.floor(Math.random()*10)+3;
+      var waitMin = Math.ceil(queuePos * 1.8);
+      spAddBotBubble('<p>🎧 <strong>Connecting to live support…</strong></p><p style="font-size:0.82rem;opacity:0.75;">Your position in queue: <strong style="color:#00e5ff;">#' + queuePos + '</strong><br>Estimated wait: ~' + waitMin + ' min</p>');
+
       try {
         var r = await fetch('/api/support/chat', {
           method: 'POST',
@@ -1771,52 +1801,59 @@
         });
         var data = await r.json();
         if (data.ticketId) {
-          _spTicketId = data.ticketId;
-          _spLastMsgCount = 1;
+          if (!_spTicketId) {
+            _spTicketId = data.ticketId;
+            // Mark the first system message as seen
+            _spSeenMsgIds.add('init_' + data.ticketId);
+          }
+          if (!_spAgentName) _spAgentName = spPickAgentName();
           spStartPolling(_spTicketId);
+          if (banner) banner.style.display = 'none';
           setTimeout(function(){
-            spAddBotBubble('<p>✅ <strong>Agent notified!</strong> Please wait — an admin will join shortly.<br><span style="font-size:0.78rem;opacity:0.6;">Avg. wait: ~2 min. Type your issue below.</span></p>');
-            var st = document.getElementById('spAgentStatus');
-            if (st) { st.textContent = '🟡 Waiting for agent…'; st.style.color = '#f0b90b'; }
-          }, 800);
+            spAddBotBubble('<p>✅ <strong>Agent ' + _spAgentName + ' has been notified!</strong><br><span style="font-size:0.78rem;opacity:0.6;">Type your issue below and they\'ll respond shortly.</span></p>');
+            spSetStatus('🟡 Waiting for ' + _spAgentName + '…', 'waiting');
+          }, 600);
         }
       } catch(e) {
         spAddBotBubble('<p>⚠️ Could not connect. Please try again.</p>');
-        if (banner) banner.style.display = '';
+        if (banner) { banner.style.display = ''; if(cb){cb.disabled=false;cb.textContent='Connect';} }
+        _spConnecting = false;
       }
     }
 
     async function spSendTopic(btn, topic) {
+      // Prevent if already have a ticket for this
       _spCurrentTopic = topic;
       spAddUserBubble(btn.textContent.trim());
-      // Also create ticket
-      try {
-        var r = await fetch('/api/support/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: topic, topic: topic })
-        });
-        var data = await r.json();
-        if (data.ticketId && !_spTicketId) {
-          _spTicketId = data.ticketId;
-          _spLastMsgCount = 1;
-          spStartPolling(_spTicketId);
-        }
-      } catch(e) {}
+      if (!_spTicketId) {
+        try {
+          var r = await fetch('/api/support/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: topic, topic: topic })
+          });
+          var d = await r.json();
+          if (d.ticketId) {
+            _spTicketId = d.ticketId;
+            _spSeenMsgIds.add('init_' + d.ticketId); // skip first user msg
+            if (!_spAgentName) _spAgentName = spPickAgentName();
+            spStartPolling(_spTicketId);
+          }
+        } catch(e) {}
+      }
       setTimeout(function(){
         var replies = {
-          'Account & security':'Please describe your account issue below. An agent has been notified. 🛡️',
-          'Deposit & withdrawal':'Please share your transaction details below. An agent has been notified. 💰',
-          'P2P':'Please describe your P2P issue below. An agent has been notified. 🤝',
-          'Identity verification':'An agent will guide you through KYC shortly. Please wait. 🪪',
-          'Promotion & bonus':'Please share your reward concern below. An agent has been notified. 🎁'
+          'Account & security':'Please describe your account issue below. <strong>' + (_spAgentName||'An agent') + '</strong> has been notified. 🛡️',
+          'Deposit & withdrawal':'Please share your transaction details. <strong>' + (_spAgentName||'An agent') + '</strong> has been notified. 💰',
+          'P2P':'Please describe your P2P issue. <strong>' + (_spAgentName||'An agent') + '</strong> has been notified. 🤝',
+          'Identity verification':'<strong>' + (_spAgentName||'An agent') + '</strong> will guide you through KYC shortly. 🪪',
+          'Promotion & bonus':'Please share your reward concern. <strong>' + (_spAgentName||'An agent') + '</strong> has been notified. 🎁'
         };
         spAddBotBubble('<p>' + (replies[topic] || 'Agent notified! Type your details below.') + '</p>');
-        var st = document.getElementById('spAgentStatus');
-        if (st) { st.textContent = '🟡 Waiting for agent…'; st.style.color = '#f0b90b'; }
+        spSetStatus('🟡 Waiting for ' + (_spAgentName||'agent') + '…', 'waiting');
         var banner = document.getElementById('spConnectBanner');
         if (banner) banner.style.display = 'none';
-      }, 600);
+      }, 500);
     }
 
     async function spSendMsg() {
@@ -1825,28 +1862,32 @@
       var msg = inp.value.trim();
       inp.value = '';
       spAddUserBubble(msg);
+      // Generate a local ID so polling skips this message
+      var localId = 'local_' + Date.now();
+      _spSeenMsgIds.add(localId);
       try {
         if (_spTicketId) {
-          // Add message to existing ticket
-          await fetch('/api/support/ticket/' + _spTicketId + '/user-reply', {
+          var r2 = await fetch('/api/support/ticket/' + _spTicketId + '/user-reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: msg })
           });
-          _spLastMsgCount++;
+          var d2 = await r2.json();
+          // Mark real server ID as seen to prevent duplicate
+          if (d2 && d2.messageId) _spSeenMsgIds.add(d2.messageId);
         } else {
-          // Create new ticket
-          var r = await fetch('/api/support/chat', {
+          var r3 = await fetch('/api/support/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: msg, topic: _spCurrentTopic || 'General' })
           });
-          var data = await r.json();
-          if (data.ticketId) {
-            _spTicketId = data.ticketId;
-            _spLastMsgCount = 1;
+          var d3 = await r3.json();
+          if (d3.ticketId) {
+            _spTicketId = d3.ticketId;
+            _spSeenMsgIds.add('init_' + d3.ticketId);
+            if (!_spAgentName) _spAgentName = spPickAgentName();
             spStartPolling(_spTicketId);
-            setTimeout(function(){ spAddBotBubble('<p>✅ Message sent! An agent will respond shortly.</p>'); }, 400);
+            setTimeout(function(){ spAddBotBubble('<p>✅ Message sent! <strong>' + _spAgentName + '</strong> will respond shortly.</p>'); }, 400);
           }
         }
       } catch(e) {}
@@ -1854,7 +1895,11 @@
 
     document.addEventListener('DOMContentLoaded', function(){
       var inp = document.getElementById('spChatInput');
-      if (inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') spSendMsg(); });
+      if (inp) {
+        inp.addEventListener('keydown', function(e){
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); spSendMsg(); }
+        });
+      }
     });
     </script>
 </body>
