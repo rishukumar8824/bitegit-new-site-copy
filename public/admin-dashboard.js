@@ -305,8 +305,8 @@ function drawChart(instanceKey, canvasId, labels, values, color = '#22c55e') {
           pointHoverRadius: 4,
           pointHoverBackgroundColor: color,
           fill: true,
-          tension: 0.42,
-          cubicInterpolationMode: 'monotone'
+          tension: 0.5,
+          cubicInterpolationMode: 'default'
         }
       ]
     },
