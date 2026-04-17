@@ -917,23 +917,11 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- LOGIN MODAL                                                   -->
-  <!-- ============================================================ -->
-  <div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;">
-    <div style="background:#111;border-radius:16px;padding:28px 24px;width:90%;max-width:380px;border:1px solid #222;">
-      <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:6px;">Sign in to P2P</div>
-      <div style="font-size:13px;color:#666;margin-bottom:24px;">Login to access P2P trading</div>
-      <div id="login-error" style="display:none;background:#3a1a1a;color:#ff6b6b;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;"></div>
-      <div style="margin-bottom:14px;">
-        <input id="login-email" type="email" placeholder="Email address" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;outline:none;box-sizing:border-box;" />
-      </div>
-      <div style="margin-bottom:20px;">
-        <input id="login-password" type="password" placeholder="Password" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')doLogin()" />
-      </div>
-      <button onclick="doLogin()" style="width:100%;background:#00d4d4;color:#000;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;">Login</button>
-      <div style="text-align:center;margin-top:14px;font-size:13px;color:#555;">Don't have account? <a href="/login.html" style="color:#00d4d4;text-decoration:none;">Register</a></div>
-    </div>
-  </div>
+  <!-- login-overlay removed — auth handled by /auth.html -->
+  <div id="login-overlay" style="display:none!important;"></div>
+  <div id="login-error" style="display:none;"></div>
+  <input id="login-email" type="hidden"/>
+  <input id="login-password" type="hidden"/>
 
   <!-- ============================================================ -->
   <!-- OVERLAY: Paid Modal                                           -->
@@ -1005,7 +993,9 @@
   // ============================================================
   async function checkAuth() {
     try {
-      const res = await fetch('/api/p2p/me', { credentials: 'include' });
+      const tok = localStorage.getItem('bitegit_token') || '';
+      const headers = tok ? { 'Authorization': 'Bearer ' + tok } : {};
+      const res = await fetch('/api/p2p/me', { credentials: 'include', headers });
       if (res.ok) {
         const data = await res.json();
         if (data.loggedIn && data.user) {
@@ -1014,50 +1004,14 @@
         }
       }
     } catch (e) {}
-    // Not logged in — redirect to auth
     window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.href);
   }
 
   function showLoginModal() {
-    document.getElementById('login-overlay').style.display = 'flex';
+    window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.href);
   }
-
-  function hideLoginModal() {
-    document.getElementById('login-overlay').style.display = 'none';
-  }
-
-  async function doLogin() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const errEl = document.getElementById('login-error');
-    errEl.style.display = 'none';
-
-    if (!email || !password) {
-      errEl.textContent = 'Email and password are required.';
-      errEl.style.display = 'block';
-      return;
-    }
-    try {
-      const res = await fetch('/api/p2p/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        errEl.textContent = data.message || 'Login failed. Check credentials.';
-        errEl.style.display = 'block';
-        return;
-      }
-      currentUser = data.user || data;
-      hideLoginModal();
-      await loadAds();
-    } catch (e) {
-      errEl.textContent = 'Network error. Try again.';
-      errEl.style.display = 'block';
-    }
-  }
+  function hideLoginModal() {}
+  function doLogin() {}
 
   // ============================================================
   // LOAD ADS / SELLERS

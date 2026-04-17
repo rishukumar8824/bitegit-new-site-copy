@@ -1057,7 +1057,9 @@
   // ============================================================
   async function checkAuth() {
     try {
-      const res = await fetch('/api/p2p/me', { credentials: 'include' });
+      const tok = localStorage.getItem('bitegit_token') || '';
+      const headers = tok ? { 'Authorization': 'Bearer ' + tok } : {};
+      const res = await fetch('/api/p2p/me', { credentials: 'include', headers });
       if (res.ok) {
         const data = await res.json();
         if (data.loggedIn && data.user) { currentUser = data.user; return; }
