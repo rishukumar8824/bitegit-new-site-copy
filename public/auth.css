@@ -11,9 +11,9 @@
 }
 
 [data-theme='dark'] {
-  --auth-bg: #06090f;
-  --auth-panel: #0e141e;
-  --auth-line: rgba(255, 255, 255, 0.12);
+  --auth-bg: #000000;
+  --auth-panel: #0d0d0d;
+  --auth-line: rgba(255, 255, 255, 0.10);
   --auth-text: #f4f8ff;
   --auth-muted: #8e9bb0;
 }
@@ -44,7 +44,7 @@ body.auth-page {
   min-height: 100vh;
   font-family: 'Manrope', 'Segoe UI', sans-serif;
   color: var(--auth-text);
-  background: radial-gradient(circle at 20% 0%, rgba(134, 244, 14, 0.14), transparent 42%), var(--auth-bg);
+  background: var(--auth-bg);
   transition: background 0.3s ease, color 0.3s ease;
 }
 
@@ -171,7 +171,7 @@ body.auth-page {
   min-height: 36px;
   border-radius: 8px;
   border: 1px solid var(--auth-line);
-  background: #070b12;
+  background: #000000;
   color: var(--auth-text);
   font-size: 0.84rem;
   padding: 0 0.7rem;
@@ -374,7 +374,7 @@ body.auth-forgot-mode .auth-submit {
   position: absolute;
   inset: 0;
   border: 0;
-  background: rgba(2, 6, 12, 0.72);
+  background: rgba(0,0,0,0.85);
 }
 
 .auth-qr-card {
@@ -431,7 +431,7 @@ body.auth-forgot-mode .auth-submit {
   position: fixed;
   inset: 0;
   z-index: 44;
-  background: rgba(3, 6, 11, 0.72);
+  background: rgba(0,0,0,0.85);
 }
 
 .auth-nav-drawer {
