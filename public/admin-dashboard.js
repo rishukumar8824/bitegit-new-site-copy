@@ -404,7 +404,7 @@ async function loadOverview() {
   const other  = Math.max(0, Number(revenue.totalRevenue?.month || 0) - p2p - spot - wdfee);
   const donutData  = [p2p, spot, wdfee, other];
   const donutLabels = ['P2P', 'Spot Fees', 'Withdrawal', 'Other'];
-  const donutColors = ['#00e5ff', '#22c55e', '#f0b90b', '#a78bfa'];
+  const donutColors = ['#00e5ff', '#0099a8', '#38bdf8', '#0ea5e9'];
   const donutTotal = p2p + spot + wdfee + other;
 
   const dtEl = document.getElementById('donutTotal');
@@ -1124,8 +1124,62 @@ async function loadRevenue() {
     'revenueChart',
     trend.map((point) => point.date),
     trend.map((point) => Number(point.revenue || 0)),
-    '#38bdf8'
+    '#00e5ff'
   );
+
+  // ── Revenue Donut Chart ──
+  const rp2p   = Number(payload.p2pEarnings || 0);
+  const rspot  = Number(payload.spotFeeEarnings || 0);
+  const rwdfee = Number(payload.withdrawalFeeEarnings || 0);
+  const rother = Math.max(0, Number(payload.totalRevenue?.month || 0) - rp2p - rspot - rwdfee);
+  const rdData   = [rp2p, rspot, rwdfee, rother];
+  const rdLabels = ['P2P', 'Spot Fees', 'Withdrawal', 'Other'];
+  const rdColors = ['#00e5ff', '#0099a8', '#38bdf8', '#0ea5e9'];
+  const rdTotal  = rp2p + rspot + rwdfee + rother;
+
+  const rdTotalEl = document.getElementById('revDonutTotal');
+  if (rdTotalEl) rdTotalEl.textContent = '₹' + formatNumber(rdTotal, 2);
+
+  const rdCanvas = document.getElementById('revDonutChart');
+  if (rdCanvas) {
+    if (state.charts['revDonut']) state.charts['revDonut'].destroy();
+    state.charts['revDonut'] = new Chart(rdCanvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: rdLabels,
+        datasets: [{
+          data: rdTotal > 0 ? rdData : [1,1,1,1],
+          backgroundColor: rdColors,
+          borderWidth: 0,
+          borderRadius: 8,
+          spacing: 4,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: { legend: { display: false }, tooltip: {
+          backgroundColor: '#141821',
+          borderColor: 'rgba(0,229,255,0.2)',
+          borderWidth: 1,
+          callbacks: { label: function(ctx) { return ' ₹' + formatNumber(ctx.parsed, 2); } }
+        }}
+      }
+    });
+  }
+
+  const rdLegend = document.getElementById('revDonutLegend');
+  if (rdLegend) {
+    rdLegend.innerHTML = rdLabels.map(function(lbl, i) {
+      var pct = rdTotal > 0 ? ((rdData[i] / rdTotal) * 100).toFixed(1) : '0.0';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;">'
+        + '<span style="display:flex;align-items:center;gap:6px;color:var(--text-2);">'
+        + '<span style="width:9px;height:9px;border-radius:3px;background:' + rdColors[i] + ';flex-shrink:0;display:inline-block;"></span>' + lbl + '</span>'
+        + '<span style="color:#fff;font-weight:700;">₹' + formatNumber(rdData[i], 2) + ' <span style="color:' + rdColors[i] + ';font-size:10px;">(' + pct + '%)</span></span></div>';
+    }).join('');
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
