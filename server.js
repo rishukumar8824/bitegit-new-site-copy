@@ -3344,6 +3344,83 @@ app.post('/api/support/chat', async (req, res) => {
   }
 });
 
+// ── Public: get ticket messages (user polling for admin replies) ──────────────
+app.get('/api/support/ticket/:ticketId/messages', async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    if (!ticketId) return res.status(400).json({ message: 'ticketId required' });
+    if (!adminStore || typeof adminStore.getSupportTicket !== 'function') {
+      return res.status(503).json({ message: 'Support service unavailable' });
+    }
+    const ticket = await adminStore.getSupportTicket(String(ticketId).trim());
+    // Return messages array and current status
+    return res.json({
+      ticketId: ticket.id,
+      status: ticket.status,
+      messages: (ticket.messages || []).map(m => {
+        const isUser = m.sender === 'user';
+        return {
+          id: m.id,
+          sender: isUser ? 'user' : 'admin',
+          senderName: m.senderName || (isUser ? 'You' : 'Support Agent'),
+          text: m.text,
+          createdAt: m.createdAt
+        };
+      })
+    });
+  } catch (err) {
+    if (err && err.status === 404) return res.status(404).json({ message: 'Ticket not found' });
+    return res.status(500).json({ message: 'Could not fetch messages' });
+  }
+});
+
+// ── Public: user sends a reply on an existing ticket ─────────────────────────
+app.post('/api/support/ticket/:ticketId/user-reply', async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const { message, name } = req.body || {};
+    if (!ticketId || !message || !String(message).trim()) {
+      return res.status(400).json({ message: 'ticketId and message required' });
+    }
+    if (!adminStore || typeof adminStore.getSupportTicket !== 'function') {
+      return res.status(503).json({ message: 'Support service unavailable' });
+    }
+    const ticket = await adminStore.getSupportTicket(String(ticketId).trim());
+    const newMsg = {
+      id: `tmsg_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
+      sender: 'user',
+      senderName: name || ticket.name || 'User',
+      text: String(message).trim(),
+      createdAt: new Date()
+    };
+    // Push message to ticket's messages array in DB
+    const { getCollections } = require('./lib/db');
+    const cols = getCollections ? getCollections() : null;
+    const adminSupportTickets = cols ? cols.adminSupportTickets : null;
+    if (adminSupportTickets) {
+      await adminSupportTickets.updateOne(
+        { id: String(ticketId).trim() },
+        {
+          $push: { messages: newMsg },
+          $set: { updatedAt: new Date(), status: 'OPEN' }
+        }
+      );
+    }
+    // Notify admin via SSE that user replied
+    broadcastAdminSupportEvent({
+      type: 'user_reply',
+      ticketId: ticket.id,
+      subject: ticket.subject,
+      agentName: name || ticket.name || 'User',
+      message: newMsg.text.slice(0, 100)
+    });
+    return res.json({ success: true, messageId: newMsg.id });
+  } catch (err) {
+    if (err && err.status === 404) return res.status(404).json({ message: 'Ticket not found' });
+    return res.status(500).json({ message: 'Could not send reply' });
+  }
+});
+
 app.get('/admin-login', (req, res) => {
   return res.redirect('/admin/login');
 });

@@ -4080,6 +4080,7 @@ body.mob-screen-open .p2p-secondary-nav {
 /* ── Chat screen ── */
 .sp-chat-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -4179,3 +4180,80 @@ body.mob-screen-open .p2p-secondary-nav {
   padding: 4px;
 }
 .sp-send-btn:active { color: #00c2b2; }
+
+/* ── Chat screen — internal scroll fix ── */
+#mobSupportChatScreen {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+#mobSupportChatScreen .sp-chat-input-area {
+  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom) + 76px);
+}
+
+/* ── Agent status badge ── */
+.sp-agent-status {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+  transition: background 0.25s, color 0.25s;
+}
+.sp-agent-status.active {
+  background: rgba(0,229,255,0.12);
+  color: #00e5ff;
+}
+
+/* ── Connect to Agent banner ── */
+.sp-connect-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(0,229,255,0.06);
+  border: 1px solid rgba(0,229,255,0.15);
+  border-radius: 12px;
+  padding: 0.65rem 0.9rem;
+  margin: 0.75rem 1rem 0.25rem;
+  flex-shrink: 0;
+}
+.sp-connect-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+.sp-connect-icon {
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+.sp-connect-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+.sp-connect-sub {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.45);
+  margin-top: 0.1rem;
+}
+.sp-connect-btn {
+  background: #00e5ff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.sp-connect-btn:active { opacity: 0.75; }
+.sp-connect-btn:disabled { opacity: 0.4; cursor: not-allowed; }

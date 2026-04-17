@@ -642,22 +642,39 @@
 
     <!-- ── Support Chat Screen ── -->
     <div id="mobSupportChatScreen" class="mob-screen hidden">
+      <!-- Header -->
       <div class="mob-screen-head sp-head">
-        <button class="mob-back-btn" onclick="window.showMobScreen && window.showMobScreen('mobSupportScreen')" aria-label="Back">
+        <button class="mob-back-btn" onclick="spLeaveChat();window.showMobScreen && window.showMobScreen('mobSupportScreen')" aria-label="Back">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <div class="sp-head-center">
           <span class="sp-bot-icon">🤖</span>
-          <span class="sp-head-title">BITEGIT Support</span>
+          <div>
+            <div class="sp-head-title">BITEGIT Support</div>
+            <div id="spAgentStatus" class="sp-agent-status">Bot Assistant</div>
+          </div>
         </div>
-        <button class="sp-close-btn" onclick="window.showMobScreen && window.showMobScreen('mobProfileScreen')" aria-label="Close">✕</button>
+        <button class="sp-close-btn" onclick="spLeaveChat();window.showMobScreen && window.showMobScreen('mobProfileScreen')" aria-label="Close">✕</button>
       </div>
 
+      <!-- Connect to Agent Banner -->
+      <div id="spConnectBanner" class="sp-connect-banner">
+        <div class="sp-connect-left">
+          <span class="sp-connect-icon">🎧</span>
+          <div>
+            <div class="sp-connect-title">Talk to a Live Agent</div>
+            <div class="sp-connect-sub">Avg. response time: ~2 min</div>
+          </div>
+        </div>
+        <button class="sp-connect-btn" onclick="spConnectAgent()">Connect</button>
+      </div>
+
+      <!-- Chat messages -->
       <div class="sp-chat-body" id="spChatMessages">
         <div class="sp-chat-time">Just now</div>
         <div class="sp-bot-bubble">
           <p><strong>👋 Hey BITEGIT user!</strong></p>
-          <p>I'm Bunz Support, your dedicated virtual assistant. How can I help today?</p>
+          <p>I'm Bunz Support. Select a topic or connect to a live agent.</p>
           <div class="sp-topic-chips">
             <button class="sp-topic-chip" onclick="spSendTopic(this,'Account &amp; security')">Account &amp; security</button>
             <button class="sp-topic-chip" onclick="spSendTopic(this,'Deposit &amp; withdrawal')">Deposit &amp; withdrawal</button>
@@ -668,10 +685,10 @@
         </div>
       </div>
 
+      <!-- Input -->
       <div class="sp-chat-input-area">
-        <button class="sp-tickets-btn">My support tickets</button>
         <div class="sp-input-row">
-          <input type="text" id="spChatInput" class="sp-input" placeholder="Input your question(s) here" autocomplete="off" />
+          <input type="text" id="spChatInput" class="sp-input" placeholder="Type your message…" autocomplete="off" />
           <button class="sp-send-btn" onclick="spSendMsg()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
           </button>
@@ -1658,26 +1675,28 @@
     </script>
     <script>
     // ── Support Chat Logic ─────────────────────────────
+    // ── Support Chat System ──────────────────────────────────────
+    var _spTicketId = null;
     var _spCurrentTopic = '';
-    // Submit message to admin via API
-    async function spSubmitToAdmin(message, topic) {
-      try {
-        await fetch('/api/support/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: message, topic: topic || _spCurrentTopic || 'General' })
-        });
-      } catch(e) {}
+    var _spPollTimer = null;
+    var _spLastMsgCount = 0;
+    var _spAgentConnected = false;
+
+    function spScroll() {
+      var msgs = document.getElementById('spChatMessages');
+      if (msgs) msgs.scrollTop = msgs.scrollHeight;
     }
+
     function spAddUserBubble(text) {
       var msgs = document.getElementById('spChatMessages');
       if (!msgs) return;
       var ub = document.createElement('div');
-      ub.style.cssText = 'display:flex;justify-content:flex-end;margin:0.5rem 1rem;';
-      ub.innerHTML = '<span style="background:#00c2b2;color:#fff;border-radius:14px 14px 2px 14px;padding:0.5rem 0.85rem;font-size:0.84rem;font-weight:600;max-width:75%;display:inline-block;">' + text + '</span>';
+      ub.style.cssText = 'display:flex;justify-content:flex-end;margin:0.5rem 1rem 0.5rem;';
+      ub.innerHTML = '<span style="background:#00c2b2;color:#fff;border-radius:14px 14px 2px 14px;padding:0.5rem 0.9rem;font-size:0.85rem;font-weight:600;max-width:78%;display:inline-block;word-break:break-word;">' + text + '</span>';
       msgs.appendChild(ub);
-      msgs.scrollTop = msgs.scrollHeight;
+      spScroll();
     }
+
     function spAddBotBubble(html) {
       var msgs = document.getElementById('spChatMessages');
       if (!msgs) return;
@@ -1685,38 +1704,154 @@
       bb.className = 'sp-bot-bubble';
       bb.innerHTML = html;
       msgs.appendChild(bb);
-      msgs.scrollTop = msgs.scrollHeight;
+      spScroll();
     }
-    function spSendTopic(btn, topic) {
+
+    function spAddAdminBubble(text, senderName) {
+      var msgs = document.getElementById('spChatMessages');
+      if (!msgs) return;
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'margin:0.5rem 1rem;';
+      wrap.innerHTML = '<div style="font-size:0.68rem;color:#00c2b2;font-weight:700;margin-bottom:3px;">🎧 ' + (senderName || 'Support Agent') + '</div>'
+        + '<div style="background:rgba(0,194,178,0.1);border:1px solid rgba(0,194,178,0.25);border-radius:2px 14px 14px 14px;padding:0.5rem 0.9rem;font-size:0.85rem;color:#fff;max-width:78%;word-break:break-word;">' + text + '</div>';
+      msgs.appendChild(wrap);
+      spScroll();
+    }
+
+    // Poll for admin replies
+    function spStartPolling(ticketId) {
+      if (_spPollTimer) clearInterval(_spPollTimer);
+      _spPollTimer = setInterval(async function() {
+        try {
+          var r = await fetch('/api/support/ticket/' + ticketId + '/messages');
+          if (!r.ok) return;
+          var data = await r.json();
+          var msgs = data.messages || [];
+          // Show only new admin messages
+          for (var i = _spLastMsgCount; i < msgs.length; i++) {
+            var m = msgs[i];
+            if (m.sender !== 'user') {
+              spAddAdminBubble(m.text, m.senderName || 'Support Agent');
+              if (!_spAgentConnected) {
+                _spAgentConnected = true;
+                var st = document.getElementById('spAgentStatus');
+                if (st) { st.textContent = '🟢 Agent Connected'; st.classList.add('active'); }
+              }
+            }
+          }
+          _spLastMsgCount = msgs.length;
+        } catch(e) {}
+      }, 3000);
+    }
+
+    function spLeaveChat() {
+      if (_spPollTimer) clearInterval(_spPollTimer);
+      _spPollTimer = null;
+      _spTicketId = null;
+      _spLastMsgCount = 0;
+      _spAgentConnected = false;
+      // Reset chat UI
+      var msgs = document.getElementById('spChatMessages');
+      if (msgs) msgs.innerHTML = '<div class="sp-chat-time">Just now</div><div class="sp-bot-bubble"><p><strong>👋 Hey BITEGIT user!</strong></p><p>I\'m Bunz Support. Select a topic or connect to a live agent.</p><div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spSendTopic(this,\'Account &amp; security\')">Account &amp; security</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Deposit &amp; withdrawal\')">Deposit &amp; withdrawal</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'P2P\')">P2P</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Identity verification\')">Identity verification</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Promotion &amp; bonus\')">Promotion &amp; bonus</button></div></div>';
+      var st = document.getElementById('spAgentStatus');
+      if (st) { st.textContent = 'Bot Assistant'; st.classList.remove('active'); }
+      var banner = document.getElementById('spConnectBanner');
+      if (banner) banner.style.display = '';
+    }
+
+    async function spConnectAgent() {
+      var banner = document.getElementById('spConnectBanner');
+      if (banner) banner.style.display = 'none';
+      spAddBotBubble('<p>🔄 <strong>Connecting you to a live agent…</strong></p>');
+      try {
+        var r = await fetch('/api/support/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: 'User requested live agent connection', topic: _spCurrentTopic || 'General', connectAgent: true })
+        });
+        var data = await r.json();
+        if (data.ticketId) {
+          _spTicketId = data.ticketId;
+          _spLastMsgCount = 1;
+          spStartPolling(_spTicketId);
+          setTimeout(function(){
+            spAddBotBubble('<p>✅ <strong>Agent notified!</strong> Please wait — an admin will join shortly.<br><span style="font-size:0.78rem;opacity:0.6;">Avg. wait: ~2 min. Type your issue below.</span></p>');
+            var st = document.getElementById('spAgentStatus');
+            if (st) { st.textContent = '🟡 Waiting for agent…'; st.style.color = '#f0b90b'; }
+          }, 800);
+        }
+      } catch(e) {
+        spAddBotBubble('<p>⚠️ Could not connect. Please try again.</p>');
+        if (banner) banner.style.display = '';
+      }
+    }
+
+    async function spSendTopic(btn, topic) {
       _spCurrentTopic = topic;
-      spAddUserBubble(btn.textContent);
-      // Submit to admin
-      spSubmitToAdmin(topic, topic);
+      spAddUserBubble(btn.textContent.trim());
+      // Also create ticket
+      try {
+        var r = await fetch('/api/support/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: topic, topic: topic })
+        });
+        var data = await r.json();
+        if (data.ticketId && !_spTicketId) {
+          _spTicketId = data.ticketId;
+          _spLastMsgCount = 1;
+          spStartPolling(_spTicketId);
+        }
+      } catch(e) {}
       setTimeout(function(){
         var replies = {
-          'Account & security': 'Our support agent has been notified and will assist you with your account & security issue shortly. 🛡️',
-          'Deposit & withdrawal': 'Our team has been notified about your deposit/withdrawal issue. An agent will respond shortly. 💰',
-          'P2P': 'Our P2P support agent has been notified. Please describe your issue below and we\'ll get back to you. 🤝',
-          'Identity verification': 'Our team has been notified. An agent will guide you through identity verification shortly. 🪪',
-          'Promotion & bonus': 'Our team has been notified about your reward/bonus issue. An agent will respond shortly. 🎁',
-          'Order inquiry': 'An agent has been notified about your order inquiry and will respond shortly. 📋'
+          'Account & security':'Please describe your account issue below. An agent has been notified. 🛡️',
+          'Deposit & withdrawal':'Please share your transaction details below. An agent has been notified. 💰',
+          'P2P':'Please describe your P2P issue below. An agent has been notified. 🤝',
+          'Identity verification':'An agent will guide you through KYC shortly. Please wait. 🪪',
+          'Promotion & bonus':'Please share your reward concern below. An agent has been notified. 🎁'
         };
-        var reply = replies[topic] || 'Our support team has been notified and will respond shortly.';
-        spAddBotBubble('<p>✅ <strong>Agent connected!</strong></p><p>' + reply + '</p><p style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-top:4px;">You can type more details below ↓</p>');
+        spAddBotBubble('<p>' + (replies[topic] || 'Agent notified! Type your details below.') + '</p>');
+        var st = document.getElementById('spAgentStatus');
+        if (st) { st.textContent = '🟡 Waiting for agent…'; st.style.color = '#f0b90b'; }
+        var banner = document.getElementById('spConnectBanner');
+        if (banner) banner.style.display = 'none';
       }, 600);
     }
-    function spSendMsg() {
+
+    async function spSendMsg() {
       var inp = document.getElementById('spChatInput');
       if (!inp || !inp.value.trim()) return;
       var msg = inp.value.trim();
       inp.value = '';
       spAddUserBubble(msg);
-      // Send to admin
-      spSubmitToAdmin(msg, _spCurrentTopic);
-      setTimeout(function(){
-        spAddBotBubble('<p>✅ Message sent to our support team! An agent will respond shortly.</p>');
-      }, 500);
+      try {
+        if (_spTicketId) {
+          // Add message to existing ticket
+          await fetch('/api/support/ticket/' + _spTicketId + '/user-reply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg })
+          });
+          _spLastMsgCount++;
+        } else {
+          // Create new ticket
+          var r = await fetch('/api/support/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, topic: _spCurrentTopic || 'General' })
+          });
+          var data = await r.json();
+          if (data.ticketId) {
+            _spTicketId = data.ticketId;
+            _spLastMsgCount = 1;
+            spStartPolling(_spTicketId);
+            setTimeout(function(){ spAddBotBubble('<p>✅ Message sent! An agent will respond shortly.</p>'); }, 400);
+          }
+        }
+      } catch(e) {}
     }
+
     document.addEventListener('DOMContentLoaded', function(){
       var inp = document.getElementById('spChatInput');
       if (inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') spSendMsg(); });
