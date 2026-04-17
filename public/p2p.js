@@ -7128,10 +7128,23 @@ window.deleteMobAd = async function(offerId) {
     if (kycBack) { e.preventDefault(); backToKycBasic(); return; }
   });
 
+  // Track touch start position to distinguish tap from scroll
+  var _touchStartY = 0, _touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    _touchStartY = e.touches[0] ? e.touches[0].clientY : 0;
+    _touchStartX = e.touches[0] ? e.touches[0].clientX : 0;
+  }, { passive: true });
+
   // iOS touchend — ensures taps work inside fixed/overflow elements
   document.addEventListener('touchend', function(e) {
+    // If finger moved more than 10px, it's a scroll — ignore
+    var endY = e.changedTouches[0] ? e.changedTouches[0].clientY : 0;
+    var endX = e.changedTouches[0] ? e.changedTouches[0].clientX : 0;
+    var moved = Math.abs(endY - _touchStartY) > 10 || Math.abs(endX - _touchStartX) > 10;
+
     var pmRow = e.target.closest('[data-open-payment]');
     if (pmRow) {
+      if (moved) return; // scrolling, not tapping
       if (window._pmJustClosed && Date.now() - window._pmJustClosed < 500) return;
       if (window._pmJustOpened && Date.now() - window._pmJustOpened < 500) return;
       e.preventDefault(); openPaymentMethodsScreen(); return;
