@@ -1689,26 +1689,34 @@
     function spAdjustForKeyboard() {
       var el = document.getElementById('mobSupportChatScreen');
       if (!el || el.style.display === 'none') return;
-      var h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      el.style.height = h + 'px';
-      el.style.maxHeight = h + 'px';
-      // scroll messages to bottom
+      if (window.visualViewport) {
+        var vv = window.visualViewport;
+        el.style.top = vv.offsetTop + 'px';
+        el.style.height = vv.height + 'px';
+        el.style.bottom = 'auto';
+      } else {
+        el.style.top = '0';
+        el.style.height = window.innerHeight + 'px';
+        el.style.bottom = 'auto';
+      }
       var body = el.querySelector('.sp-chat-body');
       if (body) setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 50);
     }
+    function spResetHeight() {
+      var el = document.getElementById('mobSupportChatScreen');
+      if (!el) return;
+      el.style.top = '0';
+      el.style.height = '';
+      el.style.bottom = '0';
+    }
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', spAdjustForKeyboard);
-      window.visualViewport.addEventListener('scroll', spAdjustForKeyboard);
     }
     window.addEventListener('focusin', function(e) {
-      if (e.target && e.target.id === 'spChatInput') {
-        setTimeout(spAdjustForKeyboard, 100);
-      }
+      if (e.target && e.target.id === 'spChatInput') setTimeout(spAdjustForKeyboard, 80);
     });
     window.addEventListener('focusout', function(e) {
-      if (e.target && e.target.id === 'spChatInput') {
-        setTimeout(spAdjustForKeyboard, 100);
-      }
+      if (e.target && e.target.id === 'spChatInput') setTimeout(spResetHeight, 80);
     });
     function spLockHeight() { spAdjustForKeyboard(); }
 
