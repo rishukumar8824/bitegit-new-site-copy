@@ -664,7 +664,7 @@ function buildP2PKycProfileFromCredential(credential = {}) {
   return {
     status,
     statusLabel: getKycStatusLabel(status),
-    canBuy: status === 'VERIFIED',
+    canBuy: true,
     level: String(credential?.kycLevel || 'BASIC').trim().toUpperCase() || 'BASIC',
     aadhaarLast4: String(credential?.kycAadhaarLast4 || '').trim(),
     requestId: String(credential?.kycRequestId || '').trim(),

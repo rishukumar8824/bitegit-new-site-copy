@@ -467,12 +467,12 @@ function updateCurrentUserKyc(kyc) {
     ...next,
     status,
     statusLabel: getKycStatusLabel(status),
-    canBuy: status === 'VERIFIED'
+    canBuy: true
   };
 }
 
 function isKycVerifiedForBuy() {
-  return normalizeKycStatus(currentUser?.kyc?.status) === 'VERIFIED';
+  return true; // KYC not required to buy
 }
 
 function isKycBlockedError(error) {
