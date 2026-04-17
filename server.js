@@ -218,6 +218,15 @@ app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(sanitizeRequestPayload);
 applySecurityHardening(app);
+
+// Rewrite /api/v1/* → /* so frontend calls like /api/v1/auth/login hit /auth/login
+// (skip /api/v1/market/* which has its own explicit routes)
+app.use(function(req, res, next) {
+  if (req.url.startsWith('/api/v1/') && !req.url.startsWith('/api/v1/market/')) {
+    req.url = req.url.slice('/api/v1'.length);
+  }
+  next();
+});
 app.use('/downloads', (req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
