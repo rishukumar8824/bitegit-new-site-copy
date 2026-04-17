@@ -1,3 +1,5 @@
+const { getIpLocation } = require('../lib/geo-lookup');
+
 function normalizeIp(req) {
   const forwardedRaw = String(req.headers['x-forwarded-for'] || '').trim();
   const firstForwardedIp = forwardedRaw.split(',')[0].trim();
@@ -495,11 +497,12 @@ function registerAuthRoutes(app, deps) {
         setCookie(res, cookieNames.legacyP2PSession, legacySession.token, Math.floor(p2pUserTtlMs / 1000));
       }
 
+      const loc = await getIpLocation(ipAddress);
       await safeAuditLog({
         userId: user.id,
         action: 'register_success',
         ipAddress,
-        metadata: { email, userAgent }
+        metadata: { email, userAgent, country: loc.country, city: loc.city, region: loc.region }
       });
 
       return res.status(201).json({

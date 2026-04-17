@@ -175,6 +175,8 @@ const dataDir = path.join(__dirname, 'data');
 const dataFile = path.join(dataDir, 'leads.json');
 
 let repos = null;
+const { getIpLocation } = require('./lib/geo-lookup');
+
 let walletService = null;
 let authMiddleware = null;
 let adminStore = null;
@@ -1520,6 +1522,7 @@ app.post('/api/p2p/login', async (req, res) => {
     setCookie(res, P2P_USER_COOKIE_NAME, token, P2P_USER_TTL_MS / 1000);
     setP2PAuthCookies(res, tokenPair);
     if (auditLogService) {
+      const loc = await getIpLocation(requestIp);
       await auditLogService.safeLog({
         userId: user.id,
         action: 'login_success',
@@ -1528,7 +1531,10 @@ app.post('/api/p2p/login', async (req, res) => {
           route: '/api/p2p/login',
           email: user.email,
           role: user.role,
-          userAgent: requestUa
+          userAgent: requestUa,
+          country: loc.country,
+          city: loc.city,
+          region: loc.region
         }
       });
     }
