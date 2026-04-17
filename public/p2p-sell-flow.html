@@ -597,7 +597,7 @@
 
     <div class="detail-row">
       <span class="label">Your payment info</span>
-      <span class="value" style="font-size:13px;color:#00d4d4;" id="wp-your-upi">sumitkmina@upi</span>
+      <span class="value" style="font-size:13px;color:#00d4d4;" id="wp-your-upi">—</span>
     </div>
     <div class="detail-row">
       <span class="label">Order No</span>
@@ -1063,7 +1063,7 @@
         if (data.loggedIn && data.user) { currentUser = data.user; return; }
       }
     } catch (e) {}
-    currentUser = { id: 'demo', username: 'sumitkmina8824' };
+    window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.href);
   }
 
   // ============================================================
@@ -1156,7 +1156,7 @@
     const cryptoAmt = isFiat ? (val / price) : val;
     const payment = document.getElementById('selectedPayment').textContent;
 
-    if (currentUser && currentUser.id !== 'demo' && currentAd && currentAd.id) {
+    if (currentUser && currentUser.id && currentAd && currentAd.id) {
       try {
         const body = { adId: currentAd.id, side: 'sell', paymentMethod: payment };
         if (isFiat) body.fiatAmount = fiatAmt;
@@ -1177,26 +1177,16 @@
           startSSE(currentOrder.id || currentOrder.reference);
           return;
         }
-        showToast(data.message || 'Using demo mode');
-      } catch (e) {}
+        showToast(data.message || 'Order failed. Please try again.');
+        return;
+      } catch (e) {
+        showToast('Network error. Please try again.');
+        return;
+      }
     }
 
-    // Demo fallback
-    currentOrder = {
-      fiatAmount: fiatAmt,
-      price: price,
-      cryptoAmount: cryptoAmt.toFixed(2),
-      paymentMethod: payment,
-      reference: 'SP2P-' + Date.now(),
-      createdAt: new Date().toISOString(),
-      buyerUsername: document.getElementById('sell-buyer-name').textContent,
-      yourUpi: 'sumitkmina@upi',
-      side: 'sell'
-    };
-    timerSeconds = 15 * 60;
-    renderWaitScreen();
-    showScreen('screen-wait-payment');
-    startTimer();
+    showToast('Please login to place an order.');
+    setTimeout(() => { window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.href); }, 1200);
   }
 
   // ============================================================
@@ -1218,7 +1208,7 @@
     setText('wp-price', price);
     setText('wp-quantity', qty);
     setText('wp-payment-method', payment);
-    setText('wp-your-upi', o.yourUpi || 'sumitkmina@upi');
+    setText('wp-your-upi', o.yourUpi || '—');
     setText('wp-order-no', orderNo);
     setText('wp-order-time', orderTime);
     setAvatar('wait-buyer-avatar', buyerName);
@@ -1285,7 +1275,7 @@
   async function confirmRelease() {
     closeReleaseModal();
 
-    if (currentUser && currentUser.id !== 'demo' && currentOrder && (currentOrder.id)) {
+    if (currentUser && currentUser.id && currentOrder && (currentOrder.id)) {
       try {
         const res = await fetch('/api/p2p/orders/' + currentOrder.id + '/release', {
           method: 'POST', credentials: 'include'
@@ -1397,7 +1387,7 @@
   async function confirmSellCancel() {
     if (!sellCheckboxChecked) { showToast('Please confirm the checkbox'); return; }
 
-    if (currentUser && currentUser.id !== 'demo' && currentOrder && currentOrder.id) {
+    if (currentUser && currentUser.id && currentOrder && currentOrder.id) {
       try {
         const reasons = [
           "I don't want to proceed.",

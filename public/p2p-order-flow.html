@@ -1014,8 +1014,8 @@
         }
       }
     } catch (e) {}
-    // Demo fallback — UI always works even without login
-    currentUser = { id: 'demo', username: 'sumitkmina8824' };
+    // Not logged in — redirect to auth
+    window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.href);
   }
 
   function showLoginModal() {
@@ -1117,7 +1117,7 @@
     const payment = document.querySelector('.payment-select .left span')?.textContent || 'UPI';
 
     // Try real backend if user is authenticated and a real ad is loaded
-    if (currentUser && currentUser.id !== 'demo' && currentAd && currentAd.id) {
+    if (currentUser && currentUser.id && currentAd && currentAd.id) {
       try {
         const body = { adId: currentAd.id, paymentMethod: payment };
         if (isFiat) body.fiatAmount = fiatAmt;
@@ -1137,26 +1137,17 @@
           showScreen('screen-order-generated');
           return;
         }
-        showToast(data.message || 'Order failed, using demo mode');
-      } catch (e) {}
+        showToast(data.message || 'Order failed. Please try again.');
+        return;
+      } catch (e) {
+        showToast('Network error. Please try again.');
+        return;
+      }
     }
 
-    // Demo fallback — works without backend
-    currentOrder = {
-      fiatAmount: fiatAmt,
-      price: price,
-      cryptoAmount: cryptoAmt.toFixed(2),
-      paymentMethod: payment,
-      reference: 'P2P-' + Date.now(),
-      createdAt: new Date().toISOString(),
-      notes: document.getElementById('buy-terms').textContent,
-      sellerUsername: document.getElementById('buy-seller-name').textContent
-    };
-    timerSeconds = 15 * 60;
-    timerExpiresAt = Date.now() + timerSeconds * 1000;
-    renderOrderDetails();
-    showScreen('screen-order-generated');
-    startTimerTick();
+    // Not logged in
+    showToast('Please login to place an order.');
+    setTimeout(() => { window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.href); }, 1200);
   }
 
   // ============================================================
