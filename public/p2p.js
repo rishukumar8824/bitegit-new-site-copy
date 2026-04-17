@@ -2543,7 +2543,9 @@ async function loadCurrentUser() {
 
   let _networkErr = false; // true only on real network/parse failure
   try {
-    const response = await fetch('/api/p2p/me', { credentials: 'include' });
+    var _jwtTok = (typeof localStorage !== 'undefined' && localStorage.getItem('bitegit_token')) || '';
+    var _meHeaders = _jwtTok ? { 'Authorization': 'Bearer ' + _jwtTok } : {};
+    const response = await fetch('/api/p2p/me', { credentials: 'include', headers: _meHeaders });
     // Treat 5xx as network error — don't log out on server hiccups
     if (!response.ok && response.status >= 500) { _networkErr = true; throw new Error('server_error'); }
     const data = await response.json();
@@ -2721,8 +2723,7 @@ async function logoutUser() {
 }
 
 function requireLoginNotice() {
-  setUserStatus('Please login first using email and password.', 'user-error');
-  setAuthModalOpen(true);
+  window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.hash);
 }
 
 async function loadExchangeTicker() {
@@ -5008,7 +5009,7 @@ function _ordShowLogin() {
     '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">' +
     '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>' +
     '<p style="color:rgba(255,255,255,0.45);font-size:14px;margin:0;text-align:center;">Login to view your orders</p>' +
-    '<button onclick="requireLoginNotice()" style="background:#a8ff3e;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Login</button>' +
+    '<button onclick="window.location.href=\'/auth.html?redirect=/p2p.html\'" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
     '</div>';
 }
 

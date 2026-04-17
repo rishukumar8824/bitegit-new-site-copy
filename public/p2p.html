@@ -1031,47 +1031,12 @@
       </div>
     </section>
 
-    <!-- Auth modal -->
-    <section id="authModal" class="p2p-auth-modal hidden" aria-hidden="true">
+    <!-- Auth modal (disabled — redirects to /auth.html) -->
+    <section id="authModal" class="p2p-auth-modal hidden" aria-hidden="true" style="display:none!important;">
       <div id="authBackdrop" class="p2p-auth-backdrop"></div>
-      <div class="p2p-auth-panel" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-        <!-- Login step -->
-        <div id="authStepLogin">
-          <h3 id="authTitle">P2P Login</h3>
-          <p>Enter your email and password to continue.</p>
-          <input id="emailInput" type="email" placeholder="Enter email" autocomplete="email" />
-          <input id="passwordInput" type="password" placeholder="Enter password" autocomplete="current-password" />
-          <div class="p2p-auth-actions">
-            <button id="loginBtn" type="button">Login</button>
-            <button id="closeAuthBtn" type="button" class="p2p-sec-btn">Close</button>
-          </div>
-          <p style="text-align:center;margin-top:0.7rem;"><button id="forgotPasswordLink" type="button" style="background:none;border:none;color:#00c2b2;font-size:0.82rem;cursor:pointer;text-decoration:underline;">Forgot Password?</button></p>
-        </div>
-        <!-- Forgot password step -->
-        <div id="authStepForgot" style="display:none;">
-          <h3>Reset Password</h3>
-          <p style="font-size:0.83rem;color:#8a97ae;">Enter your email and we'll send a 6-digit reset code.</p>
-          <input id="resetEmailInput" type="email" placeholder="Enter your email" autocomplete="email" />
-          <p id="forgotMsg" style="font-size:0.8rem;color:#f6465d;min-height:1.2em;"></p>
-          <div class="p2p-auth-actions">
-            <button id="sendResetCodeBtn" type="button">Send Code</button>
-            <button id="backToLoginBtn" type="button" class="p2p-sec-btn">Back</button>
-          </div>
-        </div>
-        <!-- Reset code + new password step -->
-        <div id="authStepReset" style="display:none;">
-          <h3>Enter Reset Code</h3>
-          <p style="font-size:0.83rem;color:#8a97ae;">Enter the 6-digit code sent to your email and your new password.</p>
-          <input id="resetCodeInput" type="text" placeholder="6-digit code" inputmode="numeric" maxlength="6" />
-          <input id="newPasswordInput" type="password" placeholder="New password (min 8 chars)" />
-          <input id="confirmPasswordInput" type="password" placeholder="Confirm new password" />
-          <p id="resetMsg" style="font-size:0.8rem;color:#f6465d;min-height:1.2em;"></p>
-          <div class="p2p-auth-actions">
-            <button id="doResetBtn" type="button">Reset Password</button>
-            <button id="backToForgotBtn" type="button" class="p2p-sec-btn">Back</button>
-          </div>
-        </div>
-      </div>
+      <div id="authStepLogin"><h3 id="authTitle"></h3><input id="emailInput" type="hidden"/><input id="passwordInput" type="hidden"/><button id="loginBtn" type="button" style="display:none"></button><button id="closeAuthBtn" type="button" style="display:none"></button><button id="forgotPasswordLink" type="button" style="display:none"></button></div>
+      <div id="authStepForgot" style="display:none;"><input id="resetEmailInput" type="hidden"/><p id="forgotMsg"></p><button id="sendResetCodeBtn" type="button" style="display:none"></button><button id="backToLoginBtn" type="button" style="display:none"></button></div>
+      <div id="authStepReset" style="display:none;"><input id="resetCodeInput" type="hidden"/><input id="newPasswordInput" type="hidden"/><input id="confirmPasswordInput" type="hidden"/><p id="resetMsg"></p><button id="doResetBtn" type="button" style="display:none"></button><button id="backToForgotBtn" type="button" style="display:none"></button></div>
     </section>
 
     <!-- KYC Rejected screen -->
