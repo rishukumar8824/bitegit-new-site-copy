@@ -1687,22 +1687,16 @@
 
     // ── Lock screen height when keyboard opens (anti-shake) ──────
     function spLockHeight() {
+      // height is controlled by CSS inset:0 + interactive-widget=resizes-content
+      // just scroll input into view when keyboard opens
       var el = document.getElementById('mobSupportChatScreen');
       if (!el) return;
-      var h = window.innerHeight;
-      el.style.height = h + 'px';
-      el.style.maxHeight = h + 'px';
-      el.style.minHeight = h + 'px';
+      var inputArea = el.querySelector('.sp-chat-input-area');
+      if (inputArea) inputArea.scrollIntoView({ block: 'end' });
     }
-    window.addEventListener('resize', function() {
-      var el = document.getElementById('mobSupportChatScreen');
-      if (el && el.style.display !== 'none') {
-        spLockHeight();
-      }
-    });
     window.addEventListener('focusin', function(e) {
       if (e.target && e.target.id === 'spChatInput') {
-        setTimeout(spLockHeight, 100);
+        setTimeout(spLockHeight, 150);
       }
     });
 

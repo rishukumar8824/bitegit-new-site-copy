@@ -4197,13 +4197,12 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 .sp-send-btn:active { color: #00c2b2; }
 
-/* ── Chat screen — fully static, no keyboard shake ── */
+/* ── Chat screen ── */
 #mobSupportChatScreen {
   overflow: hidden;
   padding-bottom: 0 !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-  /* GPU layer — stops repaint flicker */
+  /* Let inset:0 + interactive-widget=resizes-content control height */
+  /* GPU layer */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
@@ -4212,7 +4211,6 @@ body.mob-screen-open .p2p-secondary-nav {
 #mobSupportChatScreen .sp-chat-input-area {
   padding-bottom: calc(0.6rem + env(safe-area-inset-bottom));
   flex-shrink: 0;
-  /* Stick to bottom of flex container, not viewport */
   position: relative;
   bottom: auto;
 }
