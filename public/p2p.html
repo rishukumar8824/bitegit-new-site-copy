@@ -1677,74 +1677,273 @@
     // ── Support Chat System ──────────────────────────────────────
     var _spTicketId = null;
     var _spCurrentTopic = '';
+    var _spSubTopic = '';
     var _spPollTimer = null;
     var _spSeenMsgIds = new Set();
     var _spAgentConnected = false;
     var _spConnecting = false;
     var _spAgentName = '';
-    var _spBotStep = 0;          // tracks bot conversation step per topic
-    var _spBotActive = true;     // bot is active until agent connects
+    var _spBotActive = true;
 
-    // Chinese agent names (shown when live agent connects)
+    // ── Lock screen height when keyboard opens (anti-shake) ──────
+    function spLockHeight() {
+      var el = document.getElementById('mobSupportChatScreen');
+      if (!el) return;
+      el.style.height = window.innerHeight + 'px';
+      el.style.maxHeight = window.innerHeight + 'px';
+    }
+    window.addEventListener('resize', function() {
+      if (document.getElementById('mobSupportChatScreen') &&
+          !document.getElementById('mobSupportChatScreen').classList.contains('hidden')) {
+        spLockHeight();
+      }
+    });
+    window.addEventListener('focusin', function(e) {
+      if (e.target && e.target.id === 'spChatInput') {
+        setTimeout(spLockHeight, 100);
+      }
+    });
+
+    // Chinese agent names
     var _spAgentNames = [
       'Wei Lin','Xiao Chen','Li Ming','Zhang Wei','Liu Yang',
       'Chen Jing','Wang Fang','Mei Ling','Zhao Lei','Han Xiu',
       'Feng Yu','Lin Tao','Jiang Hui','Sun Rui','Bai Xue'
     ];
-
     function spPickAgentName() {
       return _spAgentNames[Math.floor(Math.random() * _spAgentNames.length)];
     }
 
-    // ── Bot Q&A flows per topic ──────────────────────────────────
-    var _spBotFlows = {
-      'Account & security': [
-        { bot: '🛡️ Sure! What issue are you facing with your account?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Forgot password\')">Forgot password</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Account locked\')">Account locked</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Suspicious activity\')">Suspicious activity</button><button class="sp-topic-chip" onclick="spBotReply(this,\'2FA issue\')">2FA issue</button></div>' },
-        { bot: '🔐 Got it. Here are some quick tips:\n\n• <b>Forgot password</b> — use "Forgot Password" on login screen\n• <b>Account locked</b> — wait 30 mins or reset password\n• <b>2FA issue</b> — check authenticator app time sync\n• <b>Suspicious login</b> — change password immediately\n\nDid this help, or do you still need a live agent?' ,
-          chips: [{ label: '✅ Issue resolved', action: 'resolved' }, { label: '🎧 Talk to agent', action: 'connect' }] }
-      ],
-      'Deposit & withdrawal': [
-        { bot: '💰 I can help! What\'s the issue?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Deposit not received\')">Deposit not received</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Withdrawal delayed\')">Withdrawal delayed</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Wrong network used\')">Wrong network used</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Withdrawal failed\')">Withdrawal failed</button></div>' },
-        { bot: '📋 Quick info:\n\n• <b>Deposits</b> — can take 1–60 mins depending on blockchain congestion\n• <b>Withdrawals</b> — processed within 24 hrs; check spam for email confirmation\n• <b>Wrong network</b> — funds may be lost if wrong network (e.g. ERC20 vs TRC20)\n• <b>Min amount</b> — ensure you met the minimum deposit/withdrawal limit\n\nStill need help?',
-          chips: [{ label: '✅ Got it, thanks!', action: 'resolved' }, { label: '🎧 Connect agent', action: 'connect' }] }
-      ],
-      'P2P': [
-        { bot: '🤝 What\'s your P2P issue?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Seller not releasing crypto\')">Seller not releasing</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Payment sent but order stuck\')">Order stuck</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Scam / fraud\')">Scam / fraud</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Order cancelled unfairly\')">Order cancelled</button></div>' },
-        { bot: '⚠️ P2P Tips:\n\n• <b>Seller not releasing</b> — click "Appeal" in the order if 15 mins have passed\n• <b>Order stuck</b> — do NOT cancel if you have already paid; appeal instead\n• <b>Scam</b> — report immediately; never release before payment is confirmed\n• <b>Cancelled unfairly</b> — our team reviews all appeals within 2 hrs\n\nNeed live support?',
-          chips: [{ label: '✅ Resolved, thanks', action: 'resolved' }, { label: '🚨 I need urgent help', action: 'connect' }] }
-      ],
-      'Identity verification': [
-        { bot: '🪪 KYC help! What\'s happening?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Documents rejected\')">Documents rejected</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Verification pending too long\')">Pending too long</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Selfie failed\')">Selfie failed</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Wrong info submitted\')">Wrong info submitted</button></div>' },
-        { bot: '📄 KYC Tips:\n\n• <b>Documents rejected</b> — ensure all 4 corners visible, no blur, no glare\n• <b>Selfie failed</b> — face must be clearly visible, no glasses/hat\n• <b>Pending</b> — KYC review takes up to 24 hrs\n• <b>Wrong info</b> — contact support to resubmit\n\nWant to talk to an agent?',
-          chips: [{ label: '✅ I\'ll try again', action: 'resolved' }, { label: '🎧 Agent please', action: 'connect' }] }
-      ],
-      'Promotion & bonus': [
-        { bot: '🎁 Rewards help! What\'s the issue?\n\n<div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spBotReply(this,\'Bonus not credited\')">Bonus not credited</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Referral not working\')">Referral not working</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Task not completing\')">Task not completing</button><button class="sp-topic-chip" onclick="spBotReply(this,\'Voucher code invalid\')">Voucher invalid</button></div>' },
-        { bot: '🎯 Rewards Tips:\n\n• <b>Bonus not credited</b> — may take up to 48 hrs after completing task\n• <b>Referral</b> — friend must complete KYC + first trade for referral to count\n• <b>Task not completing</b> — check task conditions carefully\n• <b>Voucher</b> — codes are case-sensitive and one-time use only\n\nStill facing issues?',
-          chips: [{ label: '✅ All good now!', action: 'resolved' }, { label: '🎧 Talk to agent', action: 'connect' }] }
-      ]
+    // ── Deep bot knowledge base ──────────────────────────────────
+    var _spKB = {
+      'Account & security': {
+        intro: '🛡️ I can help with account & security! What\'s the issue?',
+        chips: ['Forgot password','Account locked','2FA / OTP issue','Suspicious login','Change email/phone','Account banned'],
+        replies: {
+          'Forgot password': {
+            msg: '🔑 To reset your password:\n\n1️⃣ Go to Login page → tap <b>"Forgot Password"</b>\n2️⃣ Enter your registered email\n3️⃣ Check inbox (+ spam folder) for reset link\n4️⃣ Click the link within 10 minutes\n5️⃣ Set a strong new password\n\n⚠️ If email not received after 5 mins, check spam or try resending.',
+            follow: 'Did the password reset work?',
+            chips: ['✅ Yes it worked!','📧 Email not received','🎧 Need more help']
+          },
+          'Account locked': {
+            msg: '🔒 Account gets locked after 5 failed login attempts.\n\n✅ <b>Quick fix:</b>\n• Wait <b>30 minutes</b> — it auto-unlocks\n• OR reset password via "Forgot Password"\n• Check if correct email is being used\n\n⚠️ If locked for security reasons (suspicious activity), you may need identity verification.',
+            follow: 'Is your account unlocked now?',
+            chips: ['✅ Unlocked now','🔒 Still locked','🎧 Talk to agent']
+          },
+          '2FA / OTP issue': {
+            msg: '📱 2FA troubleshooting:\n\n• <b>Wrong code</b> — make sure your phone time is synced (Settings → Date & Time → Auto)\n• <b>App deleted</b> — use backup codes you saved during setup\n• <b>New phone</b> — use backup codes to disable 2FA, then re-enable\n• <b>No backup codes</b> — contact support with your ID for manual verification\n\n⏱️ TOTP codes expire every 30 seconds — enter quickly!',
+            follow: 'Is the 2FA issue resolved?',
+            chips: ['✅ Fixed now','🔑 Lost backup codes','🎧 Agent please']
+          },
+          'Suspicious login': {
+            msg: '🚨 Suspicious login detected — act immediately:\n\n1️⃣ <b>Change password right now</b>\n2️⃣ Enable 2FA if not already done\n3️⃣ Go to Security → Active Sessions → revoke all unknown sessions\n4️⃣ Check email for any unauthorized changes\n5️⃣ Contact support if funds were moved\n\n🔐 Never share OTP/password with anyone!',
+            follow: 'Have you secured your account?',
+            chips: ['✅ Account secured','💸 Funds missing — urgent!','🎧 Need agent']
+          },
+          'Change email/phone': {
+            msg: '📧 To change email or phone:\n\n• Go to <b>Profile → Security Settings</b>\n• Tap "Change Email" or "Change Phone"\n• Verify with current 2FA or OTP\n• Enter new email/phone and confirm\n\n⚠️ A verification link will be sent to the <b>new</b> email. Must confirm within 24 hrs.',
+            follow: 'Were you able to update it?',
+            chips: ['✅ Done!','❌ Verification failed','🎧 Agent help']
+          },
+          'Account banned': {
+            msg: '🚫 Account bans occur due to:\n\n• Violation of Terms of Service\n• Suspicious trading patterns\n• Multiple accounts on same device\n• Chargeback / payment disputes\n\nIf you believe it\'s an error, our team will review. Please provide your registered email when contacting support.',
+            follow: 'Do you want to appeal the ban?',
+            chips: ['📋 Yes, I want to appeal','🎧 Talk to agent']
+          }
+        }
+      },
+      'Deposit & withdrawal': {
+        intro: '💰 I can help with deposits and withdrawals! What\'s happening?',
+        chips: ['Deposit not received','Withdrawal delayed','Wrong network used','Withdrawal failed','Minimum not met','Bank transfer issue'],
+        replies: {
+          'Deposit not received': {
+            msg: '📥 Deposit not showing? Check these:\n\n1️⃣ Confirm the <b>transaction hash (TxID)</b> on a blockchain explorer\n2️⃣ Verify you used the <b>correct network</b> (TRC20/ERC20/BEP20)\n3️⃣ Check required <b>confirmations</b> — USDT TRC20 needs 20+ confirmations\n4️⃣ Ensure you sent to the <b>correct address</b>\n5️⃣ Wait up to <b>60 minutes</b> for high-traffic periods\n\n📊 USDT TRC20: fastest | ERC20: slowest (can take 2 hrs)',
+            follow: 'Did you find the TxID on blockchain?',
+            chips: ['✅ Deposit arrived now','🔍 TxID shows confirmed but not credited','🎧 Agent help']
+          },
+          'Withdrawal delayed': {
+            msg: '📤 Withdrawal processing times:\n\n• <b>USDT TRC20</b> — 5 to 30 mins\n• <b>USDT ERC20</b> — 30 mins to 2 hrs (gas fees)\n• <b>BTC</b> — 30 mins to 2 hrs\n• <b>Fiat</b> — 1 to 3 business days\n\n⚠️ During high network traffic, delays can be longer.\n✅ Check your email for withdrawal confirmation.\n\nIf it\'s been more than 4 hours, contact support.',
+            follow: 'Has the withdrawal arrived?',
+            chips: ['✅ Received now!','⏳ Still waiting (4+ hrs)','🎧 Agent please']
+          },
+          'Wrong network used': {
+            msg: '⚠️ <b>Wrong network is a serious issue.</b>\n\nIf you sent on wrong network:\n\n• <b>ERC20 → TRC20 address</b>: Funds may be recoverable — contact support with TxID\n• <b>TRC20 → ERC20 address</b>: Contact support immediately\n• <b>To wrong exchange</b>: Contact that exchange\'s support\n\n🔴 Recovery is NOT guaranteed and may take 7-14 business days.\n⏰ Act fast — provide TxID, amount, and both addresses to support.',
+            follow: 'Do you have the TxID ready?',
+            chips: ['📋 Yes, I have TxID','🎧 Connect agent now']
+          },
+          'Withdrawal failed': {
+            msg: '❌ Withdrawal failed reasons:\n\n• <b>Insufficient balance</b> — check if fees are deducted\n• <b>Address invalid</b> — re-verify destination address\n• <b>Daily limit exceeded</b> — check your withdrawal limits in settings\n• <b>KYC required</b> — complete identity verification first\n• <b>Security hold</b> — 24hr hold after password change\n\nTry again after checking the above.',
+            follow: 'Is the issue resolved?',
+            chips: ['✅ Fixed!','❌ Still failing','🎧 Talk to agent']
+          },
+          'Minimum not met': {
+            msg: '📊 Minimum deposit/withdrawal amounts:\n\n• <b>USDT TRC20</b> — min deposit: 1 USDT | min withdrawal: 5 USDT\n• <b>USDT ERC20</b> — min deposit: 5 USDT | min withdrawal: 20 USDT\n• <b>BTC</b> — min withdrawal: 0.001 BTC\n• <b>ETH</b> — min withdrawal: 0.01 ETH\n\nAmounts below minimum are rejected automatically.',
+            follow: 'Does this answer your question?',
+            chips: ['✅ Got it','🎧 Other issue']
+          },
+          'Bank transfer issue': {
+            msg: '🏦 Bank transfer (Fiat) tips:\n\n• Transfers take <b>1-3 business days</b>\n• Ensure bank account name matches your verified name\n• Check if your bank has blocked the transfer\n• Weekends / holidays add extra delays\n• Minimum fiat withdrawal: ₹500\n\n📞 If payment is deducted but not received within 3 days, contact support with bank reference number.',
+            follow: 'Did this help?',
+            chips: ['✅ Yes, understood','🎧 Still need help']
+          }
+        }
+      },
+      'P2P': {
+        intro: '🤝 I\'m here to help with P2P! What happened?',
+        chips: ['Seller not releasing','Paid but order stuck','Scam / fraud','Order cancelled unfairly','Payment not received','Merchant issue'],
+        replies: {
+          'Seller not releasing': {
+            msg: '⏳ Seller not releasing crypto?\n\nStep-by-step:\n1️⃣ Confirm payment is <b>fully sent</b> to seller\'s account\n2️⃣ Upload <b>payment proof</b> (screenshot) in the order\n3️⃣ Wait <b>15 minutes</b> after marking "Paid"\n4️⃣ If no release → tap <b>"Appeal"</b> button in the order\n5️⃣ Our team reviews appeals within <b>30 minutes</b>\n\n⚠️ NEVER cancel an order after payment — you will lose your money!',
+            follow: 'Have you clicked Appeal?',
+            chips: ['✅ Appeal submitted','🚨 Seller is threatening me','🎧 Urgent agent help']
+          },
+          'Paid but order stuck': {
+            msg: '🔄 Order stuck after payment?\n\n• Tap <b>"I\'ve Paid"</b> in the order if not done yet\n• Attach <b>payment screenshot</b> as proof\n• Check if the <b>timer</b> has expired — if yes, tap Appeal\n• Do NOT cancel — your funds are safe in escrow\n\n🛡️ Your crypto is held in BITEGIT escrow. It won\'t be lost. Wait for seller to confirm or appeal.',
+            follow: 'Is the order still stuck?',
+            chips: ['✅ Order released now','⏳ Still stuck — need help','🎧 Agent please']
+          },
+          'Scam / fraud': {
+            msg: '🚨 P2P Scam — act immediately!\n\n🔴 <b>STOP</b> — do NOT release crypto until:\n• Payment is fully in your bank (not just pending)\n• Screenshot shows cleared balance\n\n⚠️ Common scams:\n• Fake payment SMS/screenshots\n• "Pay extra to unfreeze" (always fake!)\n• Requests to trade off-platform\n\n📋 Evidence needed: order ID, screenshots, any chat messages.',
+            follow: 'Have you released the crypto?',
+            chips: ['🔴 NO — crypto still in escrow','🔴 YES — I released it already','🎧 Connect agent NOW']
+          },
+          'Order cancelled unfairly': {
+            msg: '❌ Order cancelled unfairly?\n\n• If <b>you cancelled</b> after paying — contact support with proof\n• If <b>seller cancelled</b> — this is a violation and we can penalize them\n• If <b>auto-cancelled</b> by system — timer expired; funds returned\n\n📋 Submit an appeal with: order ID + payment proof (bank/UPI screenshot).\n\nOur team reviews within 2 hours.',
+            follow: 'Do you have your payment proof ready?',
+            chips: ['✅ Yes I have proof','📋 Submit appeal now','🎧 Agent help']
+          },
+          'Payment not received': {
+            msg: '💸 As a seller, buyer says they paid but you didn\'t receive?\n\n• Check all payment methods (bank, UPI, wallet)\n• Check spam/notification folder for bank alerts\n• Verify the exact account the buyer was supposed to pay\n• Ask buyer for payment reference number\n\n⚠️ If you\'re unsure — DO NOT release crypto yet. Tap "Appeal" and our team will verify.',
+            follow: 'Have you verified all accounts?',
+            chips: ['✅ Payment found now','❓ Still not received','🎧 Agent verify payment']
+          },
+          'Merchant issue': {
+            msg: '🏪 Merchant account issues:\n\n• <b>Application pending</b> — review takes 2-5 business days\n• <b>Suspended</b> — check email for reason; usually disputes or low completion rate\n• <b>Limits</b> — merchants have daily trade limits based on tier\n• <b>Ad not showing</b> — ensure ad is enabled and within trading hours\n\nFor specific merchant issues, connect with our support team.',
+            follow: 'What specifically is the issue?',
+            chips: ['📋 Application pending','🔴 Account suspended','🎧 Talk to agent']
+          }
+        }
+      },
+      'Identity verification': {
+        intro: '🪪 Let me help with KYC! What\'s the problem?',
+        chips: ['Documents rejected','KYC pending too long','Selfie/face scan failed','Wrong info submitted','Level 2 KYC help','Re-verify request'],
+        replies: {
+          'Documents rejected': {
+            msg: '📄 Documents rejected? Common reasons:\n\n❌ <b>Blurry image</b> — retake in good lighting\n❌ <b>Corners cut off</b> — all 4 corners must be visible\n❌ <b>Glare/reflection</b> — avoid flash, use natural light\n❌ <b>Expired document</b> — must be valid\n❌ <b>Black & white photo</b> — must be color original\n❌ <b>Screenshot of ID</b> — must be physical document photo\n\n✅ Accepted: Passport, Aadhaar, PAN Card, Driving License',
+            follow: 'Ready to retry KYC?',
+            chips: ['✅ Will retry with tips','❓ My doc type not accepted','🎧 Agent review my case']
+          },
+          'KYC pending too long': {
+            msg: '⏳ KYC review times:\n\n• <b>Standard</b>: 24 hours\n• <b>High traffic periods</b>: up to 48 hours\n• <b>Level 2 (advanced)</b>: up to 72 hours\n\nYou will receive an email once reviewed.\n\n⚠️ Do NOT resubmit during review — it restarts the process!\n\nIf it\'s been more than 72 hours without response, contact us.',
+            follow: 'How long has it been?',
+            chips: ['⏰ Less than 48 hrs — will wait','⏰ More than 72 hrs','🎧 Escalate my review']
+          },
+          'Selfie/face scan failed': {
+            msg: '🤳 Selfie tips for success:\n\n✅ <b>Do:</b>\n• Face clearly visible, centered in frame\n• Good lighting (face well-lit, no shadows)\n• Neutral expression\n• Eyes open\n\n❌ <b>Don\'t:</b>\n• Wear glasses, mask, or hat\n• Use filters or editing\n• Take in dark/backlit areas\n• Cover any part of face\n\n📱 Use rear camera for best quality. Hold phone steady.',
+            follow: 'Does this help? Ready to try again?',
+            chips: ['✅ Will retry now','❓ Face scan keeps failing','🎧 Manual review please']
+          },
+          'Wrong info submitted': {
+            msg: '✏️ Wrong information submitted?\n\n• <b>Name mismatch</b> — must match ID exactly (including middle name)\n• <b>DOB wrong</b> — contact support to correct before resubmit\n• <b>Address wrong</b> — can update in profile settings\n\n⚠️ After 3 failed attempts, account is temporarily locked for 24 hours.\n\nContact support with correct info and your registered email.',
+            follow: 'Do you need a manual correction?',
+            chips: ['🎧 Yes, fix my info','📋 I\'ll resubmit myself']
+          },
+          'Level 2 KYC help': {
+            msg: '🏆 Level 2 KYC requirements:\n\n• <b>Address Proof</b>: Bank statement / Utility bill (last 3 months)\n• <b>Selfie with ID</b>: Hold ID next to face\n• <b>Source of funds</b>: Brief explanation of income source\n\n📊 Level 2 benefits:\n• Higher withdrawal limits (₹5 lakh/day vs ₹50K)\n• Merchant application eligibility\n• Faster order matching in P2P',
+            follow: 'Ready to complete Level 2?',
+            chips: ['✅ I\'ll complete it now','❓ More info needed','🎧 Help me submit']
+          },
+          'Re-verify request': {
+            msg: '🔄 Re-verification may be requested if:\n\n• Suspicious activity on account\n• KYC documents expired\n• Regulatory compliance update\n• Account ownership verification\n\nYou\'ll receive an email with specific instructions. Follow the steps in the email — usually same process as initial KYC.\n\n⏳ Complete within the deadline mentioned in the email.',
+            follow: 'Did you receive the re-verify email?',
+            chips: ['✅ Yes, will complete','📧 No email received','🎧 Agent assistance']
+          }
+        }
+      },
+      'Promotion & bonus': {
+        intro: '🎁 Happy to help with promotions! What\'s the issue?',
+        chips: ['Bonus not credited','Referral not working','Task not completing','Voucher code invalid','Cashback missing','VIP benefits'],
+        replies: {
+          'Bonus not credited': {
+            msg: '🎯 Bonus credit timelines:\n\n• <b>Welcome bonus</b>: within 24 hrs of first deposit\n• <b>Trade bonus</b>: within 48 hrs of completing trade\n• <b>Deposit bonus</b>: instant to 1 hr after confirmation\n• <b>Event rewards</b>: processed in batches, up to 7 days\n\nCheck: Profile → Rewards → History\n\n⚠️ Bonuses are voided if: withdrawal before turnover, using VPN, multiple accounts.',
+            follow: 'Has the bonus appeared now?',
+            chips: ['✅ Bonus credited!','❓ Still not showing','🎧 Agent check rewards']
+          },
+          'Referral not working': {
+            msg: '👥 Referral system requirements:\n\n✅ Your friend must:\n1️⃣ Register using YOUR referral link (not just code)\n2️⃣ Complete <b>Level 1 KYC</b>\n3️⃣ Make their <b>first trade or deposit</b>\n\n⚠️ Referral won\'t count if:\n• Friend was already registered\n• Used code instead of link\n• Friend\'s KYC incomplete\n• Same device / IP as you\n\n📊 Track referrals: Profile → Referral → My Referrals',
+            follow: 'Did your friend complete all steps?',
+            chips: ['✅ All done — where\'s reward?','❓ Friend completed KYC but...','🎧 Agent check referral']
+          },
+          'Task not completing': {
+            msg: '📋 Task completion issues:\n\n• <b>Progress not updating</b> — refresh the rewards page\n• <b>Trade not counting</b> — must meet minimum trade amount\n• <b>Deposit task</b> — only new deposits count, not transfers\n• <b>P2P task</b> — must complete a full P2P order (not just place)\n\n🕐 Progress updates every <b>15 minutes</b>. Be patient after completing action.',
+            follow: 'Is the task updated now?',
+            chips: ['✅ Task completed!','❓ Still not counted','🎧 Manual check please']
+          },
+          'Voucher code invalid': {
+            msg: '🎟️ Voucher troubleshooting:\n\n• <b>Case sensitive</b> — type exactly as given (CAPS/lowercase)\n• <b>Expired</b> — check expiry date in promotion details\n• <b>Already used</b> — one-time use per account\n• <b>Wrong section</b> — go to Profile → Vouchers → Apply Code\n• <b>Region restricted</b> — some codes only for specific countries\n• <b>Minimum deposit</b> — some vouchers require min deposit first',
+            follow: 'Is the voucher working now?',
+            chips: ['✅ Code applied!','❌ Still invalid','🎧 Agent verify code']
+          },
+          'Cashback missing': {
+            msg: '💵 Cashback processing:\n\n• Trading fee cashback: credited <b>every Monday</b> for previous week\n• P2P cashback: within <b>48 hours</b> after trade completion\n• Spot cashback: requires VIP level\n\n📊 View in: Profile → Rewards → Cashback History\n\n⚠️ Cashback only applies to spot/P2P fees, not P2P prices. Ensure you\'re trading at eligible tiers.',
+            follow: 'Did this clarify?',
+            chips: ['✅ Makes sense now','❓ My cashback is missing','🎧 Agent review']
+          },
+          'VIP benefits': {
+            msg: '⭐ BITEGIT VIP Tiers:\n\n🥉 <b>VIP 1</b> — 500 USDT volume: 5% fee discount\n🥈 <b>VIP 2</b> — 5,000 USDT: 10% discount + priority support\n🥇 <b>VIP 3</b> — 50,000 USDT: 20% discount + dedicated manager\n💎 <b>VIP 4</b> — 500,000 USDT: 30% discount + all perks\n\n📊 Volume resets monthly. Benefits apply next month after qualification.\n\nCheck current tier: Profile → VIP Status',
+            follow: 'Any specific VIP question?',
+            chips: ['✅ Got it!','❓ My tier is wrong','🎧 VIP manager please']
+          }
+        }
+      }
     };
 
-    function spBotShowChips(chips) {
+    // ── Show sub-topic chips for a given reply ───────────────────
+    function spBotShowSubChips(subChips, topic, sub) {
       var msgs = document.getElementById('spChatMessages');
       if (!msgs) return;
       var wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.5rem 1rem;';
-      chips.forEach(function(c) {
+      wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.4rem 1rem 0.6rem;';
+      subChips.forEach(function(label) {
         var btn = document.createElement('button');
         btn.className = 'sp-topic-chip';
-        btn.textContent = c.label;
+        btn.textContent = label;
         btn.onclick = function() {
-          if (c.action === 'connect') {
-            spAddUserBubble(c.label);
-            spConnectAgent();
-          } else if (c.action === 'resolved') {
-            spAddUserBubble(c.label);
+          // Disable all chips in this group
+          wrap.querySelectorAll('button').forEach(function(b){ b.disabled=true; b.style.opacity='0.4'; });
+          if (label.includes('✅')) {
+            spAddUserBubble(label);
             setTimeout(function(){
-              spAddBotBubble('<p>🎉 Glad to hear that! If you ever need help again, we\'re always here. Have a great day! 😊</p>');
+              spAddBotBubble('<p>🎉 <strong>That\'s great!</strong> Glad it\'s sorted. Feel free to return anytime. Have a wonderful day! 😊</p>');
+              spBotShowSubChips(['🔙 Back to main menu'], topic, sub);
             }, 400);
+          } else if (label.includes('🎧') || label.includes('🚨')) {
+            spAddUserBubble(label);
+            spConnectAgent();
+          } else if (label === '🔙 Back to main menu') {
+            spAddUserBubble('Back to main menu');
+            setTimeout(function(){
+              spBotShowTopicMenu();
+            }, 300);
+          } else {
+            // Another sub-level chip — look for deeper data or fallback
+            spAddUserBubble(label);
+            var deepMsg = {
+              '📧 Email not received': '📧 Email not arriving? Check spam/junk folder. Add noreply@bitegit.com to contacts. Wait 5 minutes and retry. If still nothing, use "Resend" option.',
+              '🔒 Still locked': '🔒 If still locked after 30 mins, try password reset. If that fails too, your account may have a security hold — our agent can lift it.',
+              '🔑 Lost backup codes': '🔑 Without backup codes, you\'ll need identity verification to regain access. Our agent will guide you through the manual process.',
+              '💸 Funds missing — urgent!': '🚨 URGENT: If funds are missing after suspicious login, we must act immediately. An agent will freeze and investigate your account.',
+              '⏳ More than 72 hrs': '⏳ If KYC review exceeds 72 hours without response, there may be a technical issue. Our agent will manually escalate your case.',
+              '⏳ Still waiting (4+ hrs)': '⏳ Withdrawals pending over 4 hours are unusual. Our agent will check your transaction status and manually push it if needed.',
+              '🔴 YES — I released it already': '🚨 CRITICAL: If you released crypto after being scammed, act now. Our agent will open an emergency investigation immediately.',
+              'default': '🤖 For this specific issue, our support agent will provide the best help.'
+            };
+            var reply = deepMsg[label] || deepMsg['default'];
+            setTimeout(function(){
+              spAddBotBubble('<p>' + reply + '</p>');
+              spBotShowSubChips(['🎧 Connect live agent','🔙 Back to main menu'], topic, sub);
+            }, 500);
           }
-          wrap.remove();
         };
         wrap.appendChild(btn);
       });
@@ -1752,32 +1951,96 @@
       spScroll();
     }
 
-    // Called when user types a free-form message while bot is active
+    function spBotShowTopicMenu() {
+      spAddBotBubble('<p>What else can I help you with? 😊</p>');
+      var msgs = document.getElementById('spChatMessages');
+      if (!msgs) return;
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.4rem 1rem 0.6rem;';
+      var topics = ['Account & security','Deposit & withdrawal','P2P','Identity verification','Promotion & bonus'];
+      topics.forEach(function(t) {
+        var btn = document.createElement('button');
+        btn.className = 'sp-topic-chip';
+        btn.textContent = t;
+        btn.onclick = function() {
+          wrap.querySelectorAll('button').forEach(function(b){ b.disabled=true; b.style.opacity='0.4'; });
+          _spCurrentTopic = t;
+          spAddUserBubble(t);
+          setTimeout(function(){ spBotStartTopic(t); }, 400);
+        };
+        wrap.appendChild(btn);
+      });
+      msgs.appendChild(wrap);
+      spScroll();
+    }
+
+    function spBotStartTopic(topic) {
+      var kb = _spKB[topic];
+      if (!kb) return;
+      spAddBotBubble('<p>' + kb.intro.replace(/\n/g,'<br>') + '</p>');
+      var msgs = document.getElementById('spChatMessages');
+      if (!msgs) return;
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.4rem 1rem 0.6rem;';
+      kb.chips.forEach(function(sub) {
+        var btn = document.createElement('button');
+        btn.className = 'sp-topic-chip';
+        btn.textContent = sub;
+        btn.onclick = function() {
+          wrap.querySelectorAll('button').forEach(function(b){ b.disabled=true; b.style.opacity='0.4'; });
+          _spSubTopic = sub;
+          spAddUserBubble(sub);
+          setTimeout(function(){ spBotShowSubReply(topic, sub); }, 400);
+        };
+        wrap.appendChild(btn);
+      });
+      setTimeout(function(){ msgs.appendChild(wrap); spScroll(); }, 500);
+    }
+
+    function spBotShowSubReply(topic, sub) {
+      var kb = _spKB[topic];
+      if (!kb || !kb.replies[sub]) {
+        spAddBotBubble('<p>🤖 Let me connect you to an agent for this specific issue.</p>');
+        spBotShowSubChips(['🎧 Connect agent','🔙 Back to main menu'], topic, sub);
+        return;
+      }
+      var r = kb.replies[sub];
+      spAddBotBubble('<p>' + r.msg.replace(/\n/g,'<br>') + '</p>');
+      setTimeout(function(){
+        spAddBotBubble('<p>' + r.follow + '</p>');
+        spBotShowSubChips(r.chips, topic, sub);
+      }, 800);
+    }
+
+    // Free-type bot reply (when user types instead of tapping chips)
     function spBotAutoReply(userMsg) {
       if (!_spBotActive || _spAgentConnected) return;
       var msg = userMsg.toLowerCase();
-      var reply = '';
-      if (msg.match(/scam|fraud|stolen|hack/)) {
-        reply = '🚨 This sounds urgent! Please connect to a live agent immediately for account security.';
-        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'🚨 Connect Agent Now', action:'connect'}]); }, 500);
-      } else if (msg.match(/deposit|withdraw|fund|money|usdt|btc|eth/)) {
-        reply = '💰 For deposit/withdrawal issues, make sure:\n• Correct network selected (TRC20/ERC20/BEP20)\n• Minimum amount met\n• Wallet address correct\n\nStill need help?';
-        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Solved',action:'resolved'},{label:'🎧 Agent',action:'connect'}]); }, 500);
-      } else if (msg.match(/p2p|order|seller|buyer|release|appeal/)) {
-        reply = '🤝 For P2P: If seller isn\'t releasing, use the <b>Appeal</b> button in your order. Never cancel after paying!';
-        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Got it',action:'resolved'},{label:'🎧 Need agent',action:'connect'}]); }, 500);
-      } else if (msg.match(/kyc|verify|id|passport|selfie|document/)) {
-        reply = '🪪 KYC tip: Ensure your documents are clear, all corners visible, and good lighting. Review takes up to 24 hrs.';
-        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Will retry',action:'resolved'},{label:'🎧 Agent help',action:'connect'}]); }, 500);
-      } else if (msg.match(/password|login|account|lock|block|2fa|otp/)) {
-        reply = '🔐 Account tips:\n• Reset password from login page\n• Check email for unlock link\n• 2FA: sync your authenticator app time';
-        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Fixed',action:'resolved'},{label:'🎧 Need agent',action:'connect'}]); }, 500);
-      } else if (msg.match(/bonus|reward|referral|voucher|promo/)) {
-        reply = '🎁 Bonuses credit within 48 hrs. Referral rewards require friend to complete KYC + first trade.';
-        setTimeout(function(){ spAddBotBubble('<p>' + reply + '</p>'); spBotShowChips([{label:'✅ Thanks',action:'resolved'},{label:'🎧 Talk to agent',action:'connect'}]); }, 500);
+      if (msg.match(/scam|fraud|stolen|hack|cheat/)) {
+        setTimeout(function(){ spAddBotBubble('<p>🚨 <strong>This sounds urgent!</strong> I\'m connecting you to an agent immediately.</p>'); spConnectAgent(); }, 400);
+      } else if (msg.match(/deposit|deposit not|not received|not credited/)) {
+        setTimeout(function(){ spBotShowSubReply('Deposit & withdrawal','Deposit not received'); }, 400);
+      } else if (msg.match(/withdraw|withdrawal/)) {
+        setTimeout(function(){ spBotShowSubReply('Deposit & withdrawal','Withdrawal delayed'); }, 400);
+      } else if (msg.match(/wrong network|wrong chain|erc20|trc20|bep20/)) {
+        setTimeout(function(){ spBotShowSubReply('Deposit & withdrawal','Wrong network used'); }, 400);
+      } else if (msg.match(/p2p|seller|buyer|release|appeal|escrow/)) {
+        setTimeout(function(){ spBotShowSubReply('P2P','Seller not releasing'); }, 400);
+      } else if (msg.match(/kyc|verify|document|selfie|aadhaar|passport/)) {
+        setTimeout(function(){ spBotShowSubReply('Identity verification','Documents rejected'); }, 400);
+      } else if (msg.match(/password|forgot|reset|login|locked/)) {
+        setTimeout(function(){ spBotShowSubReply('Account & security','Forgot password'); }, 400);
+      } else if (msg.match(/2fa|otp|authenticator|google auth/)) {
+        setTimeout(function(){ spBotShowSubReply('Account & security','2FA / OTP issue'); }, 400);
+      } else if (msg.match(/bonus|reward|referral|cashback|voucher|promo/)) {
+        setTimeout(function(){ spBotShowSubReply('Promotion & bonus','Bonus not credited'); }, 400);
+      } else if (msg.match(/hi|hello|hlo|hey|help|support/)) {
+        setTimeout(function(){ spAddBotBubble('<p>👋 Hello! I\'m here to help. What issue are you facing?</p>'); spBotShowTopicMenu(); }, 400);
       } else {
-        // Generic fallback after user types
-        setTimeout(function(){ spAddBotBubble('<p>🤖 I didn\'t quite catch that. Would you like to connect with a live agent?</p>'); spBotShowChips([{label:'🎧 Yes, connect agent',action:'connect'},{label:'↩ Back to topics',action:'resolved'}]); }, 500);
+        setTimeout(function(){
+          spAddBotBubble('<p>🤖 I\'m not sure I understand. Let me show you the topics I can help with:</p>');
+          spBotShowTopicMenu();
+        }, 500);
       }
     }
 
@@ -1865,7 +2128,7 @@
       _spAgentConnected = false;
       _spConnecting = false;
       _spAgentName = '';
-      _spBotStep = 0;
+      _spSubTopic = '';
       _spBotActive = true;
       var msgs = document.getElementById('spChatMessages');
       if (msgs) msgs.innerHTML = '<div class="sp-chat-time">Just now</div><div class="sp-bot-bubble"><p><strong>👋 Hey BITEGIT user!</strong></p><p>I\'m Bunz Support. Select a topic or connect to a live agent.</p><div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spSendTopic(this,\'Account &amp; security\')">Account &amp; security</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Deposit &amp; withdrawal\')">Deposit &amp; withdrawal</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'P2P\')">P2P</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Identity verification\')">Identity verification</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Promotion &amp; bonus\')">Promotion &amp; bonus</button></div></div>';
@@ -1922,39 +2185,10 @@
       }
     }
 
-    // Called from bot flow chips (step 1 → step 2)
-    function spBotReply(btn, text) {
-      spAddUserBubble(text);
-      btn.closest('.sp-topic-chips') && btn.closest('.sp-topic-chips').parentElement.remove && btn.closest('.sp-bot-bubble') && (btn.closest('.sp-topic-chips').style.display='none');
-      var flow = _spBotFlows[_spCurrentTopic];
-      if (!flow) return;
-      var step = flow[_spBotStep] || flow[flow.length-1];
-      _spBotStep++;
-      var nextStep = flow[_spBotStep];
-      if (nextStep) {
-        setTimeout(function(){
-          spAddBotBubble('<p>' + nextStep.bot.replace(/\n/g,'<br>') + '</p>');
-          if (nextStep.chips) spBotShowChips(nextStep.chips);
-          _spBotStep++;
-        }, 600);
-      }
-    }
-
     async function spSendTopic(btn, topic) {
       _spCurrentTopic = topic;
-      _spBotStep = 0;
       spAddUserBubble(btn.textContent.trim());
-      // Show first bot step immediately (no ticket yet — bot handles it)
-      var flow = _spBotFlows[topic];
-      setTimeout(function(){
-        if (flow && flow[0]) {
-          spAddBotBubble('<p>' + flow[0].bot.replace(/\n/g,'<br>') + '</p>');
-          if (flow[0].chips) spBotShowChips(flow[0].chips);
-          _spBotStep = 1;
-        } else {
-          spAddBotBubble('<p>🤖 Tell me more about your issue and I\'ll try to help!</p>');
-        }
-      }, 500);
+      setTimeout(function(){ spBotStartTopic(topic); }, 450);
     }
 
     async function spSendMsg() {

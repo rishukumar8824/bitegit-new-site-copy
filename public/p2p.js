@@ -7019,10 +7019,15 @@ window.deleteMobAd = async function(offerId) {
       // Trigger slide-in animation (double rAF ensures display change is flushed first)
       requestAnimationFrame(function() { requestAnimationFrame(function() { el.classList.add('mob-screen-visible'); }); });
     }
-    // Hide bottom nav on support screens
+    // Hide bottom nav on support screens + lock height for chat screen
     var supportScreens = new Set(['mobSupportScreen','mobSupportChatScreen']);
     if (supportScreens.has(screenId)) {
       document.body.classList.add('sp-screen-open');
+      if (screenId === 'mobSupportChatScreen') {
+        requestAnimationFrame(function() {
+          if (typeof spLockHeight === 'function') spLockHeight();
+        });
+      }
     } else {
       document.body.classList.remove('sp-screen-open');
     }
