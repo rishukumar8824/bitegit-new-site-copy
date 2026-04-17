@@ -535,7 +535,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 }
 
 .cf-hero-banner {
-  padding: clamp(1rem, 3vw, 1.5rem) clamp(1rem, 4vw, 2.2rem) 0;
+  padding: 0;
   background: #000000;
 }
 
