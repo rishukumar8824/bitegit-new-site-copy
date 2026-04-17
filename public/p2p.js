@@ -7199,8 +7199,9 @@ window.deleteMobAd = async function(offerId) {
     var nav = document.getElementById('p2pMobileNav');
     if (nav) nav.style.display = hide ? 'none' : '';
   }
+  var BF_SCREENS = ['bfBuyScreen','bfOrderScreen','bfPayScreen','bfCancelWarnScreen','bfCancelReasonScreen','bfCancelledScreen'];
   function bfShow(id) {
-    ['bfBuyScreen','bfOrderScreen','bfPayScreen'].forEach(function(sid) {
+    BF_SCREENS.forEach(function(sid) {
       var el = document.getElementById(sid);
       if (el) el.style.display = sid === id ? 'flex' : 'none';
     });
@@ -7209,7 +7210,7 @@ window.deleteMobAd = async function(offerId) {
     bfSetNav(!!id);
   }
   function bfClose() {
-    ['bfBuyScreen','bfOrderScreen','bfPayScreen'].forEach(function(sid) {
+    BF_SCREENS.forEach(function(sid) {
       var el = document.getElementById(sid); if (el) el.style.display = 'none';
     });
     var sheet = document.getElementById('bfPaidSheet'); if (sheet) sheet.style.display = 'none';
@@ -7250,9 +7251,12 @@ window.deleteMobAd = async function(offerId) {
   function sellerRowHtml(name) {
     var init = String(name || 'S').slice(0,1).toUpperCase();
     return '<div style="display:inline-flex;align-items:center;gap:7px;">'
-      + '<div style="width:24px;height:24px;border-radius:5px;background:#2c2c2c;color:#fff;font-size:0.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + init + '.</div>'
-      + '<span style="font-weight:700;font-size:0.9rem;">' + esc(name || '--') + '</span>'
-      + '<span style="background:#1565ff;color:#fff;font-size:0.6rem;font-weight:800;padding:1px 5px;border-radius:3px;line-height:1.5;letter-spacing:0.02em;">+</span>'
+      + '<div style="width:32px;height:32px;border-radius:6px;background:#2c2c2c;color:#fff;font-size:0.85rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">'
+      + init
+      + '<span style="position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:#00c896;border:1.5px solid #000;"></span>'
+      + '</div>'
+      + '<span style="font-weight:700;font-size:0.92rem;">' + esc(name || '--') + '</span>'
+      + '<span style="color:#00c2b2;font-size:0.9rem;margin-left:1px;">✦</span>'
       + '</div>';
   }
 
@@ -7369,6 +7373,11 @@ window.deleteMobAd = async function(offerId) {
           '</div>',
           '<div id="bfOrdChatWrap" style="flex-shrink:0;"></div>',
         '</div>',
+        // Trust bullets
+        '<div style="background:#181818;border-radius:12px;padding:0.85rem 1rem;margin-bottom:0.85rem;display:flex;flex-direction:column;gap:0.45rem;">',
+          '<div style="font-size:0.76rem;color:rgba(255,255,255,0.5);line-height:1.5;">✱ The other party has passed our real-name and video identity verification.</div>',
+          '<div style="font-size:0.76rem;color:rgba(255,255,255,0.5);line-height:1.5;">✱ The cryptocurrency in this order is held in escrow by BITEGIT P2P and your payment is secure.</div>',
+        '</div>',
         // Order details card
         '<div style="' + CARD + '">',
           // Tether T + Buy USDT header
@@ -7459,6 +7468,82 @@ window.deleteMobAd = async function(offerId) {
         '</div>',
       '</div>',
     '</div>',
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // SCREEN 4  ─  Cancel Warning
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfCancelWarnScreen" style="display:none;' + SCR + '">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.6rem;flex-shrink:0;">',
+        '<button id="bfCancelWarnBack" style="' + BACK + '">←</button>',
+      '</div>',
+      '<div style="' + BODY + 'padding-top:0.3rem;">',
+        '<h2 style="margin:0 0 1.5rem;font-size:1.2rem;font-weight:800;line-height:1.35;color:#fff;">Before you cancel, here are solutions for common issues.</h2>',
+        '<div style="background:#181818;border-radius:12px;padding:1rem 1.1rem;margin-bottom:0.6rem;display:flex;align-items:center;justify-content:space-between;">',
+          '<span style="font-size:0.9rem;color:#fff;font-weight:500;">How to make a payment</span>',
+          '<button onclick="void(0)" style="background:#2c2c2c;border:none;color:#fff;font-size:0.78rem;font-weight:600;padding:6px 14px;border-radius:7px;cursor:pointer;">View tip</button>',
+        '</div>',
+        '<div style="background:#181818;border-radius:12px;padding:1rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;">',
+          '<span style="font-size:0.9rem;color:#fff;font-weight:500;">Having trouble paying?</span>',
+          '<button id="bfCancelWarnChat" style="background:#2c2c2c;border:none;color:#fff;font-size:0.78rem;font-weight:600;padding:6px 14px;border-radius:7px;cursor:pointer;">Chat with seller</button>',
+        '</div>',
+        '<h3 style="margin:0 0 0.75rem;font-size:1rem;font-weight:800;color:#fff;line-height:1.4;">Other issue?<br>Please review the following before canceling your order.</h3>',
+        '<div style="font-size:0.82rem;color:rgba(255,255,255,0.5);line-height:1.9;">',
+          '<div>1. If you\'ve already paid, don\'t cancel your order. You may lose your funds.</div>',
+          '<div>2. Over <span style="color:#00c2b2;font-weight:700;">3</span> cancellations in a day will block P2P buying for 24 hours.</div>',
+          '<div>3. If canceled due to the seller\'s issue, you won\'t be affected.</div>',
+        '</div>',
+      '</div>',
+      '<div style="' + FOOT + '">',
+        '<button id="bfProceedCancelBtn" style="' + PBTN + '">Proceed to cancel</button>',
+      '</div>',
+    '</div>',
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // SCREEN 5  ─  Cancel Reason
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfCancelReasonScreen" style="display:none;' + SCR + '">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.6rem;flex-shrink:0;">',
+        '<button id="bfCancelReasonBack" style="' + BACK + '">←</button>',
+      '</div>',
+      '<div style="' + BODY + 'padding-top:0.3rem;">',
+        '<h2 style="margin:0 0 0.25rem;font-size:1.15rem;font-weight:800;color:#fff;">Please select a reason for cancellation</h2>',
+        '<div style="color:#00c2b2;font-size:0.82rem;font-weight:600;margin-bottom:1.4rem;cursor:pointer;">Order cancellation tips</div>',
+        '<div id="bfReasonList" style="display:flex;flex-direction:column;gap:0.1rem;"></div>',
+        '<div style="height:1rem;"></div>',
+        '<label style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem 0;border-top:1px solid #1e1e1e;cursor:pointer;">',
+          '<input type="checkbox" id="bfNotPaidCheck" style="width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:#00c2b2;">',
+          '<span style="font-size:0.82rem;color:rgba(255,255,255,0.65);line-height:1.5;">I have not paid the seller / I have received the seller\'s refund</span>',
+        '</label>',
+      '</div>',
+      '<div style="' + FOOT + '">',
+        '<button id="bfConfirmCancelBtn" disabled style="' + PBTN + 'background:#222;color:rgba(255,255,255,0.25);cursor:not-allowed;">Confirm</button>',
+      '</div>',
+    '</div>',
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // SCREEN 6  ─  Cancelled
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfCancelledScreen" style="display:none;' + SCR + '">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.6rem;flex-shrink:0;">',
+        '<button id="bfCancelledBack" style="' + BACK + '">←</button>',
+      '</div>',
+      '<div style="' + BODY + 'padding-top:0.3rem;">',
+        '<h2 style="margin:0 0 1.1rem;font-size:1.5rem;font-weight:800;color:#fff;">Canceled</h2>',
+        '<div style="background:#181818;border-radius:12px;padding:0.85rem 1rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;">',
+          '<div id="bfCancelledSellerRow"></div>',
+          '<div id="bfCancelledChatWrap" style="flex-shrink:0;"></div>',
+        '</div>',
+        '<div style="display:flex;gap:0.7rem;margin-bottom:0.9rem;">',
+          '<div style="width:22px;height:22px;border-radius:50%;background:#1a1a1a;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;font-weight:800;color:#888;margin-top:2px;">1</div>',
+          '<div style="font-size:0.83rem;color:rgba(255,255,255,0.65);line-height:1.55;">The order has been canceled. No payment is required.</div>',
+        '</div>',
+      '</div>',
+      '<div style="' + FOOT + '">',
+        '<button id="bfPlaceNewOrderBtn" style="' + PBTN + '">Place a new order</button>',
+        '<button id="bfOrderInquiryBtn" style="' + GBTN + '">Order inquiry</button>',
+      '</div>',
+    '</div>',
+
     ].join('');
 
     var w = document.createElement('div'); w.innerHTML = html; document.body.appendChild(w);
@@ -7649,13 +7734,7 @@ window.deleteMobAd = async function(offerId) {
       if (confirm('Go back? Your order will remain active.')) { bfClose(); bfShowOldOrderModal(); }
     };
     document.getElementById('bfNextBtn').onclick = function() { bfFillPay(); };
-    document.getElementById('bfOrdCancelBtn').onclick = function() {
-      bfClose();
-      var om = document.getElementById('orderModal');
-      if (om) { om.classList.remove('hidden'); om.setAttribute('aria-hidden','false'); }
-      document.body.classList.add('p2p-order-open'); document.body.style.overflow = 'hidden';
-      if (typeof setCancelModalOpen === 'function') setTimeout(function() { setCancelModalOpen(true); }, 100);
-    };
+    document.getElementById('bfOrdCancelBtn').onclick = function() { bfShow('bfCancelWarnScreen'); };
 
     // Screen 3 – delegate chat btn clicks (injected dynamically)
     document.addEventListener('click', function(e) {
@@ -7664,8 +7743,81 @@ window.deleteMobAd = async function(offerId) {
     });
 
     document.getElementById('bfPayBack').onclick = function() { bfShow('bfOrderScreen'); };
-    document.getElementById('bfPayCancelBtn').onclick = document.getElementById('bfOrdCancelBtn').onclick;
+    document.getElementById('bfPayCancelBtn').onclick = function() { bfShow('bfCancelWarnScreen'); };
     document.getElementById('bfPaidBtn').onclick = function() { bfShowPaidSheet(); };
+
+    // Cancel flow
+    var _bfCancelReason = '';
+    var CANCEL_REASONS = [
+      "I don't want to proceed with this order.",
+      "I don't meet the seller's requirements.",
+      "I don't know how to make the payment.",
+      "I agreed with the seller to cancel the order.",
+      "I could not reach the seller.",
+      "The seller's payment details are incorrect.",
+      "The seller was rude or unprofessional.",
+      "I believe the seller may be a scammer.",
+      "Other"
+    ];
+    (function buildReasonList() {
+      var list = document.getElementById('bfReasonList');
+      if (!list) return;
+      list.innerHTML = CANCEL_REASONS.map(function(r, i) {
+        return '<label style="display:flex;align-items:center;gap:0.75rem;padding:0.72rem 0;border-bottom:1px solid #1a1a1a;cursor:pointer;">'
+          + '<input type="radio" name="bfCancelReason" value="' + i + '" style="width:18px;height:18px;accent-color:#00c2b2;flex-shrink:0;">'
+          + '<span style="font-size:0.87rem;color:rgba(255,255,255,0.85);">' + r + '</span>'
+          + '</label>';
+      }).join('');
+      list.addEventListener('change', function() {
+        var sel = list.querySelector('input[name="bfCancelReason"]:checked');
+        _bfCancelReason = sel ? CANCEL_REASONS[parseInt(sel.value)] : '';
+        updateCancelConfirmBtn();
+      });
+    })();
+    function updateCancelConfirmBtn() {
+      var cb = document.getElementById('bfNotPaidCheck');
+      var btn = document.getElementById('bfConfirmCancelBtn');
+      if (!btn) return;
+      var ok = _bfCancelReason && cb && cb.checked;
+      btn.disabled = !ok;
+      btn.style.background = ok ? '#fff' : '#222';
+      btn.style.color = ok ? '#0d0d0d' : 'rgba(255,255,255,0.25)';
+      btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+    }
+    document.getElementById('bfNotPaidCheck').addEventListener('change', updateCancelConfirmBtn);
+    document.getElementById('bfCancelWarnBack').onclick = function() {
+      bfShow(_bfOrder ? 'bfPayScreen' : 'bfOrderScreen');
+    };
+    document.getElementById('bfCancelWarnChat').onclick = function() {
+      if (window.bfOpenChat) window.bfOpenChat('bfCancelWarnScreen');
+    };
+    document.getElementById('bfProceedCancelBtn').onclick = function() { bfShow('bfCancelReasonScreen'); };
+    document.getElementById('bfCancelReasonBack').onclick = function() { bfShow('bfCancelWarnScreen'); };
+    document.getElementById('bfConfirmCancelBtn').onclick = async function() {
+      var btn = this;
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = 'Cancelling...';
+      try {
+        await updateOrderStatus('cancel');
+        var sellerName = _bfOrder ? (_bfOrder.sellerUsername || (_bfOffer && _bfOffer.advertiser) || '--') : '--';
+        var csr = document.getElementById('bfCancelledSellerRow');
+        if (csr) csr.innerHTML = sellerRowHtml(sellerName);
+        var ccw = document.getElementById('bfCancelledChatWrap');
+        if (ccw) ccw.innerHTML = chatBtnHtml('bfCancelledChatBtn', 'bfCancelledScreen');
+        bfShow('bfCancelledScreen');
+        if (typeof showToast === 'function') showToast('Order cancelled');
+      } catch(e) {
+        btn.disabled = false;
+        btn.textContent = 'Confirm';
+        if (typeof showToast === 'function') showToast(e.message || 'Failed to cancel');
+      }
+    };
+    document.getElementById('bfCancelledBack').onclick = function() { bfClose(); };
+    document.getElementById('bfPlaceNewOrderBtn').onclick = function() { bfClose(); };
+    document.getElementById('bfOrderInquiryBtn').onclick = function() {
+      if (typeof showToast === 'function') showToast('Contact support for order inquiries');
+    };
 
     // Paid sheet
     document.getElementById('bfPaidSheet').addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
