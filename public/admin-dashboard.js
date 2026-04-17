@@ -404,7 +404,7 @@ async function loadOverview() {
   const other  = Math.max(0, Number(revenue.totalRevenue?.month || 0) - p2p - spot - wdfee);
   const donutData  = [p2p, spot, wdfee, other];
   const donutLabels = ['P2P', 'Spot Fees', 'Withdrawal', 'Other'];
-  const donutColors = ['#00e5ff', '#0099a8', '#38bdf8', '#0ea5e9'];
+  const donutColors = ['#00e5ff', '#f0b90b', '#0ecb81', '#a78bfa'];
   const donutTotal = p2p + spot + wdfee + other;
 
   const dtEl = document.getElementById('donutTotal');
@@ -421,17 +421,25 @@ async function loadOverview() {
           data: donutTotal > 0 ? donutData : [1, 1, 1, 1],
           backgroundColor: donutColors,
           borderWidth: 0,
-          borderRadius: 6,
-          spacing: 3,
-          hoverOffset: 6
+          borderRadius: 10,
+          spacing: 5,
+          hoverOffset: 10
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '68%',
+        cutout: '70%',
         plugins: { legend: { display: false }, tooltip: {
-          callbacks: { label: function(ctx) { return ' ₹' + formatNumber(ctx.parsed, 2); } }
+          backgroundColor: '#141821',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          callbacks: {
+            label: function(ctx) {
+              var pct = donutTotal > 0 ? ((ctx.parsed / donutTotal) * 100).toFixed(1) : '0.0';
+              return '  ₹' + formatNumber(ctx.parsed, 2) + '  (' + pct + '%)';
+            }
+          }
         }}
       }
     });
@@ -440,10 +448,14 @@ async function loadOverview() {
   const legend = document.getElementById('donutLegend');
   if (legend) {
     legend.innerHTML = donutLabels.map(function(lbl, i) {
-      return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;">'
-        + '<span style="display:flex;align-items:center;gap:5px;color:var(--text-2);">'
-        + '<span style="width:8px;height:8px;border-radius:50%;background:' + donutColors[i] + ';flex-shrink:0;display:inline-block;"></span>' + lbl + '</span>'
-        + '<span style="font-weight:700;color:#fff;">₹' + formatNumber(donutData[i], 2) + '</span></div>';
+      var pct = donutTotal > 0 ? ((donutData[i] / donutTotal) * 100).toFixed(1) : '0.0';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+        + '<span style="display:flex;align-items:center;gap:8px;">'
+        + '<span style="width:12px;height:12px;border-radius:4px;background:' + donutColors[i] + ';flex-shrink:0;display:inline-block;box-shadow:0 0 6px ' + donutColors[i] + '80;"></span>'
+        + '<span style="font-size:12px;color:rgba(255,255,255,0.6);">' + lbl + '</span></span>'
+        + '<span style="font-size:12px;font-weight:700;color:#fff;">₹' + formatNumber(donutData[i], 2)
+        + ' <span style="font-size:10px;font-weight:500;color:' + donutColors[i] + ';">(' + pct + '%)</span></span>'
+        + '</div>';
     }).join('');
   }
 
