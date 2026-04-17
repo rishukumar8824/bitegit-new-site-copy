@@ -428,6 +428,7 @@ function registerAuthRoutes(app, deps) {
     const password = String(req.body?.password || '').trim();
     const otpCode = String(req.body?.otpCode || '').trim();
     const ipAddress = normalizeIp(req);
+    const userAgent = String(req.headers['user-agent'] || '').trim().slice(0, 1024);
 
     if (!isValidEmail(email)) {
       await safeAuditLog({
@@ -498,7 +499,7 @@ function registerAuthRoutes(app, deps) {
         userId: user.id,
         action: 'register_success',
         ipAddress,
-        metadata: { email }
+        metadata: { email, userAgent }
       });
 
       return res.status(201).json({

@@ -1445,6 +1445,7 @@ async function withOrderMutation(orderId, mutator, maxRetries = 4) {
 
 app.post('/api/p2p/login', async (req, res) => {
   const requestIp = getRequestIp(req);
+  const requestUa = String(req.headers['user-agent'] || '').trim().slice(0, 1024);
   const ipCheck = loginAttemptLimiter(`p2p_login:${getRequestIp(req)}`);
   if (!ipCheck.allowed) {
     if (auditLogService) {
@@ -1526,7 +1527,8 @@ app.post('/api/p2p/login', async (req, res) => {
         metadata: {
           route: '/api/p2p/login',
           email: user.email,
-          role: user.role
+          role: user.role,
+          userAgent: requestUa
         }
       });
     }
