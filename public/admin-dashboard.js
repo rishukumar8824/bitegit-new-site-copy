@@ -305,8 +305,9 @@ function drawChart(instanceKey, canvasId, labels, values, color = '#22c55e') {
           pointHoverRadius: 4,
           pointHoverBackgroundColor: color,
           fill: true,
-          tension: 0.6,
-          cubicInterpolationMode: 'default'
+          tension: 0.8,
+          cubicInterpolationMode: 'default',
+          capBezierPoints: false
         }
       ]
     },
@@ -2915,9 +2916,9 @@ function renderNotifPanel() {
 function handleNotifClick(type) {
   document.getElementById('notifPanel').style.display = 'none';
   if (type === 'withdrawal') openWithdrawalPanel();
-  else if (type === 'kyc') navigateTo('kyc');
-  else if (type === 'support') navigateTo('notifications');
-  else if (type === 'deposit') navigateTo('wallet');
+  else if (type === 'kyc') showPanel('kyc');
+  else if (type === 'support') showPanel('notifications');
+  else if (type === 'deposit') showPanel('wallet');
 }
 
 // Poll for new alerts every 30s
