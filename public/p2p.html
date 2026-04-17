@@ -140,18 +140,39 @@
           </div>
           <!-- Row 2: Asset selector + Amount input -->
           <div class="gt-controls-row2">
-            <div class="gt-asset-wrap">
-              <span id="assetChipIcon" style="display:flex;align-items:center;">
+            <!-- Custom coin picker (replaces native select) -->
+            <div class="gt-asset-wrap" style="position:relative;cursor:pointer;" id="coinPickerWrap" onclick="toggleCoinPicker()">
+              <span id="coinPickerIcon" style="display:flex;align-items:center;">
                 <svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.122 0 1.048 3.309 1.919 7.709 2.121v7.596h3.913v-7.6c4.393-.202 7.694-1.073 7.694-2.12 0-1.046-3.301-1.917-7.694-2.12" fill="white"/></svg>
               </span>
-              <select id="assetFilter" class="gt-asset-select" aria-label="Asset">
+              <span id="coinPickerLabel" style="color:#fff;font-size:0.88rem;font-weight:600;">USDT</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              <!-- Hidden native select for JS compatibility -->
+              <select id="assetFilter" aria-label="Asset" style="display:none;">
                 <option value="USDT">USDT</option>
                 <option value="BTC">BTC</option>
                 <option value="ETH">ETH</option>
                 <option value="BNB">BNB</option>
                 <option value="XRP">XRP</option>
               </select>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              <!-- Dropdown panel -->
+              <div id="coinPickerDropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:99;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:6px;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+                <div onclick="pickCoin(event,'USDT')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:#fff;font-size:0.84rem;font-weight:600;" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='transparent'">
+                  <svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.122 0 1.048 3.309 1.919 7.709 2.121v7.596h3.913v-7.6c4.393-.202 7.694-1.073 7.694-2.12 0-1.046-3.301-1.917-7.694-2.12" fill="white"/></svg> USDT
+                </div>
+                <div onclick="pickCoin(event,'BTC')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:#fff;font-size:0.84rem;font-weight:600;" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='transparent'">
+                  <svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F7931A"/><path d="M22.5 14.3c.3-2.1-1.3-3.2-3.5-4l.7-2.8-1.7-.4-.7 2.7-1.4-.3.7-2.7-1.7-.4-.7 2.8-2.8-.7-.4 1.8s1.3.3 1.2.3c.7.2.8.6.8.9l-2 7.9c-.1.2-.3.5-.8.4 0 .1-1.2-.3-1.2-.3l-.8 2 2.6.7-.7 2.8 1.7.4.7-2.8 1.4.4-.7 2.8 1.7.4.7-2.8c2.9.5 5-.2 5.9-2.8.7-2.1 0-3.3-1.5-4.1 1.1-.3 1.9-1 2.1-2.6zm-3.7 5.2c-.5 2.1-4 1-5.1.7l.9-3.6c1.1.3 4.7.8 4.2 2.9zm.5-5.2c-.5 1.9-3.4.9-4.4.7l.8-3.3c1 .2 4.1.7 3.6 2.6z" fill="white"/></svg> BTC
+                </div>
+                <div onclick="pickCoin(event,'ETH')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:#fff;font-size:0.84rem;font-weight:600;" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='transparent'">
+                  <svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#627EEA"/><path d="M16.498 4v8.87l7.497 3.35z" fill="white" fill-opacity=".6"/><path d="M16.498 4L9 16.22l7.498-3.35z" fill="white"/><path d="M16.498 21.968v6.027L24 17.616z" fill="white" fill-opacity=".6"/><path d="M16.498 27.995v-6.028L9 17.616z" fill="white"/><path d="M16.498 20.573l7.497-4.353-7.497-3.348z" fill="white" fill-opacity=".2"/><path d="M9 16.22l7.498 4.353v-7.701z" fill="white" fill-opacity=".6"/></svg> ETH
+                </div>
+                <div onclick="pickCoin(event,'BNB')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:#fff;font-size:0.84rem;font-weight:600;" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='transparent'">
+                  <svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F3BA2F"/><path d="M12.116 13.884L16 10l3.886 3.886 2.26-2.26L16 5.48l-6.144 6.144zM5.48 16l2.26-2.26 2.26 2.26-2.26 2.26zm6.636 2.116L16 22l3.886-3.886 2.261 2.259L16 26.52l-6.146-6.144zM22 16l2.26-2.26 2.26 2.26-2.26 2.26zm-3.771 0L16 13.771 13.771 16 16 18.229z" fill="white"/></svg> BNB
+                </div>
+                <div onclick="pickCoin(event,'XRP')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:#fff;font-size:0.84rem;font-weight:600;" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='transparent'">
+                  <svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#00AAE4"/><path d="M21.5 9h2.6l-5.3 5.3c-1.5 1.5-4 1.5-5.5 0L7.9 9h2.6l4 4c.8.8 2.2.8 3 0zM10.5 23H7.9l5.4-5.4c1.5-1.5 4-1.5 5.5 0l5.3 5.4h-2.6l-4-4c-.8-.8-2.2-.8-3 0z" fill="white"/></svg> XRP
+                </div>
+              </div>
             </div>
             <div class="gt-amount-wrap">
               <input id="amountFilter" type="number" min="0" placeholder="0.000" class="gt-amount-input"/>
@@ -165,35 +186,6 @@
 
         <!-- Hidden legacy inputs kept for JS compatibility -->
         <input id="paymentFilter" type="hidden" value=""/>
-
-        <!-- Coin chips -->
-        <div style="display:flex;gap:0.5rem;padding:0.5rem 0 0.2rem;flex-wrap:wrap;">
-          <!-- USDT -->
-          <button onclick="setAssetChip('USDT','<svg width=&quot;20&quot; height=&quot;20&quot; viewBox=&quot;0 0 32 32&quot;><circle cx=&quot;16&quot; cy=&quot;16&quot; r=&quot;16&quot; fill=&quot;#26a17b&quot;/><path d=&quot;M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.122 0 1.048 3.309 1.919 7.709 2.121v7.596h3.913v-7.6c4.393-.202 7.694-1.073 7.694-2.12 0-1.046-3.301-1.917-7.694-2.12&quot; fill=&quot;white&quot;/></svg>')" type="button" style="display:flex;align-items:center;gap:5px;background:rgba(38,161,123,0.12);border:1px solid rgba(38,161,123,0.3);border-radius:20px;padding:4px 10px;cursor:pointer;color:#fff;font-size:0.78rem;font-weight:600;">
-            <svg width="16" height="16" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.122 0 1.048 3.309 1.919 7.709 2.121v7.596h3.913v-7.6c4.393-.202 7.694-1.073 7.694-2.12 0-1.046-3.301-1.917-7.694-2.12" fill="white"/></svg>
-            USDT
-          </button>
-          <!-- BTC -->
-          <button onclick="setAssetChip('BTC','<svg width=&quot;20&quot; height=&quot;20&quot; viewBox=&quot;0 0 32 32&quot;><circle cx=&quot;16&quot; cy=&quot;16&quot; r=&quot;16&quot; fill=&quot;#F7931A&quot;/><path d=&quot;M22.5 14.3c.3-2.1-1.3-3.2-3.5-4l.7-2.8-1.7-.4-.7 2.7-1.4-.3.7-2.7-1.7-.4-.7 2.8-2.8-.7-.4 1.8s1.3.3 1.2.3c.7.2.8.6.8.9l-2 7.9c-.1.2-.3.5-.8.4 0 .1-1.2-.3-1.2-.3l-.8 2 2.6.7-.7 2.8 1.7.4.7-2.8 1.4.4-.7 2.8 1.7.4.7-2.8c2.9.5 5-.2 5.9-2.8.7-2.1 0-3.3-1.5-4.1 1.1-.3 1.9-1 2.1-2.6zm-3.7 5.2c-.5 2.1-4 1-5.1.7l.9-3.6c1.1.3 4.7.8 4.2 2.9zm.5-5.2c-.5 1.9-3.4.9-4.4.7l.8-3.3c1 .2 4.1.7 3.6 2.6z&quot; fill=&quot;white&quot;/></svg>')" type="button" style="display:flex;align-items:center;gap:5px;background:rgba(247,147,26,0.12);border:1px solid rgba(247,147,26,0.3);border-radius:20px;padding:4px 10px;cursor:pointer;color:#fff;font-size:0.78rem;font-weight:600;">
-            <svg width="16" height="16" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F7931A"/><path d="M22.5 14.3c.3-2.1-1.3-3.2-3.5-4l.7-2.8-1.7-.4-.7 2.7-1.4-.3.7-2.7-1.7-.4-.7 2.8-2.8-.7-.4 1.8s1.3.3 1.2.3c.7.2.8.6.8.9l-2 7.9c-.1.2-.3.5-.8.4 0 .1-1.2-.3-1.2-.3l-.8 2 2.6.7-.7 2.8 1.7.4.7-2.8 1.4.4-.7 2.8 1.7.4.7-2.8c2.9.5 5-.2 5.9-2.8.7-2.1 0-3.3-1.5-4.1 1.1-.3 1.9-1 2.1-2.6zm-3.7 5.2c-.5 2.1-4 1-5.1.7l.9-3.6c1.1.3 4.7.8 4.2 2.9zm.5-5.2c-.5 1.9-3.4.9-4.4.7l.8-3.3c1 .2 4.1.7 3.6 2.6z" fill="white"/></svg>
-            BTC
-          </button>
-          <!-- ETH -->
-          <button onclick="setAssetChip('ETH','<svg width=&quot;20&quot; height=&quot;20&quot; viewBox=&quot;0 0 32 32&quot;><circle cx=&quot;16&quot; cy=&quot;16&quot; r=&quot;16&quot; fill=&quot;#627EEA&quot;/><path d=&quot;M16.498 4v8.87l7.497 3.35z&quot; fill=&quot;white&quot; fill-opacity=&quot;.6&quot;/><path d=&quot;M16.498 4L9 16.22l7.498-3.35z&quot; fill=&quot;white&quot;/><path d=&quot;M16.498 21.968v6.027L24 17.616z&quot; fill=&quot;white&quot; fill-opacity=&quot;.6&quot;/><path d=&quot;M16.498 27.995v-6.028L9 17.616z&quot; fill=&quot;white&quot;/><path d=&quot;M16.498 20.573l7.497-4.353-7.497-3.348z&quot; fill=&quot;white&quot; fill-opacity=&quot;.2&quot;/><path d=&quot;M9 16.22l7.498 4.353v-7.701z&quot; fill=&quot;white&quot; fill-opacity=&quot;.6&quot;/></svg>')" type="button" style="display:flex;align-items:center;gap:5px;background:rgba(98,126,234,0.12);border:1px solid rgba(98,126,234,0.3);border-radius:20px;padding:4px 10px;cursor:pointer;color:#fff;font-size:0.78rem;font-weight:600;">
-            <svg width="16" height="16" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#627EEA"/><path d="M16.498 4v8.87l7.497 3.35z" fill="white" fill-opacity=".6"/><path d="M16.498 4L9 16.22l7.498-3.35z" fill="white"/><path d="M16.498 21.968v6.027L24 17.616z" fill="white" fill-opacity=".6"/><path d="M16.498 27.995v-6.028L9 17.616z" fill="white"/><path d="M16.498 20.573l7.497-4.353-7.497-3.348z" fill="white" fill-opacity=".2"/><path d="M9 16.22l7.498 4.353v-7.701z" fill="white" fill-opacity=".6"/></svg>
-            ETH
-          </button>
-          <!-- BNB -->
-          <button onclick="setAssetChip('BNB','<svg width=&quot;20&quot; height=&quot;20&quot; viewBox=&quot;0 0 32 32&quot;><circle cx=&quot;16&quot; cy=&quot;16&quot; r=&quot;16&quot; fill=&quot;#F3BA2F&quot;/><path d=&quot;M12.116 13.884L16 10l3.886 3.886 2.26-2.26L16 5.48l-6.144 6.144zM5.48 16l2.26-2.26 2.26 2.26-2.26 2.26zm6.636 2.116L16 22l3.886-3.886 2.261 2.259L16 26.52l-6.146-6.144zM22 16l2.26-2.26 2.26 2.26-2.26 2.26zm-3.771 0L16 13.771 13.771 16 16 18.229z&quot; fill=&quot;white&quot;/></svg>')" type="button" style="display:flex;align-items:center;gap:5px;background:rgba(243,186,47,0.12);border:1px solid rgba(243,186,47,0.3);border-radius:20px;padding:4px 10px;cursor:pointer;color:#fff;font-size:0.78rem;font-weight:600;">
-            <svg width="16" height="16" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F3BA2F"/><path d="M12.116 13.884L16 10l3.886 3.886 2.26-2.26L16 5.48l-6.144 6.144zM5.48 16l2.26-2.26 2.26 2.26-2.26 2.26zm6.636 2.116L16 22l3.886-3.886 2.261 2.259L16 26.52l-6.146-6.144zM22 16l2.26-2.26 2.26 2.26-2.26 2.26zm-3.771 0L16 13.771 13.771 16 16 18.229z" fill="white"/></svg>
-            BNB
-          </button>
-          <!-- XRP -->
-          <button onclick="setAssetChip('XRP','<svg width=&quot;20&quot; height=&quot;20&quot; viewBox=&quot;0 0 32 32&quot;><circle cx=&quot;16&quot; cy=&quot;16&quot; r=&quot;16&quot; fill=&quot;#00AAE4&quot;/><path d=&quot;M21.5 9h2.6l-5.3 5.3c-1.5 1.5-4 1.5-5.5 0L7.9 9h2.6l4 4c.8.8 2.2.8 3 0zM10.5 23H7.9l5.4-5.4c1.5-1.5 4-1.5 5.5 0l5.3 5.4h-2.6l-4-4c-.8-.8-2.2-.8-3 0z&quot; fill=&quot;white&quot;/></svg>')" type="button" style="display:flex;align-items:center;gap:5px;background:rgba(0,170,228,0.12);border:1px solid rgba(0,170,228,0.3);border-radius:20px;padding:4px 10px;cursor:pointer;color:#fff;font-size:0.78rem;font-weight:600;">
-            <svg width="16" height="16" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#00AAE4"/><path d="M21.5 9h2.6l-5.3 5.3c-1.5 1.5-4 1.5-5.5 0L7.9 9h2.6l4 4c.8.8 2.2.8 3 0zM10.5 23H7.9l5.4-5.4c1.5-1.5 4-1.5 5.5 0l5.3 5.4h-2.6l-4-4c-.8-.8-2.2-.8-3 0z" fill="white"/></svg>
-            XRP
-          </button>
-        </div>
 
         <!-- Alert -->
         <div class="p2p-alert-bar" id="p2pAlertBar" style="position:relative;">
@@ -1404,12 +1396,32 @@
     </div>
 
     <script>
-    function setAssetChip(val, svgHtml) {
+    var coinSVGs = {
+      USDT: '<svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.122 0 1.048 3.309 1.919 7.709 2.121v7.596h3.913v-7.6c4.393-.202 7.694-1.073 7.694-2.12 0-1.046-3.301-1.917-7.694-2.12" fill="white"/></svg>',
+      BTC: '<svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F7931A"/><path d="M22.5 14.3c.3-2.1-1.3-3.2-3.5-4l.7-2.8-1.7-.4-.7 2.7-1.4-.3.7-2.7-1.7-.4-.7 2.8-2.8-.7-.4 1.8s1.3.3 1.2.3c.7.2.8.6.8.9l-2 7.9c-.1.2-.3.5-.8.4 0 .1-1.2-.3-1.2-.3l-.8 2 2.6.7-.7 2.8 1.7.4.7-2.8 1.4.4-.7 2.8 1.7.4.7-2.8c2.9.5 5-.2 5.9-2.8.7-2.1 0-3.3-1.5-4.1 1.1-.3 1.9-1 2.1-2.6zm-3.7 5.2c-.5 2.1-4 1-5.1.7l.9-3.6c1.1.3 4.7.8 4.2 2.9zm.5-5.2c-.5 1.9-3.4.9-4.4.7l.8-3.3c1 .2 4.1.7 3.6 2.6z" fill="white"/></svg>',
+      ETH: '<svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#627EEA"/><path d="M16.498 4v8.87l7.497 3.35z" fill="white" fill-opacity=".6"/><path d="M16.498 4L9 16.22l7.498-3.35z" fill="white"/><path d="M16.498 21.968v6.027L24 17.616z" fill="white" fill-opacity=".6"/><path d="M16.498 27.995v-6.028L9 17.616z" fill="white"/><path d="M16.498 20.573l7.497-4.353-7.497-3.348z" fill="white" fill-opacity=".2"/><path d="M9 16.22l7.498 4.353v-7.701z" fill="white" fill-opacity=".6"/></svg>',
+      BNB: '<svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F3BA2F"/><path d="M12.116 13.884L16 10l3.886 3.886 2.26-2.26L16 5.48l-6.144 6.144zM5.48 16l2.26-2.26 2.26 2.26-2.26 2.26zm6.636 2.116L16 22l3.886-3.886 2.261 2.259L16 26.52l-6.146-6.144zM22 16l2.26-2.26 2.26 2.26-2.26 2.26zm-3.771 0L16 13.771 13.771 16 16 18.229z" fill="white"/></svg>',
+      XRP: '<svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#00AAE4"/><path d="M21.5 9h2.6l-5.3 5.3c-1.5 1.5-4 1.5-5.5 0L7.9 9h2.6l4 4c.8.8 2.2.8 3 0zM10.5 23H7.9l5.4-5.4c1.5-1.5 4-1.5 5.5 0l5.3 5.4h-2.6l-4-4c-.8-.8-2.2-.8-3 0z" fill="white"/></svg>'
+    };
+    function toggleCoinPicker() {
+      var dd = document.getElementById('coinPickerDropdown');
+      dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+    }
+    function pickCoin(e, val) {
+      e.stopPropagation();
       var sel = document.getElementById('assetFilter');
       if (sel) { sel.value = val; sel.dispatchEvent(new Event('change')); }
-      var icon = document.getElementById('assetChipIcon');
-      if (icon) icon.innerHTML = svgHtml;
+      document.getElementById('coinPickerIcon').innerHTML = coinSVGs[val] || '';
+      document.getElementById('coinPickerLabel').textContent = val;
+      document.getElementById('coinPickerDropdown').style.display = 'none';
     }
+    document.addEventListener('click', function(e) {
+      var wrap = document.getElementById('coinPickerWrap');
+      if (wrap && !wrap.contains(e.target)) {
+        var dd = document.getElementById('coinPickerDropdown');
+        if (dd) dd.style.display = 'none';
+      }
+    });
     </script>
 </body>
 </html>
