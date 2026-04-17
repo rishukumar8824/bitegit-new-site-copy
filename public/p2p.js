@@ -421,9 +421,13 @@ function normalizeKycStatus(status) {
   const normalized = String(status || '')
     .trim()
     .toUpperCase();
+  // Admin stores 'APPROVED' → treat as VERIFIED on frontend
+  if (normalized === 'APPROVED') return 'VERIFIED';
   if (['VERIFIED', 'PENDING_REVIEW', 'REJECTED', 'NOT_SUBMITTED'].includes(normalized)) {
     return normalized;
   }
+  // PENDING from admin = under review
+  if (normalized === 'PENDING') return 'PENDING_REVIEW';
   return 'NOT_SUBMITTED';
 }
 
@@ -7191,6 +7195,10 @@ window.deleteMobAd = async function(offerId) {
   function bfStopTimer() { if (_bfTimerTick) { clearInterval(_bfTimerTick); _bfTimerTick = null; } }
 
   // ── Screen management ─────────────────────────────────────────────
+  function bfSetNav(hide) {
+    var nav = document.getElementById('p2pMobileNav');
+    if (nav) nav.style.display = hide ? 'none' : '';
+  }
   function bfShow(id) {
     ['bfBuyScreen','bfOrderScreen','bfPayScreen'].forEach(function(sid) {
       var el = document.getElementById(sid);
@@ -7198,6 +7206,7 @@ window.deleteMobAd = async function(offerId) {
     });
     document.body.style.overflow = id ? 'hidden' : '';
     document.body.classList.toggle('bf-open', !!id);
+    bfSetNav(!!id);
   }
   function bfClose() {
     ['bfBuyScreen','bfOrderScreen','bfPayScreen'].forEach(function(sid) {
@@ -7205,6 +7214,7 @@ window.deleteMobAd = async function(offerId) {
     });
     var sheet = document.getElementById('bfPaidSheet'); if (sheet) sheet.style.display = 'none';
     document.body.style.overflow = ''; document.body.classList.remove('bf-open'); bfStopTimer();
+    bfSetNav(false);
   }
   function bfShowOldOrderModal() {
     bfClose();
