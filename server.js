@@ -3715,7 +3715,7 @@ async function boot() {
         otpConfig: otpAuthConfig.otp
       });
 
-    if (otpAuthConfig.mysql.enabled) {
+    if (otpAuthConfig.mysql && otpAuthConfig.mysql.enabled) {
       try {
         otpAuthStore = createMySqlAuthStore(otpAuthConfig.mysql);
         await otpAuthStore.initialize();
