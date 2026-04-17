@@ -305,7 +305,7 @@ function drawChart(instanceKey, canvasId, labels, values, color = '#22c55e') {
           pointHoverRadius: 4,
           pointHoverBackgroundColor: color,
           fill: true,
-          tension: 0.5,
+          tension: 0.6,
           cubicInterpolationMode: 'default'
         }
       ]
@@ -2841,12 +2841,108 @@ function connectWithdrawalSSE() {
   _wdSSE.onerror = () => setTimeout(connectWithdrawalSSE, 5000);
 }
 
+// ── Notification Bell ──────────────────────────────────────────
+var _notifs = [];
+
+function toggleNotifPanel() {
+  var panel = document.getElementById('notifPanel');
+  if (!panel) return;
+  var open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (!open) renderNotifPanel();
+}
+
+// Close panel on outside click
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('notifBellWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    var panel = document.getElementById('notifPanel');
+    if (panel) panel.style.display = 'none';
+  }
+});
+
+function addNotif(type, title, body, time) {
+  // avoid duplicates by title+type
+  if (_notifs.find(function(n){ return n.title === title && n.type === type; })) return;
+  _notifs.unshift({ type: type, title: title, body: body, time: time || new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) });
+  if (_notifs.length > 50) _notifs.length = 50;
+  updateNotifBadge();
+}
+
+function updateNotifBadge() {
+  var badge = document.getElementById('notifBellBadge');
+  if (!badge) return;
+  if (_notifs.length > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = _notifs.length > 99 ? '99+' : _notifs.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function clearAllNotifs() {
+  _notifs = [];
+  updateNotifBadge();
+  renderNotifPanel();
+}
+
+function renderNotifPanel() {
+  var list = document.getElementById('notifList');
+  var empty = document.getElementById('notifEmpty');
+  if (!list) return;
+  if (_notifs.length === 0) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  var icons = { withdrawal:'💸', deposit:'⬇️', kyc:'🪪', support:'💬', system:'⚙️' };
+  var colors = { withdrawal:'#f6465d', deposit:'#0ecb81', kyc:'#f0b90b', support:'#00e5ff', system:'#a78bfa' };
+  list.innerHTML = _notifs.map(function(n, i) {
+    var ic = icons[n.type] || '🔔';
+    var cl = colors[n.type] || '#fff';
+    return '<div onclick="handleNotifClick(\''+n.type+'\')" style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.1s;" onmouseenter="this.style.background=\'rgba(255,255,255,0.04)\'" onmouseleave="this.style.background=\'\'">'
+      + '<div style="width:32px;height:32px;border-radius:50%;background:'+cl+'18;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;">'+ic+'</div>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+n.title+'</div>'
+      + '<div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;line-height:1.4;">'+n.body+'</div>'
+      + '</div>'
+      + '<div style="font-size:10px;color:rgba(255,255,255,0.25);flex-shrink:0;margin-top:1px;">'+n.time+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function handleNotifClick(type) {
+  document.getElementById('notifPanel').style.display = 'none';
+  if (type === 'withdrawal') openWithdrawalPanel();
+  else if (type === 'kyc') navigateTo('kyc');
+  else if (type === 'support') navigateTo('notifications');
+  else if (type === 'deposit') navigateTo('wallet');
+}
+
+// Poll for new alerts every 30s
+function pollNotifAlerts() {
+  apiRequest('/admin/overview').then(function(data) {
+    if (!data) return;
+    if ((data.pendingWithdrawals || 0) > 0) addNotif('withdrawal', 'Pending Withdrawals', (data.pendingWithdrawals||0)+' withdrawal request(s) awaiting approval');
+    if ((data.pendingKyc || 0) > 0) addNotif('kyc', 'KYC Pending', (data.pendingKyc||0)+' user(s) waiting for KYC review');
+    if ((data.openSupportTickets || 0) > 0) addNotif('support', 'Support Tickets', (data.openSupportTickets||0)+' open support ticket(s)');
+  }).catch(function(){});
+  apiRequest('/wallet/deposits?status=pending&limit=1').then(function(data) {
+    var arr = data && (data.deposits || data.rows || []);
+    if (arr && arr.length > 0) addNotif('deposit', 'Pending Deposits', arr.length+' deposit(s) need review');
+  }).catch(function(){});
+}
+setTimeout(pollNotifAlerts, 2000);
+setInterval(pollNotifAlerts, 30000);
+
 function updateWithdrawalBadge() {
   const badge = document.getElementById('withdrawalBadge');
   if (!badge) return;
   if (_wdPendingCount > 0) {
     badge.style.display = 'flex';
     badge.textContent = _wdPendingCount;
+    addNotif('withdrawal', 'Pending Withdrawals', _wdPendingCount + ' withdrawal request(s) awaiting approval');
   } else {
     badge.style.display = 'none';
   }
