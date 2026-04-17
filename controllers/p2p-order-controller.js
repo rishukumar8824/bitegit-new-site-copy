@@ -128,33 +128,7 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
         return res.status(400).json({ success: false, message: 'Buyer and seller cannot be same account.' });
       }
 
-      if (adType === 'SELL') {
-        const credential = await repos.getP2PCredential(String(req.p2pUser?.email || '').trim().toLowerCase());
-        const kycStatus = normalizeP2PKycStatus(credential?.kycStatus);
-
-        if (kycStatus !== 'VERIFIED') {
-          const statusMessageMap = {
-            NOT_SUBMITTED: 'Complete KYC verification before placing a buy order.',
-            PENDING_REVIEW: 'KYC is under review. You can place buy orders after verification.',
-            REJECTED: 'KYC verification was rejected. Please resubmit documents to continue.'
-          };
-
-          const codeMap = {
-            NOT_SUBMITTED: 'KYC_REQUIRED',
-            PENDING_REVIEW: 'KYC_PENDING',
-            REJECTED: 'KYC_REJECTED'
-          };
-
-          return res.status(403).json({
-            success: false,
-            code: codeMap[kycStatus] || 'KYC_REQUIRED',
-            message: statusMessageMap[kycStatus] || 'KYC verification required for buy orders.',
-            kyc: {
-              status: kycStatus
-            }
-          });
-        }
-      }
+      // KYC check removed — all logged-in users can buy
 
       const selectedPaymentMethod = String(req.body.paymentMethod || '').trim();
       const exactPayment = Array.isArray(offer.payments)
