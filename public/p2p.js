@@ -7008,7 +7008,7 @@ window.deleteMobAd = async function(offerId) {
 
 // ===== MOB-SCREEN NAV (profile / orders screens) =====
 (function initMobScreenNav() {
-  var profileFlowScreens = new Set(['mobProfileScreen', 'mobPaymentMethodsScreen', 'mobPaymentMethodTypesScreen', 'mobPaymentMethodFormScreen']);
+  var profileFlowScreens = new Set(['mobProfileScreen', 'mobPaymentMethodsScreen', 'mobPaymentMethodTypesScreen', 'mobPaymentMethodFormScreen', 'mobTradingDataScreen']);
   function showMobScreen(screenId) {
     var all = document.querySelectorAll('.mob-screen');
     all.forEach(function(s){ s.style.display = 'none'; s.classList.remove('mob-screen-visible'); });
