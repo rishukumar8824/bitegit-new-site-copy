@@ -2189,6 +2189,11 @@ body[data-mobile-tab="ads"] .p2p-mobile-bottom-nav {
   display: flex !important;
 }
 
+/* Hide bottom nav on support screens */
+body.sp-screen-open .p2p-mobile-bottom-nav {
+  display: none !important;
+}
+
 /* Hide main P2P header when on profile/orders screen */
 body[data-mobile-tab="profile"] .p2p-header,
 body[data-mobile-tab="profile"] .p2p-subnav,
@@ -4227,11 +4232,9 @@ body.mob-screen-open .p2p-secondary-nav {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  background: rgba(0,229,255,0.06);
-  border: 1px solid rgba(0,229,255,0.15);
-  border-radius: 12px;
-  padding: 0.65rem 0.9rem;
-  margin: 0.75rem 1rem 0.25rem;
+  background: rgba(0,229,255,0.05);
+  border-top: 1px solid rgba(0,229,255,0.18);
+  padding: 0.7rem 1rem;
   flex-shrink: 0;
 }
 .sp-connect-left {

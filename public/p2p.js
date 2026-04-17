@@ -7019,6 +7019,14 @@ window.deleteMobAd = async function(offerId) {
       // Trigger slide-in animation (double rAF ensures display change is flushed first)
       requestAnimationFrame(function() { requestAnimationFrame(function() { el.classList.add('mob-screen-visible'); }); });
     }
+    // Hide bottom nav on support screens
+    var supportScreens = new Set(['mobSupportScreen','mobSupportChatScreen']);
+    if (supportScreens.has(screenId)) {
+      document.body.classList.add('sp-screen-open');
+    } else {
+      document.body.classList.remove('sp-screen-open');
+    }
+
     if (profileFlowScreens.has(screenId) || screenId === 'mobOrdersScreen' || screenId === 'mobPostAdScreen') {
       document.body.classList.add('mob-screen-open');
       if (profileFlowScreens.has(screenId)) {
@@ -7051,7 +7059,7 @@ window.deleteMobAd = async function(offerId) {
     stopOrdPolling();
     var all = document.querySelectorAll('.mob-screen');
     all.forEach(function(s){ s.style.display = 'none'; s.classList.remove('mob-screen-visible'); });
-    document.body.classList.remove('mob-screen-open', 'mob-profile-open');
+    document.body.classList.remove('mob-screen-open', 'mob-profile-open', 'sp-screen-open');
     document.body.dataset.mobileTab = 'p2p';
     setMobileNavActive('p2p');
     ['kycBasicScreen','kycAdvanceScreen'].forEach(function(id){

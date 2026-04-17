@@ -657,18 +657,6 @@
         <button class="sp-close-btn" onclick="spLeaveChat();window.showMobScreen && window.showMobScreen('mobProfileScreen')" aria-label="Close">✕</button>
       </div>
 
-      <!-- Connect to Agent Banner -->
-      <div id="spConnectBanner" class="sp-connect-banner">
-        <div class="sp-connect-left">
-          <span class="sp-connect-icon">🎧</span>
-          <div>
-            <div class="sp-connect-title">Talk to a Live Agent</div>
-            <div class="sp-connect-sub">Avg. response time: ~2 min</div>
-          </div>
-        </div>
-        <button class="sp-connect-btn" onclick="spConnectAgent()">Connect</button>
-      </div>
-
       <!-- Chat messages -->
       <div class="sp-chat-body" id="spChatMessages">
         <div class="sp-chat-time">Just now</div>
@@ -683,6 +671,18 @@
             <button class="sp-topic-chip" onclick="spSendTopic(this,'Promotion &amp; bonus')">Promotion &amp; bonus</button>
           </div>
         </div>
+      </div>
+
+      <!-- Connect to Agent Banner (bottom, above input) -->
+      <div id="spConnectBanner" class="sp-connect-banner">
+        <div class="sp-connect-left">
+          <span class="sp-connect-icon">🎧</span>
+          <div>
+            <div class="sp-connect-title">Talk to a Live Agent</div>
+            <div class="sp-connect-sub">Avg. response time: ~2 min</div>
+          </div>
+        </div>
+        <button class="sp-connect-btn" onclick="spConnectAgent()">Connect</button>
       </div>
 
       <!-- Input -->
@@ -1779,6 +1779,8 @@
       spSetStatus('Bot Assistant', 'bot');
       var banner = document.getElementById('spConnectBanner');
       if (banner) { banner.style.display = ''; var cb = banner.querySelector('.sp-connect-btn'); if(cb){cb.disabled=false;cb.textContent='Connect';} }
+      // Restore bottom nav
+      document.body.classList.remove('sp-screen-open');
     }
 
     async function spConnectAgent() {
