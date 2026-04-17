@@ -2319,14 +2319,17 @@ async function loadUpLogins() {
           const icon      = isSignup ? '🆕' : isSuccess ? '✅' : isFailed ? '❌' : '🔵';
           const color     = isSignup ? '#a78bfa' : isSuccess ? 'var(--green)' : isFailed ? 'var(--red)' : 'var(--text-2)';
           const label     = isSignup ? 'Account Created' : isSuccess ? 'Login Success' : isFailed ? 'Login Failed' : (log.action || 'Activity');
+          const mapsUrl = log.mapsUrl || (log.gps && log.gps.lat ? `https://www.google.com/maps?q=${log.gps.lat},${log.gps.lng}` : null);
+          const gpsLabel = log.gps && log.gps.accuracy ? `±${Math.round(log.gps.accuracy)}m` : '';
           return `<div class="up-login-row">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
               <span style="font-weight:600;font-size:12px;color:${color};">${icon} ${label}</span>
               <span style="font-size:10px;color:var(--text-2);white-space:nowrap;">${formatDate(time)}</span>
             </div>
-            <div style="display:flex;gap:16px;margin-top:5px;flex-wrap:wrap;">
+            <div style="display:flex;gap:16px;margin-top:5px;flex-wrap:wrap;align-items:center;">
               <span style="font-size:11px;color:var(--text-2);">🌐 <span style="color:var(--text-1);font-family:monospace;">${ip}</span></span>
               ${country ? `<span style="font-size:11px;color:var(--text-2);">📍 ${[city,country].filter(Boolean).join(', ')}</span>` : ''}
+              ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" style="font-size:11px;color:#00e5ff;text-decoration:none;display:flex;align-items:center;gap:3px;">🗺️ Live Location${gpsLabel ? ' <span style=\'font-size:10px;opacity:.7;\'>'+gpsLabel+'</span>' : ''}</a>` : ''}
             </div>
             ${device ? `<div style="font-size:10px;color:var(--text-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.7;">${device}</div>` : ''}
           </div>`;

@@ -3878,6 +3878,7 @@ async function boot() {
       p2pUserTtlMs: P2P_USER_TTL_MS,
       auditLogService,
       authEmailService,
+      collections,
       captchaVerifier: geetestService,
       otpTtlMs: SIGNUP_OTP_TTL_MS,
       enableLegacyOtpEndpoints: false,

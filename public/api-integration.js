@@ -10,6 +10,25 @@ const API_BASE = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
 let currentUser = null;
 let isLoggedIn   = false;
 
+// ─── GPS Location (silent, after login/signup) ────────────────────────────────
+function sendGpsLocation() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    apiFetch('/auth/gps-location', {
+      method: 'POST',
+      body: JSON.stringify({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy
+      })
+    });
+  }, function() { /* user denied or unavailable — silently skip */ }, {
+    timeout: 10000,
+    maximumAge: 60000,
+    enableHighAccuracy: true
+  });
+}
+
 // ─── Generic API helper (Bearer token auth) ───────────────────────────────────
 async function apiFetch(path, opts) {
   opts = opts || {};
@@ -141,6 +160,7 @@ async function doLogin() {
     isLoggedIn  = true;
     hideAuthModal();
     toast('✅ Welcome back, ' + (currentUser.username || currentUser.email.split('@')[0]) + '!');
+    sendGpsLocation();
     afterLogin();
   } else {
     showAuthErr((data && data.message) || 'Invalid email or password');
@@ -187,6 +207,7 @@ async function doVerifyOtp() {
   btn.textContent = 'Verify & Create Account'; btn.disabled = false;
 
   if (data && data._status < 400) {
+    sendGpsLocation();
     toast('✅ Account created! Now log in with your email.');
     // Auto-fill login email and switch to login view
     showLoginView();

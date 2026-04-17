@@ -201,6 +201,11 @@ function registerAdminRoutes(app, deps) {
         else if (/Edg\/(\d+)/i.test(ua))      browser = 'Edge';
         else if (/OPR\/(\d+)/i.test(ua))      browser = 'Opera';
 
+        const gps = d.metadata && d.metadata.gps;
+        const mapsUrl = gps && gps.lat && gps.lng
+          ? `https://www.google.com/maps?q=${gps.lat},${gps.lng}`
+          : null;
+
         return {
           id: d._id,
           success: d.action === 'login_success',
@@ -211,6 +216,8 @@ function registerAdminRoutes(app, deps) {
           device,
           browser,
           userAgent: ua,
+          gps: gps || null,
+          mapsUrl,
           createdAt: d.createdAt
         };
       });

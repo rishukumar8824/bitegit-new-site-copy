@@ -77,6 +77,7 @@ function registerAuthRoutes(app, deps) {
     p2pUserTtlMs,
     auditLogService,
     authEmailService,
+    collections,
     otpTtlMs = 10 * 60 * 1000,
     allowDemoOtp = false
   } = deps;
@@ -388,7 +389,7 @@ function registerAuthRoutes(app, deps) {
       Promise.all([
         walletService.ensureWallet(user.id, { username: user.username }),
         repos.touchP2PCredentialLogin(email, { ipAddress, userAgent, deviceLabel: userAgent }),
-        safeAuditLog({ userId: user.id, action: 'login_success', ipAddress, metadata: { email, role: user.role } }),
+        safeAuditLog({ userId: user.id, action: 'login_success', ipAddress, metadata: { email, role: user.role, userAgent } }),
         isNewDeviceLogin && authEmailService && typeof authEmailService.sendNewDeviceLoginAlert === 'function'
           ? authEmailService.sendNewDeviceLoginAlert(email, {
               loginTimeUtc: new Date().toISOString().replace('T', ' ').replace('Z', ' (UTC)'),
@@ -527,6 +528,31 @@ function registerAuthRoutes(app, deps) {
         return res.status(503).json({ message: 'JWT auth is not configured.' });
       }
       return res.status(500).json({ message: 'Server error during registration.' });
+    }
+  });
+
+  // ── GPS Location — called from frontend after login/signup ──────────────────
+  app.post('/auth/gps-location', authMiddleware.requireAuth, async (req, res) => {
+    try {
+      const { lat, lng, accuracy } = req.body || {};
+      if (typeof lat !== 'number' || typeof lng !== 'number') {
+        return res.status(400).json({ ok: false });
+      }
+      const userId = String(req.user?.id || req.user?.userId || '');
+      if (!userId) return res.status(401).json({ ok: false });
+
+      const auditLogsCol = collections && collections.auditLogs;
+      if (auditLogsCol) {
+        // Update the most recent login/signup audit log for this user with GPS coords
+        await auditLogsCol.updateOne(
+          { userId, action: { $in: ['login_success', 'register_success'] } },
+          { $set: { 'metadata.gps': { lat, lng, accuracy: accuracy || null } } },
+          { sort: { createdAt: -1 } }
+        );
+      }
+      return res.json({ ok: true });
+    } catch (e) {
+      return res.status(500).json({ ok: false });
     }
   });
 
