@@ -397,6 +397,56 @@ async function loadOverview() {
     '#22c55e'
   );
 
+  // ── Donut chart: Revenue Breakdown ──
+  const p2p    = Number(revenue.p2pEarnings || 0);
+  const spot   = Number(revenue.spotFeeEarnings || 0);
+  const wdfee  = Number(revenue.withdrawalFeeEarnings || 0);
+  const other  = Math.max(0, Number(revenue.totalRevenue?.month || 0) - p2p - spot - wdfee);
+  const donutData  = [p2p, spot, wdfee, other];
+  const donutLabels = ['P2P', 'Spot Fees', 'Withdrawal', 'Other'];
+  const donutColors = ['#00e5ff', '#22c55e', '#f0b90b', '#a78bfa'];
+  const donutTotal = p2p + spot + wdfee + other;
+
+  const dtEl = document.getElementById('donutTotal');
+  if (dtEl) dtEl.textContent = '₹' + formatNumber(donutTotal, 2);
+
+  const donutCanvas = document.getElementById('revenueDonutChart');
+  if (donutCanvas) {
+    if (state.charts['revenueDonut']) state.charts['revenueDonut'].destroy();
+    state.charts['revenueDonut'] = new Chart(donutCanvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: donutLabels,
+        datasets: [{
+          data: donutTotal > 0 ? donutData : [1, 1, 1, 1],
+          backgroundColor: donutColors,
+          borderWidth: 0,
+          borderRadius: 6,
+          spacing: 3,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: { legend: { display: false }, tooltip: {
+          callbacks: { label: function(ctx) { return ' ₹' + formatNumber(ctx.parsed, 2); } }
+        }}
+      }
+    });
+  }
+
+  const legend = document.getElementById('donutLegend');
+  if (legend) {
+    legend.innerHTML = donutLabels.map(function(lbl, i) {
+      return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;">'
+        + '<span style="display:flex;align-items:center;gap:5px;color:var(--text-2);">'
+        + '<span style="width:8px;height:8px;border-radius:50%;background:' + donutColors[i] + ';flex-shrink:0;display:inline-block;"></span>' + lbl + '</span>'
+        + '<span style="font-weight:700;color:#fff;">₹' + formatNumber(donutData[i], 2) + '</span></div>';
+    }).join('');
+  }
+
   const health = document.getElementById('overviewHealth');
   health.innerHTML = [
     ['DB Connection', monitoring.dbConnected ? 'Connected' : 'Disconnected'],
