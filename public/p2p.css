@@ -640,7 +640,7 @@ body.p2p-kyc-open { overflow: hidden; }
 .gt-asset-select { background: transparent; border: none; color: #fff; font-size: 0.9rem; font-weight: 700; outline: none; cursor: pointer; -webkit-appearance: none; font-family: 'Manrope', sans-serif; }
 .gt-asset-select option { background: #111; }
 .gt-amount-wrap { flex: 1; display: flex; align-items: center; background: rgba(255,255,255,0.06); border-radius: 10px; padding: 0 0.75rem; height: 46px; gap: 0.5rem; }
-.gt-amount-input { flex: 1; background: transparent; border: none; color: #6b7690; font-size: 0.95rem; outline: none; min-width: 0; font-family: 'Manrope', sans-serif; }
+.gt-amount-input { flex: 1; background: transparent; border: none; color: #6b7690; font-size: 16px; outline: none; min-width: 0; font-family: 'Manrope', sans-serif; }
 .gt-amount-input::placeholder { color: #4e5a6e; }
 .gt-amount-right { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
 .gt-amount-cur { font-size: 0.88rem; font-weight: 700; color: #fff; }
@@ -1373,7 +1373,7 @@ body.p2p-kyc-open { overflow: hidden; }
 .edit-ad-close { background: none; border: none; color: #8a97ae; font-size: 1.1rem; cursor: pointer; padding: 0; }
 .edit-ad-body { padding: 0.8rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
 .edit-ad-label { font-size: 0.72rem; color: #00e5ff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.edit-ad-input { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.85rem; padding: 0.55rem 0.8rem; font-family: 'Manrope', sans-serif; outline: none; width: 100%; box-sizing: border-box; }
+.edit-ad-input { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 16px; padding: 0.55rem 0.8rem; font-family: 'Manrope', sans-serif; outline: none; width: 100%; box-sizing: border-box; }
 .edit-ad-input:focus { border-color: #00c2b2; }
 
 .my-ad-card p { margin: 0; color: var(--p2p-muted); font-size: 0.78rem; }
@@ -2427,7 +2427,7 @@ body.mob-screen-open .p2p-secondary-nav {
   background: #14161d;
   color: #fff;
   padding: 0 1rem;
-  font-size: 0.95rem;
+  font-size: 16px;
   outline: none;
 }
 
@@ -2518,7 +2518,7 @@ body.mob-screen-open .p2p-secondary-nav {
   background: #191b22;
   color: #fff;
   padding: 0 0.95rem;
-  font-size: 0.94rem;
+  font-size: 16px;
   outline: none;
   margin-bottom: 1.2rem;
 }
@@ -3840,7 +3840,7 @@ body.mob-screen-open .p2p-secondary-nav {
   border-radius: 8px;
   color: #fff;
   padding: 0.7rem 0.85rem;
-  font-size: 0.95rem;
+  font-size: 16px;
   width: 100%;
   box-sizing: border-box;
   -webkit-appearance: none;
@@ -4177,7 +4177,7 @@ body.mob-screen-open .p2p-secondary-nav {
   border: none;
   outline: none;
   color: #fff;
-  font-size: 0.85rem;
+  font-size: 16px;
   font-family: 'Manrope', sans-serif;
   padding: 0.65rem 0;
 }
