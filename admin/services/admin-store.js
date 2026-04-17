@@ -1186,6 +1186,20 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       throw new Error('Withdrawal request not found');
     }
 
+    // When APPROVED → deduct from user balance via walletService
+    if (normalizedDecision === 'APPROVED' && walletService && typeof walletService.processWithdrawalRequest === 'function') {
+      try {
+        await walletService.processWithdrawalRequest(_doc.requestId || _doc.id, 'sent', {
+          isAdmin: true,
+          id: actor.id,
+          username: actor.role || 'admin'
+        });
+      } catch(e) {
+        // If processWithdrawalRequest fails (e.g. already processed), just log silently
+        console.error('[reviewWithdrawal] walletService.processWithdrawalRequest error:', e.message);
+      }
+    }
+
     return _doc;
   }
 

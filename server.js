@@ -90,6 +90,11 @@ function broadcastAdminSupportEvent(payload) {
   const msg = `data: ${JSON.stringify(payload)}\n\n`;
   adminSupportSseClients.forEach(res => { try { res.write(msg); } catch(e) {} });
 }
+const adminWithdrawalSseClients = new Set();
+function broadcastAdminWithdrawalEvent(payload) {
+  const msg = `data: ${JSON.stringify(payload)}\n\n`;
+  adminWithdrawalSseClients.forEach(res => { try { res.write(msg); } catch(e) {} });
+}
 function getUserStreams(userId) {
   if (!p2pUserStreams.has(userId)) p2pUserStreams.set(userId, new Set());
   return p2pUserStreams.get(userId);
@@ -2196,6 +2201,19 @@ app.post(
         }
       });
 
+      // Notify admin via SSE
+      broadcastAdminWithdrawalEvent({
+        type: 'new_withdrawal',
+        requestId: withdrawal.requestId || withdrawal.id,
+        userId: req.p2pUser.id,
+        username: req.p2pUser.username || req.p2pUser.email || 'User',
+        amount: withdrawal.amount,
+        currency: withdrawal.currency,
+        network: withdrawal.network,
+        address: withdrawal.address,
+        createdAt: new Date()
+      });
+
       if (auditLogService) {
         await auditLogService.safeLog({
           userId: req.p2pUser.id,
@@ -3296,6 +3314,24 @@ app.get('/api/admin/support/live-notify', async (req, res) => {
   res.write(': connected\n\n');
   const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
   req.on('close', () => { clearInterval(ping); adminSupportSseClients.delete(res); });
+});
+
+// ── Admin: Withdrawal live-notify SSE ─────────────────────────────────────────
+app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
+  try {
+    const cookies = parseCookies(req);
+    const accessToken = String(cookies[ADMIN_ACCESS_COOKIE_NAME] || '').trim();
+    if (!accessToken) return res.status(401).end();
+  } catch(_) {}
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+  adminWithdrawalSseClients.add(res);
+  res.write(': connected\n\n');
+  const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
+  req.on('close', () => { clearInterval(ping); adminWithdrawalSseClients.delete(res); });
 });
 
 // ── Public Support Chat — user submits message ────────────────────────────────

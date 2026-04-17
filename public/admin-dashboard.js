@@ -293,33 +293,52 @@ function drawChart(instanceKey, canvasId, labels, values, color = '#22c55e') {
         {
           data: values,
           borderColor: color,
-          backgroundColor: `${color}33`,
-          borderWidth: 2,
-          pointRadius: 2,
-          pointHoverRadius: 3,
+          backgroundColor: (ctx) => {
+            const c = ctx.chart.ctx;
+            const g = c.createLinearGradient(0, 0, 0, ctx.chart.height || 200);
+            g.addColorStop(0, color + '55');
+            g.addColorStop(1, color + '00');
+            return g;
+          },
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: color,
           fill: true,
-          tension: 0.32
+          tension: 0.42,
+          cubicInterpolationMode: 'monotone'
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: {
-          display: false
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a2030',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          titleColor: '#94a3b8',
+          bodyColor: '#eaecef',
+          padding: 10,
+          cornerRadius: 8
         }
       },
       scales: {
         x: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: '#1e293b' }
+          ticks: { color: '#94a3b8', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false }
         },
         y: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: '#1e293b' }
+          ticks: { color: '#94a3b8', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false }
         }
-      }
+      },
+      animation: { duration: 600, easing: 'easeInOutQuart' }
     }
   });
 }
@@ -2787,6 +2806,7 @@ async function init() {
 
     // SSE for instant new-ticket alerts
     connectSupportSSE();
+    connectWithdrawalSSE();
     // Poll support tickets every 15s for badge count sync
     await pollSupportTickets();
     setInterval(pollSupportTickets, 15000);
@@ -2798,3 +2818,136 @@ async function init() {
 }
 
 init();
+
+// ─── Withdrawal Notifications ─────────────────────────────────────────────────
+let _wdSSE = null;
+let _wdPendingCount = 0;
+let _wdPendingList = [];
+
+function connectWithdrawalSSE() {
+  if (_wdSSE) { try { _wdSSE.close(); } catch(_) {} }
+  _wdSSE = new EventSource('/api/admin/withdrawal/live-notify');
+  _wdSSE.onmessage = (ev) => {
+    try {
+      const info = JSON.parse(ev.data);
+      if (info.type === 'new_withdrawal') {
+        _wdPendingList.unshift(info);
+        _wdPendingCount++;
+        updateWithdrawalBadge();
+        showWithdrawalNotification(info);
+      }
+    } catch(_) {}
+  };
+  _wdSSE.onerror = () => setTimeout(connectWithdrawalSSE, 5000);
+}
+
+function updateWithdrawalBadge() {
+  const badge = document.getElementById('withdrawalBadge');
+  if (!badge) return;
+  if (_wdPendingCount > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = _wdPendingCount;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function showWithdrawalNotification(info) {
+  const n = document.createElement('div');
+  n.style.cssText = `position:fixed;top:18px;right:18px;z-index:10000;
+    background:#141821;border:1px solid rgba(0,229,255,0.3);border-radius:14px;
+    padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:340px;`;
+  n.innerHTML = `
+    <div style="width:38px;height:38px;border-radius:50%;background:rgba(0,229,255,0.1);border:2px solid rgba(0,229,255,0.3);
+                display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💸</div>
+    <div style="flex:1;min-width:0;">
+      <p style="margin:0 0 2px;font-size:12px;font-weight:700;color:#00e5ff;">New Withdrawal Request</p>
+      <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#eaecef;">${info.username || 'User'}</p>
+      <p style="margin:0 0 2px;font-size:13px;color:#eaecef;font-weight:700;">${info.amount} ${info.currency || 'USDT'} <span style="font-size:11px;color:#848e9c;">(${info.network || ''})</span></p>
+      <p style="margin:2px 0 0;font-size:10px;color:#848e9c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${info.address || ''}</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#00e5ff;font-weight:600;">👆 Click to review</p>
+    </div>
+    <button onclick="event.stopPropagation();this.closest('[style]').remove();"
+      style="background:none;border:none;color:#848e9c;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;">✕</button>`;
+  n.addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') return; n.remove(); openWithdrawalPanel(); });
+  document.body.appendChild(n);
+  setTimeout(() => { if (n.isConnected) n.remove(); }, 12000);
+}
+
+async function openWithdrawalPanel() {
+  _wdPendingCount = 0;
+  updateWithdrawalBadge();
+  // Load pending withdrawals from server
+  let withdrawals = [];
+  try {
+    const data = await apiRequest('/wallet/withdrawals?status=pending&limit=50');
+    withdrawals = data.withdrawals || [];
+  } catch(e) {}
+
+  // Remove existing panel
+  const existing = document.getElementById('wdPanel');
+  if (existing) { existing.remove(); return; }
+
+  const panel = document.createElement('div');
+  panel.id = 'wdPanel';
+  panel.style.cssText = `position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;
+    background:#0d1117;border-left:1px solid rgba(255,255,255,0.07);z-index:9998;
+    display:flex;flex-direction:column;animation:slideInRight 0.3s ease;overflow:hidden;`;
+
+  const rows = withdrawals.length === 0
+    ? `<div style="padding:2rem;text-align:center;color:#848e9c;">No pending withdrawals 🎉</div>`
+    : withdrawals.map(w => `
+      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:#848e9c;margin-bottom:2px;">${w.userId || 'User'}</div>
+            <div style="font-size:16px;font-weight:700;color:#eaecef;">${w.amount} <span style="color:#00e5ff;">${w.currency || 'USDT'}</span></div>
+            <div style="font-size:11px;color:#848e9c;margin-top:2px;">Network: <b style="color:#eaecef;">${w.network || '-'}</b></div>
+            <div style="font-size:11px;color:#848e9c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;" title="${w.address || ''}">${w.address || '-'}</div>
+            <div style="font-size:10px;color:#474d57;margin-top:2px;">${new Date(w.createdAt).toLocaleString()}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+            <button onclick="wdAction('${w.requestId || w.id}','APPROVED',this)"
+              style="background:#02c076;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">✓ Approve</button>
+            <button onclick="wdAction('${w.requestId || w.id}','REJECTED',this)"
+              style="background:#f6465d;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">✕ Reject</button>
+          </div>
+        </div>
+      </div>`).join('');
+
+  panel.innerHTML = `
+    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#eaecef;">💸 Withdrawal Requests</div>
+        <div style="font-size:12px;color:#848e9c;">${withdrawals.length} pending</div>
+      </div>
+      <button onclick="document.getElementById('wdPanel').remove();"
+        style="background:none;border:none;color:#848e9c;cursor:pointer;font-size:20px;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;">${rows}</div>`;
+
+  document.body.appendChild(panel);
+}
+
+async function wdAction(withdrawalId, decision, btn) {
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    await apiRequest(`/wallet/withdrawals/${encodeURIComponent(withdrawalId)}/review`, {
+      method: 'POST',
+      body: JSON.stringify({ decision, reason: decision === 'APPROVED' ? 'Approved by admin' : 'Rejected by admin' })
+    });
+    const row = btn.closest('div[style*="border-bottom"]');
+    if (row) {
+      row.style.opacity = '0.4';
+      row.innerHTML = `<div style="padding:8px 0;font-size:12px;color:${decision==='APPROVED'?'#02c076':'#f6465d'};font-weight:700;">
+        ${decision==='APPROVED'?'✓ Approved — balance deducted':'✕ Rejected — funds returned'}</div>`;
+    }
+    showMessage(decision === 'APPROVED' ? 'Withdrawal approved. Balance deducted.' : 'Withdrawal rejected. Funds returned to user.', decision === 'APPROVED' ? 'success' : 'error');
+  } catch(e) {
+    showMessage(e.message || 'Action failed', 'error');
+    btn.disabled = false;
+    btn.textContent = decision === 'APPROVED' ? '✓ Approve' : '✕ Reject';
+  }
+}
