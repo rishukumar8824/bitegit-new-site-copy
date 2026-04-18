@@ -7231,7 +7231,11 @@ window.deleteMobAd = async function(offerId) {
     BF_SCREENS.forEach(function(sid) {
       var el = document.getElementById(sid); if (el) el.style.display = 'none';
     });
+    // Also hide chat screen (managed separately)
+    var chatScr = document.getElementById('bfChatScreen');
+    if (chatScr) chatScr.style.display = 'none';
     var sheet = document.getElementById('bfPaidSheet'); if (sheet) sheet.style.display = 'none';
+    var menuSheet = document.getElementById('bfChatMenuSheet'); if (menuSheet) menuSheet.style.display = 'none';
     document.body.style.overflow = ''; document.body.classList.remove('bf-open'); bfStopTimer();
     bfSetNav(false);
   }
@@ -7919,13 +7923,15 @@ window.deleteMobAd = async function(offerId) {
     };
   }
 
-  // ── Override fillDealModal ─────────────────────────────────────────
-  var _origFillDeal = window.fillDealModal;
+  // ── Override fillDealModal — go straight to bf buy screen ─────────
   window.fillDealModal = function(offer) {
-    if (_origFillDeal) _origFillDeal(offer);
+    // Keep activeDealOffer in sync (used by legacy cancel logic)
+    if (typeof activeDealOffer !== 'undefined') activeDealOffer = offer;
+    // Make sure old deal modal stays hidden
     var dm = document.getElementById('dealModal');
     if (dm) { dm.classList.add('hidden'); dm.setAttribute('aria-hidden','true'); }
     document.body.classList.remove('p2p-deal-open');
+    // Open bf buy screen directly — no old modal flash
     bfFillBuy(offer);
   };
 
@@ -8184,10 +8190,13 @@ window.deleteMobAd = async function(offerId) {
   function wireChatEvents() {
     document.getElementById('bfChatBackBtn').onclick = function() {
       stopPolling();
-      document.getElementById('bfChatScreen').style.display = 'none';
+      var chatScr = document.getElementById('bfChatScreen');
+      if (chatScr) chatScr.style.display = 'none';
+      var menuSheet = document.getElementById('bfChatMenuSheet'); if (menuSheet) menuSheet.style.display = 'none';
       var prev = document.getElementById(_chatPrevScreen);
       if (prev) prev.style.display = 'flex';
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('bf-open'); // keep nav hidden
     };
 
     // Pay button → go back to payment screen
@@ -8298,6 +8307,18 @@ window.deleteMobAd = async function(offerId) {
     if (!orderId) return;
     var openChat = target.getAttribute('data-open-chat') === '1';
     _ordPrimeOrderOpen(orderId);
+
+    // For chat: try cached order first — instant open, no network fetch needed
+    if (openChat && typeof window.bfOpenExistingOrder === 'function' && window.bfOpenChat) {
+      var allOrders = (typeof _ordAllOrders !== 'undefined' ? _ordAllOrders : []);
+      var cached = allOrders.find(function(o) { return String(o && o.id || '').trim() === orderId; });
+      if (cached && isOngoingOrderStatus(cached.status)) {
+        window.bfOpenExistingOrder(cached);
+        setTimeout(function() { if (window.bfOpenChat) window.bfOpenChat('bfOrderScreen'); }, 60);
+        return;
+      }
+    }
+
     openOrderById(orderId, { openChat: openChat });
   }
 
