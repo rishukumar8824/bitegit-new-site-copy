@@ -672,8 +672,8 @@
   <div class="screen" id="screen-chat" style="padding-bottom:0; height:100vh; max-height:100vh; overflow:hidden;">
     <div class="topbar">
       <div class="back-btn" onclick="showScreen('screen-order-generated')">←</div>
-      <div class="title">ER.LAOR</div>
-      <div class="more-btn">···</div>
+      <div class="title" id="chat-seller-title">Seller</div>
+      <div class="more-btn" onclick="showChatMenu()">···</div>
     </div>
     <div class="online-row"><div class="online-dot"></div><span class="online-text">Online</span></div>
 
@@ -687,31 +687,8 @@
       </div>
     </div>
 
-    <div class="chat-messages" style="flex:1;overflow-y:auto;min-height:0;">
-      <div class="msg-time">2026-03-23 20:59:25</div>
-      <div class="msg-item">
-        <div class="msg-avatar">E</div>
-        <div class="msg-bubble-wrap">
-          <div class="msg-sender">ER.LAOR</div>
-          <div class="msg-bubble">noted</div>
-        </div>
-      </div>
-
-      <div class="msg-time">2026-03-23 20:59:25</div>
-      <div class="system-msg">
-        You have an order pending payment. Please complete the payment within 15 minutes or your order will be automatically canceled.
-      </div>
-
-      <div class="msg-time">2026-03-23 20:59:55</div>
-      <div class="msg-item">
-        <div class="msg-avatar">E</div>
-        <div class="msg-bubble-wrap">
-          <div class="msg-sender">ER.LAOR</div>
-          <div class="msg-bubble" style="padding:0;overflow:hidden;width:160px;height:90px;">
-            <div style="background:#222;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#666;">📷 QR Image</div>
-          </div>
-        </div>
-      </div>
+    <div class="chat-messages" id="chatMessages" style="flex:1;overflow-y:auto;min-height:0;">
+      <!-- messages loaded dynamically -->
     </div>
 
     <div class="chat-input-bar">
@@ -952,6 +929,18 @@
     </div>
   </div>
 
+  <!-- ============================================================ -->
+  <!-- OVERLAY: Chat ··· Menu                                        -->
+  <!-- ============================================================ -->
+  <div class="bottom-sheet-overlay" id="chat-menu-overlay" onclick="closeChatMenu(event)">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-item" onclick="followSeller()">Follow</div>
+      <div class="sheet-item" onclick="blockSeller()">Block</div>
+      <div class="sheet-item" onclick="closeChatMenu()">Cancel</div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="toast-msg" id="toast">Cancellation successful</div>
 
@@ -1159,6 +1148,7 @@
 
     // Chat header
     setText('chat-amount', fiat);
+    setText('chat-seller-title', sellerName);
   }
 
   // ============================================================
@@ -1503,6 +1493,29 @@
     return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // ============================================================
+  // CHAT MENU (···)
+  // ============================================================
+  function showChatMenu() {
+    document.getElementById('chat-menu-overlay').classList.add('active');
+  }
+  function closeChatMenu(e) {
+    if (!e || e.target === document.getElementById('chat-menu-overlay')) {
+      document.getElementById('chat-menu-overlay').classList.remove('active');
+    }
+  }
+  function followSeller() {
+    closeChatMenu();
+    showToast('Followed seller');
+  }
+  function blockSeller() {
+    closeChatMenu();
+    showToast('Seller blocked');
+  }
+
+  // ============================================================
+  // UTILITIES
+  // ============================================================
   function setupCopyIcons() {
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('.copy-icon');
