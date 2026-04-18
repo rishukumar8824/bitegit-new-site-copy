@@ -7189,6 +7189,7 @@ window.deleteMobAd = async function(offerId) {
 (function initBuyFlow() {
   var _bfOffer = null;
   var _bfOrder = null;
+  var _bfCryptoMode = false; // false = Fiat (INR input), true = Crypto (USDT input)
   var _bfTimerTick = null;
   var _bfPaidSel = 0;
 
@@ -7342,15 +7343,15 @@ window.deleteMobAd = async function(offerId) {
         // Crypto / Fiat tabs + price
         '<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid #1e1e1e;margin-bottom:1.1rem;">',
           '<div style="display:flex;gap:1.6rem;">',
-            '<span style="padding-bottom:0.6rem;font-size:0.88rem;font-weight:600;color:rgba(255,255,255,0.32);cursor:pointer;">Crypto</span>',
-            '<span style="padding-bottom:0.6rem;font-size:0.88rem;font-weight:700;color:#fff;border-bottom:2px solid #00c2b2;position:relative;top:1px;">Fiat</span>',
+            '<span id="bfCryptoTab" style="padding-bottom:0.6rem;font-size:0.88rem;font-weight:600;color:rgba(255,255,255,0.32);cursor:pointer;">Crypto</span>',
+            '<span id="bfFiatTab" style="padding-bottom:0.6rem;font-size:0.88rem;font-weight:700;color:#fff;border-bottom:2px solid #00c2b2;position:relative;top:1px;cursor:pointer;">Fiat</span>',
           '</div>',
           '<span id="bfPriceTag" style="font-size:0.76rem;color:rgba(255,255,255,0.38);padding-bottom:0.6rem;display:flex;align-items:center;gap:4px;">Price ₹-- <span style="color:#00c2b2;font-size:0.82rem;">↻</span></span>',
         '</div>',
         // Amount input
         '<div style="background:#181818;border-radius:10px;padding:0.8rem 1rem;display:flex;align-items:center;gap:0.65rem;margin-bottom:0.4rem;">',
           '<input id="bfPayInput" type="number" inputmode="decimal" placeholder="Enter amount" style="flex:1;background:none;border:none;color:#fff;font-size:1.15rem;font-weight:600;outline:none;font-family:Manrope,sans-serif;min-width:0;"/>',
-          '<span style="color:rgba(255,255,255,0.38);font-size:0.84rem;font-weight:700;flex-shrink:0;">INR</span>',
+          '<span id="bfInputUnit" style="color:rgba(255,255,255,0.38);font-size:0.84rem;font-weight:700;flex-shrink:0;">INR</span>',
           '<button id="bfMaxBtn" style="background:transparent;border:1px solid #00c2b2;color:#00c2b2;font-size:0.72rem;font-weight:700;padding:4px 11px;border-radius:5px;cursor:pointer;flex-shrink:0;font-family:Manrope,sans-serif;">Max</button>',
         '</div>',
         '<div id="bfLimitInfo" style="font-size:0.74rem;color:rgba(255,255,255,0.36);margin-bottom:0.18rem;padding-left:2px;">Limit ₹-- - ₹--</div>',
@@ -7619,13 +7620,12 @@ window.deleteMobAd = async function(offerId) {
   // ── Fill Screen 1 ─────────────────────────────────────────────────
   function bfFillBuy(offer) {
     _bfOffer = offer;
+    _bfCryptoMode = false; // always reset to Fiat on open
     var el;
     var sellerRow = document.getElementById('bfSellerRow');
     if (sellerRow) sellerRow.innerHTML = sellerRowHtml(offer.advertiser || '--');
     el = document.getElementById('bfPriceTag');
     if (el) el.innerHTML = 'Price ₹' + fmt(offer.price) + ' <span style="color:#00c2b2;font-size:0.82rem;">↻</span>';
-    el = document.getElementById('bfLimitInfo');
-    if (el) el.textContent = 'Limit ₹' + fmt(offer.minLimit) + ' - ₹' + fmt(offer.maxLimit);
     el = document.getElementById('bfTerms');
     if (el) el.textContent = offer.remark || 'Standard P2P terms apply.';
     el = document.getElementById('bfHistOrders');
@@ -7634,18 +7634,68 @@ window.deleteMobAd = async function(offerId) {
     if (el) el.textContent = offer.orders || 0;
     var pm = document.getElementById('bfPayMethod');
     if (pm) pm.innerHTML = getOfferPayments(offer).map(function(m) { return '<option value="' + esc(m) + '">' + esc(m) + '</option>'; }).join('');
-    var pi = document.getElementById('bfPayInput');
-    if (pi) { pi.value = offer.minLimit || ''; bfUpdateCalc(); }
     el = document.getElementById('bfBuyHint'); if (el) el.textContent = '';
+    bfSetTabMode(false); // sets unit, limit, input value, and calls bfUpdateCalc
     bfShow('bfBuyScreen');
+    var pi = document.getElementById('bfPayInput');
     if (pi) setTimeout(function() { pi.focus(); }, 350);
   }
 
   function bfUpdateCalc() {
     var pi = document.getElementById('bfPayInput'), uc = document.getElementById('bfUsdtCalc');
     if (!pi || !_bfOffer) return;
-    var amt = Number(pi.value || 0), usdt = _bfOffer.price > 0 ? amt / _bfOffer.price : 0;
-    if (uc) uc.textContent = amt > 0 ? ('≈ ' + usdt.toFixed(2) + 'USDT') : '≈ -- USDT';
+    var amt = Number(pi.value || 0);
+    if (_bfCryptoMode) {
+      // Input is USDT → show equivalent INR
+      var inr = amt * (_bfOffer.price || 0);
+      if (uc) uc.textContent = amt > 0 ? ('≈ ' + fmt(inr) + ' INR') : '≈ -- INR';
+    } else {
+      // Input is INR → show equivalent USDT
+      var usdt = _bfOffer.price > 0 ? amt / _bfOffer.price : 0;
+      if (uc) uc.textContent = amt > 0 ? ('≈ ' + usdt.toFixed(2) + ' USDT') : '≈ -- USDT';
+    }
+  }
+
+  function bfSetTabMode(isCrypto) {
+    _bfCryptoMode = isCrypto;
+    var cryptoTab = document.getElementById('bfCryptoTab');
+    var fiatTab   = document.getElementById('bfFiatTab');
+    var unitEl    = document.getElementById('bfInputUnit');
+    var limitEl   = document.getElementById('bfLimitInfo');
+    // Swap active styles
+    if (cryptoTab) {
+      cryptoTab.style.color       = isCrypto ? '#fff' : 'rgba(255,255,255,0.32)';
+      cryptoTab.style.fontWeight  = isCrypto ? '700' : '600';
+      cryptoTab.style.borderBottom = isCrypto ? '2px solid #00c2b2' : 'none';
+    }
+    if (fiatTab) {
+      fiatTab.style.color       = isCrypto ? 'rgba(255,255,255,0.32)' : '#fff';
+      fiatTab.style.fontWeight  = isCrypto ? '600' : '700';
+      fiatTab.style.borderBottom = isCrypto ? 'none' : '2px solid #00c2b2';
+    }
+    if (unitEl) unitEl.textContent = isCrypto ? 'USDT' : 'INR';
+    // Update limit line
+    if (limitEl && _bfOffer) {
+      if (isCrypto) {
+        var price = _bfOffer.price || 1;
+        var minU = price > 0 ? (_bfOffer.minLimit / price) : 0;
+        var maxU = price > 0 ? (_bfOffer.maxLimit / price) : 0;
+        limitEl.textContent = 'Limit ' + minU.toFixed(2) + ' - ' + maxU.toFixed(2) + ' USDT';
+      } else {
+        limitEl.textContent = 'Limit ₹' + fmt(_bfOffer.minLimit) + ' - ₹' + fmt(_bfOffer.maxLimit);
+      }
+    }
+    // Set input to min for the active mode
+    var pi = document.getElementById('bfPayInput');
+    if (pi && _bfOffer) {
+      if (isCrypto) {
+        var p2 = _bfOffer.price || 1;
+        pi.value = p2 > 0 ? (_bfOffer.minLimit / p2).toFixed(2) : '';
+      } else {
+        pi.value = _bfOffer.minLimit || '';
+      }
+    }
+    bfUpdateCalc();
   }
 
   // ── Fill Screen 2 ─────────────────────────────────────────────────
@@ -7759,18 +7809,36 @@ window.deleteMobAd = async function(offerId) {
   function wireEvents() {
     // Screen 1
     document.getElementById('bfBuyBack').onclick = function() { bfClose(); };
+    document.getElementById('bfCryptoTab').onclick = function() { bfSetTabMode(true); };
+    document.getElementById('bfFiatTab').onclick   = function() { bfSetTabMode(false); };
     document.getElementById('bfPayInput').oninput = bfUpdateCalc;
     document.getElementById('bfMaxBtn').onclick = function() {
-      if (_bfOffer) { document.getElementById('bfPayInput').value = _bfOffer.maxLimit; bfUpdateCalc(); }
+      if (_bfOffer) {
+        if (_bfCryptoMode) {
+          var p = _bfOffer.price || 1;
+          document.getElementById('bfPayInput').value = p > 0 ? (_bfOffer.maxLimit / p).toFixed(2) : 0;
+        } else {
+          document.getElementById('bfPayInput').value = _bfOffer.maxLimit;
+        }
+        bfUpdateCalc();
+      }
     };
     document.getElementById('bfBuyBtn').onclick = async function() {
       var btn = this, hint = document.getElementById('bfBuyHint');
       if (!_bfOffer) return;
-      var payAmt = Number(document.getElementById('bfPayInput').value || 0);
+      var inputAmt = Number(document.getElementById('bfPayInput').value || 0);
       var method = document.getElementById('bfPayMethod').value;
+      // Normalise to INR for validation (Crypto mode input is in USDT)
+      var payAmt = _bfCryptoMode ? inputAmt * (_bfOffer.price || 0) : inputAmt;
       var min = Number(_bfOffer.minLimit || 0), max = Number(_bfOffer.maxLimit || Infinity);
       if (!payAmt || payAmt < min || payAmt > max) {
-        if (hint) hint.textContent = 'Enter amount between ₹' + fmt(min) + ' and ₹' + fmt(max);
+        if (_bfCryptoMode) {
+          var minU = _bfOffer.price > 0 ? (min / _bfOffer.price) : 0;
+          var maxU = _bfOffer.price > 0 ? (max / _bfOffer.price) : 0;
+          if (hint) hint.textContent = 'Enter amount between ' + minU.toFixed(2) + ' - ' + maxU.toFixed(2) + ' USDT';
+        } else {
+          if (hint) hint.textContent = 'Enter amount between ₹' + fmt(min) + ' and ₹' + fmt(max);
+        }
         return;
       }
       if (hint) hint.textContent = '';
