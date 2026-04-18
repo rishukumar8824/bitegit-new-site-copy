@@ -3241,7 +3241,11 @@ async function createOrder(offerId, options = {}) {
     }
 
     if (openAfterCreate) {
-      openOrder(data.order);
+      if (typeof window.bfOpenExistingOrder === 'function') {
+        window.bfOpenExistingOrder(data.order);
+      } else {
+        openOrder(data.order);
+      }
     }
 
     // ── Immediately inject new order into cache + orders screen ──
@@ -3315,7 +3319,12 @@ async function submitDealOrder() {
     console.log('[submitDealOrder] order created ref=' + data.order.reference + ' id=' + data.order.id);
     setDealHint('Order created! Ref: ' + data.order.reference, 'success');
     closeDealModal();
-    openOrder(data.order);
+    // Use bf screens when available, fall back to old modal only if bf not loaded
+    if (typeof window.bfOpenExistingOrder === 'function') {
+      window.bfOpenExistingOrder(data.order);
+    } else {
+      openOrder(data.order);
+    }
   } catch (error) {
     console.warn('[submitDealOrder] FAILED:', error.message, 'code=' + (error.code || 'none'));
     if (error.code === 'EMAIL_NOT_VERIFIED') {
@@ -4103,15 +4112,15 @@ async function openOrderById(orderId, opts) {
     if (!response.ok) throw new Error(data.message || 'Unable to open order.');
     if (!isOngoingOrderStatus(data?.order?.status)) throw new Error('Only ongoing orders can be opened.');
 
-    // Use bf screens
-    if (typeof bfOpenExistingOrder === 'function') {
-      bfOpenExistingOrder(data.order);
-      // If chat button was clicked, open chat directly after order loads
-      if (openChat && window.bfOpenChat) {
-        setTimeout(function() { window.bfOpenChat('bfOrderScreen'); }, 80);
-      }
+    // Always use bf screens; suppress old modal regardless
+    if (typeof window.bfOpenExistingOrder === 'function') {
+      window.bfOpenExistingOrder(data.order);
     } else {
-      openOrder(data.order);
+      openOrder(data.order, { suppressModal: true });
+    }
+    // If chat button was clicked, open chat directly after order loads
+    if (openChat && window.bfOpenChat) {
+      setTimeout(function() { window.bfOpenChat('bfOrderScreen'); }, 120);
     }
     if (data.counterparty) renderCounterpartyReputation(data.counterparty);
     await loadLiveOrders();
@@ -7235,14 +7244,25 @@ window.deleteMobAd = async function(offerId) {
 
   // Open existing order (from orders tab) in bf screens
   window.bfOpenExistingOrder = function(order) {
+    // Set up _bfOffer FIRST so bfFillOrder has seller name + price
+    if (order) {
+      _bfOffer = {
+        advertiser: order.sellerUsername || order.advertiser || '--',
+        price: order.price || 0,
+        remark: order.notes || order.remark || '',
+        minLimit: order.minLimit || 0,
+        maxLimit: order.maxLimit || 0,
+        payments: order.paymentMethod ? [order.paymentMethod] : []
+      };
+    }
     // Set up backend (SSE/polling) without showing old modal
     openOrder(order, { suppressModal: true });
+    // Reset order title to default for new/created orders
+    var titleEl = document.getElementById('bfOrdTitle');
+    if (titleEl) { titleEl.innerHTML = 'The order has been generated.<br>Proceed to payment.'; }
+    var nextBtn = document.getElementById('bfNextBtn'); if (nextBtn) nextBtn.style.display = '';
     // Fill bf screens and show order screen
     bfFillOrder(order);
-    // Also update the buy screen offer reference if available
-    if (!_bfOffer && order) {
-      _bfOffer = { advertiser: order.sellerUsername || '--', price: order.price || 0, remark: order.notes || '' };
-    }
   };
 
   // ── Copy SVG icon ─────────────────────────────────────────────────
@@ -7385,7 +7405,7 @@ window.deleteMobAd = async function(offerId) {
         '<button id="bfOrderBack" style="' + BACK + '">←</button>',
       '</div>',
       '<div style="' + BODY + 'padding-top:0.1rem;">',
-        '<h2 style="margin:0 0 0.4rem;font-size:1.25rem;font-weight:800;line-height:1.35;color:#fff;">The order has been generated.<br>Proceed to payment.</h2>',
+        '<h2 id="bfOrdTitle" style="margin:0 0 0.4rem;font-size:1.25rem;font-weight:800;line-height:1.35;color:#fff;">The order has been generated.<br>Proceed to payment.</h2>',
         '<p style="margin:0 0 1.25rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfOrderTimer" style="color:#00c2b2;font-weight:700;">15:00s</span></p>',
         // Seller card with chat btn
         '<div style="' + CARD + 'display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;">',
@@ -7624,7 +7644,7 @@ window.deleteMobAd = async function(offerId) {
   // ── Fill Screen 2 ─────────────────────────────────────────────────
   function bfFillOrder(order) {
     _bfOrder = order;
-    var sellerName = order.sellerUsername || (_bfOffer && _bfOffer.advertiser) || '--';
+    var sellerName = order.sellerUsername || order.advertiser || (_bfOffer && _bfOffer.advertiser) || 'Seller';
     var el = document.getElementById('bfOrdSellerRow');
     if (el) el.innerHTML = sellerRowHtml(sellerName);
     var cw = document.getElementById('bfOrdChatWrap');
@@ -7653,6 +7673,29 @@ window.deleteMobAd = async function(offerId) {
     var secs = typeof remainingSeconds !== 'undefined' ? remainingSeconds : 900;
     var t = document.getElementById('bfOrderTimer'); if (t) t.textContent = bfTimerFmt(secs);
     bfStartTimer();
+
+    // Update title + Next button based on current order status
+    var normSt = String(order.status || '').toUpperCase().replace('PAYMENT_SENT','PAID');
+    var titleEl = document.getElementById('bfOrdTitle');
+    var nextBtn = document.getElementById('bfNextBtn');
+    if (normSt === 'PAID' || normSt === 'PAYMENT_SENT') {
+      if (titleEl) titleEl.innerHTML = 'Payment sent.<br>Waiting for seller to release crypto.';
+      if (nextBtn) nextBtn.style.display = 'none';
+    } else if (normSt === 'RELEASED' || normSt === 'COMPLETED') {
+      if (titleEl) titleEl.innerHTML = 'Order completed! Crypto released. ✓';
+      if (nextBtn) nextBtn.style.display = 'none';
+    } else if (normSt === 'CANCELLED' || normSt === 'CANCELED' || normSt === 'EXPIRED') {
+      if (titleEl) titleEl.innerHTML = 'Order ' + (normSt === 'EXPIRED' ? 'expired.' : 'cancelled.');
+      if (nextBtn) nextBtn.style.display = 'none';
+    } else if (normSt === 'DISPUTED') {
+      if (titleEl) titleEl.innerHTML = 'Order under dispute.<br>Admin is reviewing.';
+      if (nextBtn) nextBtn.style.display = 'none';
+    } else {
+      // CREATED — default: proceed to payment
+      if (titleEl) titleEl.innerHTML = 'The order has been generated.<br>Proceed to payment.';
+      if (nextBtn) nextBtn.style.display = '';
+    }
+
     bfShow('bfOrderScreen');
   }
 
@@ -7661,7 +7704,9 @@ window.deleteMobAd = async function(offerId) {
     if (!_bfOrder) return;
     var order = _bfOrder;
     var method = order.paymentMethod || (_bfOffer && _bfOffer.payments && _bfOffer.payments[0]) || 'UPI';
-    var sellerName = order.sellerUsername || (_bfOffer && _bfOffer.advertiser) || '--';
+    var sellerName = order.sellerUsername || order.advertiser || (_bfOffer && _bfOffer.advertiser) ||
+      (typeof activeOrderSnapshot !== 'undefined' && activeOrderSnapshot ?
+        (activeOrderSnapshot.sellerUsername || activeOrderSnapshot.advertiser) : '') || 'Seller';
     var el;
     el = document.getElementById('bfPayTitle');
     if (el) el.textContent = 'Please use ' + method + ' to transfer funds';
@@ -7858,9 +7903,13 @@ window.deleteMobAd = async function(offerId) {
       btn.style.transition = 'transform 0.1s ease';
       btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:ord-spin 0.7s linear infinite;display:inline-block;"></span>Processing...</span>';
       setTimeout(function() { btn.style.transform = ''; }, 150);
-      // Optimistic: close sheet immediately, show waiting state
+      // Optimistic: close sheet, update title, stay in bf screens
       var sheet = document.getElementById('bfPaidSheet'); if (sheet) sheet.style.display = 'none';
-      bfClose(); bfShowOldOrderModal();
+      // Update order screen title to "waiting for release" and show it
+      var titleEl = document.getElementById('bfOrdTitle');
+      if (titleEl) { titleEl.innerHTML = 'Payment sent.<br>Waiting for seller to release crypto.'; }
+      var nextBtn = document.getElementById('bfNextBtn'); if (nextBtn) nextBtn.style.display = 'none';
+      bfShow('bfOrderScreen');
       try {
         await updateOrderStatus('mark_paid');
       } catch(e) {

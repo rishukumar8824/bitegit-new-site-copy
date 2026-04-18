@@ -56,6 +56,9 @@ body.p2p-kyc-open { overflow: hidden; }
 
 .hidden { display: none !important; }
 .hidden-control { display: none !important; }
+
+/* Legacy order modal permanently hidden — bf screens replace it */
+#orderModal { display: none !important; }
 .mobile-only { display: block; }
 .desktop-only { display: none; }
 
