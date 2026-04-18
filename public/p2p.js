@@ -7246,25 +7246,20 @@ window.deleteMobAd = async function(offerId) {
 
   // Open existing order (from orders tab) in bf screens
   window.bfOpenExistingOrder = function(order) {
+    if (!order) return;
     // Set up _bfOffer FIRST so bfFillOrder has seller name + price
-    if (order) {
-      _bfOffer = {
-        advertiser: order.sellerUsername || order.advertiser || '--',
-        price: order.price || 0,
-        remark: order.notes || order.remark || '',
-        minLimit: order.minLimit || 0,
-        maxLimit: order.maxLimit || 0,
-        payments: order.paymentMethod ? [order.paymentMethod] : []
-      };
-    }
-    // Set up backend (SSE/polling) without showing old modal
-    openOrder(order, { suppressModal: true });
-    // Reset order title to default for new/created orders
-    var titleEl = document.getElementById('bfOrdTitle');
-    if (titleEl) { titleEl.innerHTML = 'The order has been generated.<br>Proceed to payment.'; }
-    var nextBtn = document.getElementById('bfNextBtn'); if (nextBtn) nextBtn.style.display = '';
-    // Fill bf screens and show order screen
+    _bfOffer = {
+      advertiser: order.sellerUsername || order.advertiser || '--',
+      price: order.price || 0,
+      remark: order.notes || order.remark || '',
+      minLimit: order.minLimit || 0,
+      maxLimit: order.maxLimit || 0,
+      payments: order.paymentMethod ? [order.paymentMethod] : []
+    };
+    // Fill bf screens FIRST (sets _bfOrder + populates DOM), then start backend
     bfFillOrder(order);
+    // Set up backend (SSE/polling) without showing old modal — called after screen is shown
+    openOrder(order, { suppressModal: true });
   };
 
   // ── Copy SVG icon ─────────────────────────────────────────────────
@@ -7738,26 +7733,32 @@ window.deleteMobAd = async function(offerId) {
     var t = document.getElementById('bfOrderTimer'); if (t) t.textContent = bfTimerFmt(secs);
     bfStartTimer();
 
-    // Update title + Next button based on current order status
+    // Update title + Next + Cancel buttons based on current order status
     var normSt = String(order.status || '').toUpperCase().replace('PAYMENT_SENT','PAID');
     var titleEl = document.getElementById('bfOrdTitle');
     var nextBtn = document.getElementById('bfNextBtn');
+    var cancelBtn = document.getElementById('bfOrdCancelBtn');
     if (normSt === 'PAID' || normSt === 'PAYMENT_SENT') {
       if (titleEl) titleEl.innerHTML = 'Payment sent.<br>Waiting for seller to release crypto.';
       if (nextBtn) nextBtn.style.display = 'none';
+      if (cancelBtn) cancelBtn.style.display = 'none';
     } else if (normSt === 'RELEASED' || normSt === 'COMPLETED') {
       if (titleEl) titleEl.innerHTML = 'Order completed! Crypto released. ✓';
       if (nextBtn) nextBtn.style.display = 'none';
+      if (cancelBtn) cancelBtn.style.display = 'none';
     } else if (normSt === 'CANCELLED' || normSt === 'CANCELED' || normSt === 'EXPIRED') {
       if (titleEl) titleEl.innerHTML = 'Order ' + (normSt === 'EXPIRED' ? 'expired.' : 'cancelled.');
       if (nextBtn) nextBtn.style.display = 'none';
+      if (cancelBtn) cancelBtn.style.display = 'none';
     } else if (normSt === 'DISPUTED') {
       if (titleEl) titleEl.innerHTML = 'Order under dispute.<br>Admin is reviewing.';
       if (nextBtn) nextBtn.style.display = 'none';
+      if (cancelBtn) cancelBtn.style.display = 'none';
     } else {
       // CREATED — default: proceed to payment
       if (titleEl) titleEl.innerHTML = 'The order has been generated.<br>Proceed to payment.';
       if (nextBtn) nextBtn.style.display = '';
+      if (cancelBtn) cancelBtn.style.display = '';
     }
 
     bfShow('bfOrderScreen');
@@ -7787,6 +7788,12 @@ window.deleteMobAd = async function(offerId) {
     var t1 = document.getElementById('bfPaidOpt1Text'); if (t1) t1.textContent = 'I have transferred ' + fmt(order.amountInr || 0) + ' INR to the above account.';
     var secs = typeof remainingSeconds !== 'undefined' ? remainingSeconds : 900;
     var t = document.getElementById('bfPayTimer'); if (t) t.textContent = bfTimerFmt(secs);
+    // Hide Paid + Cancel buttons if order is already paid/completed
+    var paySt = String(order.status || '').toUpperCase().replace('PAYMENT_SENT','PAID').replace('COMPLETED','RELEASED');
+    var paidBtn = document.getElementById('bfPaidBtn'), payCancelBtn = document.getElementById('bfPayCancelBtn');
+    var alreadyPaid = ['PAID','RELEASED','CANCELLED','CANCELED','EXPIRED','DISPUTED'].indexOf(paySt) !== -1;
+    if (paidBtn) paidBtn.style.display = alreadyPaid ? 'none' : '';
+    if (payCancelBtn) payCancelBtn.style.display = alreadyPaid ? 'none' : '';
     bfShow('bfPayScreen');
   }
 
@@ -7877,6 +7884,7 @@ window.deleteMobAd = async function(offerId) {
       var sh = document.getElementById('bfPaidSheet'); if (sh) sh.style.display = 'none';
       var titleEl = document.getElementById('bfOrdTitle'); if (titleEl) titleEl.innerHTML = 'Payment sent.<br>Waiting for seller to release crypto.';
       var nextBtn = document.getElementById('bfNextBtn'); if (nextBtn) nextBtn.style.display = 'none';
+      var cancelBtnX = document.getElementById('bfOrdCancelBtn'); if (cancelBtnX) cancelBtnX.style.display = 'none';
       bfShow('bfOrderScreen');
       try { await updateOrderStatus('mark_paid'); } catch(e) { console.error('[bfPaidConfirm]', e.message); }
     };
@@ -7952,6 +7960,8 @@ window.deleteMobAd = async function(offerId) {
   // ── Expose internals needed by chat IIFE ─────────────────────────
   window._bfFillPay = function() { if (typeof bfFillPay === 'function') bfFillPay(); };
   window._bfBF_SCREENS = BF_SCREENS;
+  window._bfGetCurrentOrder = function() { return _bfOrder; };
+  window._bfFillOrder = function(order) { if (order && typeof bfFillOrder === 'function') bfFillOrder(order); };
 
   // ── Override fillDealModal — go straight to new buy screen ──────────
   window.fillDealModal = function(offer) {
@@ -8092,6 +8102,11 @@ window.deleteMobAd = async function(offerId) {
         var nav = document.getElementById('p2pMobileNav'); if (nav) nav.style.display = '';
         return;
       }
+      // If returning to order screen, re-fill it with latest order data (prevents black/stale screen)
+      if (_chatPrev === 'bfOrderScreen' && typeof window._bfFillOrder === 'function') {
+        var latestOrd = typeof window._bfGetCurrentOrder === 'function' ? window._bfGetCurrentOrder() : null;
+        if (latestOrd) { window._bfFillOrder(latestOrd); return; }
+      }
       var prev = document.getElementById(_chatPrev);
       if (prev) { prev.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     };
@@ -8124,10 +8139,11 @@ window.deleteMobAd = async function(offerId) {
     var el = document.getElementById('bfChatSellerName'); if (el) el.textContent = sellerName;
     var payAmt = snap ? (snap.amountInr || 0) : 0;
     var pa = document.getElementById('bfChatPayAmt'); if (pa) pa.textContent = '₹ ' + (payAmt ? Number(payAmt).toLocaleString('en-IN', {minimumFractionDigits:2,maximumFractionDigits:2}) : '--');
-    // Show/hide pay bar based on status
+    // Show/hide pay bar based on status — prefer _bfOrder (most up-to-date) over stale snapshot
     var payBar = document.getElementById('bfChatPayBar');
-    var st = String(snap && snap.status || '').toUpperCase();
-    if (payBar) payBar.style.display = ['CREATED','PENDING'].indexOf(st) !== -1 ? '' : 'none';
+    var currentOrd = (typeof window._bfGetCurrentOrder === 'function') ? window._bfGetCurrentOrder() : null;
+    var st = String((currentOrd && currentOrd.status) || (snap && snap.status) || '').toUpperCase().replace('PAYMENT_SENT','PAID').replace('COMPLETED','RELEASED');
+    if (payBar) payBar.style.display = (st === 'CREATED' || st === 'PENDING' || st === '') ? '' : 'none';
     // Hide all bf screens, show chat on top
     (window._bfBF_SCREENS || []).forEach(function(sid) { var e = document.getElementById(sid); if (e) e.style.display = 'none'; });
     var cs = document.getElementById('bfChatScreen');
