@@ -7213,7 +7213,9 @@ window.deleteMobAd = async function(offerId) {
     var nav = document.getElementById('p2pMobileNav');
     if (nav) nav.style.display = hide ? 'none' : '';
   }
-  var BF_SCREENS = ['bfOrderScreen','bfCancelWarnScreen','bfCancelReasonScreen','bfCancelledScreen'];
+  var BF_SCREENS = ['bfBuyScreen','bfOrderScreen','bfPayScreen','bfCancelWarnScreen','bfCancelReasonScreen','bfCancelledScreen'];
+  var _bfCryptoMode = false; // false=Fiat, true=Crypto
+  var _bfPaidSel = 0;
   function bfShow(id) {
     BF_SCREENS.forEach(function(sid) {
       var el = document.getElementById(sid);
@@ -7227,6 +7229,8 @@ window.deleteMobAd = async function(offerId) {
     BF_SCREENS.forEach(function(sid) {
       var el = document.getElementById(sid); if (el) el.style.display = 'none';
     });
+    var chatScr = document.getElementById('bfChatScreen'); if (chatScr) chatScr.style.display = 'none';
+    var paidSh  = document.getElementById('bfPaidSheet');  if (paidSh)  paidSh.style.display  = 'none';
     document.body.style.overflow = ''; document.body.classList.remove('bf-open'); bfStopTimer();
     bfSetNav(false);
   }
@@ -7319,8 +7323,78 @@ window.deleteMobAd = async function(offerId) {
 
     var html = [
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // SCREEN 1  ─  Buy USDT  [REMOVED — rebuild pending]
+    // SCREEN 1  ─  Buy USDT
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfBuyScreen" style="display:none;' + SCR + '">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.6rem;flex-shrink:0;">',
+        '<button id="bfBuyBack" style="' + BACK + '">←</button>',
+        '<h2 style="flex:1;text-align:center;margin:0;font-size:1rem;font-weight:700;color:#fff;">Buy USDT</h2>',
+        '<div style="width:1.8rem;"></div>',
+      '</div>',
+      '<div style="' + BODY + 'padding-top:0.2rem;">',
+        // Tabs + price row
+        '<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid #1e1e1e;margin-bottom:1.1rem;">',
+          '<div style="display:flex;gap:1.5rem;">',
+            '<span id="bfCryptoTab" style="padding-bottom:0.6rem;font-size:0.92rem;font-weight:600;color:rgba(255,255,255,0.35);cursor:pointer;">Crypto</span>',
+            '<span id="bfFiatTab" style="padding-bottom:0.6rem;font-size:0.92rem;font-weight:700;color:#fff;border-bottom:2px solid #fff;position:relative;top:1px;cursor:pointer;">Fiat</span>',
+          '</div>',
+          '<span id="bfPriceTag" style="font-size:0.76rem;color:rgba(255,255,255,0.4);padding-bottom:0.6rem;display:flex;align-items:center;gap:5px;">Price ₹-- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>',
+        '</div>',
+        // Amount input box
+        '<div style="background:#1a1a1a;border-radius:10px;padding:0.85rem 1rem;display:flex;align-items:center;gap:0.7rem;margin-bottom:0.35rem;">',
+          '<input id="bfPayInput" type="number" inputmode="decimal" placeholder="Enter amount" style="flex:1;background:none;border:none;color:#fff;font-size:1.2rem;font-weight:600;outline:none;font-family:Manrope,sans-serif;min-width:0;"/>',
+          '<span id="bfInputUnit" style="color:rgba(255,255,255,0.55);font-size:0.9rem;font-weight:700;flex-shrink:0;">INR</span>',
+          '<button id="bfMaxBtn" style="background:transparent;border:none;color:#00c2b2;font-size:0.88rem;font-weight:700;padding:0;cursor:pointer;flex-shrink:0;font-family:Manrope,sans-serif;">Max</button>',
+        '</div>',
+        '<div id="bfLimitInfo" style="font-size:0.78rem;color:rgba(255,255,255,0.38);margin-bottom:0.15rem;padding-left:2px;">Limit ₹-- - ₹--</div>',
+        '<div id="bfUsdtCalc" style="font-size:0.78rem;color:rgba(255,255,255,0.38);margin-bottom:1.1rem;padding-left:2px;">≈ -- USDT</div>',
+        // Payment method
+        '<div style="background:#1a1a1a;border-radius:10px;padding:0.82rem 1rem;display:flex;align-items:center;gap:0.65rem;margin-bottom:1.2rem;">',
+          '<span id="bfPayMethodDot" style="width:10px;height:10px;border-radius:2px;background:#00c2b2;flex-shrink:0;"></span>',
+          '<select id="bfPayMethod" style="flex:1;background:none;border:none;color:#fff;font-size:0.9rem;font-family:Manrope,sans-serif;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;font-weight:500;"></select>',
+          '<svg width="11" height="7" viewBox="0 0 11 7" fill="none"><path d="M1 1l4.5 4.5L10 1" stroke="rgba(255,255,255,0.4)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        '</div>',
+        // Advertiser terms
+        '<div style="margin-bottom:1.3rem;">',
+          '<div style="font-size:0.82rem;color:rgba(255,255,255,0.55);font-weight:700;margin-bottom:0.35rem;">Advertiser terms</div>',
+          '<div id="bfTerms" style="font-size:0.82rem;color:rgba(255,255,255,0.75);line-height:1.6;"></div>',
+        '</div>',
+        // Seller card
+        '<div style="' + CARD + 'padding:0.9rem 1rem;">',
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem;">',
+            '<div id="bfSellerRow"></div>',
+            '<svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M1 1l6 6-6 6" stroke="rgba(255,255,255,0.35)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+          '</div>',
+          '<div style="display:grid;gap:0.5rem;font-size:0.79rem;">',
+            '<div style="display:flex;justify-content:space-between;">',
+              '<span style="color:rgba(255,255,255,0.42);">Pay within</span>',
+              '<span id="bfDuration" style="color:#fff;font-weight:600;">15 minute(s)</span>',
+            '</div>',
+            '<div style="display:flex;justify-content:space-between;">',
+              '<span style="color:rgba(255,255,255,0.42);">Historical orders</span>',
+              '<span id="bfHistOrders" style="color:#fff;font-weight:600;">--</span>',
+            '</div>',
+            '<div style="display:flex;justify-content:space-between;">',
+              '<span style="color:rgba(255,255,255,0.42);">30D average release time</span>',
+              '<span id="bfAvgRelease" style="color:#fff;font-weight:600;">--</span>',
+            '</div>',
+            '<div style="display:flex;justify-content:space-between;">',
+              '<span style="color:rgba(255,255,255,0.42);">Completed orders (both parties)</span>',
+              '<span id="bfCompletedOrds" style="color:#fff;font-weight:600;">0</span>',
+            '</div>',
+            '<div style="display:flex;justify-content:space-between;">',
+              '<span style="color:rgba(255,255,255,0.42);">Account signup time</span>',
+              '<span id="bfSignupDate" style="color:#fff;font-weight:600;">--</span>',
+            '</div>',
+          '</div>',
+        '</div>',
+        '<div style="height:0.5rem;"></div>',
+      '</div>',
+      '<div style="' + FOOT + '">',
+        '<div id="bfBuyHint" style="font-size:0.78rem;color:#f6465d;min-height:1em;text-align:center;"></div>',
+        '<button id="bfBuyBtn" style="' + PBTN + 'background:#00c2b2;color:#000;">Buy USDT with 0 fees</button>',
+      '</div>',
+    '</div>',
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // SCREEN 2  ─  Order Generated
@@ -7332,17 +7406,16 @@ window.deleteMobAd = async function(offerId) {
       '<div style="' + BODY + 'padding-top:0.1rem;">',
         '<h2 id="bfOrdTitle" style="margin:0 0 0.4rem;font-size:1.25rem;font-weight:800;line-height:1.35;color:#fff;">The order has been generated.<br>Proceed to payment.</h2>',
         '<p style="margin:0 0 1.25rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfOrderTimer" style="color:#00c2b2;font-weight:700;">15:00s</span></p>',
-        // Seller card with chat btn
-        '<div style="' + CARD + 'display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;">',
-          '<div style="flex:1;min-width:0;">',
-            '<div id="bfOrdSellerRow" style="margin-bottom:0.8rem;"></div>',
+        // Seller card + trust bullets (combined, matching Bitget)
+        '<div style="' + CARD + 'padding:0.9rem 1rem;margin-bottom:0.7rem;">',
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;">',
+            '<div id="bfOrdSellerRow"></div>',
+            '<div id="bfOrdChatWrap" style="flex-shrink:0;"></div>',
           '</div>',
-          '<div id="bfOrdChatWrap" style="flex-shrink:0;"></div>',
-        '</div>',
-        // Trust bullets
-        '<div style="background:#181818;border-radius:12px;padding:0.85rem 1rem;margin-bottom:0.85rem;display:flex;flex-direction:column;gap:0.45rem;">',
-          '<div style="font-size:0.76rem;color:rgba(255,255,255,0.5);line-height:1.5;">✱ The other party has passed our real-name and video identity verification.</div>',
-          '<div style="font-size:0.76rem;color:rgba(255,255,255,0.5);line-height:1.5;">✱ The cryptocurrency in this order is held in escrow by BITEGIT P2P and your payment is secure.</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.35rem;">',
+            '<div style="font-size:0.76rem;color:rgba(255,255,255,0.45);line-height:1.5;">* The other party has passed our real-name and video identity verification.</div>',
+            '<div style="font-size:0.76rem;color:rgba(255,255,255,0.45);line-height:1.5;">* The cryptocurrency in this order is held in escrow by BITEGIT P2P and your payment is secure.</div>',
+          '</div>',
         '</div>',
         // Order details card
         '<div style="' + CARD + '">',
@@ -7368,9 +7441,131 @@ window.deleteMobAd = async function(offerId) {
     '</div>',
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // SCREEN 3  ─  Payment  [REMOVED — rebuild pending]
-    // PAID BOTTOM SHEET    [REMOVED — rebuild pending]
+    // SCREEN 3  ─  Payment Instructions
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfPayScreen" style="display:none;' + SCR + '">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.5rem;flex-shrink:0;">',
+        '<button id="bfPayBack" style="' + BACK + '">←</button>',
+      '</div>',
+      '<div style="' + BODY + 'padding-top:0.1rem;">',
+        '<h2 id="bfPayTitle" style="margin:0 0 0.3rem;font-size:1.15rem;font-weight:800;line-height:1.35;color:#fff;">Please use UPI to transfer funds</h2>',
+        '<p style="margin:0 0 1rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfPayTimer" style="color:#00c2b2;font-weight:700;">15:00s</span></p>',
+        // Seller row + chat
+        '<div style="' + CARD + 'display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.8rem 1rem;margin-bottom:1.1rem;">',
+          '<div id="bfPaySellerRow"></div>',
+          '<div id="bfPayChatWrap" style="flex-shrink:0;"></div>',
+        '</div>',
+        // Step 1
+        '<div style="display:flex;gap:0.85rem;margin-bottom:0.9rem;align-items:flex-start;">',
+          // Diamond step number
+          '<div style="width:26px;height:26px;background:#1a1a1a;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transform:rotate(45deg);border-radius:4px;">',
+            '<span style="font-size:0.72rem;font-weight:800;color:#fff;line-height:1;transform:rotate(-45deg);display:block;">1</span>',
+          '</div>',
+          '<div style="flex:1;">',
+            '<p style="margin:0 0 0.3rem;font-size:0.88rem;color:#fff;font-weight:700;line-height:1.45;">Exit the App and transfer funds to the following recipient\'s account.</p>',
+            '<p style="margin:0 0 0.7rem;font-size:0.75rem;color:rgba(255,255,255,0.38);line-height:1.55;">During the transfer, please avoid using terms like BTC, USDT, BITEGIT, or similar, in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>',
+            // Transfer detail card
+            '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:0.1rem 0.9rem;margin-bottom:0.7rem;">',
+              '<div id="bfPayDetails"></div>',
+              '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-top:1px solid #1e1e1e;">',
+                '<span style="color:rgba(255,255,255,0.42);font-size:0.79rem;">QR code</span>',
+                '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17v3M20 14v3"/></svg>',
+              '</div>',
+            '</div>',
+            '<p id="bfPayWarn" style="font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;margin:0 0 0.5rem;"></p>',
+          '</div>',
+        '</div>',
+        // Step 2
+        '<div style="display:flex;gap:0.85rem;margin-bottom:1rem;align-items:flex-start;">',
+          '<div style="width:26px;height:26px;background:#1a1a1a;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transform:rotate(45deg);border-radius:4px;">',
+            '<span style="font-size:0.72rem;font-weight:800;color:#fff;line-height:1;transform:rotate(-45deg);display:block;">2</span>',
+          '</div>',
+          '<p style="margin:0;font-size:0.88rem;color:#fff;font-weight:700;line-height:1.45;margin-top:4px;">After completing the transfer, tap the Paid button.</p>',
+        '</div>',
+        '<div style="height:0.5rem;"></div>',
+      '</div>',
+      // Floating headphone FAB
+      '<div onclick="void(0)" style="position:fixed;bottom:120px;right:18px;width:46px;height:46px;border-radius:50%;background:#1a1a1a;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,0.5);">',
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>',
+      '</div>',
+      '<div style="' + FOOT + '">',
+        '<button id="bfPaidBtn" style="' + PBTN + '">Paid</button>',
+        '<button id="bfPayCancelBtn" style="' + GBTN + '">Cancel</button>',
+      '</div>',
+    '</div>',
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PAID BOTTOM SHEET
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfPaidSheet" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.6);align-items:flex-end;font-family:Manrope,sans-serif;">',
+      '<div style="background:#141414;border-radius:18px 18px 0 0;width:100%;padding-bottom:calc(1.4rem + env(safe-area-inset-bottom));">',
+        '<div style="padding:0.8rem 0 0.2rem;display:flex;justify-content:center;">',
+          '<div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.15);"></div>',
+        '</div>',
+        '<div style="padding:0.9rem 1.1rem 0;">',
+          '<h3 style="margin:0 0 1rem;font-size:1.05rem;font-weight:700;color:#fff;">Paid</h3>',
+          '<div style="background:rgba(240,165,0,0.07);border:1px solid rgba(240,165,0,0.22);border-radius:9px;padding:0.7rem 0.85rem;margin-bottom:0.9rem;display:flex;gap:0.5rem;align-items:flex-start;">',
+            '<span style="color:#f0a500;font-size:0.9rem;flex-shrink:0;">ℹ</span>',
+            '<p style="margin:0;font-size:0.76rem;color:rgba(255,255,255,0.62);line-height:1.5;">Complete the payment before clicking "Paid". False actions may lead to account restrictions.</p>',
+          '</div>',
+          '<div id="bfPaidOpt1" onclick="bfSelectPaidOpt(1)" style="background:#1c1c1c;border:1.5px solid #2a2a2a;border-radius:10px;padding:0.9rem 1rem;margin-bottom:0.45rem;cursor:pointer;">',
+            '<span id="bfPaidOpt1Text" style="font-size:0.86rem;color:#fff;line-height:1.4;display:block;">I have transferred the amount to the above account.</span>',
+          '</div>',
+          '<div id="bfPaidOpt2" onclick="bfSelectPaidOpt(2)" style="background:#1c1c1c;border:1.5px solid #2a2a2a;border-radius:10px;padding:0.9rem 1rem;margin-bottom:1rem;cursor:pointer;">',
+            '<span style="font-size:0.86rem;color:#fff;line-height:1.4;display:block;">I have not made the payment yet.</span>',
+          '</div>',
+          '<button id="bfPaidConfirmBtn" disabled style="width:100%;padding:1rem;background:#222;color:rgba(255,255,255,0.22);border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:not-allowed;font-family:Manrope,sans-serif;">Confirm</button>',
+        '</div>',
+      '</div>',
+    '</div>',
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // CHAT SCREEN  (z:630, managed separately)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfChatScreen" style="display:none;position:fixed;inset:0;z-index:630;background:#000;flex-direction:column;font-family:Manrope,sans-serif;overflow:hidden;">',
+      // Header
+      '<div style="display:flex;align-items:center;padding:0.75rem 1rem 0.5rem;flex-shrink:0;border-bottom:1px solid #111;">',
+        '<button id="bfChatBack" style="' + BACK + '">←</button>',
+        '<div style="flex:1;text-align:center;">',
+          '<div id="bfChatSellerName" style="font-size:0.95rem;font-weight:700;color:#fff;line-height:1.2;"></div>',
+          '<div style="font-size:0.74rem;color:rgba(255,255,255,0.45);margin-top:1px;"><span style="color:#00c2b2;font-size:0.68rem;">●</span> Online</div>',
+        '</div>',
+        '<button id="bfChatMenuBtn" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:1.15rem;cursor:pointer;padding:0.25rem 0.35rem;letter-spacing:1px;">···</button>',
+      '</div>',
+      // Notice bar (dismissable)
+      '<div id="bfChatNoticeBar" style="background:rgba(40,28,0,0.95);border-bottom:1px solid rgba(80,55,0,0.6);padding:0.6rem 1rem;display:flex;align-items:flex-start;gap:0.55rem;flex-shrink:0;">',
+        '<span style="color:#f0a500;font-size:0.85rem;flex-shrink:0;margin-top:1px;">ℹ</span>',
+        '<div style="flex:1;">',
+          '<span style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.9);">Notice</span>',
+          '<br>',
+          '<span style="font-size:0.76rem;color:rgba(255,255,255,0.65);line-height:1.4;">Remember to click paid after you have transferred funds from your bank account.</span>',
+        '</div>',
+        '<button onclick="document.getElementById(\'bfChatNoticeBar\').style.display=\'none\'" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:1rem;cursor:pointer;flex-shrink:0;padding:0;margin-top:-1px;">✕</button>',
+      '</div>',
+      // Pay bar (To be paid + Pay btn + timer)
+      '<div id="bfChatPayBar" style="padding:0.7rem 1rem 0.65rem;border-bottom:1px solid #111;flex-shrink:0;">',
+        '<div style="display:flex;align-items:center;justify-content:space-between;">',
+          '<div>',
+            '<div style="font-size:0.76rem;color:rgba(255,255,255,0.45);margin-bottom:1px;">To be paid</div>',
+            '<div id="bfChatPayAmt" style="font-size:1.18rem;font-weight:800;color:#fff;">₹ --</div>',
+          '</div>',
+          '<button id="bfChatPayBtn" style="background:#fff;color:#000;border:none;border-radius:10px;padding:0.62rem 1.4rem;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:Manrope,sans-serif;">Pay</button>',
+        '</div>',
+        '<div style="font-size:0.76rem;color:rgba(255,255,255,0.4);margin-top:4px;">Please pay within <span id="bfChatTimer" style="color:#00c2b2;font-weight:700;">15:00s</span></div>',
+      '</div>',
+      // Messages area
+      '<div id="bfChatMessages" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.9rem 1rem;display:flex;flex-direction:column;gap:0.55rem;background:#000;"></div>',
+      // Input bar
+      '<div style="display:flex;align-items:center;gap:0.6rem;padding:0.6rem 1rem;padding-bottom:calc(0.6rem + env(safe-area-inset-bottom));border-top:1px solid #111;flex-shrink:0;background:#000;">',
+        '<input id="bfChatInput" type="text" placeholder="" style="flex:1;background:#1a1a1a;border:none;color:#fff;border-radius:22px;padding:0.65rem 1rem;font-size:0.9rem;font-family:Manrope,sans-serif;outline:none;"/>',
+        '<button id="bfChatImgBtn" style="background:none;border:none;cursor:pointer;padding:4px;flex-shrink:0;">',
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+        '</button>',
+        '<button id="bfChatSendBtn" style="background:#00c2b2;border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">',
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+        '</button>',
+      '</div>',
+    '</div>',
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // SCREEN 4  ─  Cancel Warning
@@ -7452,7 +7647,63 @@ window.deleteMobAd = async function(offerId) {
     var w = document.createElement('div'); w.innerHTML = html; document.body.appendChild(w);
   }
 
-  // ── Fill Screen 1  [REMOVED — rebuild pending] ────────────────────
+  // ── Fill Screen 1 ─ Buy ───────────────────────────────────────────
+  function bfUpdateCalc() {
+    var pi = document.getElementById('bfPayInput'), uc = document.getElementById('bfUsdtCalc');
+    if (!pi || !_bfOffer) return;
+    var amt = Number(pi.value || 0);
+    if (_bfCryptoMode) {
+      var inr = amt * (_bfOffer.price || 0);
+      if (uc) uc.textContent = amt > 0 ? ('≈ ' + fmt(inr) + 'INR') : '≈ -- INR';
+    } else {
+      var usdt = _bfOffer.price > 0 ? amt / _bfOffer.price : 0;
+      if (uc) uc.textContent = amt > 0 ? ('≈ ' + usdt.toFixed(2) + 'USDT') : '≈ -- USDT';
+    }
+  }
+
+  function bfSetTabMode(isCrypto) {
+    _bfCryptoMode = isCrypto;
+    var ct = document.getElementById('bfCryptoTab'), ft = document.getElementById('bfFiatTab');
+    var uu = document.getElementById('bfInputUnit'), li = document.getElementById('bfLimitInfo');
+    if (ct) { ct.style.color = isCrypto ? '#fff' : 'rgba(255,255,255,0.35)'; ct.style.fontWeight = isCrypto ? '700' : '600'; ct.style.borderBottom = isCrypto ? '2px solid #fff' : 'none'; }
+    if (ft) { ft.style.color = isCrypto ? 'rgba(255,255,255,0.35)' : '#fff'; ft.style.fontWeight = isCrypto ? '600' : '700'; ft.style.borderBottom = isCrypto ? 'none' : '2px solid #fff'; }
+    if (uu) uu.textContent = isCrypto ? 'USDT' : 'INR';
+    if (li && _bfOffer) {
+      if (isCrypto) {
+        var p = _bfOffer.price || 1;
+        li.textContent = 'Limit ' + (p > 0 ? (_bfOffer.minLimit / p).toFixed(2) : '--') + ' - ' + (p > 0 ? (_bfOffer.maxLimit / p).toFixed(2) : '--') + ' USDT';
+      } else {
+        li.textContent = 'Limit ₹' + fmt(_bfOffer.minLimit) + ' - ₹' + fmt(_bfOffer.maxLimit);
+      }
+    }
+    var pi = document.getElementById('bfPayInput');
+    if (pi && _bfOffer) {
+      if (isCrypto) { var p2 = _bfOffer.price || 1; pi.value = p2 > 0 ? (_bfOffer.minLimit / p2).toFixed(2) : ''; }
+      else { pi.value = _bfOffer.minLimit || ''; }
+    }
+    bfUpdateCalc();
+  }
+
+  function bfFillBuy(offer) {
+    _bfOffer = offer;
+    _bfCryptoMode = false;
+    var el;
+    el = document.getElementById('bfSellerRow'); if (el) el.innerHTML = sellerRowHtml(offer.advertiser || '--');
+    el = document.getElementById('bfPriceTag'); if (el) el.innerHTML = 'Price ₹' + fmt(offer.price) + ' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+    el = document.getElementById('bfTerms'); if (el) el.textContent = offer.remark || 'Standard P2P terms apply.';
+    el = document.getElementById('bfHistOrders'); if (el) el.textContent = 'Buy ' + (offer.orders || 0) + ' Sell 0';
+    el = document.getElementById('bfCompletedOrds'); if (el) el.textContent = offer.orders || 0;
+    el = document.getElementById('bfAvgRelease'); if (el) el.textContent = (offer.avgReleaseTime || '1') + ' min';
+    el = document.getElementById('bfSignupDate'); if (el) el.textContent = offer.signupDate || '--';
+    el = document.getElementById('bfDuration'); if (el) el.textContent = (offer.duration || 15) + ' minute(s)';
+    var pm = document.getElementById('bfPayMethod');
+    if (pm) pm.innerHTML = getOfferPayments(offer).map(function(m) { return '<option value="' + esc(m) + '">' + esc(m) + '</option>'; }).join('');
+    el = document.getElementById('bfBuyHint'); if (el) el.textContent = '';
+    bfSetTabMode(false);
+    bfShow('bfBuyScreen');
+    var pi = document.getElementById('bfPayInput');
+    if (pi) setTimeout(function() { pi.focus(); }, 350);
+  }
 
   // ── Fill Screen 2 ─────────────────────────────────────────────────
   function bfFillOrder(order) {
@@ -7512,15 +7763,129 @@ window.deleteMobAd = async function(offerId) {
     bfShow('bfOrderScreen');
   }
 
-  // ── Fill Screen 3  [REMOVED — rebuild pending] ────────────────────
-  // ── Paid sheet    [REMOVED — rebuild pending] ────────────────────
+  // ── Fill Screen 3 ─ Pay ───────────────────────────────────────────
+  function bfFillPay() {
+    if (!_bfOrder) return;
+    var order = _bfOrder;
+    var method = order.paymentMethod || (_bfOffer && _bfOffer.payments && _bfOffer.payments[0]) || 'UPI';
+    var sellerName = order.sellerUsername || (_bfOffer && _bfOffer.advertiser) || 'Seller';
+    var el;
+    el = document.getElementById('bfPayTitle'); if (el) el.textContent = 'Please use ' + method + ' to transfer funds';
+    el = document.getElementById('bfPaySellerRow'); if (el) el.innerHTML = sellerRowHtml(sellerName);
+    var cw = document.getElementById('bfPayChatWrap');
+    if (cw) cw.innerHTML = chatBtnHtml('bfPayChatBtn', 'bfPayScreen');
+    var det = document.getElementById('bfPayDetails');
+    if (det) {
+      det.innerHTML =
+        makeRow('Trading amount', '₹ ' + fmt(order.amountInr || 0), String(order.amountInr || '')) +
+        makeRow('Recipient name', esc(sellerName), sellerName) +
+        makeRow('Payment method', pmPill(method), null) +
+        makeRow(method + ' wallet VPA', '<span style="color:rgba(255,255,255,0.5);">ask in chat</span>', null);
+    }
+    var myName = (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.username || currentUser.name || 'you') : 'you';
+    el = document.getElementById('bfPayWarn'); if (el) el.textContent = 'Please use an account under your name (' + myName + ') to make the transfer. If the paying account and your personal information do not match, the seller may request a refund or cancel the order.';
+    var t1 = document.getElementById('bfPaidOpt1Text'); if (t1) t1.textContent = 'I have transferred ' + fmt(order.amountInr || 0) + ' INR to the above account.';
+    var secs = typeof remainingSeconds !== 'undefined' ? remainingSeconds : 900;
+    var t = document.getElementById('bfPayTimer'); if (t) t.textContent = bfTimerFmt(secs);
+    bfShow('bfPayScreen');
+  }
+
+  // ── Paid sheet ─────────────────────────────────────────────────────
+  function bfShowPaidSheet() {
+    _bfPaidSel = 0;
+    var o1 = document.getElementById('bfPaidOpt1'), o2 = document.getElementById('bfPaidOpt2'), btn = document.getElementById('bfPaidConfirmBtn');
+    if (o1) { o1.style.borderColor = '#2a2a2a'; o1.style.background = '#1c1c1c'; }
+    if (o2) { o2.style.borderColor = '#2a2a2a'; o2.style.background = '#1c1c1c'; }
+    if (btn) { btn.disabled = true; btn.style.background = '#222'; btn.style.color = 'rgba(255,255,255,0.22)'; btn.style.cursor = 'not-allowed'; }
+    var sh = document.getElementById('bfPaidSheet'); if (sh) sh.style.display = 'flex';
+  }
+  window.bfSelectPaidOpt = function(opt) {
+    _bfPaidSel = opt;
+    var o1 = document.getElementById('bfPaidOpt1'), o2 = document.getElementById('bfPaidOpt2'), btn = document.getElementById('bfPaidConfirmBtn');
+    if (o1) { o1.style.borderColor = opt === 1 ? '#00c2b2' : '#2a2a2a'; o1.style.background = opt === 1 ? 'rgba(0,194,178,0.07)' : '#1c1c1c'; }
+    if (o2) { o2.style.borderColor = opt === 2 ? 'rgba(255,255,255,0.2)' : '#2a2a2a'; o2.style.background = opt === 2 ? 'rgba(255,255,255,0.04)' : '#1c1c1c'; }
+    if (btn) { var ok = opt === 1; btn.disabled = !ok; btn.style.background = ok ? '#fff' : '#222'; btn.style.color = ok ? '#0d0d0d' : 'rgba(255,255,255,0.22)'; btn.style.cursor = ok ? 'pointer' : 'not-allowed'; }
+  };
 
   // ── Wire Events ───────────────────────────────────────────────────
   function wireEvents() {
+    // Screen 1 — Buy
+    document.getElementById('bfBuyBack').onclick = function() { bfClose(); };
+    document.getElementById('bfCryptoTab').onclick = function() { bfSetTabMode(true); };
+    document.getElementById('bfFiatTab').onclick   = function() { bfSetTabMode(false); };
+    document.getElementById('bfPayInput').oninput  = bfUpdateCalc;
+    document.getElementById('bfMaxBtn').onclick = function() {
+      if (!_bfOffer) return;
+      if (_bfCryptoMode) { var p = _bfOffer.price || 1; document.getElementById('bfPayInput').value = p > 0 ? (_bfOffer.maxLimit / p).toFixed(2) : 0; }
+      else { document.getElementById('bfPayInput').value = _bfOffer.maxLimit; }
+      bfUpdateCalc();
+    };
+    document.getElementById('bfBuyBtn').onclick = async function() {
+      var btn = this, hint = document.getElementById('bfBuyHint');
+      if (!_bfOffer) return;
+      var inputAmt = Number(document.getElementById('bfPayInput').value || 0);
+      var method = document.getElementById('bfPayMethod').value;
+      var payAmt = _bfCryptoMode ? inputAmt * (_bfOffer.price || 0) : inputAmt;
+      var min = Number(_bfOffer.minLimit || 0), max = Number(_bfOffer.maxLimit || Infinity);
+      if (!payAmt || payAmt < min || payAmt > max) {
+        if (_bfCryptoMode) { var minU = _bfOffer.price > 0 ? (min/_bfOffer.price) : 0; var maxU = _bfOffer.price > 0 ? (max/_bfOffer.price) : 0; if (hint) hint.textContent = 'Enter amount between ' + minU.toFixed(2) + ' - ' + maxU.toFixed(2) + ' USDT'; }
+        else { if (hint) hint.textContent = 'Enter amount between ₹' + fmt(min) + ' and ₹' + fmt(max); }
+        return;
+      }
+      if (hint) hint.textContent = '';
+      var hasActive = (typeof _ordAllOrders !== 'undefined' ? _ordAllOrders : []).some(function(o) { return ['CREATED','PENDING','PAID','PAYMENT_SENT'].indexOf((o.status||'').toUpperCase()) !== -1; });
+      if (hasActive) { if (hint) hint.textContent = 'You already have an active order. Complete it first.'; return; }
+      if (btn._creating) return;
+      btn._creating = true; btn.disabled = true;
+      btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:ord-spin 0.7s linear infinite;display:inline-block;"></span>Placing order...</span>';
+      var toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00c2b2;color:#000;padding:10px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,194,178,0.4);';
+      toast.textContent = '⏳ Placing your order...';
+      document.body.appendChild(toast);
+      try {
+        var data = await createOrder(_bfOffer.id, { amountInr: payAmt, paymentMethod: method, openAfterCreate: false });
+        if (!data || !data.order) throw new Error('Order creation failed.');
+        toast.style.background = '#16a34a'; toast.textContent = '✓ Order placed!';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 2000);
+        openOrder(data.order, { suppressModal: true });
+        bfFillOrder(data.order);
+      } catch(e) {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+        if (hint) hint.textContent = e.message || 'Failed to create order.';
+      } finally {
+        btn._creating = false; btn.disabled = false;
+        btn.textContent = 'Buy USDT with 0 fees';
+      }
+    };
+
     // Screen 2 — Order Generated
     document.getElementById('bfOrderBack').onclick = function() { bfClose(); };
-    document.getElementById('bfNextBtn').onclick = function() { /* payment screen rebuild pending */ };
+    document.getElementById('bfNextBtn').onclick = function() { bfFillPay(); };
     document.getElementById('bfOrdCancelBtn').onclick = function() { bfShow('bfCancelWarnScreen'); };
+
+    // Screen 3 — Pay
+    document.getElementById('bfPayBack').onclick = function() { bfShow('bfOrderScreen'); };
+    document.getElementById('bfPayCancelBtn').onclick = function() { bfShow('bfCancelWarnScreen'); };
+    document.getElementById('bfPaidBtn').onclick = function() { bfShowPaidSheet(); };
+
+    // Paid sheet
+    document.getElementById('bfPaidSheet').addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
+    document.getElementById('bfPaidConfirmBtn').onclick = async function() {
+      if (_bfPaidSel !== 1) return;
+      var btn = this; btn.disabled = true;
+      btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:ord-spin 0.7s linear infinite;display:inline-block;"></span>Processing...</span>';
+      var sh = document.getElementById('bfPaidSheet'); if (sh) sh.style.display = 'none';
+      var titleEl = document.getElementById('bfOrdTitle'); if (titleEl) titleEl.innerHTML = 'Payment sent.<br>Waiting for seller to release crypto.';
+      var nextBtn = document.getElementById('bfNextBtn'); if (nextBtn) nextBtn.style.display = 'none';
+      bfShow('bfOrderScreen');
+      try { await updateOrderStatus('mark_paid'); } catch(e) { console.error('[bfPaidConfirm]', e.message); }
+    };
+
+    // Chat btn clicks (delegated — buttons injected dynamically)
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-chat-prev]');
+      if (btn && window.bfOpenChat) { window.bfOpenChat(btn.getAttribute('data-chat-prev')); }
+    });
 
     // Cancel flow
     var _bfCancelReason = '';
@@ -7562,7 +7927,7 @@ window.deleteMobAd = async function(offerId) {
     }
     document.getElementById('bfNotPaidCheck').addEventListener('change', updateCancelConfirmBtn);
     document.getElementById('bfCancelWarnBack').onclick = function() {
-      bfShow('bfOrderScreen');
+      bfShow(_bfOrder ? 'bfPayScreen' : 'bfOrderScreen');
     };
     document.getElementById('bfProceedCancelBtn').onclick = function() { bfShow('bfCancelReasonScreen'); };
     document.getElementById('bfCancelReasonBack').onclick = function() { bfShow('bfCancelWarnScreen'); };
@@ -7584,20 +7949,211 @@ window.deleteMobAd = async function(offerId) {
     };
   }
 
-  // ── fillDealModal stub — buy screen rebuild pending ────────────────
+  // ── Expose internals needed by chat IIFE ─────────────────────────
+  window._bfFillPay = function() { if (typeof bfFillPay === 'function') bfFillPay(); };
+  window._bfBF_SCREENS = BF_SCREENS;
+
+  // ── Override fillDealModal — go straight to new buy screen ──────────
   window.fillDealModal = function(offer) {
     if (typeof activeDealOffer !== 'undefined') activeDealOffer = offer;
     var dm = document.getElementById('dealModal');
     if (dm) { dm.classList.add('hidden'); dm.setAttribute('aria-hidden','true'); }
     document.body.classList.remove('p2p-deal-open');
-    // TODO: open new buy screen here once rebuilt
+    bfFillBuy(offer);
   };
 
   // ── Init ──────────────────────────────────────────────────────────
   injectHTML();
   wireEvents();
 })();
-// ===== Chat screen removed — rebuild pending =====
+// ===================================================================
+// CHAT SCREEN  (Bitget-style, full rebuild)
+// ===================================================================
+(function initBfChatScreen() {
+  var _chatPrev = 'bfOrderScreen';
+  var _chatPollTimer = null;
+  var _chatRendered = {};
+  var _chatOrderId = null;
+  var _chatMyUser = null;
+
+  function esc2(s) { return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function getOrderId() { return typeof activeOrderId !== 'undefined' ? activeOrderId : null; }
+  function getMyUsername() { return (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.username||'') : ''; }
+
+  // ── Scroll to bottom ──────────────────────────────────────────────
+  function scrollBottom() {
+    var m = document.getElementById('bfChatMessages');
+    if (m) setTimeout(function() { m.scrollTop = m.scrollHeight; }, 60);
+  }
+
+  // ── Render a single message ───────────────────────────────────────
+  function renderMsg(msg) {
+    var isMine = msg.sender === getMyUsername();
+    var isSystem = msg.role === 'system' || msg.sender === 'System';
+    if (isSystem) {
+      var sEl = document.createElement('div');
+      sEl.style.cssText = 'text-align:center;font-size:0.73rem;color:rgba(255,255,255,0.35);padding:0.2rem 0;';
+      sEl.textContent = msg.text || '';
+      return sEl;
+    }
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:' + (isMine ? 'flex-end' : 'flex-start') + ';gap:3px;';
+    if (!isMine) {
+      var nameEl = document.createElement('div');
+      nameEl.style.cssText = 'font-size:0.72rem;color:rgba(255,255,255,0.4);padding-left:40px;';
+      nameEl.textContent = esc2(msg.sender || '');
+      wrap.appendChild(nameEl);
+    }
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-end;gap:8px;' + (isMine ? 'flex-direction:row-reverse;' : '');
+    if (!isMine) {
+      var av = document.createElement('div');
+      av.style.cssText = 'width:30px;height:30px;border-radius:50%;background:#2a2a2a;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.78rem;font-weight:700;color:#fff;';
+      av.textContent = (msg.sender||'?')[0].toUpperCase();
+      row.appendChild(av);
+    }
+    var bubble = document.createElement('div');
+    bubble.style.cssText = 'max-width:72%;padding:0.55rem 0.9rem;border-radius:' +
+      (isMine ? '16px 4px 16px 16px' : '4px 16px 16px 16px') +
+      ';font-size:0.87rem;line-height:1.48;word-break:break-word;' +
+      (isMine ? 'background:#2a2a2a;color:#fff;' : 'background:#1e1e1e;color:#fff;');
+    if (msg.imageBase64) {
+      var img = document.createElement('img');
+      img.src = msg.imageBase64; img.style.cssText = 'max-width:200px;border-radius:8px;display:block;';
+      bubble.appendChild(img);
+    } else {
+      bubble.textContent = msg.text || '';
+    }
+    row.appendChild(bubble);
+    var timeEl = document.createElement('div');
+    timeEl.style.cssText = 'font-size:0.67rem;color:rgba(255,255,255,0.28);white-space:nowrap;';
+    var d = new Date(msg.createdAt || Date.now());
+    timeEl.textContent = (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+    row.appendChild(timeEl);
+    wrap.appendChild(row);
+    return wrap;
+  }
+
+  // ── Poll messages ─────────────────────────────────────────────────
+  function pollMessages() {
+    var oid = _chatOrderId || getOrderId();
+    if (!oid) return;
+    fetch('/api/p2p/orders/' + oid + '/messages', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) {
+        if (!d || !d.messages) return;
+        var box = document.getElementById('bfChatMessages');
+        if (!box) return;
+        var atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+        var added = false;
+        d.messages.forEach(function(msg) {
+          if (_chatRendered[msg.id]) return;
+          _chatRendered[msg.id] = true;
+          box.appendChild(renderMsg(msg));
+          added = true;
+        });
+        if (added && atBottom) scrollBottom();
+      }).catch(function(){});
+  }
+
+  function startPolling() {
+    stopPolling();
+    pollMessages();
+    _chatPollTimer = setInterval(pollMessages, 3000);
+  }
+  function stopPolling() {
+    if (_chatPollTimer) { clearInterval(_chatPollTimer); _chatPollTimer = null; }
+  }
+
+  // ── Send message ──────────────────────────────────────────────────
+  async function sendMsg(text) {
+    var oid = _chatOrderId || getOrderId();
+    if (!oid || !text.trim()) return;
+    try {
+      await fetch('/api/p2p/orders/' + oid + '/messages', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.trim() })
+      });
+      pollMessages();
+    } catch(e) {}
+  }
+
+  // ── Wire chat events ──────────────────────────────────────────────
+  function wireChatEvents() {
+    document.getElementById('bfChatBack').onclick = function() {
+      stopPolling();
+      var cs = document.getElementById('bfChatScreen'); if (cs) cs.style.display = 'none';
+      document.body.classList.add('bf-open');
+      // Return to previous bf screen or close entirely
+      if (_chatPrev === 'orders') {
+        document.body.classList.remove('bf-open');
+        document.body.style.overflow = '';
+        var nav = document.getElementById('p2pMobileNav'); if (nav) nav.style.display = '';
+        return;
+      }
+      var prev = document.getElementById(_chatPrev);
+      if (prev) { prev.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    };
+    document.getElementById('bfChatPayBtn').onclick = function() {
+      var cs = document.getElementById('bfChatScreen'); if (cs) cs.style.display = 'none';
+      if (window._bfFillPay) window._bfFillPay();
+    };
+    var inp = document.getElementById('bfChatInput');
+    var sendBtn = document.getElementById('bfChatSendBtn');
+    sendBtn.onclick = function() {
+      var v = inp.value.trim();
+      if (!v) return;
+      inp.value = '';
+      sendMsg(v);
+    };
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+    });
+  }
+
+  // ── Public: open chat ──────────────────────────────────────────────
+  window.bfOpenChat = function(prevScreenId) {
+    _chatPrev = prevScreenId || 'bfOrderScreen';
+    _chatOrderId = getOrderId();
+    _chatRendered = {};
+    _chatMyUser = getMyUsername();
+    // Fill seller name + pay amount from snapshot
+    var snap = typeof activeOrderSnapshot !== 'undefined' ? activeOrderSnapshot : null;
+    var sellerName = snap ? (snap.sellerUsername || snap.advertiser || 'Seller') : 'Seller';
+    var el = document.getElementById('bfChatSellerName'); if (el) el.textContent = sellerName;
+    var payAmt = snap ? (snap.amountInr || 0) : 0;
+    var pa = document.getElementById('bfChatPayAmt'); if (pa) pa.textContent = '₹ ' + (payAmt ? Number(payAmt).toLocaleString('en-IN', {minimumFractionDigits:2,maximumFractionDigits:2}) : '--');
+    // Show/hide pay bar based on status
+    var payBar = document.getElementById('bfChatPayBar');
+    var st = String(snap && snap.status || '').toUpperCase();
+    if (payBar) payBar.style.display = ['CREATED','PENDING'].indexOf(st) !== -1 ? '' : 'none';
+    // Hide all bf screens, show chat on top
+    (window._bfBF_SCREENS || []).forEach(function(sid) { var e = document.getElementById(sid); if (e) e.style.display = 'none'; });
+    var cs = document.getElementById('bfChatScreen');
+    if (cs) { cs.style.display = 'flex'; cs.style.flexDirection = 'column'; }
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('bf-open');
+    var nav = document.getElementById('p2pMobileNav'); if (nav) nav.style.display = 'none';
+    // Notice bar reset
+    var nb = document.getElementById('bfChatNoticeBar'); if (nb) nb.style.display = '';
+    // Clear messages and reload
+    var box = document.getElementById('bfChatMessages');
+    if (box) box.innerHTML = '';
+    // Seed remark as first seller message if no messages yet
+    var remark = snap ? (snap.notes || snap.remark || '') : '';
+    if (remark) {
+      var seed = { id: 'seed_remark', sender: sellerName, text: remark, createdAt: snap && snap.createdAt ? snap.createdAt : Date.now(), role: '' };
+      _chatRendered['seed_remark'] = true;
+      if (box) box.appendChild(renderMsg(seed));
+    }
+    startPolling();
+    scrollBottom();
+    setTimeout(function() { var i = document.getElementById('bfChatInput'); if (i) i.focus(); }, 400);
+  };
+
+  wireChatEvents();
+})();
 
 
 // ── Navigate to standalone order flow on Buy ──────────────────────
