@@ -4019,14 +4019,18 @@ function openOrder(order, opts) {
   messagePollTick = 0;
   resetChatMessages();
   setChatUploading(false);
+  // Always update snapshot/timer (needed for chat, cancel, etc.)
+  updateOrderUi(order);
+  fetchMessages({ forceScroll: true });
   // Only show old modal if NOT in bf mode
   var suppressModal = (opts && opts.suppressModal) || document.body.classList.contains('bf-open');
   if (!suppressModal) {
     setModalOpen(true);
     setPaymentPanelOpen(false);
     setCancelModalOpen(false);
-    updateOrderUi(order);
-    fetchMessages({ forceScroll: true });
+  } else {
+    // Hide old modal in case it was open
+    setModalOpen(false);
   }
 
   resetOrderWatch();
@@ -7947,7 +7951,7 @@ window.deleteMobAd = async function(offerId) {
             '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
             '<input id="bfChatImgInput" type="file" accept="image/*" style="display:none;">',
           '</label>',
-          '<input id="bfChatInput" type="text" placeholder="Type a message..." style="flex:1;background:#1a1a1a;border:none;border-radius:22px;color:#fff;font-size:0.9rem;font-family:Manrope,sans-serif;padding:0.65rem 1rem;outline:none;min-width:0;" />',
+          '<input id="bfChatInput" type="text" placeholder="Type a message..." style="flex:1;background:#1a1a1a;border:none;border-radius:22px;color:#fff;font-size:16px;font-family:Manrope,sans-serif;padding:0.65rem 1rem;outline:none;min-width:0;" />',
           '<button id="bfChatSendBtn" style="width:38px;height:38px;border-radius:50%;background:#00c2b2;border:none;color:#000;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">',
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
           '</button>',

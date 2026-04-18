@@ -16,6 +16,12 @@
 
 * { box-sizing: border-box; }
 
+/* Prevent iOS zoom-in on input focus */
+input, textarea, select {
+  font-size: 16px !important;
+  touch-action: manipulation;
+}
+
 html, body {
   margin: 0;
   padding: 0;
