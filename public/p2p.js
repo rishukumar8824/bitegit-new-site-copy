@@ -7189,7 +7189,7 @@ window.deleteMobAd = async function(offerId) {
     _bfTimerTick = setInterval(function() {
       var secs = typeof remainingSeconds !== 'undefined' ? remainingSeconds : 0;
       var txt = bfTimerFmt(secs);
-      ['bfOrderTimer','bfPayTimer'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = txt; });
+      ['bfOrderTimer','bfPayTimer','bfChatTimer'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = txt; });
     }, 500);
   }
   function bfStopTimer() { if (_bfTimerTick) { clearInterval(_bfTimerTick); _bfTimerTick = null; } }
@@ -7883,27 +7883,57 @@ window.deleteMobAd = async function(offerId) {
   function injectChatHTML() {
     var div = document.createElement('div');
     div.innerHTML = [
-      '<div id="bfChatScreen" style="display:none;position:fixed;inset:0;z-index:650;background:#0a0a0a;flex-direction:column;font-family:Manrope,sans-serif;overflow:hidden;">',
-        // Header
-        '<div id="bfChatHeader" style="display:flex;align-items:center;padding:0.85rem 1rem;gap:0.75rem;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.07);background:#111;">',
-          '<button id="bfChatBackBtn" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0.2rem 0.4rem;line-height:1;">←</button>',
-          '<div id="bfChatAvatar" style="width:34px;height:34px;border-radius:50%;background:#a8ff3e;color:#000;font-weight:800;font-size:0.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>',
-          '<div style="flex:1;min-width:0;">',
-            '<div id="bfChatName" style="font-weight:700;font-size:0.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>',
-            '<div style="font-size:0.72rem;color:rgba(255,255,255,0.4);">P2P Order Chat</div>',
+      '<div id="bfChatScreen" style="display:none;position:fixed;inset:0;z-index:650;background:#000;flex-direction:column;font-family:Manrope,sans-serif;overflow:hidden;">',
+
+        // ── Header: ← | Seller name + online dot | ··· menu
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1rem 0.7rem;flex-shrink:0;">',
+          '<button id="bfChatBackBtn" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0.2rem 0.4rem;line-height:1;flex-shrink:0;">←</button>',
+          '<div style="flex:1;text-align:center;">',
+            '<div id="bfChatName" style="font-weight:700;font-size:1rem;color:#fff;"></div>',
+            '<div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:2px;">',
+              '<span style="width:7px;height:7px;border-radius:50%;background:#00c896;display:inline-block;"></span>',
+              '<span style="font-size:0.71rem;color:rgba(255,255,255,0.45);">Online</span>',
+            '</div>',
+          '</div>',
+          '<button id="bfChatMenuBtn" style="background:none;border:none;color:#fff;font-size:1.35rem;cursor:pointer;padding:0.2rem 0.4rem;letter-spacing:2px;flex-shrink:0;">···</button>',
+        '</div>',
+
+        // ── Payment notice bar (To be paid + timer + Pay btn)
+        '<div style="padding:0.65rem 1.1rem 0.85rem;border-bottom:1px solid #1a1a1a;flex-shrink:0;">',
+          '<div style="display:flex;align-items:center;justify-content:space-between;">',
+            '<div>',
+              '<div style="font-size:0.88rem;font-weight:700;color:#fff;">To be paid <span id="bfChatPayAmount">--</span></div>',
+              '<div style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Please pay within <span id="bfChatTimer" style="color:#00c2b2;font-weight:700;">15:00</span>.</div>',
+            '</div>',
+            '<button id="bfChatPayBtn" style="background:transparent;border:1px solid rgba(255,255,255,0.28);border-radius:8px;color:#fff;font-size:0.85rem;font-weight:600;padding:7px 18px;cursor:pointer;font-family:Manrope,sans-serif;">Pay</button>',
           '</div>',
         '</div>',
-        // Messages area
+
+        // ── Messages area
         '<div id="bfChatMsgs" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.9rem 1rem;display:flex;flex-direction:column;gap:0.55rem;"></div>',
-        // Footer
-        '<div style="flex-shrink:0;padding:0.7rem 1rem;padding-bottom:calc(0.7rem + env(safe-area-inset-bottom));background:#111;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:flex-end;gap:0.55rem;">',
-          '<label id="bfChatImgBtn" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:1.1rem;" title="Send image">',
-            '<span>📎</span>',
+
+        // ── Input bar
+        '<div style="flex-shrink:0;padding:0.65rem 1rem;padding-bottom:calc(0.65rem + env(safe-area-inset-bottom));background:#000;border-top:1px solid #1a1a1a;display:flex;align-items:center;gap:0.55rem;">',
+          '<label id="bfChatImgBtn" style="width:38px;height:38px;border-radius:50%;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;" title="Send image">',
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
             '<input id="bfChatImgInput" type="file" accept="image/*" style="display:none;">',
           '</label>',
-          '<textarea id="bfChatInput" rows="1" placeholder="Type a message..." style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;color:#fff;font-size:0.9rem;font-family:Manrope,sans-serif;padding:0.6rem 1rem;outline:none;resize:none;max-height:100px;line-height:1.4;"></textarea>',
-          '<button id="bfChatSendBtn" style="width:42px;height:42px;border-radius:50%;background:#00c2b2;border:none;color:#000;font-size:1.1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;">→</button>',
+          '<input id="bfChatInput" type="text" placeholder="Type a message..." style="flex:1;background:#1a1a1a;border:none;border-radius:22px;color:#fff;font-size:0.9rem;font-family:Manrope,sans-serif;padding:0.65rem 1rem;outline:none;min-width:0;" />',
+          '<button id="bfChatSendBtn" style="width:38px;height:38px;border-radius:50%;background:#00c2b2;border:none;color:#000;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">',
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+          '</button>',
         '</div>',
+
+        // ── ··· Bottom sheet menu
+        '<div id="bfChatMenuSheet" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.6);align-items:flex-end;justify-content:center;">',
+          '<div style="background:#111;border-radius:16px 16px 0 0;width:100%;max-width:430px;padding-bottom:calc(0.5rem + env(safe-area-inset-bottom));">',
+            '<div style="width:36px;height:4px;background:#333;border-radius:2px;margin:10px auto 16px;"></div>',
+            '<div id="bfChatMenuFollow" style="padding:17px 24px;font-size:1rem;color:#fff;cursor:pointer;border-bottom:1px solid #1a1a1a;text-align:center;">Follow</div>',
+            '<div id="bfChatMenuBlock" style="padding:17px 24px;font-size:1rem;color:#fff;cursor:pointer;border-bottom:1px solid #1a1a1a;text-align:center;">Block</div>',
+            '<div id="bfChatMenuCancel" style="padding:17px 24px;font-size:1rem;color:rgba(255,255,255,0.45);cursor:pointer;text-align:center;">Cancel</div>',
+          '</div>',
+        '</div>',
+
       '</div>'
     ].join('');
     document.body.appendChild(div);
@@ -8082,15 +8112,40 @@ window.deleteMobAd = async function(offerId) {
       document.body.style.overflow = 'hidden';
     };
 
+    // Pay button → go back to payment screen
+    var payBtn = document.getElementById('bfChatPayBtn');
+    if (payBtn) payBtn.onclick = function() {
+      document.getElementById('bfChatScreen').style.display = 'none';
+      var payScr = document.getElementById('bfPayScreen');
+      if (payScr) payScr.style.display = 'flex';
+      else { var ordScr = document.getElementById('bfOrderScreen'); if (ordScr) ordScr.style.display = 'flex'; }
+    };
+
+    // ··· menu
+    var menuBtn = document.getElementById('bfChatMenuBtn');
+    var menuSheet = document.getElementById('bfChatMenuSheet');
+    if (menuBtn && menuSheet) {
+      menuBtn.onclick = function() { menuSheet.style.display = 'flex'; };
+      menuSheet.onclick = function(e) { if (e.target === menuSheet) menuSheet.style.display = 'none'; };
+    }
+    var followBtn = document.getElementById('bfChatMenuFollow');
+    var blockBtn = document.getElementById('bfChatMenuBlock');
+    var cancelMenuBtn = document.getElementById('bfChatMenuCancel');
+    if (followBtn) followBtn.onclick = function() {
+      if (menuSheet) menuSheet.style.display = 'none';
+      if (typeof showP2PToast === 'function') showP2PToast('Followed seller');
+    };
+    if (blockBtn) blockBtn.onclick = function() {
+      if (menuSheet) menuSheet.style.display = 'none';
+      if (typeof showP2PToast === 'function') showP2PToast('Seller blocked');
+    };
+    if (cancelMenuBtn) cancelMenuBtn.onclick = function() { if (menuSheet) menuSheet.style.display = 'none'; };
+
     document.getElementById('bfChatSendBtn').onclick = function() { sendMessage(); };
 
     var input = document.getElementById('bfChatInput');
     input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-    });
-    input.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+      if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
     });
 
     document.getElementById('bfChatImgInput').addEventListener('change', function() {
@@ -8120,10 +8175,15 @@ window.deleteMobAd = async function(offerId) {
       counterparty = _bfOffer.advertiser || '';
     }
 
-    var avatar = document.getElementById('bfChatAvatar');
     var nameEl = document.getElementById('bfChatName');
-    if (avatar) avatar.textContent = String(counterparty || 'S').slice(0,1).toUpperCase();
     if (nameEl) nameEl.textContent = (typeof maskEmail === 'function' ? maskEmail(counterparty) : counterparty) || 'Seller';
+
+    // Fill payment notice bar
+    var payAmtEl = document.getElementById('bfChatPayAmount');
+    if (payAmtEl && snapshot) {
+      var fiat = Number(snapshot.fiatAmount || snapshot.amountInr || 0);
+      payAmtEl.textContent = fiat > 0 ? ('₹ ' + (typeof fmt === 'function' ? fmt(fiat) : fiat)) : '--';
+    }
 
     // Reset message list (keep cache for dedup)
     var container = document.getElementById('bfChatMsgs');
