@@ -7391,6 +7391,10 @@ window.deleteMobAd = async function(offerId) {
         '</div>',
         '<div style="height:0.5rem;"></div>',
       '</div>',
+      // Support FAB
+      '<div onclick="void(0)" style="position:fixed;bottom:120px;right:18px;width:46px;height:46px;border-radius:50%;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,0.5);">',
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>',
+      '</div>',
       '<div style="' + FOOT + '">',
         '<button id="bfNextBtn" style="' + PBTN + '">Next →</button>',
         '<button id="bfOrdCancelBtn" style="' + GBTN + '">Cancel</button>',
@@ -7412,26 +7416,41 @@ window.deleteMobAd = async function(offerId) {
           '<div id="bfPaySellerRow"></div>',
           '<div id="bfPayChatWrap" style="flex-shrink:0;"></div>',
         '</div>',
-        // ◆ Exit instruction
-        '<div style="display:flex;gap:0.7rem;margin-bottom:0.7rem;">',
-          '<span style="color:#f0a500;font-size:1rem;flex-shrink:0;margin-top:3px;">◆</span>',
-          '<div>',
-            '<p style="margin:0 0 0.4rem;font-size:0.85rem;color:#fff;font-weight:600;line-height:1.5;">Exit the App and transfer funds to the following recipient\'s account.</p>',
-            '<p style="margin:0;font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;">During the transfer, please avoid using terms like BTC, USDT, Bitget, or similar, in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>',
+        // Step 1 — numbered circle
+        '<div style="display:flex;gap:0.9rem;margin-bottom:0.75rem;align-items:flex-start;">',
+          '<div style="width:26px;height:26px;border-radius:50%;background:#262626;border:1.5px solid #444;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">',
+            '<span style="font-size:0.75rem;font-weight:800;color:#fff;line-height:1;">1</span>',
+          '</div>',
+          '<div style="flex:1;">',
+            '<p style="margin:0 0 0.35rem;font-size:0.88rem;color:#fff;font-weight:700;line-height:1.45;">Exit the Bitget App and transfer funds to the following recipient\'s account.</p>',
+            '<p style="margin:0 0 0.7rem;font-size:0.75rem;color:rgba(255,255,255,0.38);line-height:1.55;">During the transfer, please avoid using terms like BTC, USDT, Bitget, or similar, in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>',
+            // Transfer details table
+            '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:0.15rem 0.9rem;margin-bottom:0.7rem;">',
+              '<div id="bfPayDetails"></div>',
+              // QR code row
+              '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.52rem 0;">',
+                '<span style="color:rgba(255,255,255,0.42);font-size:0.79rem;">QR code</span>',
+                '<span style="display:flex;align-items:center;gap:6px;">',
+                  '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17v3M20 14v3"/></svg>',
+                '</span>',
+              '</div>',
+            '</div>',
+            // Warning text
+            '<p id="bfPayWarn" style="font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;margin:0 0 0.5rem;"></p>',
           '</div>',
         '</div>',
-        // Transfer details table
-        '<div style="background:#151515;border-radius:10px;padding:0.2rem 1rem;margin-bottom:0.8rem;">',
-          '<div id="bfPayDetails"></div>',
-        '</div>',
-        // Warning text
-        '<p id="bfPayWarn" style="font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;margin:0 0 0.9rem;"></p>',
-        // ◆ Tap Paid
-        '<div style="display:flex;gap:0.7rem;margin-bottom:1rem;">',
-          '<span style="color:#f0a500;font-size:1rem;flex-shrink:0;margin-top:3px;">◆</span>',
-          '<p style="margin:0;font-size:0.85rem;color:#fff;line-height:1.5;">After completing the transfer, tap the <strong>Paid</strong> button</p>',
+        // Step 2 — numbered circle
+        '<div style="display:flex;gap:0.9rem;margin-bottom:1rem;align-items:flex-start;">',
+          '<div style="width:26px;height:26px;border-radius:50%;background:#262626;border:1.5px solid #444;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">',
+            '<span style="font-size:0.75rem;font-weight:800;color:#fff;line-height:1;">2</span>',
+          '</div>',
+          '<p style="margin:0;font-size:0.88rem;color:#fff;font-weight:700;line-height:1.45;margin-top:4px;">After completing the transfer, tap the Paid button.</p>',
         '</div>',
         '<div style="height:0.5rem;"></div>',
+      '</div>',
+      // Support FAB
+      '<div onclick="void(0)" style="position:fixed;bottom:120px;right:18px;width:46px;height:46px;border-radius:50%;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,0.5);">',
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>',
       '</div>',
       '<div style="' + FOOT + '">',
         '<button id="bfPaidBtn" style="' + PBTN + '">Paid</button>',
