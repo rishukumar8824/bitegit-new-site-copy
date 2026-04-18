@@ -30,6 +30,32 @@ function buildOrderParticipants({ buyerId, buyerUsername, sellerId, sellerUserna
   ];
 }
 
+function buildOrderCreatedMessages({ now, buyerUsername, sellerUsername, payWindowMinutes }) {
+  const minutes = Number(payWindowMinutes || 15);
+  return [
+    {
+      id: `msg_${now}_created_buyer`,
+      sender: 'System',
+      senderRole: 'system',
+      messageType: 'system',
+      isSystem: true,
+      role: 'buyer',
+      text: `You have an order pending payment. Please complete the payment within ${minutes} minutes or your order will be automatically cancelled.`,
+      createdAt: now
+    },
+    {
+      id: `msg_${now}_created_seller`,
+      sender: 'System',
+      senderRole: 'system',
+      messageType: 'system',
+      isSystem: true,
+      role: 'seller',
+      text: `${buyerUsername || 'Buyer'} placed an order. Wait for the buyer to complete payment before releasing assets.`,
+      createdAt: now + 1
+    }
+  ];
+}
+
 function createOrderId() {
   return `ord_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 }
@@ -140,6 +166,7 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
       }
 
       const now = Date.now();
+      const payWindowMinutes = Math.max(1, Math.round(orderTtlMs / 60000));
       const orderDoc = buildP2POrderDocument({
         id: createOrderId(),
         reference: createOrderReference(),
@@ -162,14 +189,12 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
           sellerId: seller.id,
           sellerUsername: seller.username || seller.id
         }),
-        messages: [
-          {
-            id: `msg_${now}_welcome`,
-            sender: 'System',
-            text: 'Order created. Complete payment before timer ends.',
-            createdAt: now
-          }
-        ]
+        messages: buildOrderCreatedMessages({
+          now,
+          buyerUsername: buyer.username || buyer.id,
+          sellerUsername: seller.username || seller.id,
+          payWindowMinutes
+        })
       });
 
       const savedOrder = await walletService.createEscrowOrder(orderDoc);

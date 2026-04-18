@@ -8234,8 +8234,7 @@ window.deleteMobAd = async function(offerId) {
     var openChat = target.getAttribute('data-open-chat') === '1';
     _ordPrimeOrderOpen(orderId);
 
-    // Chat screen removed — just open the order screen
-    openOrderById(orderId, { openChat: false });
+    openOrderById(orderId, { openChat: openChat });
   }
 
   document.addEventListener('click', function(event) {

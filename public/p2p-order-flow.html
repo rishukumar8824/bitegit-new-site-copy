@@ -1190,7 +1190,9 @@
   var ORDERS_FOCUS_STATE_KEY = 'p2p_orders_focus_state';
   var ORDERS_CACHE_KEY = 'p2p_orders_cache';
   var NOTICE_DISMISS_KEY_PREFIX = 'p2p_notice_dismissed_';
+  var PAID_PENDING_KEY_PREFIX = 'p2p_paid_pending_';
   var _bootFailSafeTimer = null;
+  var _paidRetryInFlight = {};
   var PREVIEW_MODE = new URLSearchParams(window.location.search).get('preview') === '1';
   var PREVIEW_USER = {
     id: 'preview_buyer',
@@ -1320,6 +1322,112 @@
   function _cacheOrderMessagesFromOrder(order) {
     if (!order || !order.id || !Array.isArray(order.messages) || !order.messages.length) return;
     _saveCachedChatMessages(order.id, order.messages);
+  }
+
+  function _statusUpper(status) {
+    return String(status || '').trim().toUpperCase();
+  }
+
+  function _isPaidLikeStatus(status) {
+    return ['PAID', 'PAYMENT_SENT', 'DISPUTED', 'RELEASED', 'COMPLETED'].indexOf(_statusUpper(status)) !== -1;
+  }
+
+  function _isPendingPaymentStatus(status) {
+    var s = _statusUpper(status);
+    return !s || ['CREATED', 'PENDING', 'OPEN'].indexOf(s) !== -1;
+  }
+
+  function _paidPendingKey(orderId) {
+    return PAID_PENDING_KEY_PREFIX + String(orderId || '').trim();
+  }
+
+  function _setPaidPending(orderId) {
+    if (!orderId) return;
+    try { localStorage.setItem(_paidPendingKey(orderId), String(Date.now())); } catch (_) {}
+  }
+
+  function _clearPaidPending(orderId) {
+    if (!orderId) return;
+    try { localStorage.removeItem(_paidPendingKey(orderId)); } catch (_) {}
+  }
+
+  function _hasPaidPending(orderId) {
+    if (!orderId) return false;
+    try { return Boolean(localStorage.getItem(_paidPendingKey(orderId))); } catch (_) { return false; }
+  }
+
+  function _mergeMessages(existing, incoming) {
+    var map = {};
+    var merged = [];
+    function add(msg) {
+      if (!msg) return;
+      var id = String(msg.id || msg.clientId || '').trim();
+      if (id && map[id]) return;
+      if (id) map[id] = true;
+      merged.push(msg);
+    }
+    (Array.isArray(existing) ? existing : []).forEach(add);
+    (Array.isArray(incoming) ? incoming : []).forEach(add);
+    return merged.sort(function(a, b) {
+      return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+    });
+  }
+
+  function _mergeOrderMessages(messages) {
+    if (!currentOrder || !currentOrder.id || !Array.isArray(messages) || !messages.length) return;
+    currentOrder.messages = _mergeMessages(currentOrder.messages, messages);
+    _saveCachedChatMessages(currentOrder.id, currentOrder.messages);
+  }
+
+  function _addLocalSystemMessage(role, text, suffix) {
+    if (!currentOrder || !currentOrder.id) return;
+    var now = Date.now();
+    _mergeOrderMessages([{
+      id: 'msg_' + currentOrder.id + '_' + suffix,
+      sender: 'System',
+      senderRole: 'system',
+      messageType: 'system',
+      isSystem: true,
+      role: role,
+      text: text,
+      createdAt: new Date(now).toISOString()
+    }]);
+  }
+
+  function _shouldKeepLocalPaidState(localOrder, freshOrder) {
+    if (!localOrder || !freshOrder || !localOrder.id) return false;
+    return _isPaidLikeStatus(localOrder.status) && _isPendingPaymentStatus(freshOrder.status) && _hasPaidPending(localOrder.id);
+  }
+
+  function _retryPendingPaidSync(orderId, forceOpenChat, requestedScreen) {
+    var normalizedOrderId = String(orderId || '').trim();
+    if (!normalizedOrderId || _paidRetryInFlight[normalizedOrderId]) return;
+    if (!_hasPaidPending(normalizedOrderId)) return;
+    _paidRetryInFlight[normalizedOrderId] = true;
+    fetch('/api/p2p/orders/' + encodeURIComponent(normalizedOrderId) + '/mark-paid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      keepalive: true,
+      body: '{}'
+    }).then(function(res) { return res.ok ? res.json() : null; })
+      .then(function(data) {
+        if (!data) return;
+        var nextOrder = data.order || data;
+        var messages = data.messages || nextOrder.messages || [];
+        currentOrder = Object.assign({}, currentOrder || {}, nextOrder || {});
+        if (Array.isArray(messages) && messages.length) {
+          currentOrder.messages = _mergeMessages(currentOrder.messages, messages);
+        }
+        cacheCurrentOrder();
+        if (_isPaidLikeStatus(currentOrder.status)) {
+          _clearPaidPending(normalizedOrderId);
+        }
+        applyOrderAndShow(currentOrder, forceOpenChat, requestedScreen);
+      }).catch(function() {})
+      .finally(function() {
+        delete _paidRetryInFlight[normalizedOrderId];
+      });
   }
 
   function _syncOrderIntoOrdersCache(order) {
@@ -2084,12 +2192,24 @@
           .then(function(data){
             if (!data) return;
             var fresh = data.order || data;
+            if (_isPaidLikeStatus(fresh.status)) {
+              _clearPaidPending(orderId);
+            }
+            if (_shouldKeepLocalPaidState(cachedOrder, fresh)) {
+              currentOrder = cachedOrder;
+              cacheCurrentOrder();
+              _retryPendingPaidSync(orderId, forceOpenChat, requestedScreen);
+              return;
+            }
             if (fresh.status !== cachedOrder.status) {
               // status changed — re-apply
               try { localStorage.setItem('p2p_order_' + orderId, JSON.stringify(fresh)); } catch(e){}
               applyOrderAndShow(fresh, forceOpenChat, requestedScreen);
             } else {
-              currentOrder = fresh;
+              currentOrder = Object.assign({}, cachedOrder, fresh);
+              if (Array.isArray(fresh.messages) && fresh.messages.length) {
+                currentOrder.messages = _mergeMessages(cachedOrder.messages, fresh.messages);
+              }
               cacheCurrentOrder();
               syncOrderUrl(requestedScreen);
               startTimerFromOrder(fresh);
@@ -2115,6 +2235,12 @@
       }
       var data = orderResult.payload || {};
       var order = data.order || data;
+      if (_isPaidLikeStatus(order.status)) {
+        _clearPaidPending(orderId);
+      }
+      if (Array.isArray(data.messages) && data.messages.length) {
+        order.messages = _mergeMessages(order.messages, data.messages);
+      }
       try { localStorage.setItem('p2p_order_' + orderId, JSON.stringify(order)); } catch(e) {}
       _cacheOrderMessagesFromOrder(order);
       applyOrderAndShow(order, forceOpenChat, requestedScreen);
@@ -3854,6 +3980,12 @@
       status: 'PAYMENT_SENT',
       paymentSentAt: currentOrder.paymentSentAt || new Date().toISOString()
     });
+    _setPaidPending(currentOrder.id);
+    _addLocalSystemMessage(
+      'buyer',
+      "You've marked the order as paid. Please wait for the seller to release your assets.",
+      'paid_buyer_local'
+    );
     cacheCurrentOrder();
     renderOrderDetails();
     syncBuyerPaidUi('PAYMENT_SENT');
@@ -3867,15 +3999,28 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        keepalive: !_proofBase64,
         body: JSON.stringify(paidPayload)
       }).then(function(res) { return res.ok ? res.json() : null; })
         .then(function(data) {
           if (data && (data.order || data.id)) {
-            currentOrder = data.order || data;
-            try { localStorage.setItem('p2p_order_' + currentOrder.id, JSON.stringify(currentOrder)); } catch(_) {}
+            var nextOrder = data.order || data;
+            var messages = data.messages || nextOrder.messages || [];
+            currentOrder = Object.assign({}, currentOrder || {}, nextOrder || {});
+            if (Array.isArray(messages) && messages.length) {
+              currentOrder.messages = _mergeMessages(currentOrder.messages, messages);
+              _saveCachedChatMessages(currentOrder.id, currentOrder.messages);
+            }
+            cacheCurrentOrder();
+            if (_isPaidLikeStatus(currentOrder.status)) {
+              _clearPaidPending(currentOrder.id);
+            }
+            syncBuyerPaidUi(currentOrder.status);
+            setupChatForRole(currentOrder.status);
           }
           pollNewMessages();
-        }).catch(function(e) { console.warn('[confirmPaid] API error:', e); });
+        }).catch(function(e) { console.warn('[confirmPaid] API error:', e); })
+        .finally(function() { _paidActionPending = false; });
     }
   }
 

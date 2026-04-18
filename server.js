@@ -1179,6 +1179,7 @@ function toP2PRequestUser(input = {}) {
 
   return {
     id: userId,
+    userId,
     username: String(input.username || '').trim(),
     email: String(input.email || '')
       .trim()
@@ -1293,6 +1294,7 @@ async function getP2PUserFromRequest(req, res = null) {
 
   return {
     id: session.userId,
+    userId: session.userId,
     username: session.username,
     email: session.email,
     role: tokenService.normalizeRole(session.role || 'USER'),
@@ -1406,6 +1408,9 @@ function toClientMessages(messages) {
     };
     if (msg.imageBase64) m.imageBase64 = msg.imageBase64;
     if (msg.role) m.role = msg.role; // 'buyer' | 'seller' | undefined=all
+    if (msg.senderRole) m.senderRole = msg.senderRole;
+    if (msg.messageType) m.messageType = msg.messageType;
+    if (msg.isSystem != null) m.isSystem = Boolean(msg.isSystem);
     return m;
   });
 }
@@ -2836,6 +2841,7 @@ app.post('/api/p2p/orders/:orderId/mark-paid', requiresP2PUser, async (req, res)
   try {
     const updatedOrder = await walletService.markOrderPaid(req.params.orderId, req.p2pUser);
     const normalizedOrder = normalizeOrderState(updatedOrder);
+    const normalizedMessages = toClientMessages(updatedOrder.messages || []);
     const participantPayload = {
       order: normalizedOrder,
       orderId: normalizedOrder.id,
@@ -2844,8 +2850,9 @@ app.post('/api/p2p/orders/:orderId/mark-paid', requiresP2PUser, async (req, res)
       updatedAt: normalizedOrder.updatedAt
     };
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
+    broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
-    return res.json({ success: true, order: normalizedOrder });
+    return res.json({ success: true, order: { ...normalizedOrder, messages: normalizedMessages }, messages: normalizedMessages });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Server error.' });
   }
@@ -2856,6 +2863,7 @@ app.post('/api/p2p/orders/:orderId/cancel', requiresP2PUser, async (req, res) =>
   try {
     const updatedOrder = await walletService.cancelOrder(req.params.orderId, req.p2pUser, 'CANCELLED');
     const normalizedOrder = normalizeOrderState(updatedOrder);
+    const normalizedMessages = toClientMessages(updatedOrder.messages || []);
     const participantPayload = {
       order: normalizedOrder,
       orderId: normalizedOrder.id,
@@ -2864,8 +2872,9 @@ app.post('/api/p2p/orders/:orderId/cancel', requiresP2PUser, async (req, res) =>
       updatedAt: normalizedOrder.updatedAt
     };
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
+    broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
-    return res.json({ success: true, order: normalizedOrder });
+    return res.json({ success: true, order: { ...normalizedOrder, messages: normalizedMessages }, messages: normalizedMessages });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Server error.' });
   }
@@ -3125,7 +3134,10 @@ app.get('/api/p2p/orders/:orderId', requiresP2PUser, async (req, res) => {
     }
 
     return res.json({
-      order: normalizeOrderState(order)
+      order: {
+        ...normalizeOrderState(order),
+        messages: toClientMessages(order.messages || [])
+      }
     });
   } catch (error) {
     return res.status(500).json({ message: 'Server error while fetching order.' });
@@ -3199,7 +3211,8 @@ app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) =>
 
     return res.json({
       message: 'Order updated.',
-      order: normalizedOrder
+      order: { ...normalizedOrder, messages: normalizedMessages },
+      messages: normalizedMessages
     });
   } catch (error) {
     if (error.status) {
