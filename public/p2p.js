@@ -4089,15 +4089,10 @@ function openOrder(order, opts) {
   };
 }
 
-async function openOrderById(orderId) {
-  if (!liveOrdersMeta) {
-    return;
-  }
-
-  if (!currentUser) {
-    requireLoginNotice();
-    return;
-  }
+async function openOrderById(orderId, opts) {
+  if (!liveOrdersMeta) return;
+  if (!currentUser) { requireLoginNotice(); return; }
+  var openChat = opts && opts.openChat;
 
   try {
     const response = await fetch(`/api/p2p/orders/${orderId}`, {
@@ -4105,22 +4100,23 @@ async function openOrderById(orderId) {
       headers: { 'Cache-Control': 'no-store' }
     });
     const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Unable to open order.');
-    }
-    if (!isOngoingOrderStatus(data?.order?.status)) {
-      throw new Error('Only ongoing orders can be opened.');
-    }
-    // Use bf screens if available, otherwise fall back to old modal
+    if (!response.ok) throw new Error(data.message || 'Unable to open order.');
+    if (!isOngoingOrderStatus(data?.order?.status)) throw new Error('Only ongoing orders can be opened.');
+
+    // Use bf screens
     if (typeof bfOpenExistingOrder === 'function') {
       bfOpenExistingOrder(data.order);
+      // If chat button was clicked, open chat directly after order loads
+      if (openChat && window.bfOpenChat) {
+        setTimeout(function() { window.bfOpenChat('bfOrderScreen'); }, 80);
+      }
     } else {
       openOrder(data.order);
     }
     if (data.counterparty) renderCounterpartyReputation(data.counterparty);
     await loadLiveOrders();
   } catch (error) {
-    liveOrdersMeta.textContent = error.message;
+    if (liveOrdersMeta) liveOrdersMeta.textContent = error.message;
   }
 }
 
@@ -8248,13 +8244,12 @@ window.deleteMobAd = async function(offerId) {
   }
 
   function handleOrderOpen(target) {
-    if (!target) {
-      return;
-    }
+    if (!target) return;
     var orderId = String(target.getAttribute('data-order-id') || '').trim();
     if (!orderId) return;
+    var openChat = target.getAttribute('data-open-chat') === '1';
     _ordPrimeOrderOpen(orderId);
-    openOrderById(orderId);
+    openOrderById(orderId, { openChat: openChat });
   }
 
   document.addEventListener('click', function(event) {
