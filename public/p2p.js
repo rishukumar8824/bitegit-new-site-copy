@@ -4010,7 +4010,7 @@ function renderCounterpartyReputation(rep) {
   meta.style.color = rep.onlineStatus === 'online' ? '#2ebd85' : rep.onlineStatus === 'away' ? '#a8ff3e' : 'rgba(255,255,255,0.4)';
 }
 
-function openOrder(order) {
+function openOrder(order, opts) {
   // Close any previous stream before opening new one
   if (orderStream) { try { orderStream.close(); } catch(e){} orderStream = null; }
 
@@ -4019,11 +4019,15 @@ function openOrder(order) {
   messagePollTick = 0;
   resetChatMessages();
   setChatUploading(false);
-  setModalOpen(true);
-  setPaymentPanelOpen(false);
-  setCancelModalOpen(false);
-  updateOrderUi(order);
-  fetchMessages({ forceScroll: true });
+  // Only show old modal if NOT in bf mode
+  var suppressModal = (opts && opts.suppressModal) || document.body.classList.contains('bf-open');
+  if (!suppressModal) {
+    setModalOpen(true);
+    setPaymentPanelOpen(false);
+    setCancelModalOpen(false);
+    updateOrderUi(order);
+    fetchMessages({ forceScroll: true });
+  }
 
   resetOrderWatch();
 
@@ -4103,7 +4107,12 @@ async function openOrderById(orderId) {
     if (!isOngoingOrderStatus(data?.order?.status)) {
       throw new Error('Only ongoing orders can be opened.');
     }
-    openOrder(data.order);
+    // Use bf screens if available, otherwise fall back to old modal
+    if (typeof bfOpenExistingOrder === 'function') {
+      bfOpenExistingOrder(data.order);
+    } else {
+      openOrder(data.order);
+    }
     if (data.counterparty) renderCounterpartyReputation(data.counterparty);
     await loadLiveOrders();
   } catch (error) {
@@ -7224,6 +7233,18 @@ window.deleteMobAd = async function(offerId) {
     document.body.classList.add('p2p-order-open'); document.body.style.overflow = 'hidden';
   }
 
+  // Open existing order (from orders tab) in bf screens
+  window.bfOpenExistingOrder = function(order) {
+    // Set up backend (SSE/polling) without showing old modal
+    openOrder(order, { suppressModal: true });
+    // Fill bf screens and show order screen
+    bfFillOrder(order);
+    // Also update the buy screen offer reference if available
+    if (!_bfOffer && order) {
+      _bfOffer = { advertiser: order.sellerUsername || '--', price: order.price || 0, remark: order.notes || '' };
+    }
+  };
+
   // ── Copy SVG icon ─────────────────────────────────────────────────
   function copyBtn(val) {
     var v = String(val || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
@@ -7732,10 +7753,8 @@ window.deleteMobAd = async function(offerId) {
         toast.style.background = '#16a34a';
         toast.textContent = '✓ Order placed!';
         setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 2000);
-        openOrder(data.order);
-        var om = document.getElementById('orderModal');
-        if (om) { om.classList.add('hidden'); om.setAttribute('aria-hidden','true'); }
-        document.body.classList.remove('p2p-order-open');
+        // Setup backend without showing old modal (bf-open class already set)
+        openOrder(data.order, { suppressModal: true });
         bfFillOrder(data.order);
       } catch(e) {
         if (toast.parentNode) toast.parentNode.removeChild(toast);
@@ -7749,9 +7768,7 @@ window.deleteMobAd = async function(offerId) {
     };
 
     // Screen 2
-    document.getElementById('bfOrderBack').onclick = function() {
-      if (confirm('Go back? Your order will remain active.')) { bfClose(); bfShowOldOrderModal(); }
-    };
+    document.getElementById('bfOrderBack').onclick = function() { bfClose(); };
     document.getElementById('bfNextBtn').onclick = function() { bfFillPay(); };
     document.getElementById('bfOrdCancelBtn').onclick = function() { bfShow('bfCancelWarnScreen'); };
 
@@ -7815,22 +7832,15 @@ window.deleteMobAd = async function(offerId) {
     document.getElementById('bfConfirmCancelBtn').onclick = async function() {
       var btn = this;
       if (btn.disabled) return;
-      btn.disabled = true;
-      btn.textContent = 'Cancelling...';
-      try {
-        await updateOrderStatus('cancel');
-        var sellerName = _bfOrder ? (_bfOrder.sellerUsername || (_bfOffer && _bfOffer.advertiser) || '--') : '--';
-        var csr = document.getElementById('bfCancelledSellerRow');
-        if (csr) csr.innerHTML = sellerRowHtml(sellerName);
-        var ccw = document.getElementById('bfCancelledChatWrap');
-        if (ccw) ccw.innerHTML = chatBtnHtml('bfCancelledChatBtn', 'bfCancelledScreen');
-        bfShow('bfCancelledScreen');
-        if (typeof showToast === 'function') showToast('Order cancelled');
-      } catch(e) {
-        btn.disabled = false;
-        btn.textContent = 'Confirm';
-        if (typeof showToast === 'function') showToast(e.message || 'Failed to cancel');
-      }
+      // Optimistic: show cancelled screen immediately
+      var sellerName = _bfOrder ? (_bfOrder.sellerUsername || (_bfOffer && _bfOffer.advertiser) || '--') : '--';
+      var csr = document.getElementById('bfCancelledSellerRow');
+      if (csr) csr.innerHTML = sellerRowHtml(sellerName);
+      var ccw = document.getElementById('bfCancelledChatWrap');
+      if (ccw) ccw.innerHTML = chatBtnHtml('bfCancelledChatBtn', 'bfCancelledScreen');
+      bfShow('bfCancelledScreen');
+      // API call in background
+      updateOrderStatus('cancel').catch(function() {});
     };
     document.getElementById('bfCancelledBack').onclick = function() { bfClose(); };
     document.getElementById('bfPlaceNewOrderBtn').onclick = function() { bfClose(); };
