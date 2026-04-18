@@ -7061,12 +7061,12 @@ window.deleteMobAd = async function(offerId) {
         setMobileNavActive('profile');
         document.body.classList.add('mob-profile-open');
         if (screenId === 'mobProfileScreen') {
-          history.replaceState(null,'','/p2p#profile');
+          history.replaceState(null,'', window.location.pathname + '#profile');
         }
       } else if (screenId === 'mobOrdersScreen') {
         document.body.dataset.mobileTab = 'orders';
         setMobileNavActive('orders');
-        history.replaceState(null,'','/p2p#orders');
+        history.replaceState(null,'', window.location.pathname + '#orders');
         // Keep any already-rendered data visible; background refresh still runs.
         if (!_applyOrdersFocusState()) {
           switchOrdMain(_ordMainTab || 'pending');
@@ -7075,7 +7075,7 @@ window.deleteMobAd = async function(offerId) {
       } else if (screenId === 'mobPostAdScreen') {
         document.body.dataset.mobileTab = 'post';
         setMobileNavActive('post');
-        history.replaceState(null,'','/p2p#ads');
+        history.replaceState(null,'', window.location.pathname + '#ads');
       }
     }
   }
@@ -7093,7 +7093,7 @@ window.deleteMobAd = async function(offerId) {
       var el = document.getElementById(id);
       if(el) el.style.display = 'none';
     });
-    history.replaceState(null,'','/p2p');
+    history.replaceState(null,'', window.location.pathname);
   }
 
   // Restore screen on refresh from hash
@@ -7245,6 +7245,9 @@ window.deleteMobAd = async function(offerId) {
     if (om) { om.classList.remove('hidden'); om.setAttribute('aria-hidden','false'); }
     document.body.classList.add('p2p-order-open'); document.body.style.overflow = 'hidden';
   }
+
+  // Expose close for external callers (e.g. chat screen)
+  window.bfClose = bfClose;
 
   // Open existing order (from orders tab) in bf screens
   window.bfOpenExistingOrder = function(order) {
@@ -7983,7 +7986,7 @@ window.deleteMobAd = async function(offerId) {
         '</div>',
 
         // ── Payment notice bar (To be paid + timer + Pay btn)
-        '<div style="padding:0.65rem 1.1rem 0.85rem;border-bottom:1px solid #1a1a1a;flex-shrink:0;">',
+        '<div id="bfChatPayBar" style="padding:0.65rem 1.1rem 0.85rem;border-bottom:1px solid #1a1a1a;flex-shrink:0;">',
           '<div style="display:flex;align-items:center;justify-content:space-between;">',
             '<div>',
               '<div style="font-size:0.88rem;font-weight:700;color:#fff;">To be paid <span id="bfChatPayAmount">--</span></div>',
@@ -8193,6 +8196,17 @@ window.deleteMobAd = async function(offerId) {
       var chatScr = document.getElementById('bfChatScreen');
       if (chatScr) chatScr.style.display = 'none';
       var menuSheet = document.getElementById('bfChatMenuSheet'); if (menuSheet) menuSheet.style.display = 'none';
+      // If opened directly from orders list, close the whole bf flow (return to orders list)
+      if (_chatPrevScreen === 'orders') {
+        chatScr = document.getElementById('bfChatScreen'); if (chatScr) chatScr.style.display = 'none';
+        ['bfBuyScreen','bfOrderScreen','bfPayScreen','bfCancelWarnScreen','bfCancelReasonScreen','bfCancelledScreen']
+          .forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+        var paidSh = document.getElementById('bfPaidSheet'); if (paidSh) paidSh.style.display = 'none';
+        document.body.style.overflow = '';
+        document.body.classList.remove('bf-open');
+        var nav = document.getElementById('p2pMobileNav'); if (nav) nav.style.display = '';
+        return;
+      }
       var prev = document.getElementById(_chatPrevScreen);
       if (prev) prev.style.display = 'flex';
       document.body.style.overflow = 'hidden';
@@ -8265,7 +8279,14 @@ window.deleteMobAd = async function(offerId) {
     var nameEl = document.getElementById('bfChatName');
     if (nameEl) nameEl.textContent = (typeof maskEmail === 'function' ? maskEmail(counterparty) : counterparty) || 'Seller';
 
-    // Fill payment notice bar
+    // Show/hide payment notice bar based on order status
+    var payBar = document.getElementById('bfChatPayBar');
+    var ordStatus = String(snapshot && snapshot.status || '').toUpperCase();
+    var needsToPay = ['CREATED','PENDING'].indexOf(ordStatus) !== -1 ||
+      (ordStatus === '' && snapshot); // unknown status — show by default
+    if (payBar) payBar.style.display = needsToPay ? '' : 'none';
+
+    // Fill payment amount
     var payAmtEl = document.getElementById('bfChatPayAmount');
     if (payAmtEl && snapshot) {
       var fiat = Number(snapshot.fiatAmount || snapshot.amountInr || 0);
@@ -8314,7 +8335,8 @@ window.deleteMobAd = async function(offerId) {
       var cached = allOrders.find(function(o) { return String(o && o.id || '').trim() === orderId; });
       if (cached && isOngoingOrderStatus(cached.status)) {
         window.bfOpenExistingOrder(cached);
-        setTimeout(function() { if (window.bfOpenChat) window.bfOpenChat('bfOrderScreen'); }, 60);
+        // Pass 'orders' as prevScreen — back btn in chat returns to orders list (bfClose), not order screen
+        setTimeout(function() { if (window.bfOpenChat) window.bfOpenChat('orders'); }, 60);
         return;
       }
     }
