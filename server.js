@@ -2241,6 +2241,21 @@ app.post(
         }
       });
 
+      if (adminStore && typeof adminStore.createWithdrawalRequest === 'function') {
+        await adminStore.createWithdrawalRequest({
+          requestId: withdrawal.requestId || withdrawal.id,
+          userId: req.p2pUser.id,
+          username: req.p2pUser.username || req.p2pUser.email || 'User',
+          amount: withdrawal.amount,
+          currency: withdrawal.currency || currency,
+          coin: withdrawal.currency || currency,
+          network: withdrawal.metadata?.network || network,
+          address: withdrawal.address || address,
+          source: 'assets_withdrawal',
+          createdAt: withdrawal.createdAt
+        });
+      }
+
       // Notify admin via SSE
       broadcastAdminWithdrawalEvent({
         type: 'new_withdrawal',

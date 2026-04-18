@@ -71,6 +71,23 @@
     .asset-amount{font-size:0.9rem;font-weight:700;}
     .asset-usdt{font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:2px;}
 
+    /* ── Withdrawal history ── */
+    .withdraw-history{border-top:1px solid rgba(255,255,255,0.08);padding:14px 16px 10px;}
+    .withdraw-history-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px;}
+    .withdraw-history-title{font-size:0.92rem;font-weight:700;}
+    .withdraw-history-refresh{min-height:32px;padding:0 12px;border-radius:8px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.78);font-size:0.76rem;font-weight:700;}
+    .withdraw-history-list{display:grid;}
+    .withdraw-history-empty{padding:18px 0 8px;color:rgba(255,255,255,0.42);font-size:0.82rem;line-height:1.5;}
+    .withdraw-history-row{display:grid;gap:8px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+    .withdraw-history-main,.withdraw-history-meta{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+    .withdraw-history-amount{font-size:0.92rem;font-weight:700;}
+    .withdraw-history-id,.withdraw-history-address,.withdraw-history-date{min-width:0;color:rgba(255,255,255,0.42);font-size:0.74rem;line-height:1.45;word-break:break-word;}
+    .withdraw-history-address{text-align:right;}
+    .withdraw-status{flex-shrink:0;padding:4px 8px;border-radius:8px;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0;}
+    .withdraw-status.pending{background:rgba(255,191,71,0.14);color:#ffe1a1;}
+    .withdraw-status.approved{background:rgba(27,214,125,0.14);color:#bdf8d4;}
+    .withdraw-status.rejected{background:rgba(255,95,95,0.14);color:#ffc1c1;}
+
     /* ── Empty state ── */
     .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px 24px;gap:14px;}
     .empty-icon{opacity:0.4;}
@@ -118,7 +135,7 @@
     .assets-summary-line.success{color:#bdf8d4;}
   </style>
   <script src="/app-nav.js?v=20260416d" defer></script>
-  <script src="/assets.js?v=20260416d" defer></script>
+  <script src="/assets.js?v=20260419a" defer></script>
 </head>
 <body class="has-mobile-nav">
 
@@ -257,6 +274,16 @@
   </div>
   <div data-assets-panel="spot" class="asset-list hidden" id="assetsCoinListSpot"></div>
   <div data-assets-panel="funding" class="asset-list hidden" id="assetsCoinListFunding"></div>
+
+  <section class="withdraw-history" aria-labelledby="assetsWithdrawHistoryTitle">
+    <div class="withdraw-history-head">
+      <h2 class="withdraw-history-title" id="assetsWithdrawHistoryTitle">Withdrawal History</h2>
+      <button class="withdraw-history-refresh" id="assetsWithdrawHistoryRefreshBtn" type="button">Refresh</button>
+    </div>
+    <div class="withdraw-history-list" id="assetsWithdrawHistoryList">
+      <p class="withdraw-history-empty">No withdrawal requests yet.</p>
+    </div>
+  </section>
 
   <!-- ── Deposit Modal ── -->
   <div class="assets-modal hidden" id="depositModal" aria-hidden="true">

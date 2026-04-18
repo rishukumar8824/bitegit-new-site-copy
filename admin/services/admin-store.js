@@ -1159,15 +1159,85 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return { page, limit, total, withdrawals: rows };
   }
 
+  async function createWithdrawalRequest(payload = {}) {
+    const requestId = String(payload.requestId || payload.id || '').trim();
+    const userId = String(payload.userId || '').trim();
+    const amount = Number(toNumber(payload.amount, 0).toFixed(8));
+    const coin = String(payload.coin || payload.currency || 'USDT').trim().toUpperCase();
+    const network = normalizeNetwork(payload.network) || normalizeNetwork(payload.chain) || 'TRC20';
+    const address = sanitizeAddress(payload.address || payload.toAddress || payload.to || '');
+
+    if (!requestId) {
+      throw new Error('Withdrawal request id is required');
+    }
+    if (!userId) {
+      throw new Error('User id is required');
+    }
+    if (!amount || !Number.isFinite(amount) || amount <= 0) {
+      throw new Error('Invalid withdrawal amount');
+    }
+
+    const now = new Date();
+    const doc = {
+      id: requestId,
+      requestId,
+      userId,
+      username: String(payload.username || payload.email || '').trim(),
+      coin,
+      currency: coin,
+      amount,
+      network,
+      address,
+      toAddress: address,
+      status: 'PENDING',
+      fee: toNumber(payload.fee, 0),
+      source: String(payload.source || 'assets_withdrawal').trim(),
+      createdAt: payload.createdAt ? toDate(payload.createdAt) : now,
+      updatedAt: now
+    };
+
+    const result = await adminWithdrawals.findOneAndUpdate(
+      { id: requestId },
+      { $setOnInsert: doc, $set: { updatedAt: now } },
+      { upsert: true, returnDocument: 'after' }
+    );
+
+    return result?.value ?? result ?? doc;
+  }
+
   async function reviewWithdrawal(withdrawalId, decision, reason, actor) {
+    const normalizedWithdrawalId = String(withdrawalId || '').trim();
     const normalizedDecision = normalizeWithdrawalStatus(decision);
     if (!['APPROVED', 'REJECTED'].includes(normalizedDecision)) {
       throw new Error('Decision must be APPROVED or REJECTED');
     }
 
+    const existing = await adminWithdrawals.findOne({ id: normalizedWithdrawalId });
+    if (!existing) {
+      throw new Error('Withdrawal request not found');
+    }
+
+    const currentStatus = String(existing.status || '').trim().toUpperCase();
+    if (currentStatus === normalizedDecision) {
+      return existing;
+    }
+    if (currentStatus !== 'PENDING') {
+      throw new Error('Only pending withdrawals can be reviewed');
+    }
+
+    if (walletService && typeof walletService.processWithdrawalRequest === 'function') {
+      const targetWalletStatus = normalizedDecision === 'APPROVED' ? 'sent' : 'rejected';
+      await walletService.processWithdrawalRequest(existing.requestId || existing.id, targetWalletStatus, {
+        isAdmin: true,
+        id: actor.id,
+        username: actor.role || 'admin',
+        reason
+      });
+    }
+
     const now = new Date();
     const result = await adminWithdrawals.findOneAndUpdate(
-      { id: String(withdrawalId || '').trim() },
+      { id: normalizedWithdrawalId },
       {
         $set: {
           status: normalizedDecision,
@@ -1184,20 +1254,6 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     const _doc = result?.value ?? result;
     if (!_doc) {
       throw new Error('Withdrawal request not found');
-    }
-
-    // When APPROVED → deduct from user balance via walletService
-    if (normalizedDecision === 'APPROVED' && walletService && typeof walletService.processWithdrawalRequest === 'function') {
-      try {
-        await walletService.processWithdrawalRequest(_doc.requestId || _doc.id, 'sent', {
-          isAdmin: true,
-          id: actor.id,
-          username: actor.role || 'admin'
-        });
-      } catch(e) {
-        // If processWithdrawalRequest fails (e.g. already processed), just log silently
-        console.error('[reviewWithdrawal] walletService.processWithdrawalRequest error:', e.message);
-      }
     }
 
     return _doc;
@@ -2031,6 +2087,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     listDeposits,
     reviewDeposit,
     listWithdrawals,
+    createWithdrawalRequest,
     reviewWithdrawal,
     getCoinWalletConfig,
     getUserDepositConfig,
