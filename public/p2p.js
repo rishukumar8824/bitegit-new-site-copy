@@ -6400,6 +6400,48 @@ function closeP2PScreen(id) {
   var any = document.querySelector('.mob-screen[style*="flex"]');
   if (!any) document.body.classList.remove('mob-screen-open');
 }
+// ── Merchant perks table ──
+(function buildPerksTable() {
+  var rows = [
+    ['Number of buy ads',                      '✗', 'Up to 3'],
+    ['Buy ad limit (per ad)',                   '✗', 'Up to 150000 USDT'],
+    ['Number of sell ads',                      '✗', 'Up to 5'],
+    ['Sell ad Limit (per ad)',                  '✗', 'Up to 300000 USDT'],
+    ['Max active orders',                       '✗', 'Up to 35'],
+    ['Identity badge',                          '✗', 'Exclusive logo for VIP3+'],
+    ['Gain priority to ad sorting',             '✗', 'V4>V3>V2>V1'],
+    ['Eligibility to publish order acceptance ads', '✗', '✓'],
+    ['Gain priority as promotional merchant',   '✗', 'Supported'],
+    ['Customer service response time',          '✗', 'Dedicated & timely'],
+    ['Counterparty conditions',                 '✗', 'Basic'],
+  ];
+  document.addEventListener('DOMContentLoaded', function() {
+    var tbody = document.getElementById('perksTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = rows.map(function(r, i) {
+      var bg = i % 2 === 0 ? '' : 'background:rgba(255,255,255,0.02);';
+      var merch = r[2] === '✓'
+        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00c853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<span style="font-size:0.82rem;color:rgba(255,255,255,0.7);">' + r[2] + '</span>';
+      return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:13px 8px;border-bottom:1px solid rgba(255,255,255,0.05);' + bg + 'align-items:center;">'
+        + '<span style="font-size:0.78rem;color:rgba(255,255,255,0.55);line-height:1.4;">' + r[0] + '</span>'
+        + '<span style="text-align:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="#e05260" stroke-width="2.5" stroke-linecap="round"/></svg></span>'
+        + '<span style="text-align:center;display:flex;justify-content:center;">' + merch + '</span>'
+        + '</div>';
+    }).join('');
+  });
+})();
+
+function submitMerchantApp() {
+  var cb = document.getElementById('merchantAgree');
+  if (!cb || !cb.checked) {
+    alert('Please agree to the Merchant Service Agreement first.');
+    return;
+  }
+  alert('Application submitted! Our team will review and get back to you within 2-5 business days.');
+  closeP2PScreen('merchantApplyScreen');
+}
+
 function toggleFaqSection(head) {
   var section = head.parentElement;
   section.classList.toggle('open');

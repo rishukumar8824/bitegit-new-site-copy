@@ -1464,69 +1464,203 @@
 
     <!-- ===== PAYMENT METHODS SCREEN ===== -->
     <!-- ===== BECOME MERCHANT SCREEN ===== -->
+    <!-- ===== BECOME MERCHANT SCREEN ===== -->
     <div id="merchantScreen" class="mob-screen p2p-info-screen" style="display:none;z-index:600;background:#000;overflow-y:auto;">
       <div class="mob-screen-head" style="position:sticky;top:0;z-index:10;background:#000;">
         <button class="mob-back-btn" onclick="closeP2PScreen('merchantScreen')" aria-label="Back">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <h2>Become Merchant</h2>
+        <h2 style="font-size:1rem;font-weight:700;">Become a merchant</h2>
+        <span></span>
+      </div>
+      <div style="padding:0 0 3rem;">
+        <!-- Hero 0% graphic -->
+        <div style="display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 1.5rem;">
+          <div style="position:relative;width:200px;height:160px;display:flex;align-items:center;justify-content:center;margin-bottom:1.2rem;">
+            <svg width="200" height="160" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- person silhouette -->
+              <circle cx="48" cy="45" r="18" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6"/>
+              <path d="M20 100 Q48 75 76 100" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-linecap="round"/>
+              <!-- coin badge -->
+              <circle cx="68" cy="68" r="14" fill="#2a2a2a" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+              <path d="M63 68 l3 3 6-6" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- big 0 -->
+              <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="4">0</text>
+              <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="rgba(255,255,255,0.08)">0</text>
+              <!-- % teal -->
+              <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#00e5ff">%</text>
+            </svg>
+          </div>
+          <h1 style="font-size:1.6rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;line-height:1.25;">Apply to be a merchant</h1>
+          <p style="font-size:0.84rem;color:rgba(255,255,255,0.45);text-align:center;margin:0 0 1.5rem;line-height:1.6;">Become a BITEGIT merchant and post ads for zero fees.</p>
+          <button onclick="openP2PScreen('merchantApplyScreen')" style="width:100%;max-width:340px;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;">Apply now</button>
+        </div>
+
+        <!-- Merchant perks comparison -->
+        <div style="padding:0 1rem;">
+          <h2 style="font-size:1rem;font-weight:700;color:#fff;text-align:center;margin:0.5rem 0 1rem;">Merchant perks comparison</h2>
+          <!-- fiat selector -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);margin-bottom:1rem;">
+            <span style="font-size:0.84rem;color:rgba(255,255,255,0.45);">Current fiat</span>
+            <span style="display:flex;align-items:center;gap:6px;font-size:0.9rem;font-weight:600;color:#fff;">
+              <span style="width:20px;height:20px;border-radius:50%;background:#138808;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;color:#fff;">₹</span>
+              INR
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </div>
+          <!-- Verified merchant card -->
+          <div style="border-radius:16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:1rem;margin-bottom:1rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+              <div>
+                <div style="font-size:1rem;font-weight:700;color:#fff;">Verified merchant</div>
+                <div style="font-size:0.78rem;color:rgba(255,255,255,0.45);margin-top:3px;">Become a verified merchant to enjoy more perks.</div>
+              </div>
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="22,4 26,16 39,16 29,24 33,37 22,29 11,37 15,24 5,16 18,16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linejoin="round"/>
+                <polygon points="22,8 25,17 35,17 27,23 30,33 22,27 14,33 17,23 9,17 19,17" fill="rgba(255,255,255,0.08)"/>
+              </svg>
+            </div>
+            <ul style="list-style:none;padding:0;margin:0;display:grid;gap:10px;">
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Number of sell ads 5
+              </li>
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Sell ad Limit (per ad) 300000 USDT
+              </li>
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Number of buy ads 3
+              </li>
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Buy ad limit (per ad) 150000 USDT
+              </li>
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Max active orders 35
+              </li>
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Eligibility to publish order acceptance ads: Supported
+              </li>
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Gain priority as a promotional merchant: Supported
+              </li>
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Customer service response time: Dedicated and timely
+              </li>
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Gain priority to ad sorting: Priority
+              </li>
+              <li style="display:flex;align-items:flex-start;gap:10px;font-size:0.84rem;color:rgba(255,255,255,0.75);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Counterparty conditions: Basic
+              </li>
+            </ul>
+          </div>
+
+          <!-- Perks comparison table -->
+          <h2 style="font-size:1rem;font-weight:700;color:#fff;text-align:center;margin:1.2rem 0 1rem;">Perks comparison</h2>
+          <div style="border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+            <!-- header row -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:rgba(255,255,255,0.06);padding:12px 8px;border-bottom:1px solid rgba(255,255,255,0.08);">
+              <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);"></span>
+              <span style="font-size:0.75rem;font-weight:700;color:#fff;text-align:center;">Regular user</span>
+              <span style="font-size:0.75rem;font-weight:700;color:#fff;text-align:center;">Verified merchant</span>
+            </div>
+            <!-- rows -->
+            <div id="perksTableBody" style="display:grid;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MERCHANT APPLY / REQUIREMENTS SCREEN ===== -->
+    <div id="merchantApplyScreen" class="mob-screen p2p-info-screen" style="display:none;z-index:700;background:#000;overflow-y:auto;">
+      <div class="mob-screen-head" style="position:sticky;top:0;z-index:10;background:#000;">
+        <button class="mob-back-btn" onclick="closeP2PScreen('merchantApplyScreen')" aria-label="Back">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h2 style="font-size:1rem;font-weight:700;">Become a merchant</h2>
         <span></span>
       </div>
       <div style="padding:1.2rem 1rem 3rem;">
-        <!-- Hero -->
-        <div style="margin-bottom:1.8rem;">
-          <h1 style="font-size:1.5rem;font-weight:800;color:#fff;line-height:1.35;margin:0 0 0.5rem;">MGBX P2P Merchant Application</h1>
-          <p style="font-size:0.82rem;color:#6b7690;line-height:1.6;margin:0 0 1rem;">Become an MGBX P2P merchant and enjoy zero fees along with more exclusive services.</p>
-          <button class="mob-kyc-fp-btn" style="background:linear-gradient(96deg,#00c2b2,#0099a8);box-shadow:0 2px 14px rgba(0,194,178,0.3);max-width:160px;">Apply Now</button>
+        <!-- Apply now button at top -->
+        <button style="width:100%;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;margin-bottom:2rem;">Apply now</button>
+
+        <!-- Requirements -->
+        <h2 style="font-size:1rem;font-weight:700;color:#fff;text-align:center;margin:0 0 1.2rem;">Requirements</h2>
+        <div style="display:grid;gap:0;">
+          <!-- req item -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.9rem;color:#fff;font-weight:500;">A photo of you holding your ID card.</span>
+            </div>
+            <button style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.9rem;color:#fff;font-weight:500;">ID verification</span>
+            </div>
+            <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Done</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.9rem;color:#fff;font-weight:500;">Bind email</span>
+            </div>
+            <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Done</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.9rem;color:#fff;font-weight:500;">Bind mobile</span>
+            </div>
+            <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Done</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.9rem;color:#fff;font-weight:500;">Select a currency</span>
+            </div>
+            <button style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
+          </div>
+          <div style="padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+              <div style="display:flex;align-items:flex-start;gap:12px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div>
+                  <div style="font-size:0.9rem;color:#fff;font-weight:600;margin-bottom:5px;">Spot account assets can't be less than 0 USDT.</div>
+                  <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);line-height:1.55;">After submitting your application, the corresponding amount of assets will be locked as a security margin. The assets can be unlocked after you withdraw from the BITEGIT merchant program by contacting customer service.</div>
+                </div>
+              </div>
+              <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Done</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.9rem;color:#fff;font-weight:500;">Social media accounts</span>
+            </div>
+            <button style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
+          </div>
         </div>
-        <!-- Merchant Benefits -->
-        <h2 style="font-size:1rem;font-weight:700;color:#fff;text-align:center;margin:0 0 1rem;">Merchant Benefits</h2>
-        <!-- Certified -->
-        <div class="merch-card">
-          <div class="merch-card-head"><span>Certified Merchant</span><span class="merch-badge merch-badge-cert">✓</span></div>
-          <ul class="merch-list">
-            <li>Buy/Sell Orders: 2 Each</li>
-            <li>Pending Orders: 6 Each</li>
-            <li>Single Order Limit: 30,000 USDT</li>
-          </ul>
+
+        <!-- Agreement + Submit -->
+        <div style="margin-top:1.8rem;">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:1.5rem;">
+            <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#00e5ff;flex-shrink:0;" />
+            <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#00e5ff;cursor:pointer;">Merchant Service Agreement</span></span>
+          </label>
+          <button onclick="submitMerchantApp()" style="width:100%;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;">Submit</button>
         </div>
-        <!-- Blue V -->
-        <div class="merch-card">
-          <div class="merch-card-head"><span>Blue V Merchant</span><span class="merch-badge merch-badge-blue">◆</span></div>
-          <ul class="merch-list">
-            <li>Exclusive Blue "V" Badge</li>
-            <li>Buy/Sell Orders: 3 Each</li>
-            <li>Pending Orders: 10 Each</li>
-            <li>Single Order Limit: 100,000 USDT</li>
-            <li>Better Exposure &amp; Higher Ranking for Ads</li>
-            <li>Priority Customer Support</li>
-            <li>1-on-1 Dedicated Support &amp; BD</li>
-          </ul>
-        </div>
-        <!-- Crown -->
-        <div class="merch-card">
-          <div class="merch-card-head"><span>Crown Merchant</span><span class="merch-badge merch-badge-crown">♛</span></div>
-          <ul class="merch-list">
-            <li>Exclusive "Crown" Badge</li>
-            <li>Buy/Sell Orders: 3 Each</li>
-            <li>Pending Orders: 15 Each</li>
-            <li>Single Order Limit: 150,000 USDT</li>
-            <li>Better Exposure &amp; Higher Ranking for Ads</li>
-            <li>Priority Customer Support</li>
-            <li>1-on-1 Dedicated Support &amp; BD</li>
-            <li>Special Gifts</li>
-          </ul>
-        </div>
-        <!-- How to become -->
-        <h2 style="font-size:1rem;font-weight:700;color:#fff;text-align:center;margin:1.5rem 0 1rem;">How to Become a Verified Merchant?</h2>
-        <div class="merch-steps">
-          <div class="merch-step"><div class="merch-step-icon">📋</div><p>Submit the application form</p></div>
-          <div class="merch-step-divider"></div>
-          <div class="merch-step"><div class="merch-step-icon">💰</div><p>Pay deposit</p></div>
-          <div class="merch-step-divider"></div>
-          <div class="merch-step"><div class="merch-step-icon">✅</div><p>Approval — Become certified</p></div>
-        </div>
-        <p style="font-size:0.75rem;color:#6b7690;text-align:center;margin-top:1.2rem;">Contact Us: <span style="color:#00c2b2;">support@mgbx.com</span></p>
       </div>
     </div>
 
