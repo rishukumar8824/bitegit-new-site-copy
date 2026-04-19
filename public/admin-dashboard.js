@@ -102,6 +102,15 @@ function formatDate(value) {
   });
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function statusBadge(status) {
   const normalized = String(status || '').trim().toUpperCase();
   let css = 'badge';
@@ -708,21 +717,30 @@ async function loadWallet() {
       const canReview = status === 'PENDING';
       const disabledClass = canReview ? '' : ' opacity-60';
       const disabledAttr = canReview ? '' : ' disabled';
+      const withdrawalId = String(row.requestId || row.id || '').trim();
+      const network = String(row.network || row.chain || '-').trim().toUpperCase() || '-';
+      const address = String(row.address || row.toAddress || row.to || '-').trim();
+      const userLabel = String(row.username || row.userId || '-').trim();
       return `
       <article class="list-item">
         <div class="flex items-start justify-between gap-2">
           <div>
-            <p class="text-sm font-semibold">${row.id}</p>
-            <p class="text-xs text-slate-400">User: ${row.userId || '-'}</p>
+            <p class="text-sm font-semibold">${escapeHtml(row.coin || row.currency || 'USDT')} • ${formatNumber(row.amount || 0, 6)}</p>
+            <p class="text-xs text-slate-400">Request: ${escapeHtml(withdrawalId || '-')}</p>
             <p class="text-xs text-slate-500">${formatDate(row.createdAt)}</p>
           </div>
           ${statusBadge(status)}
         </div>
-        <p class="mt-2 text-sm text-slate-200">${row.coin || 'USDT'} • ${formatNumber(row.amount || 0, 6)}</p>
-        <p class="mt-1 text-xs text-slate-500">To: ${row.address || row.toAddress || row.to || '-'}</p>
-        <div class="mt-2 flex gap-2">
-          <button class="btn-primary${disabledClass}" data-withdrawal-action="approve" data-withdrawal-id="${row.id}"${disabledAttr}>Approve</button>
-          <button class="btn-danger${disabledClass}" data-withdrawal-action="reject" data-withdrawal-id="${row.id}"${disabledAttr}>Reject</button>
+        <div class="mt-3 rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-xs text-slate-300" style="display:grid;gap:7px;">
+          <div><span class="text-slate-500">User:</span> ${escapeHtml(userLabel)}</div>
+          <div><span class="text-slate-500">User ID:</span> ${escapeHtml(row.userId || '-')}</div>
+          <div><span class="text-slate-500">Network:</span> ${escapeHtml(network)}</div>
+          <div style="word-break:break-all;"><span class="text-slate-500">Address:</span> ${escapeHtml(address)}</div>
+          <div><span class="text-slate-500">Created:</span> ${escapeHtml(formatDate(row.createdAt))}</div>
+        </div>
+        <div class="mt-3 grid grid-cols-2 gap-2">
+          <button class="btn-primary${disabledClass}" data-withdrawal-action="approve" data-withdrawal-id="${escapeHtml(withdrawalId || row.id)}"${disabledAttr}>Approve</button>
+          <button class="btn-danger${disabledClass}" data-withdrawal-action="reject" data-withdrawal-id="${escapeHtml(withdrawalId || row.id)}"${disabledAttr}>Reject</button>
         </div>
       </article>
     `;
@@ -3158,24 +3176,33 @@ async function openWithdrawalPanel() {
 
   const rows = withdrawals.length === 0
     ? `<div style="padding:2rem;text-align:center;color:#848e9c;">No pending withdrawals 🎉</div>`
-    : withdrawals.map(w => `
-      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.05);">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+    : withdrawals.map(w => {
+      const id = String(w.requestId || w.id || '').trim();
+      const address = String(w.address || w.toAddress || w.to || '-').trim();
+      return `
+      <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:12px;color:#848e9c;margin-bottom:2px;">${w.userId || 'User'}</div>
-            <div style="font-size:16px;font-weight:700;color:#eaecef;">${w.amount} <span style="color:#00e5ff;">${w.currency || 'USDT'}</span></div>
-            <div style="font-size:11px;color:#848e9c;margin-top:2px;">Network: <b style="color:#eaecef;">${w.network || '-'}</b></div>
-            <div style="font-size:11px;color:#848e9c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;" title="${w.address || ''}">${w.address || '-'}</div>
-            <div style="font-size:10px;color:#474d57;margin-top:2px;">${new Date(w.createdAt).toLocaleString()}</div>
+            <div style="font-size:17px;font-weight:800;color:#eaecef;">${escapeHtml(w.amount)} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
+            <div style="font-size:11px;color:#848e9c;margin-top:3px;">Request: ${escapeHtml(id || '-')}</div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-            <button onclick="wdAction('${w.requestId || w.id}','APPROVED',this)"
-              style="background:#02c076;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">✓ Approve</button>
-            <button onclick="wdAction('${w.requestId || w.id}','REJECTED',this)"
-              style="background:#f6465d;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">✕ Reject</button>
-          </div>
+          ${statusBadge(w.status || 'PENDING')}
         </div>
-      </div>`).join('');
+        <div style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.03);display:grid;gap:8px;font-size:12px;color:#c9d1d9;">
+          <div><span style="color:#848e9c;">User:</span> ${escapeHtml(w.username || w.userId || 'User')}</div>
+          <div><span style="color:#848e9c;">User ID:</span> ${escapeHtml(w.userId || '-')}</div>
+          <div><span style="color:#848e9c;">Network:</span> ${escapeHtml(w.network || '-')}</div>
+          <div style="word-break:break-all;"><span style="color:#848e9c;">Address:</span> ${escapeHtml(address)}</div>
+          <div><span style="color:#848e9c;">Created:</span> ${escapeHtml(formatDate(w.createdAt))}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+          <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
+            style="background:#02c076;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Approve</button>
+          <button onclick="wdAction('${escapeHtml(id)}','REJECTED',this)"
+            style="background:#f6465d;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Reject</button>
+        </div>
+      </div>`;
+    }).join('');
 
   panel.innerHTML = `
     <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;">

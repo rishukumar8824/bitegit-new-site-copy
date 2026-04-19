@@ -1138,6 +1138,36 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return { page, limit, total, deposits: rows };
   }
 
+  async function listUserDeposits(userId, options = {}) {
+    const normalizedUserId = String(userId || '').trim();
+    const limit = Math.min(Math.max(Number(options.limit || 25), 1), 100);
+    if (!normalizedUserId) {
+      return [];
+    }
+
+    const rows = await adminDeposits
+      .find({ userId: normalizedUserId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+
+    return rows.map((row) => ({
+      id: String(row.id || '').trim(),
+      userId: String(row.userId || '').trim(),
+      amount: toNumber(row.amount, 0),
+      coin: String(row.coin || row.currency || 'USDT').trim().toUpperCase(),
+      currency: String(row.currency || row.coin || 'USDT').trim().toUpperCase(),
+      network: String(row.network || row.chain || '').trim().toUpperCase(),
+      address: String(row.address || row.depositAddress || row.toAddress || '').trim(),
+      txHash: String(row.txHash || row.txid || '').trim(),
+      status: String(row.status || 'PENDING').trim().toUpperCase(),
+      type: String(row.type || 'ONCHAIN').trim().toUpperCase(),
+      createdAt: row.createdAt || null,
+      updatedAt: row.updatedAt || null,
+      reviewedAt: row.reviewedAt || null
+    }));
+  }
+
   async function reviewDeposit(depositId, decision, reason, actor = {}) {
     const normalizedDepositId = String(depositId || '').trim();
     if (!normalizedDepositId) {
@@ -2175,6 +2205,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     reviewKyc,
     getWalletOverview,
     listDeposits,
+    listUserDeposits,
     reviewDeposit,
     listWithdrawals,
     createWithdrawalRequest,
