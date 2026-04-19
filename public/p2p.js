@@ -2797,13 +2797,15 @@ function renderOffers(data, append) {
     const rowClass = index === 0 ? 'top-pick-row offer-highlight' : '';
     const topPickTag = index === 0 ? '<p class="top-pick-label">Top Picks for New Users</p>' : '';
     const actionText = isOwnAd ? 'Your Ad' : currentUser ? actionLabel : 'Login';
-    // Admin-assigned merchant badge (only show if admin approved)
+    // Admin-assigned merchant badge — use server value OR fall back to current user's own badge
     const _BADGE_MAP = {
       1: { icon: '✓', color: '#00e5ff', label: 'Verified Merchant' },
       2: { icon: '★', color: '#f7931a', label: 'Pro Merchant' },
       3: { icon: '♛', color: '#a855f7', label: 'Elite Merchant' }
     };
-    const _mb = offer.merchantBadge ? _BADGE_MAP[offer.merchantBadge] : null;
+    const _isMyAd = currentUser && currentUser.username && offer.advertiser === currentUser.username;
+    const _badgeNum = offer.merchantBadge || (_isMyAd && _myMerchantBadge ? _myMerchantBadge : null);
+    const _mb = _badgeNum ? _BADGE_MAP[_badgeNum] : null;
     const verificationBadge = _mb
       ? `<span title="${_mb.label}" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:${_mb.color};color:#000;font-size:9px;font-weight:900;margin-left:2px;vertical-align:middle;">${_mb.icon}</span>`
       : '';
@@ -6562,6 +6564,9 @@ var MERCHANT_BADGES = {
   3: { name: 'Elite',    color: '#a855f7', icon: '♛' }
 };
 
+// Global: current user's own merchant badge number (1/2/3), set after loadMerchantBadge()
+var _myMerchantBadge = null;
+
 async function loadMerchantBadge() {
   try {
     var res = await fetch('/api/merchant/application-status', { credentials: 'include' });
@@ -6569,6 +6574,8 @@ async function loadMerchantBadge() {
     if (data.success && data.status === 'approved' && data.badge) {
       var b = MERCHANT_BADGES[data.badge];
       if (!b) return;
+      // Store globally so ad cards can use it as fallback
+      _myMerchantBadge = data.badge;
       // Show badge in profile
       var badgeEl = document.getElementById('mobMerchantBadge');
       if (badgeEl) {
@@ -6581,6 +6588,8 @@ async function loadMerchantBadge() {
       // Change "Apply to Become Merchant" text
       var applyItem = document.getElementById('mobMerchantApplyItem');
       if (applyItem) applyItem.querySelector('span') && (applyItem.querySelector('.bg-menu-label').textContent = b.name + ' Merchant ✓');
+    } else {
+      _myMerchantBadge = null;
     }
   } catch(e) {}
 }
