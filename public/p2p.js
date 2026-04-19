@@ -2800,17 +2800,14 @@ function renderOffers(data, append) {
     const topPickTag = index === 0 ? '<p class="top-pick-label">Top Picks for New Users</p>' : '';
     const actionText = isOwnAd ? 'Your Ad' : currentUser ? actionLabel : 'Login';
     // Admin-assigned merchant badge — use server value OR fall back to current user's own badge
-    const _BADGE_MAP = {
-      1: { icon: '✓', color: '#00e5ff', label: 'Verified Merchant' },
-      2: { icon: '★', color: '#f7931a', label: 'Pro Merchant' },
-      3: { icon: '♛', color: '#a855f7', label: 'Elite Merchant' }
+    const _BADGE_SVG = {
+      1: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet()"><path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#1a6ff4"/><path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#2979ff" opacity="0.4"/><polyline points="14,22 20,28 30,16" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      2: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet()"><path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#f7931a"/><path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#ffb347" opacity="0.35"/><path d="M13 28 L13 20 L17 24 L22 15 L27 24 L31 20 L31 28 Z" fill="#fff" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/></svg>`,
+      3: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet()"><path d="M22 4 L36 10 L36 22 C36 30 29 37 22 40 C15 37 8 30 8 22 L8 10 Z" fill="#f5a623"/><path d="M22 8 L33 13 L33 22 C33 28.5 27.5 34 22 37 C16.5 34 11 28.5 11 22 L11 13 Z" fill="#ffc849" opacity="0.4"/><path d="M22 13 L28 16 L28 22 C28 26 25 29 22 31 C19 29 16 26 16 22 L16 16 Z" fill="#fff" opacity="0.9"/></svg>`
     };
     const _isMyAd = currentUser && currentUser.username && offer.advertiser === currentUser.username;
     const _badgeNum = offer.merchantBadge || (_isMyAd && _myMerchantBadge ? _myMerchantBadge : null);
-    const _mb = _badgeNum ? _BADGE_MAP[_badgeNum] : null;
-    const verificationBadge = _mb
-      ? `<span title="${_mb.label}" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:${_mb.color};color:#000;font-size:9px;font-weight:900;margin-left:2px;vertical-align:middle;">${_mb.icon}</span>`
-      : '';
+    const verificationBadge = _badgeNum && _BADGE_SVG[_badgeNum] ? _BADGE_SVG[_badgeNum] : '';
     const initial = String(offer.advertiser || 'U')
       .trim()
       .slice(0, 1)
@@ -6563,9 +6560,9 @@ async function submitMerchantApp() {
 
 // Merchant badge names & colors
 var MERCHANT_BADGES = {
-  1: { name: 'Verified', color: '#00e5ff', icon: '✓' },
-  2: { name: 'Pro',      color: '#f7931a', icon: '★' },
-  3: { name: 'Elite',    color: '#a855f7', icon: '♛' }
+  1: { name: 'Blue V',  color: '#1a6ff4', icon: '◆' },
+  2: { name: 'Crown',   color: '#f7931a', icon: '♛' },
+  3: { name: 'Shield',  color: '#f5a623', icon: '❖' }
 };
 
 // Global: current user's own merchant badge number (1/2/3), set after loadMerchantBadge()

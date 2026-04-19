@@ -2414,5 +2414,76 @@
       }
     });
     </script>
+
+<!-- ── Merchant Badge Bottom Sheet ── -->
+<div id="merchantBadgeSheet" onclick="if(event.target===this)closeMerchantBadgeSheet()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);align-items:flex-end;">
+  <div style="background:#111;border-radius:20px 20px 0 0;width:100%;max-width:480px;margin:0 auto;padding:24px 20px 40px;max-height:85vh;overflow-y:auto;">
+    <!-- Handle -->
+    <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
+    <h2 style="color:#fff;font-size:18px;font-weight:700;margin:0 0 24px;">Merchant Badge Meaning</h2>
+
+    <!-- Blue V -->
+    <div style="display:flex;gap:14px;margin-bottom:22px;">
+      <div style="flex-shrink:0;width:44px;height:44px;">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#1a6ff4"/>
+          <path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#2979ff" opacity="0.4"/>
+          <polyline points="14,22 20,28 30,16" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <p style="color:#fff;font-size:15px;font-weight:700;margin:0 0 6px;">Blue V Merchant</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:13px;line-height:1.55;margin:0;">This badge represents a high-quality merchant who has extensive experience and meets the platform's requirements for transaction volume and order completion rate. Blue V Merchants are known for their reliability and good reputation.</p>
+      </div>
+    </div>
+
+    <!-- Crown -->
+    <div style="display:flex;gap:14px;margin-bottom:22px;">
+      <div style="flex-shrink:0;width:44px;height:44px;">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#f7931a"/>
+          <path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#ffb347" opacity="0.35"/>
+          <path d="M13 28 L13 20 L17 24 L22 15 L27 24 L31 20 L31 28 Z" fill="#fff" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <p style="color:#fff;font-size:15px;font-weight:700;margin:0 0 6px;">Crown Merchant</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:13px;line-height:1.55;margin:0;">This is the highest-level certification for merchants on our platform. Crown Merchants have strong financial capabilities, a wealth of trading experience, and enjoy exclusive privileges.</p>
+      </div>
+    </div>
+
+    <!-- Shield -->
+    <div style="display:flex;gap:14px;margin-bottom:22px;">
+      <div style="flex-shrink:0;width:44px;height:44px;">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 4 L36 10 L36 22 C36 30 29 37 22 40 C15 37 8 30 8 22 L8 10 Z" fill="#f5a623"/>
+          <path d="M22 8 L33 13 L33 22 C33 28.5 27.5 34 22 37 C16.5 34 11 28.5 11 22 L11 13 Z" fill="#ffc849" opacity="0.4"/>
+          <path d="M22 13 L28 16 L28 22 C28 26 25 29 22 31 C19 29 16 26 16 22 L16 16 Z" fill="#fff" opacity="0.9"/>
+        </svg>
+      </div>
+      <div>
+        <p style="color:#fff;font-size:15px;font-weight:700;margin:0 0 6px;">Shield Merchants</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:13px;line-height:1.55;margin:0;">Offer limited compensation if a seller's account is frozen due to legal reasons.</p>
+      </div>
+    </div>
+
+    <button onclick="closeMerchantBadgeSheet()" style="width:100%;padding:14px;border-radius:12px;background:rgba(255,255,255,0.08);border:none;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;">Close</button>
+  </div>
+</div>
+
+<script>
+function openMerchantBadgeSheet() {
+  var s = document.getElementById('merchantBadgeSheet');
+  if (!s) return;
+  s.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeMerchantBadgeSheet() {
+  var s = document.getElementById('merchantBadgeSheet');
+  if (!s) return;
+  s.style.display = 'none';
+  document.body.style.overflow = '';
+}
+</script>
 </body>
 </html>
