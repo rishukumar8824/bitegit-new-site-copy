@@ -3112,7 +3112,7 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
 
     if (action === 'reject') {
       app.status = 'rejected';
-      app.badge = null;
+      app.assignedBadge = null;
       app.reviewedAt = new Date().toISOString();
       merchantApplications.set(id, app);
       return res.json({ success: true, message: 'Application rejected.' });
@@ -3124,7 +3124,7 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
     }
 
     app.status = 'approved';
-    app.badge = badgeNum;
+    app.assignedBadge = badgeNum;
     app.reviewedAt = new Date().toISOString();
     merchantApplications.set(id, app);
 
@@ -3139,7 +3139,7 @@ app.get('/api/merchant/application-status', requiresP2PUser, (req, res) => {
   const userId = req.p2pUser.id;
   for (const [, app] of merchantApplications) {
     if (app.userId === userId) {
-      return res.json({ success: true, found: true, status: app.status, badge: app.badge, applicationId: app.id });
+      return res.json({ success: true, found: true, status: app.status, badge: app.assignedBadge || app.badge || null, applicationId: app.id });
     }
   }
   return res.json({ success: true, found: false, status: null, badge: null });

@@ -976,7 +976,15 @@ async function loadMerchantApplications() {
   tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:24px;">Loading…</td></tr>';
   try {
     var res = await fetch('/api/admin/merchant-applications', { credentials:'include' });
+    if (res.status === 401 || res.status === 403) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#f59e0b;padding:24px;">Session expired — please <a href="/admin/login" style="color:#00e5ff;">log in again</a>.</td></tr>';
+      return;
+    }
     var data = await res.json();
+    if (!data.success) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#f6465d;padding:24px;">' + escH(data.message || 'Failed to load applications.') + '</td></tr>';
+      return;
+    }
     _merchantAppsCache = data.applications || [];
     var apps = _merchantAppsCache.filter(function(a){ return !filter || a.status === filter; });
     if (countEl) countEl.textContent = apps.length + ' applications';
