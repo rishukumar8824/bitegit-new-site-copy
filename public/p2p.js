@@ -2929,6 +2929,7 @@ function getDummyOffers(side) {
 var _offersOffset = 0;
 var _offersHasMore = false;
 var _offersFetching = false; // in-flight lock — prevents stacked parallel calls
+var _lastOffersData = null; // last successful offers response for badge re-renders
 var _offersResponseCache = new Map();
 var _OFFERS_CACHE_TTL_MS = 25 * 1000;
 var _P2P_SELECTED_AD_CACHE_KEY = 'p2p_selected_ad';
@@ -3154,6 +3155,7 @@ async function loadOffers(append) {
 
     if (!append) _offersFetching = false;
     if (!append) _writeOffersCache(cacheKey, data);
+    if (!append) _lastOffersData = data;
     console.log('[loadOffers] rendered', data.offers ? data.offers.length : 0, 'offers');
     renderOffers(data, append);
     _offersOffset += data.offers.length;
@@ -6578,25 +6580,12 @@ async function loadMerchantBadge() {
       if (!b) return;
       // Store globally so ad cards can use it as fallback
       _myMerchantBadge = data.badge;
-      // Patch existing ad cards in the DOM so badge appears without re-fetch
-      (function _patchAdCardBadges() {
-        if (!currentUser || !currentUser.username) return;
-        var bConf = MERCHANT_BADGES[_myMerchantBadge];
-        if (!bConf) return;
-        var badgeHtml = '<span class="gt-merchant-badge-live" title="' + bConf.name + ' Merchant" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:' + bConf.color + ';color:#000;font-size:9px;font-weight:900;margin-left:2px;vertical-align:middle;">' + bConf.icon + '</span>';
-        document.querySelectorAll('.gt-user-row').forEach(function(row) {
-          var nameEl = row.querySelector('.gt-username');
-          if (!nameEl || nameEl.textContent.trim() !== currentUser.username) return;
-          if (row.querySelector('.gt-merchant-badge-live')) return; // already added
-          nameEl.insertAdjacentHTML('afterend', badgeHtml);
-        });
-        // Also patch desktop table rows
-        document.querySelectorAll('.adv-name').forEach(function(el) {
-          if (!el.textContent.includes(currentUser.username)) return;
-          if (el.querySelector('.gt-merchant-badge-live')) return;
-          el.insertAdjacentHTML('beforeend', badgeHtml);
-        });
-      })();
+      // Re-render cards with badge — use stored data if available, else re-fetch
+      if (_lastOffersData) {
+        renderOffers(_lastOffersData, false);
+      } else {
+        setTimeout(function() { if (typeof loadOffers === 'function') loadOffers(); }, 800);
+      }
       // Show badge in profile
       var badgeEl = document.getElementById('mobMerchantBadge');
       if (badgeEl) {
