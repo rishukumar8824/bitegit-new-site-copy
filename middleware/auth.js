@@ -135,7 +135,11 @@ function createAuthMiddleware(options = {}) {
     const allowLegacy = config.allowLegacy !== false;
 
     return async function adminMiddleware(req, res, next) {
-      const accessToken = extractAccessTokenFromRequest(req);
+      // Only check admin_access_token or Authorization header — never P2P user tokens
+      const authHeader = String(req.headers.authorization || '').trim();
+      const cookies = parseCookies(req);
+      const accessToken = (authHeader.toLowerCase().startsWith('bearer ') ? authHeader.slice(7).trim() : '') ||
+        String(cookies.admin_access_token || '').trim();
       let jwtValidationFailed = false;
 
       if (accessToken) {
