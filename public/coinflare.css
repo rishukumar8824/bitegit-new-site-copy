@@ -206,10 +206,10 @@ a {
 
 .cf-brand-word,
 .cf-drawer-brand span:last-child {
-  font-size: clamp(1.32rem, 3vw, 1.52rem);
-  font-weight: 900;
-  color: #ffffff;
-  letter-spacing: 0.03em;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #00e5ff;
+  letter-spacing: 0.04em;
   text-shadow: none;
 }
 
