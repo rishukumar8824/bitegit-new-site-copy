@@ -40,6 +40,12 @@
         <span class="nav-badge" id="kycPendingBadge" style="display:none">0</span>
       </button>
 
+      <button class="admin-nav-btn" data-view="merchants">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Merchants
+        <span class="nav-badge" id="merchantPendingBadge" style="display:none">0</span>
+      </button>
+
       <button class="admin-nav-btn" data-view="users">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Users
@@ -239,6 +245,58 @@
               </tr></thead>
               <tbody id="kycTableBody"></tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── MERCHANT APPLICATIONS ── -->
+      <section class="admin-panel hidden" data-panel="merchants">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">🏪 Merchant Applications</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="merchantStatusFilter" class="input-dark" style="width:160px;height:34px;padding:4px 10px;">
+                <option value="">All</option>
+                <option value="pending" selected>Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <button onclick="loadMerchantApplications()" class="btn-primary btn-sm">Reload</button>
+              <span style="font-size:11px;color:var(--text-2);" id="merchantCount"></span>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr>
+                <th class="admin-th">App ID</th>
+                <th class="admin-th">Username</th>
+                <th class="admin-th">Email</th>
+                <th class="admin-th">Submitted</th>
+                <th class="admin-th">Status</th>
+                <th class="admin-th">Badge</th>
+                <th class="admin-th">Actions</th>
+              </tr></thead>
+              <tbody id="merchantTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:24px;">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Badge assign legend -->
+        <div class="panel-card" style="margin-top:16px;">
+          <div class="panel-card-header"><span class="panel-card-title">Badge Tiers</span></div>
+          <div class="panel-card-body" style="display:flex;gap:16px;flex-wrap:wrap;padding:16px;">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);">
+              <span style="font-size:1.3rem;">✓</span>
+              <div><div style="font-weight:700;color:#00e5ff;font-size:0.9rem;">Badge 1 — Verified</div><div style="font-size:0.75rem;color:var(--text-2);">Basic merchant verification</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);">
+              <span style="font-size:1.3rem;">★</span>
+              <div><div style="font-weight:700;color:#f7931a;font-size:0.9rem;">Badge 2 — Pro</div><div style="font-size:0.75rem;color:var(--text-2);">Advanced trusted merchant</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);">
+              <span style="font-size:1.3rem;">♛</span>
+              <div><div style="font-weight:700;color:#a855f7;font-size:0.9rem;">Badge 3 — Elite</div><div style="font-size:0.75rem;color:var(--text-2);">Top-tier elite merchant</div></div>
+            </div>
           </div>
         </div>
       </section>
@@ -898,5 +956,111 @@
 </aside>
 
 <script src="/admin-dashboard.js?v=20260419f"></script>
+<script>
+// ── Merchant Applications ──
+var MERCHANT_BADGE_INFO = {
+  1: { label:'✓ Verified', color:'#00e5ff' },
+  2: { label:'★ Pro',      color:'#f7931a' },
+  3: { label:'♛ Elite',   color:'#a855f7' }
+};
+
+async function loadMerchantApplications() {
+  var filter = document.getElementById('merchantStatusFilter')?.value || '';
+  var tbody = document.getElementById('merchantTableBody');
+  var countEl = document.getElementById('merchantCount');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:24px;">Loading…</td></tr>';
+  try {
+    var res = await fetch('/api/admin/merchant-applications', { credentials:'include' });
+    var data = await res.json();
+    var apps = (data.applications || []).filter(function(a){ return !filter || a.status === filter; });
+    if (countEl) countEl.textContent = apps.length + ' applications';
+    var pending = (data.applications || []).filter(function(a){ return a.status === 'pending'; }).length;
+    var badge = document.getElementById('merchantPendingBadge');
+    if (badge) { badge.textContent = pending; badge.style.display = pending ? 'inline-flex' : 'none'; }
+    if (!apps.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:24px;">No applications found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = apps.map(function(a) {
+      var bInfo = a.badge ? MERCHANT_BADGE_INFO[a.badge] : null;
+      var statusColor = a.status === 'approved' ? '#1bd67d' : a.status === 'rejected' ? '#f6465d' : '#ffd87a';
+      return '<tr>' +
+        '<td class="admin-td" style="font-family:monospace;font-size:12px;">' + escH(a.id) + '</td>' +
+        '<td class="admin-td"><strong>' + escH(a.username) + '</strong></td>' +
+        '<td class="admin-td" style="font-size:12px;">' + escH(a.email) + '</td>' +
+        '<td class="admin-td" style="font-size:12px;">' + new Date(a.submittedAt).toLocaleString() + '</td>' +
+        '<td class="admin-td"><span style="color:' + statusColor + ';font-weight:700;text-transform:capitalize;">' + escH(a.status) + '</span></td>' +
+        '<td class="admin-td">' + (bInfo ? '<span style="color:' + bInfo.color + ';font-weight:800;">' + bInfo.label + '</span>' : '<span style="color:var(--text-2);">—</span>') + '</td>' +
+        '<td class="admin-td">' +
+          (a.status === 'pending' ? [
+            '<button onclick="assignMerchantBadge(\'' + a.id + '\',1)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(0,229,255,0.12);color:#00e5ff;border:1px solid rgba(0,229,255,0.3);font-size:11px;font-weight:700;cursor:pointer;">✓ Verified</button>',
+            '<button onclick="assignMerchantBadge(\'' + a.id + '\',2)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(247,147,26,0.12);color:#f7931a;border:1px solid rgba(247,147,26,0.3);font-size:11px;font-weight:700;cursor:pointer;">★ Pro</button>',
+            '<button onclick="assignMerchantBadge(\'' + a.id + '\',3)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.3);font-size:11px;font-weight:700;cursor:pointer;">♛ Elite</button>',
+            '<button onclick="rejectMerchantApp(\'' + a.id + '\')" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(246,70,93,0.12);color:#f6465d;border:1px solid rgba(246,70,93,0.3);font-size:11px;font-weight:700;cursor:pointer;">✕ Reject</button>'
+          ].join('') : '<span style="color:var(--text-2);font-size:12px;">Reviewed</span>') +
+        '</td></tr>';
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#f6465d;padding:24px;">Error loading applications.</td></tr>';
+  }
+}
+
+async function assignMerchantBadge(id, badge) {
+  if (!confirm('Assign Badge ' + badge + ' (' + MERCHANT_BADGE_INFO[badge].label + ') to this merchant?')) return;
+  try {
+    var res = await fetch('/api/admin/merchant-applications/' + id + '/badge', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ badge: badge, action: 'approve' })
+    });
+    var data = await res.json();
+    if (data.success) { showGlobalMsg('✅ ' + data.message, 'success'); loadMerchantApplications(); }
+    else showGlobalMsg('❌ ' + data.message, 'error');
+  } catch(e) { showGlobalMsg('Network error.', 'error'); }
+}
+
+async function rejectMerchantApp(id) {
+  if (!confirm('Reject this merchant application?')) return;
+  try {
+    var res = await fetch('/api/admin/merchant-applications/' + id + '/badge', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'reject' })
+    });
+    var data = await res.json();
+    if (data.success) { showGlobalMsg('Application rejected.', 'success'); loadMerchantApplications(); }
+    else showGlobalMsg('❌ ' + data.message, 'error');
+  } catch(e) { showGlobalMsg('Network error.', 'error'); }
+}
+
+function showGlobalMsg(msg, type) {
+  var el = document.getElementById('globalMessage');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = type === 'success' ? 'global-msg success' : 'global-msg error';
+  el.classList.remove('hidden');
+  setTimeout(function(){ el.classList.add('hidden'); }, 4000);
+}
+
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Hook into existing nav switch to load merchant data
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[data-view="merchants"]').forEach(function(btn) {
+    btn.addEventListener('click', function(){ setTimeout(loadMerchantApplications, 100); });
+  });
+  // Load pending count on start
+  setTimeout(function(){
+    fetch('/api/admin/merchant-applications', { credentials:'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var pending = (data.applications||[]).filter(function(a){ return a.status==='pending'; }).length;
+        var badge = document.getElementById('merchantPendingBadge');
+        if (badge && pending) { badge.textContent = pending; badge.style.display = 'inline-flex'; }
+      }).catch(function(){});
+  }, 2000);
+});
+</script>
 </body>
 </html>

@@ -6432,14 +6432,64 @@ function closeP2PScreen(id) {
   });
 })();
 
-function submitMerchantApp() {
+async function submitMerchantApp() {
   var cb = document.getElementById('merchantAgree');
   if (!cb || !cb.checked) {
     alert('Please agree to the Merchant Service Agreement first.');
     return;
   }
-  alert('Application submitted! Our team will review and get back to you within 2-5 business days.');
-  closeP2PScreen('merchantApplyScreen');
+  var submitBtn = document.querySelector('#merchantApplyScreen button[onclick="submitMerchantApp()"]');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting...'; }
+  try {
+    var res = await fetch('/api/merchant/apply', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    var data = await res.json();
+    if (data.success) {
+      alert('✅ ' + data.message);
+      closeP2PScreen('merchantApplyScreen');
+      closeP2PScreen('merchantScreen');
+    } else {
+      alert('❌ ' + (data.message || 'Application failed.'));
+    }
+  } catch (e) {
+    alert('Network error. Please try again.');
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit'; }
+  }
+}
+
+// Merchant badge names & colors
+var MERCHANT_BADGES = {
+  1: { name: 'Verified', color: '#00e5ff', icon: '✓' },
+  2: { name: 'Pro',      color: '#f7931a', icon: '★' },
+  3: { name: 'Elite',    color: '#a855f7', icon: '♛' }
+};
+
+async function loadMerchantBadge() {
+  try {
+    var res = await fetch('/api/merchant/application-status', { credentials: 'include' });
+    var data = await res.json();
+    if (data.success && data.status === 'approved' && data.badge) {
+      var b = MERCHANT_BADGES[data.badge];
+      if (!b) return;
+      // Show badge in profile
+      var badgeEl = document.getElementById('mobMerchantBadge');
+      if (badgeEl) {
+        badgeEl.textContent = b.icon + ' ' + b.name + ' Merchant';
+        badgeEl.style.display = 'inline-flex';
+        badgeEl.style.background = b.color + '22';
+        badgeEl.style.color = b.color;
+        badgeEl.style.border = '1px solid ' + b.color + '55';
+      }
+      // Change "Apply to Become Merchant" text
+      var applyItem = document.getElementById('mobMerchantApplyItem');
+      if (applyItem) applyItem.querySelector('span') && (applyItem.querySelector('.bg-menu-label').textContent = b.name + ' Merchant ✓');
+    }
+  } catch(e) {}
 }
 
 function toggleFaqSection(head) {
@@ -7138,7 +7188,7 @@ window.deleteMobAd = async function(offerId) {
   // Restore screen on refresh from hash
   (function restoreFromHash() {
     var hash = window.location.hash.replace('#','');
-    if (hash === 'profile') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); }, 300); }
+    if (hash === 'profile') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); loadMerchantBadge && loadMerchantBadge(); }, 300); }
     else if (hash === 'profile-payment') { openPaymentMethodsScreen(); }
     else if (hash === 'profile-payment-add') { openPaymentMethodPickerScreen(); }
     else if (hash === 'orders') { showMobScreen('mobOrdersScreen'); }

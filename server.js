@@ -70,7 +70,11 @@ const P2P_ACCESS_COOKIE_NAME = 'p2p_access_token';
 const P2P_REFRESH_COOKIE_NAME = 'p2p_refresh_token';
 const P2P_ORDER_TTL_MS = 1000 * 60 * 15;
 const P2P_EXPIRY_SWEEP_INTERVAL_MS = 30 * 1000;
-const MERCHANT_ACTIVATION_DEPOSIT = 200;
+const MERCHANT_ACTIVATION_DEPOSIT = 500;
+
+// In-memory merchant applications store
+const merchantApplications = new Map(); // id -> application
+let merchantAppCounter = 1;
 const SIGNUP_OTP_TTL_MS = Math.max(
   60 * 1000,
   Number.parseInt(String(process.env.SIGNUP_OTP_TTL_MS || '600000'), 10) || 600000
@@ -3033,6 +3037,92 @@ app.post('/api/merchant/activate', requiresP2PUser, async (req, res) => {
       message: 'Server error while activating merchant.'
     });
   }
+});
+
+// ── Merchant Application: User submits application ──
+app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
+  try {
+    const { photoUrl, socialMedia } = req.body || {};
+    const userId = req.p2pUser.id;
+    const username = req.p2pUser.username;
+    const email = req.p2pUser.email;
+
+    // Check if already applied
+    for (const [, app] of merchantApplications) {
+      if (app.userId === userId && app.status === 'pending') {
+        return res.status(400).json({ success: false, message: 'You already have a pending merchant application.' });
+      }
+    }
+
+    const id = `MRC-${String(merchantAppCounter++).padStart(5, '0')}`;
+    const application = {
+      id,
+      userId,
+      username,
+      email,
+      photoUrl: photoUrl || '',
+      socialMedia: socialMedia || '',
+      status: 'pending', // pending | approved | rejected
+      badge: null,       // 1 = Verified, 2 = Pro, 3 = Elite
+      submittedAt: new Date().toISOString(),
+      reviewedAt: null
+    };
+    merchantApplications.set(id, application);
+
+    return res.json({ success: true, message: 'Application submitted! Admin will review within 2-5 business days.', applicationId: id });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Server error while submitting application.' });
+  }
+});
+
+// ── Merchant Application: Admin list all ──
+app.get('/api/admin/merchant-applications', requiresAdmin, (req, res) => {
+  const list = Array.from(merchantApplications.values()).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+  return res.json({ success: true, applications: list });
+});
+
+// ── Merchant Application: Admin assign badge ──
+app.post('/api/admin/merchant-applications/:id/badge', requiresAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { badge, action } = req.body; // badge: 1|2|3, action: 'approve'|'reject'
+
+    const app = merchantApplications.get(id);
+    if (!app) return res.status(404).json({ success: false, message: 'Application not found.' });
+
+    if (action === 'reject') {
+      app.status = 'rejected';
+      app.badge = null;
+      app.reviewedAt = new Date().toISOString();
+      merchantApplications.set(id, app);
+      return res.json({ success: true, message: 'Application rejected.' });
+    }
+
+    const badgeNum = Number(badge);
+    if (![1, 2, 3].includes(badgeNum)) {
+      return res.status(400).json({ success: false, message: 'Badge must be 1, 2, or 3.' });
+    }
+
+    app.status = 'approved';
+    app.badge = badgeNum;
+    app.reviewedAt = new Date().toISOString();
+    merchantApplications.set(id, app);
+
+    return res.json({ success: true, message: `Badge ${badgeNum} assigned to ${app.username}.`, application: app });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// ── Merchant Application: User checks their status ──
+app.get('/api/merchant/application-status', requiresP2PUser, (req, res) => {
+  const userId = req.p2pUser.id;
+  for (const [, app] of merchantApplications) {
+    if (app.userId === userId) {
+      return res.json({ success: true, found: true, status: app.status, badge: app.badge, applicationId: app.id });
+    }
+  }
+  return res.json({ success: true, found: false, status: null, badge: null });
 });
 
 // Returns only the current user's own active orders (for mobile Active tab)
