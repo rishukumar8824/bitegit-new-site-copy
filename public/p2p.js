@@ -1905,35 +1905,44 @@ function openProfileEditModal() {
 
 function saveProfileNickname() {
   var nicknameInput = document.getElementById('editNicknameInput');
-  var msg = document.getElementById('editProfileMsg');
-  var nickname = (nicknameInput && nicknameInput.value || '').trim();
-  if (!nickname || nickname.length < 2) {
-    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Nickname must be at least 2 characters.'; }
+  var msg = document.getElementById('editNicknameMsg');
+  var nickname = (nicknameInput ? nicknameInput.value : '').trim();
+  if (!nickname || nickname.length < 3) {
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Username must be at least 3 characters.'; }
     return;
   }
-  if (msg) { msg.style.color = '#555'; msg.textContent = 'Saving...'; }
+  if (!/^[a-zA-Z0-9_]+$/.test(nickname)) {
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Only letters, numbers and underscores allowed.'; }
+    return;
+  }
+  if (msg) { msg.style.color = 'rgba(255,255,255,0.5)'; msg.textContent = 'Saving...'; }
   fetch('/api/p2p/profile', {
     method: 'PUT', credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nickname: nickname })
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.ok || d.success || d.nickname) {
-      if (msg) { msg.style.color = '#16c784'; msg.textContent = '✓ Nickname updated!'; }
-      if (currentUser) currentUser.nickname = nickname;
-      // Update displays
+      if (msg) { msg.style.color = '#16c784'; msg.textContent = '✓ Username updated!'; }
+      // Update currentUser everywhere
+      if (currentUser) { currentUser.username = nickname; currentUser.nickname = nickname; }
       var el;
       if ((el = document.getElementById('profileNameMobile'))) el.textContent = nickname;
       if ((el = document.getElementById('profileName'))) el.textContent = nickname;
       if ((el = document.getElementById('profileAvatarMobile'))) el.textContent = nickname.charAt(0).toUpperCase();
       if ((el = document.getElementById('profileAvatar'))) el.textContent = nickname.charAt(0).toUpperCase();
+      // Clear offer cache and reload so ad cards show new username immediately
+      if (_offersResponseCache) _offersResponseCache.clear();
+      _lastOffersData = null;
       setTimeout(function() {
         closeMobScreen('mobProfileEditScreen', 'mobProfileScreen');
-      }, 800);
+        loadOffers();
+        loadMyAds();
+      }, 700);
     } else {
       if (msg) { msg.style.color = '#f6465d'; msg.textContent = d.error || d.message || 'Failed to save.'; }
     }
   }).catch(function() {
-    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Network error.'; }
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Network error. Please try again.'; }
   });
 }
 
@@ -7237,7 +7246,7 @@ window.deleteMobAd = async function(offerId) {
 
 // ===== MOB-SCREEN NAV (profile / orders screens) =====
 (function initMobScreenNav() {
-  var profileFlowScreens = new Set(['mobProfileScreen', 'mobPaymentMethodsScreen', 'mobPaymentMethodTypesScreen', 'mobPaymentMethodFormScreen', 'mobTradingDataScreen', 'mobSupportScreen', 'mobSupportChatScreen']);
+  var profileFlowScreens = new Set(['mobProfileScreen', 'mobProfileEditScreen', 'mobPaymentMethodsScreen', 'mobPaymentMethodTypesScreen', 'mobPaymentMethodFormScreen', 'mobTradingDataScreen', 'mobSupportScreen', 'mobSupportChatScreen']);
   function showMobScreen(screenId) {
     var all = document.querySelectorAll('.mob-screen');
     all.forEach(function(s){ s.style.display = 'none'; s.classList.remove('mob-screen-visible'); });

@@ -489,6 +489,32 @@
       <button id="profileDepositBtn" class="hidden"></button>
     </div>
 
+    <!-- ── Profile Edit Screen ── -->
+    <div id="mobProfileEditScreen" class="mob-screen hidden" style="display:flex;flex-direction:column;height:100%;background:#0a0a0a;">
+      <div class="mob-screen-head" style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);gap:10px;flex-shrink:0;">
+        <button class="mob-back-btn" onclick="window.closeMobScreen&&closeMobScreen('mobProfileEditScreen','mobProfileScreen')" aria-label="Back" style="background:none;border:none;color:#fff;cursor:pointer;padding:4px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span style="font-size:16px;font-weight:700;color:#fff;flex:1;">Edit Username</span>
+      </div>
+
+      <div style="padding:28px 20px;flex:1;">
+        <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px;">New Username</label>
+        <div style="position:relative;margin-bottom:8px;">
+          <input id="editNicknameInput" type="text" maxlength="20" placeholder="e.g. trader_99"
+            style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px 16px;color:#fff;font-size:15px;outline:none;box-sizing:border-box;"
+            oninput="document.getElementById('editNicknameMsg').textContent=''"
+          />
+        </div>
+        <p style="font-size:12px;color:rgba(255,255,255,0.35);margin:0 0 6px;">3–20 characters · letters, numbers, underscores only</p>
+        <p id="editNicknameMsg" style="font-size:13px;min-height:18px;margin:0 0 28px;"></p>
+
+        <button onclick="saveProfileNickname()" style="width:100%;padding:15px;border-radius:14px;background:#00e5ff;border:none;color:#000;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.02em;">
+          Save Username
+        </button>
+      </div>
+    </div>
+
     <!-- Trading Data Detail Screen -->
     <div id="mobTradingDataScreen" class="mob-screen hidden">
       <div class="mob-screen-head">

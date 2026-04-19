@@ -1800,6 +1800,45 @@ app.post('/api/p2p/logout', async (req, res) => {
   }
 });
 
+// ── Update P2P username ──
+app.put('/api/p2p/profile', requiresP2PUser, async (req, res) => {
+  try {
+    const userId = req.p2pUser.id;
+    const email = req.p2pUser.email;
+    const newUsername = String(req.body.nickname || req.body.username || '').trim();
+
+    if (!newUsername || newUsername.length < 3 || newUsername.length > 20) {
+      return res.status(400).json({ ok: false, message: 'Username must be 3–20 characters.' });
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(newUsername)) {
+      return res.status(400).json({ ok: false, message: 'Only letters, numbers and underscores allowed.' });
+    }
+
+    const collections = getCollections();
+
+    // Check uniqueness
+    const taken = await collections.p2pCredentials.findOne({ username: newUsername, email: { $ne: email } });
+    if (taken) return res.status(400).json({ ok: false, message: 'Username already taken. Try another.' });
+
+    // Update credential
+    await collections.p2pCredentials.updateOne({ email }, { $set: { username: newUsername, updatedAt: new Date() } });
+
+    // Update all offers by this user
+    await collections.p2pOffers.updateMany(
+      { createdByUserId: userId },
+      { $set: { advertiser: newUsername, createdByUsername: newUsername } }
+    );
+
+    // Update wallet username
+    await collections.wallets.updateOne({ userId }, { $set: { username: newUsername } });
+
+    return res.json({ ok: true, nickname: newUsername, message: 'Username updated.' });
+  } catch (err) {
+    console.error('[profile] update error:', err.message);
+    return res.status(500).json({ ok: false, message: 'Server error while updating username.' });
+  }
+});
+
 app.get('/api/p2p/me', async (req, res) => {
   const user = await getP2PUserFromRequest(req, res);
 
