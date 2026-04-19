@@ -286,6 +286,27 @@ function sanitizeAdmin(admin) {
   };
 }
 
+function normalizeAdminAppealDetails(rawAppeal = {}) {
+  const payload = rawAppeal && typeof rawAppeal === 'object' ? rawAppeal : {};
+  const attachments = Array.isArray(payload.attachments)
+    ? payload.attachments.map((item, index) => ({
+        id: String(item?.id || `appeal_file_${index}`),
+        name: String(item?.name || `Attachment ${index + 1}`),
+        dataUrl: String(item?.dataUrl || item?.imageUrl || item?.imageBase64 || '').trim(),
+        uploadedAt: item?.uploadedAt || null
+      }))
+    : [];
+
+  return {
+    type: String(payload.type || '').trim(),
+    reason: String(payload.reason || '').trim(),
+    attachments: attachments.filter((item) => item.dataUrl),
+    submittedAt: payload.submittedAt || null,
+    submittedBy: payload.submittedBy && typeof payload.submittedBy === 'object' ? payload.submittedBy : {},
+    orderSnapshot: payload.orderSnapshot && typeof payload.orderSnapshot === 'object' ? payload.orderSnapshot : {}
+  };
+}
+
 function getDefaultPlatformSettings() {
   return {
     siteName: 'Bitegit Exchange',
@@ -1678,7 +1699,20 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       .limit(limit)
       .toArray();
     const total = await p2pOrders.countDocuments({ status: 'DISPUTED' });
-    return { page, limit, total, disputes: rows };
+    return {
+      page,
+      limit,
+      total,
+      disputes: rows.map((row) => ({
+        ...row,
+        buyerUserId: String(row.buyerUserId || row.buyerId || '').trim(),
+        sellerUserId: String(row.sellerUserId || row.sellerId || '').trim(),
+        buyerUsername: String(row.buyerUsername || '').trim(),
+        sellerUsername: String(row.sellerUsername || '').trim(),
+        appealDetails: normalizeAdminAppealDetails(row.appealDetails),
+        chatMessages: Array.isArray(row.messages) ? row.messages : []
+      }))
+    };
   }
 
   async function manualReleaseEscrow(orderId, actor) {

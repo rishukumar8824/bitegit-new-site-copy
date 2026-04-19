@@ -834,6 +834,79 @@ async function loadSpot() {
 // P2P
 // ─────────────────────────────────────────────────────────────────────────────
 
+function renderP2PDisputeCard(order = {}) {
+  const appeal = order.appealDetails && typeof order.appealDetails === 'object' ? order.appealDetails : {};
+  const attachments = Array.isArray(appeal.attachments) ? appeal.attachments : [];
+  const messages = Array.isArray(order.chatMessages)
+    ? order.chatMessages
+    : Array.isArray(order.messages)
+      ? order.messages
+      : [];
+  const lastMessages = messages.slice(-3);
+  const appealType = appeal.type || order.disputeReason || 'Appeal';
+  const appealReason = appeal.reason || order.disputeReason || 'No appeal details submitted.';
+  const submittedBy = appeal.submittedBy?.username || appeal.submittedBy?.userId || order.disputedBy || '-';
+  const submittedAt = appeal.submittedAt || order.disputedAt || order.updatedAt;
+  const buyerLabel = order.buyerUsername || order.buyerUserId || '-';
+  const sellerLabel = order.sellerUsername || order.sellerUserId || '-';
+
+  const attachmentMarkup = attachments.length
+    ? `<div class="mt-2 grid grid-cols-3 gap-2">
+        ${attachments.map((item) => `
+          <a href="${escapeHtml(item.dataUrl)}" target="_blank" rel="noopener" class="block overflow-hidden rounded-lg border border-slate-700 bg-slate-950" title="${escapeHtml(item.name || 'Appeal attachment')}">
+            <img src="${escapeHtml(item.dataUrl)}" alt="${escapeHtml(item.name || 'Appeal attachment')}" style="height:72px;width:100%;object-fit:cover;" />
+          </a>
+        `).join('')}
+      </div>`
+    : '<p class="mt-2 text-xs text-slate-500">No screenshots attached.</p>';
+
+  const messageMarkup = lastMessages.length
+    ? lastMessages.map((message) => {
+        const sender = message.senderRole || message.role || message.sender || 'chat';
+        const text = message.text || message.message || '';
+        return `<p class="text-xs text-slate-400"><span class="text-slate-200">${escapeHtml(sender)}:</span> ${escapeHtml(text)}</p>`;
+      }).join('')
+    : '<p class="text-xs text-slate-500">No chat messages found.</p>';
+
+  return `
+    <article class="list-item" style="border-color:rgba(245,158,11,.35);background:rgba(15,23,42,.72);">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <p class="text-sm font-semibold">${escapeHtml(order.reference || order.id || 'P2P order')}</p>
+          <p class="text-xs text-slate-400">${escapeHtml(order.id || '-')} • ${escapeHtml(order.asset || 'USDT')} • ₹${formatNumber(order.amountInr || 0, 2)}</p>
+        </div>
+        ${statusBadge(order.status || 'DISPUTED')}
+      </div>
+
+      <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
+        <div><span class="text-slate-500">Buyer:</span> <span class="text-slate-200">${escapeHtml(buyerLabel)}</span></div>
+        <div><span class="text-slate-500">Seller:</span> <span class="text-slate-200">${escapeHtml(sellerLabel)}</span></div>
+        <div><span class="text-slate-500">Asset Amt:</span> <span class="text-white">${formatNumber(order.assetAmount || order.escrowAmount || 0, 6)}</span></div>
+        <div><span class="text-slate-500">Price:</span> <span class="text-white">₹${formatNumber(order.price || 0, 2)}</span></div>
+        <div><span class="text-slate-500">Payment:</span> ${escapeHtml(order.paymentMethod || 'UPI')}</div>
+        <div><span class="text-slate-500">Raised:</span> ${escapeHtml(formatDate(submittedAt))}</div>
+      </div>
+
+      <div class="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
+        <p class="text-xs font-semibold text-amber-300">Appeal by ${escapeHtml(submittedBy)}</p>
+        <p class="mt-1 text-xs text-slate-300"><span class="text-slate-500">Type:</span> ${escapeHtml(appealType)}</p>
+        <p class="mt-1 text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(appealReason)}</p>
+        ${attachmentMarkup}
+      </div>
+
+      <div class="mt-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3">
+        <p class="mb-1 text-xs font-semibold text-slate-300">Latest chat</p>
+        ${messageMarkup}
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button class="btn-primary" data-p2p-action="release-order" data-order-id="${escapeHtml(order.id || '')}">Release Escrow</button>
+        <button class="btn-danger" data-p2p-action="freeze-order" data-order-id="${escapeHtml(order.id || '')}">Freeze Escrow</button>
+      </div>
+    </article>
+  `;
+}
+
 async function loadP2P() {
   const [adsPayload, disputesPayload, settingsPayload] = await Promise.all([
     apiRequest('/p2p/ads?limit=30'),
@@ -872,18 +945,7 @@ async function loadP2P() {
   const disputesList = document.getElementById('p2pDisputesList');
   const disputes = Array.isArray(disputesPayload.disputes) ? disputesPayload.disputes : [];
   disputesList.innerHTML = disputes
-    .map(
-      (order) => `
-      <article class="list-item">
-        <p class="text-sm font-semibold">${order.reference}</p>
-        <p class="text-xs text-slate-400">${order.id} • ${order.asset} • ₹${formatNumber(order.amountInr || 0, 2)}</p>
-        <div class="mt-2 flex gap-2">
-          <button class="btn-primary" data-p2p-action="release-order" data-order-id="${order.id}">Release Escrow</button>
-          <button class="btn-danger" data-p2p-action="freeze-order" data-order-id="${order.id}">Freeze Escrow</button>
-        </div>
-      </article>
-    `
-    )
+    .map((order) => renderP2PDisputeCard(order))
     .join('');
 
   if (disputes.length === 0) {

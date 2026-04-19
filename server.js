@@ -1345,6 +1345,7 @@ function normalizeOrderState(order) {
     return null;
   }
 
+  const disputedDate = order.disputedAt ? new Date(order.disputedAt) : null;
   const remainingSeconds =
     P2P_ORDER_ACTIVE_STATUSES.includes(order.status) && Number(order.expiresAt) > Date.now()
       ? Math.max(0, Math.floor((Number(order.expiresAt) - Date.now()) / 1000))
@@ -1368,6 +1369,11 @@ function normalizeOrderState(order) {
     buyerUserId: order.buyerUserId,
     buyerUsername: order.buyerUsername,
     escrowAmount: order.escrowAmount,
+    disputedAt: disputedDate && !Number.isNaN(disputedDate.getTime()) ? disputedDate.toISOString() : null,
+    disputedBy: order.disputedBy || null,
+    disputeReason: order.disputeReason || null,
+    disputeStatus: order.disputeStatus || null,
+    appealDetails: order.appealDetails || null,
     isParticipant: true,
     createdAt: new Date(order.createdAt).toISOString(),
     expiresAt: new Date(order.expiresAt).toISOString(),
@@ -3159,6 +3165,76 @@ app.get('/api/p2p/orders/:orderId', requiresP2PUser, async (req, res) => {
   }
 });
 
+app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) => {
+  const appealType = String(req.body.reason || req.body.appealType || '').trim();
+  const appealReason = String(req.body.description || req.body.appealReason || '').trim();
+  const appealImages = Array.isArray(req.body.images)
+    ? req.body.images.slice(0, 3)
+    : Array.isArray(req.body.appealImages)
+      ? req.body.appealImages.slice(0, 3)
+      : [];
+
+  if (!appealType) {
+    return res.status(400).json({ message: 'Appeal reason is required.' });
+  }
+  if (appealReason.length < 10) {
+    return res.status(400).json({ message: 'Describe your issue in at least 10 characters.' });
+  }
+
+  try {
+    const updatedOrder = await walletService.setOrderDisputed(req.params.orderId, req.p2pUser, {
+      reason: appealReason,
+      appealType,
+      appealReason,
+      appealImages
+    });
+
+    const normalizedOrder = normalizeOrderState(updatedOrder);
+    const normalizedMessages = toClientMessages(updatedOrder.messages || []);
+    const participantPayload = {
+      order: normalizedOrder,
+      orderId: normalizedOrder.id,
+      reference: normalizedOrder.reference,
+      status: normalizedOrder.status,
+      updatedAt: normalizedOrder.updatedAt
+    };
+
+    broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
+    broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
+    broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
+
+    if (p2pEmailService) {
+      setImmediate(async () => {
+        try {
+          const [sellerCred, buyerCred] = await Promise.all([
+            repos.getP2PCredentialByUserId(updatedOrder.sellerUserId),
+            repos.getP2PCredentialByUserId(updatedOrder.buyerUserId)
+          ]);
+          const raisedBy = req.p2pUser.username || req.p2pUser.email;
+          const adminEmail = String(process.env.ADMIN_EMAIL || '').trim();
+          if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, raisedBy);
+          if (sellerCred?.email) await p2pEmailService.sendDisputeRaised(sellerCred.email, updatedOrder, raisedBy);
+          if (buyerCred?.email && buyerCred.email !== sellerCred?.email) {
+            await p2pEmailService.sendDisputeRaised(buyerCred.email, updatedOrder, raisedBy);
+          }
+        } catch (emailErr) {
+          console.warn('[p2p-email] appeal notification failed:', emailErr.message);
+        }
+      });
+    }
+
+    return res.json({
+      message: 'Appeal submitted. Redirecting to dispute orders.',
+      order: normalizedOrder
+    });
+  } catch (error) {
+    console.error('Appeal error:', error.message);
+    return res.status(error.status || 500).json({
+      message: error.message || 'Failed to submit appeal.'
+    });
+  }
+});
+
 app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) => {
   const action = String(req.body.action || '').trim().toLowerCase();
 
@@ -3172,7 +3248,15 @@ app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) =>
     } else if (action === 'release') {
       updatedOrder = await walletService.releaseOrder(req.params.orderId, req.p2pUser);
     } else if (action === 'dispute') {
-      updatedOrder = await walletService.setOrderDisputed(req.params.orderId, req.p2pUser);
+      const appealType = String(req.body.appealType || '').trim();
+      const appealReason = String(req.body.appealReason || '').trim();
+      const disputeReason = String(req.body.reason || appealReason || appealType || '').trim();
+      updatedOrder = await walletService.setOrderDisputed(req.params.orderId, req.p2pUser, {
+        reason: disputeReason,
+        appealType,
+        appealReason,
+        appealImages: Array.isArray(req.body.appealImages) ? req.body.appealImages.slice(0, 3) : []
+      });
     } else {
       return res.status(400).json({ message: 'Invalid action.' });
     }
