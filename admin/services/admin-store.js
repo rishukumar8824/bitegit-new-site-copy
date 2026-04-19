@@ -103,6 +103,43 @@ function sanitizeAddress(value) {
   return address;
 }
 
+function toAdminWithdrawalStatus(status) {
+  const normalized = String(status || '').trim().toUpperCase();
+  if (['APPROVED', 'SENT', 'COMPLETED', 'SUCCESS'].includes(normalized)) {
+    return 'APPROVED';
+  }
+  if (['REJECTED', 'CANCELLED', 'CANCELED', 'FAILED'].includes(normalized)) {
+    return 'REJECTED';
+  }
+  return 'PENDING';
+}
+
+function walletWithdrawalToAdminDoc(row = {}) {
+  const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+  const requestId = String(row.requestId || row.id || '').trim();
+  const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
+  const address = String(row.address || row.toAddress || row.to || '').trim();
+
+  return {
+    id: requestId,
+    requestId,
+    userId: String(row.userId || '').trim(),
+    username: String(row.username || metadata.username || '').trim(),
+    coin: currency,
+    currency,
+    amount: toNumber(row.amount, 0),
+    network: normalizeNetwork(row.network || metadata.network) || '',
+    address,
+    toAddress: address,
+    status: toAdminWithdrawalStatus(row.status),
+    fee: toNumber(row.fee || metadata.fee, 0),
+    source: String(metadata.source || row.source || 'assets_withdrawal').trim(),
+    createdAt: row.createdAt ? toDate(row.createdAt) : new Date(),
+    updatedAt: row.updatedAt ? toDate(row.updatedAt) : new Date(),
+    processedAt: row.processedAt ? toDate(row.processedAt) : null
+  };
+}
+
 function createEmptyNetworkMap() {
   return USDT_NETWORKS.reduce((acc, network) => {
     acc[network] = '';
@@ -302,6 +339,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     p2pKycRequests,
     p2pUserSessions,
     wallets,
+    withdrawalRequests,
     p2pOffers,
     p2pOrders,
     tradeOrders
@@ -1052,6 +1090,8 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
   }
 
   async function getWalletOverview() {
+    await syncWithdrawalRequestsToAdmin();
+
     const [walletAgg] = await wallets
       .aggregate([
         {
@@ -1147,6 +1187,8 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
   }
 
   async function listWithdrawals(params = {}) {
+    await syncWithdrawalRequestsToAdmin();
+
     const { page, limit, skip } = parsePagination(params);
     const status = String(params.status || '').trim().toUpperCase();
     const query = {};
@@ -1157,6 +1199,54 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     const rows = await adminWithdrawals.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray();
     const total = await adminWithdrawals.countDocuments(query);
     return { page, limit, total, withdrawals: rows };
+  }
+
+  async function syncWithdrawalRequestsToAdmin() {
+    if (!withdrawalRequests || !adminWithdrawals) {
+      return;
+    }
+
+    const rows = await withdrawalRequests
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .toArray();
+
+    const operations = rows
+      .map((row) => walletWithdrawalToAdminDoc(row))
+      .filter((doc) => doc.id && doc.userId && doc.amount > 0)
+      .map((doc) => ({
+        updateOne: {
+          filter: { id: doc.id },
+          update: {
+            $set: {
+              requestId: doc.requestId,
+              userId: doc.userId,
+              username: doc.username,
+              coin: doc.coin,
+              currency: doc.currency,
+              amount: doc.amount,
+              network: doc.network,
+              address: doc.address,
+              toAddress: doc.toAddress,
+              status: doc.status,
+              fee: doc.fee,
+              source: doc.source,
+              updatedAt: doc.updatedAt,
+              processedAt: doc.processedAt
+            },
+            $setOnInsert: {
+              id: doc.id,
+              createdAt: doc.createdAt
+            }
+          },
+          upsert: true
+        }
+      }));
+
+    if (operations.length) {
+      await adminWithdrawals.bulkWrite(operations, { ordered: false });
+    }
   }
 
   async function createWithdrawalRequest(payload = {}) {

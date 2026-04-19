@@ -2950,7 +2950,9 @@ async function init() {
     connectWithdrawalSSE();
     // Poll support tickets every 15s for badge count sync
     await pollSupportTickets();
+    await refreshWithdrawalNotifications({ silent: true });
     setInterval(pollSupportTickets, 15000);
+    setInterval(() => refreshWithdrawalNotifications({ silent: true }), 15000);
 
     showMessage('Admin dashboard loaded.', 'success');
   } catch (error) {
@@ -2975,11 +2977,31 @@ function connectWithdrawalSSE() {
         _wdPendingList.unshift(info);
         _wdPendingCount++;
         updateWithdrawalBadge();
+        addNotif('withdrawal', 'New Withdrawal Request', `${info.amount || ''} ${info.currency || 'USDT'} from ${info.username || info.userId || 'User'}`);
         showWithdrawalNotification(info);
+        if (state.currentView === 'wallet') {
+          loadWallet().catch(() => {});
+        }
       }
     } catch(_) {}
   };
   _wdSSE.onerror = () => setTimeout(connectWithdrawalSSE, 5000);
+}
+
+async function refreshWithdrawalNotifications({ silent = false } = {}) {
+  try {
+    const data = await apiRequest('/wallet/withdrawals?status=PENDING&limit=50');
+    const rows = Array.isArray(data.withdrawals) ? data.withdrawals : [];
+    _wdPendingList = rows;
+    _wdPendingCount = rows.length;
+    updateWithdrawalBadge();
+    if (rows.length > 0) {
+      addNotif('withdrawal', 'Pending Withdrawals', `${rows.length} withdrawal request(s) awaiting approval`);
+    }
+    if (!silent && state.currentView === 'wallet') {
+      await loadWallet();
+    }
+  } catch (_) {}
 }
 
 // ── Notification Bell ──────────────────────────────────────────
@@ -3063,11 +3085,13 @@ function handleNotifClick(type) {
 
 // Poll for new alerts every 30s
 function pollNotifAlerts() {
-  apiRequest('/admin/overview').then(function(data) {
+  apiRequest('/wallet/overview').then(function(data) {
     if (!data) return;
     if ((data.pendingWithdrawals || 0) > 0) addNotif('withdrawal', 'Pending Withdrawals', (data.pendingWithdrawals||0)+' withdrawal request(s) awaiting approval');
-    if ((data.pendingKyc || 0) > 0) addNotif('kyc', 'KYC Pending', (data.pendingKyc||0)+' user(s) waiting for KYC review');
-    if ((data.openSupportTickets || 0) > 0) addNotif('support', 'Support Tickets', (data.openSupportTickets||0)+' open support ticket(s)');
+  }).catch(function(){});
+  apiRequest('/wallet/withdrawals?status=PENDING&limit=50').then(function(data) {
+    var arr = data && (data.withdrawals || data.rows || []);
+    if (arr && arr.length > 0) addNotif('withdrawal', 'Pending Withdrawals', arr.length+' withdrawal request(s) awaiting approval');
   }).catch(function(){});
   apiRequest('/wallet/deposits?status=pending&limit=1').then(function(data) {
     var arr = data && (data.deposits || data.rows || []);
