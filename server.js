@@ -2795,12 +2795,7 @@ app.get('/api/p2p/offers', async (req, res) => {
         }
         return amount >= offer.minLimit && amount <= offer.maxLimit;
       })
-      .sort((a, b) => {
-        if (normalizedSide === 'buy') {
-          return a.price - b.price;
-        }
-        return b.price - a.price;
-      });
+      .sort((a, b) => a.price - b.price); // lowest price first for both sides
 
     const totalCount = filtered.length;
     const paginated = filtered.slice(pageOffset, pageOffset + pageSize);
@@ -2996,8 +2991,16 @@ async function createP2PAdController(req, res) {
       return res.status(403).json({ message: 'Only approved merchants can post ads. Apply to become a merchant first.' });
     }
 
-    // Enforce 1-ad limit
+    // Must have at least one payment method
     const cols = getCollections();
+    try {
+      const userPms = await repos.listPaymentMethods(userId);
+      if (!userPms || userPms.length === 0) {
+        return res.status(400).json({ message: 'Add a payment method before posting an ad.' });
+      }
+    } catch (_) {}
+
+    // Enforce 1-ad limit
     const existingAds = await cols.p2pOffers.countDocuments({
       $or: [{ createdByUserId: userId }, { advertiser: username }],
       status: { $ne: 'DELETED' }

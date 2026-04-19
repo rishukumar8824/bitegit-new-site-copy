@@ -1258,6 +1258,39 @@ async function deleteMyAd(offerId) {
   } catch (e) { alert('Network error.'); }
 }
 
+// Edit ad from My Ads tab — prefills from cached offer data
+window.openMobEditAd = function(offerId) {
+  var o = (window._myAdsCache || {})[offerId] || {};
+  var existing = document.getElementById('editAdModal');
+  if (existing) existing.remove();
+  var modal = document.createElement('div');
+  modal.id = 'editAdModal';
+  modal.className = 'edit-ad-modal-overlay';
+  modal.innerHTML = `
+    <div class="edit-ad-modal">
+      <div class="edit-ad-head">
+        <h3>Edit Ad</h3>
+        <button onclick="document.getElementById('editAdModal').remove()" class="edit-ad-close">✕</button>
+      </div>
+      <div class="edit-ad-body">
+        <label class="edit-ad-label">Price (INR per USDT)</label>
+        <input id="eadPrice" type="number" class="edit-ad-input" value="${o.price || ''}" placeholder="Enter price"/>
+        <label class="edit-ad-label">Min Limit (INR)</label>
+        <input id="eadMin" type="number" class="edit-ad-input" value="${o.minLimit || ''}" placeholder="Min limit"/>
+        <label class="edit-ad-label">Max Limit (INR)</label>
+        <input id="eadMax" type="number" class="edit-ad-input" value="${o.maxLimit || ''}" placeholder="Max limit"/>
+        <label class="edit-ad-label">Payment Methods (comma separated)</label>
+        <input id="eadPayments" type="text" class="edit-ad-input" value="${Array.isArray(o.payments) ? o.payments.join(', ') : (o.payments || '')}" placeholder="UPI, Bank Transfer"/>
+        <label class="edit-ad-label">Remark (optional)</label>
+        <input id="eadRemark" type="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="Note for buyers"/>
+        <p id="eadMsg" style="font-size:12px;min-height:16px;margin:4px 0 0;color:#f6465d;"></p>
+      </div>
+      <button class="mob-kyc-fp-btn" style="background:linear-gradient(96deg,#00c2b2,#0099a8);margin:0 1rem 1rem;" onclick="submitEditAd('${offerId}')">Save Changes</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
+
 function openEditAdModal(offerId) {
   var offer = null;
   // find from DOM
@@ -7217,25 +7250,50 @@ function initMobPostAdScreen() {
       // Enforce 1-ad limit: hide create form if merchant already has an ad
       var createSection = document.getElementById('mobPostAdCreate');
       var adLimitMsg = document.getElementById('mobAdLimitMsg');
+      // Cache offer data so edit modal can prefill
+      window._myAdsCache = {};
+      offers.forEach(function(o) { window._myAdsCache[o.id] = o; });
+
       if (offers.length > 0) {
         if (createSection) createSection.style.display = 'none';
-        if (adLimitMsg) { adLimitMsg.style.display = 'block'; adLimitMsg.textContent = 'You already have an active ad. Delete it first to post a new one.'; }
+        if (adLimitMsg) { adLimitMsg.style.display = 'block'; adLimitMsg.textContent = 'You already have 1 active ad. Edit or delete it below.'; }
         // Switch to My Ads tab automatically
         var myadsTab = document.querySelector('.mob-ptab[data-ptab="myads"]');
         if (myadsTab) myadsTab.click();
       } else {
-        if (createSection) createSection.style.display = 'block';
-        if (adLimitMsg) adLimitMsg.style.display = 'none';
+        // Check payment methods before showing create form
+        try {
+          var pmRes = await fetch('/api/p2p/payment-methods', { credentials: 'include' });
+          var pmData = await pmRes.json();
+          var methods = Array.isArray(pmData.methods) ? pmData.methods : (Array.isArray(pmData) ? pmData : []);
+          if (!methods.length) {
+            if (createSection) createSection.style.display = 'none';
+            if (adLimitMsg) {
+              adLimitMsg.style.display = 'block';
+              adLimitMsg.style.color = '#f6a623';
+              adLimitMsg.innerHTML = 'Add a payment method first before posting an ad. <button onclick="openPaymentMethodsScreen()" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:6px 14px;font-weight:700;cursor:pointer;margin-top:8px;display:block;width:100%;">Add Payment Method</button>';
+            }
+          } else {
+            if (createSection) createSection.style.display = 'block';
+            if (adLimitMsg) adLimitMsg.style.display = 'none';
+          }
+        } catch(_) {
+          if (createSection) createSection.style.display = 'block';
+          if (adLimitMsg) adLimitMsg.style.display = 'none';
+        }
       }
       if (!offers.length) { listEl.innerHTML = '<p class="mob-myads-empty">No ads posted yet.</p>'; return; }
       listEl.innerHTML = offers.map(function(o) {
         var isActive = o.status === 'ACTIVE';
+        var pmList = Array.isArray(o.payments) ? o.payments.join(', ') : (o.payments || '');
         return '<div class="mob-myad-card">' +
           '<div class="mob-myad-row"><span class="mob-myad-type ' + (o.side === 'sell' ? 'sell' : 'buy') + '">' + (o.side === 'sell' ? 'SELL' : 'BUY') + '</span>' +
           '<span class="mob-myad-status ' + (isActive ? 'active' : 'paused') + '">' + (o.status || 'PAUSED') + '</span></div>' +
           '<div class="mob-myad-price">₹' + (o.price || 0) + ' / USDT</div>' +
           '<div class="mob-myad-meta">Available: ' + (o.available || 0) + ' USDT &nbsp;|&nbsp; ' + (o.minLimit || 0) + '–' + (o.maxLimit || 0) + ' INR</div>' +
+          (pmList ? '<div class="mob-myad-meta" style="color:rgba(255,255,255,0.45);font-size:11px;">💳 ' + pmList + '</div>' : '') +
           '<div class="mob-myad-actions">' +
+            '<button class="mob-myad-btn edit" onclick="openMobEditAd(\'' + o.id + '\')">Edit</button>' +
             '<button class="mob-myad-btn" onclick="toggleMobAd(\'' + o.id + '\',\'' + (isActive ? 'PAUSED' : 'ACTIVE') + '\')">' + (isActive ? 'Pause' : 'Activate') + '</button>' +
             '<button class="mob-myad-btn danger" onclick="deleteMobAd(\'' + o.id + '\')">Delete</button>' +
           '</div></div>';

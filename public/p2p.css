@@ -3915,6 +3915,7 @@ body.mob-screen-open .p2p-secondary-nav {
   cursor: pointer;
 }
 .mob-myad-btn.danger { border-color: rgba(246,70,93,0.4); color: #f6465d; background: rgba(246,70,93,0.08); }
+.mob-myad-btn.edit { border-color: rgba(0,229,255,0.4); color: #00e5ff; background: rgba(0,229,255,0.08); }
 
 /* ══════════════════════════════════════
    SUPPORT SCREEN (Bitget-style, dark)
