@@ -895,9 +895,15 @@ function renderWithdrawalHistory() {
       return `
         <article class="withdraw-history-row">
           <div class="withdraw-history-main">
-            <div>
-              <p class="withdraw-history-amount">${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</p>
-              <p class="withdraw-history-id">${escapeHtml(title)} #${escapeHtml(shortenValue(requestId || title.toLowerCase(), 12, 6))}</p>
+            <div class="withdraw-history-coin">
+              <span class="history-coin-icon">
+                <img src="${getAssetIconUrl(currency.toLowerCase())}" alt="${escapeHtml(currency)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
+                <span class="history-coin-fallback">${escapeHtml(currency.slice(0, 4))}</span>
+              </span>
+              <div>
+                <p class="withdraw-history-amount">${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</p>
+                <p class="withdraw-history-id">${escapeHtml(title)} #${escapeHtml(shortenValue(requestId || title.toLowerCase(), 12, 6))}</p>
+              </div>
             </div>
             <span class="withdraw-status ${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>
           </div>

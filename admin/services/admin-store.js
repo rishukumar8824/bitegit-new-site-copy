@@ -1146,7 +1146,10 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     }
 
     const rows = await adminDeposits
-      .find({ userId: normalizedUserId })
+      .find({
+        userId: normalizedUserId,
+        type: { $ne: 'MANUAL_ADJUSTMENT' }
+      })
       .sort({ createdAt: -1 })
       .limit(limit)
       .toArray();
