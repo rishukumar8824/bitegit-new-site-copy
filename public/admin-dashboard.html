@@ -1010,7 +1010,7 @@ async function loadMerchantApplications() {
         '<td class="admin-td">' + (bInfo ? '<span style="color:' + bInfo.color + ';font-weight:800;">' + bInfo.label + '</span>' : '<span style="color:var(--text-2);">—</span>') + '</td>' +
         '<td class="admin-td">' +
           '<button onclick="viewMerchantApp(\'' + a.id + '\')" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:11px;font-weight:600;cursor:pointer;">👁 View</button>' +
-          (a.status === 'pending' ? '<br>' + [
+          (['pending','approved'].includes(a.status) ? '<br>' + [
             '<button onclick="assignMerchantBadge(\'' + a.id + '\',1)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(0,229,255,0.12);color:#00e5ff;border:1px solid rgba(0,229,255,0.3);font-size:11px;font-weight:700;cursor:pointer;">✓ Verified</button>',
             '<button onclick="assignMerchantBadge(\'' + a.id + '\',2)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(247,147,26,0.12);color:#f7931a;border:1px solid rgba(247,147,26,0.3);font-size:11px;font-weight:700;cursor:pointer;">★ Pro</button>',
             '<button onclick="assignMerchantBadge(\'' + a.id + '\',3)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.3);font-size:11px;font-weight:700;cursor:pointer;">♛ Elite</button>',
@@ -1082,7 +1082,7 @@ function viewMerchantApp(id) {
         '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Submitted</div>' +
         '<div style="font-size:13px;color:rgba(255,255,255,0.75);">' + new Date(a.submittedAt).toLocaleString() + '</div>' +
       '</div>' +
-      (a.status === 'pending' ? '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">' +
+      (['pending','approved'].includes(a.status) ? '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">' +
         '<button onclick="assignMerchantBadge(\'' + a.id + '\',1);document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(0,229,255,0.15);color:#00e5ff;border:1px solid rgba(0,229,255,0.35);font-size:13px;font-weight:700;cursor:pointer;">✓ Verified</button>' +
         '<button onclick="assignMerchantBadge(\'' + a.id + '\',2);document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(247,147,26,0.15);color:#f7931a;border:1px solid rgba(247,147,26,0.35);font-size:13px;font-weight:700;cursor:pointer;">★ Pro</button>' +
         '<button onclick="assignMerchantBadge(\'' + a.id + '\',3);document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.35);font-size:13px;font-weight:700;cursor:pointer;">♛ Elite</button>' +
