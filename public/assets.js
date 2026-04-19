@@ -39,8 +39,18 @@ const withdrawScannerCloseBtn = document.getElementById('assetsWithdrawScannerCl
 const withdrawAmountInput = document.getElementById('assetsWithdrawAmount');
 const withdrawResultEl = document.getElementById('assetsWithdrawResult');
 const withdrawSubmitBtn = document.getElementById('assetsWithdrawSubmitBtn');
-const withdrawHistoryListEl = document.getElementById('assetsWithdrawHistoryList');
-const withdrawHistoryRefreshBtn = document.getElementById('assetsWithdrawHistoryRefreshBtn');
+const historyScreen = document.getElementById('historyScreen');
+const historyBackBtn = document.getElementById('historyBackBtn');
+const histDepositPanel = document.getElementById('histDepositPanel');
+const histWithdrawalPanel = document.getElementById('histWithdrawalPanel');
+const histDepositList = document.getElementById('histDepositList');
+const histDepositEmpty = document.getElementById('histDepositEmpty');
+const histWithdrawalList = document.getElementById('histWithdrawalList');
+const histWithdrawalEmpty = document.getElementById('histWithdrawalEmpty');
+const histDepositRefreshBtn = document.getElementById('histDepositRefreshBtn');
+const histWithdrawalRefreshBtn = document.getElementById('histWithdrawalRefreshBtn');
+const assetsHistoryBtn = document.getElementById('assetsHistoryBtn');
+const histTabs = Array.from(document.querySelectorAll('[data-hist-tab]'));
 
 const WALLET_ENDPOINTS = ['/api/wallet/summary', '/api/wallet', '/api/p2p/wallet'];
 const WITHDRAW_ENDPOINTS = [
@@ -112,6 +122,8 @@ const state = {
   },
   depositWallets: [],
   withdrawals: [],
+  deposits: [],
+  histTab: 'deposit',
   scanner: {
     active: false,
     stream: null,
@@ -853,82 +865,136 @@ async function loadWalletSummary() {
   }
 }
 
-function renderWithdrawalHistory() {
-  if (!withdrawHistoryListEl) {
-    return;
-  }
+const SVG_DEP = `<svg viewBox="0 0 24 24" fill="none" stroke="#1bd67d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 19h14"/></svg>`;
+const SVG_WD  = `<svg viewBox="0 0 24 24" fill="none" stroke="#ffd87a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="m17 14-5-5-5 5"/><path d="M5 5h14"/></svg>`;
 
+function getDepositStatusTone(raw) {
+  const s = String(raw || '').toLowerCase();
+  if (['pending','processing','confirming'].includes(s)) return { label:'Pending', tone:'pending' };
+  if (['failed','rejected','cancelled'].includes(s)) return { label:'Rejected', tone:'rejected' };
+  return { label:'Completed', tone:'completed' };
+}
+
+function renderWithdrawalHistory() {
+  if (!histWithdrawalList) return;
   const rows = Array.isArray(state.withdrawals) ? state.withdrawals : [];
   if (!rows.length) {
-    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">No withdrawal requests yet.</p>';
+    histWithdrawalEmpty?.classList.remove('hidden');
+    histWithdrawalList.innerHTML = '';
     return;
   }
+  histWithdrawalEmpty?.classList.add('hidden');
+  histWithdrawalList.innerHTML = rows.map((row) => {
+    const status = getWithdrawalStatusView(row.status);
+    const address = String(row.address || row.toAddress || row.to || '').trim();
+    const network = normalizeNetwork(row.network || row.chain || row.metadata?.network) || 'USDT';
+    const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
+    const createdAt = formatAssetDate(row.createdAt || row.created_at);
+    return `<div class="hist-row">
+      <span class="hist-icon wd">${SVG_WD}</span>
+      <div class="hist-body">
+        <div class="hist-type">Withdrawal</div>
+        <div class="hist-meta">${escapeHtml(network)}${address ? ' · ' + escapeHtml(shortenValue(address,6,4)) : ''}${createdAt ? ' · ' + escapeHtml(createdAt) : ''}</div>
+      </div>
+      <div class="hist-right">
+        <div class="hist-amount">-${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</div>
+        <span class="hist-badge ${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-  withdrawHistoryListEl.innerHTML = rows
-    .map((row) => {
-      const status = getWithdrawalStatusView(row.status);
-      const requestId = String(row.requestId || row.id || '').trim();
-      const address = String(row.address || row.toAddress || row.to || '').trim();
-      const network = normalizeNetwork(row.network || row.chain || row.metadata?.network) || 'USDT';
-      const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
-      const createdAt = formatAssetDate(row.createdAt || row.created_at);
-
-      return `
-        <article class="withdraw-history-row">
-          <div class="withdraw-history-main">
-            <div>
-              <p class="withdraw-history-amount">${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</p>
-              <p class="withdraw-history-id">#${escapeHtml(shortenValue(requestId || 'withdrawal', 12, 6))}</p>
-            </div>
-            <span class="withdraw-status ${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>
-          </div>
-          <div class="withdraw-history-meta">
-            <p class="withdraw-history-date">${escapeHtml(network)}${createdAt ? ` - ${escapeHtml(createdAt)}` : ''}</p>
-            <p class="withdraw-history-address">${escapeHtml(shortenValue(address || 'Address pending', 10, 8))}</p>
-          </div>
-        </article>
-      `;
-    })
-    .join('');
+function renderDepositHistory() {
+  if (!histDepositList) return;
+  const rows = Array.isArray(state.deposits) ? state.deposits : [];
+  if (!rows.length) {
+    histDepositEmpty?.classList.remove('hidden');
+    histDepositList.innerHTML = '';
+    return;
+  }
+  histDepositEmpty?.classList.add('hidden');
+  histDepositList.innerHTML = rows.map((row) => {
+    const status = getDepositStatusTone(row.status);
+    const network = normalizeNetwork(row.network || row.chain) || 'USDT';
+    const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
+    const createdAt = formatAssetDate(row.createdAt || row.created_at);
+    return `<div class="hist-row">
+      <span class="hist-icon dep">${SVG_DEP}</span>
+      <div class="hist-body">
+        <div class="hist-type">Deposit</div>
+        <div class="hist-meta">${escapeHtml(network)}${createdAt ? ' · ' + escapeHtml(createdAt) : ''}</div>
+      </div>
+      <div class="hist-right">
+        <div class="hist-amount">+${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</div>
+        <span class="hist-badge ${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function loadWithdrawalHistory() {
-  if (!withdrawHistoryListEl) {
-    return;
-  }
-
+  if (!histWithdrawalList) return;
+  histWithdrawalEmpty?.classList.add('hidden');
+  histWithdrawalList.innerHTML = '<div class="history-empty-wrap"><span>Loading...</span></div>';
   try {
-    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">Loading withdrawal history...</p>';
     const { response, payload } = await requestJson('/api/withdrawals?limit=25', { method: 'GET' });
-
-    if (response.status === 404) {
-      state.withdrawals = [];
-      renderWithdrawalHistory();
-      return;
-    }
-
+    if (response.status === 404) { state.withdrawals = []; renderWithdrawalHistory(); return; }
     if (response.status === 401 || response.status === 403) {
-      withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">Login to view withdrawal history.</p>';
+      histWithdrawalList.innerHTML = '<div class="history-empty-wrap"><span>Login to view history.</span></div>';
       return;
     }
-
-    if (!response.ok) {
-      throw new Error(String(payload?.message || 'Unable to load withdrawal history.'));
-    }
-
-    const withdrawals = Array.isArray(payload?.withdrawals)
-      ? payload.withdrawals
-      : Array.isArray(payload?.data?.withdrawals)
-        ? payload.data.withdrawals
-        : Array.isArray(payload)
-          ? payload
-          : [];
-    state.withdrawals = withdrawals;
+    if (!response.ok) throw new Error(String(payload?.message || 'Unable to load.'));
+    state.withdrawals = Array.isArray(payload?.withdrawals) ? payload.withdrawals
+      : Array.isArray(payload?.data?.withdrawals) ? payload.data.withdrawals
+      : Array.isArray(payload) ? payload : [];
     renderWithdrawalHistory();
   } catch (error) {
     console.error(error);
-    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">Withdrawal history is unavailable right now.</p>';
+    histWithdrawalList.innerHTML = '<div class="history-empty-wrap"><span>Unavailable right now.</span></div>';
   }
+}
+
+async function loadDepositHistory() {
+  if (!histDepositList) return;
+  histDepositEmpty?.classList.add('hidden');
+  histDepositList.innerHTML = '<div class="history-empty-wrap"><span>Loading...</span></div>';
+  try {
+    const { response, payload } = await requestJson('/api/deposits?limit=25', { method: 'GET' });
+    if (response.status === 404) { state.deposits = []; renderDepositHistory(); return; }
+    if (response.status === 401 || response.status === 403) {
+      histDepositList.innerHTML = '<div class="history-empty-wrap"><span>Login to view history.</span></div>';
+      return;
+    }
+    if (!response.ok) throw new Error(String(payload?.message || 'Unable to load.'));
+    state.deposits = Array.isArray(payload?.deposits) ? payload.deposits
+      : Array.isArray(payload?.data?.deposits) ? payload.data.deposits
+      : Array.isArray(payload) ? payload : [];
+    renderDepositHistory();
+  } catch (error) {
+    console.error(error);
+    histDepositList.innerHTML = '<div class="history-empty-wrap"><span>Unavailable right now.</span></div>';
+  }
+}
+
+function setHistTab(tab) {
+  state.histTab = tab;
+  histTabs.forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-hist-tab') === tab));
+  histDepositPanel?.classList.toggle('hidden', tab !== 'deposit');
+  histWithdrawalPanel?.classList.toggle('hidden', tab !== 'withdrawal');
+}
+
+function openHistoryScreen() {
+  if (!historyScreen) return;
+  historyScreen.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  setHistTab('deposit');
+  loadDepositHistory();
+  loadWithdrawalHistory();
+}
+
+function closeHistoryScreen() {
+  historyScreen?.classList.add('hidden');
+  document.body.style.overflow = 'auto';
 }
 
 async function requestWithdrawal(amount, address, network) {
@@ -997,7 +1063,7 @@ async function handleWithdrawSubmit(event) {
     if (withdrawForm) {
       withdrawForm.reset();
     }
-    await Promise.all([loadWalletSummary(), loadWithdrawalHistory()]);
+    await loadWalletSummary();
   } catch (error) {
     console.error(error);
     setWithdrawResult(String(error?.message || 'Withdrawal request failed.'), 'error');
@@ -1151,6 +1217,12 @@ function bindEvents() {
     setActionMessage('Transfer flow will be enabled in next release.');
   });
 
+  assetsHistoryBtn?.addEventListener('click', openHistoryScreen);
+  historyBackBtn?.addEventListener('click', closeHistoryScreen);
+  histTabs.forEach(btn => btn.addEventListener('click', () => setHistTab(btn.getAttribute('data-hist-tab'))));
+  histDepositRefreshBtn?.addEventListener('click', loadDepositHistory);
+  histWithdrawalRefreshBtn?.addEventListener('click', loadWithdrawalHistory);
+
   document.querySelectorAll('[data-modal-close]').forEach((node) => {
     node.addEventListener('click', () => {
       const modalId = node.getAttribute('data-modal-close');
@@ -1195,10 +1267,6 @@ function bindEvents() {
     stopWithdrawScanner();
   });
 
-  withdrawHistoryRefreshBtn?.addEventListener('click', () => {
-    loadWithdrawalHistory();
-  });
-
   withdrawForm?.addEventListener('submit', handleWithdrawSubmit);
 
   window.addEventListener('keydown', (event) => {
@@ -1220,8 +1288,6 @@ function bindEvents() {
   renderDepositAddress();
   renderBalances();
   renderWithdrawNetworkUi();
-  renderWithdrawalHistory();
   bindEvents();
   loadWalletSummary();
-  loadWithdrawalHistory();
 })();
