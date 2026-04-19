@@ -2564,6 +2564,8 @@ async function loadCurrentUser() {
       currentUser = normalizedUser;
       updateCurrentUserKyc(currentUser.kyc || {});
       try { localStorage.setItem('_p2p_hint', JSON.stringify({ id: getCurrentUserId(), username: currentUser.username, email: currentUser.email, role: currentUser.role, avatar: currentUser.avatar || '', createdAt: currentUser.createdAt || null })); } catch(_) {}
+      // Load merchant badge on login so ad cards show it immediately
+      loadMerchantBadge && loadMerchantBadge();
       // Single call — fetchOrdersSafe shows cache instantly then fetches fresh
       fetchOrdersSafe();
       _startFallbackPoll(); // 15s fallback poll in case SSE is down
@@ -6576,6 +6578,8 @@ async function loadMerchantBadge() {
       if (!b) return;
       // Store globally so ad cards can use it as fallback
       _myMerchantBadge = data.badge;
+      // Re-render offer cards so the badge appears immediately
+      if (typeof renderOffers === 'function') renderOffers();
       // Show badge in profile
       var badgeEl = document.getElementById('mobMerchantBadge');
       if (badgeEl) {
