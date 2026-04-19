@@ -1832,6 +1832,9 @@ app.put('/api/p2p/profile', requiresP2PUser, async (req, res) => {
     // Update wallet username
     await collections.wallets.updateOne({ userId }, { $set: { username: newUsername } });
 
+    // Update ALL active sessions so refresh returns the new username immediately
+    await collections.p2pUserSessions.updateMany({ userId }, { $set: { username: newUsername } });
+
     return res.json({ ok: true, nickname: newUsername, message: 'Username updated.' });
   } catch (err) {
     console.error('[profile] update error:', err.message);
