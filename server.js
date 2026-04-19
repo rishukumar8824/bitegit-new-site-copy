@@ -2754,16 +2754,23 @@ app.get('/api/p2p/offers', async (req, res) => {
     const enriched = await Promise.all(paginated.map(async (offer) => {
       try {
         const userId = offer.createdByUserId;
-        if (!userId) return offer;
-        const rep = await repos.getUserReputation(userId);
-        // Look up approved merchant badge for this advertiser
+        const advertiserName = offer.advertiser || '';
+
+        // Always look up merchant badge — by userId if available, always fallback to username
         let merchantBadge = null;
         for (const [, app] of merchantApplications) {
-          if (String(app.userId) === String(userId) && app.status === 'approved' && app.assignedBadge) {
-            merchantBadge = app.assignedBadge; // 1=Verified, 2=Pro, 3=Elite
-            break;
+          if (app.status === 'approved' && app.assignedBadge) {
+            const userIdMatch = userId && String(app.userId) === String(userId);
+            const usernameMatch = advertiserName && app.username === advertiserName;
+            if (userIdMatch || usernameMatch) {
+              merchantBadge = app.assignedBadge; // 1=Verified, 2=Pro, 3=Elite
+              break;
+            }
           }
         }
+
+        if (!userId) return { ...offer, merchantBadge };
+        const rep = await repos.getUserReputation(userId);
         return { ...offer, reputation: rep || undefined, merchantBadge };
       } catch (_) { return offer; }
     }));
