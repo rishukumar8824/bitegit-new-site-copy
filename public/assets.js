@@ -16,6 +16,7 @@ const panels = Array.from(document.querySelectorAll('[data-assets-panel]'));
 const depositBtn = document.getElementById('assetsDepositBtn');
 const withdrawBtn = document.getElementById('assetsWithdrawBtn');
 const transferBtn = document.getElementById('assetsTransferBtn');
+const historyBtn = document.getElementById('assetsHistoryBtn');
 
 const depositModal = document.getElementById('depositModal');
 const withdrawModal = document.getElementById('withdrawModal');
@@ -39,6 +40,7 @@ const withdrawScannerCloseBtn = document.getElementById('assetsWithdrawScannerCl
 const withdrawAmountInput = document.getElementById('assetsWithdrawAmount');
 const withdrawResultEl = document.getElementById('assetsWithdrawResult');
 const withdrawSubmitBtn = document.getElementById('assetsWithdrawSubmitBtn');
+const historySectionEl = document.getElementById('assetsHistorySection');
 const withdrawHistoryListEl = document.getElementById('assetsWithdrawHistoryList');
 const withdrawHistoryRefreshBtn = document.getElementById('assetsWithdrawHistoryRefreshBtn');
 const historyTabButtons = Array.from(document.querySelectorAll('[data-history-tab]'));
@@ -929,13 +931,25 @@ async function loadDepositHistory() {
   if (!response.ok) {
     throw new Error(String(payload?.message || 'Unable to load deposit history.'));
   }
-  state.deposits = Array.isArray(payload?.deposits)
+  const deposits = Array.isArray(payload?.deposits)
     ? payload.deposits
     : Array.isArray(payload?.data?.deposits)
       ? payload.data.deposits
       : Array.isArray(payload)
         ? payload
         : [];
+  state.deposits = deposits.filter((row) => {
+    const type = String(row?.type || '').trim().toUpperCase();
+    const source = String(row?.source || row?.metadata?.source || '').trim().toLowerCase();
+    if (['MANUAL_ADJUSTMENT', 'ADMIN_ADJUSTMENT', 'BALANCE_ADJUSTMENT'].includes(type)) {
+      return false;
+    }
+    return (
+      ['ONCHAIN', 'CRYPTO', 'CRYPTO_DEPOSIT', 'USER_DEPOSIT'].includes(type) ||
+      ['api.deposits', 'assets_deposit', 'user_deposit'].includes(source) ||
+      Boolean(String(row?.txHash || row?.txid || row?.proofUrl || '').trim())
+    );
+  });
 }
 
 async function loadWithdrawalHistory() {
@@ -1040,7 +1054,7 @@ async function handleWithdrawSubmit(event) {
     if (withdrawForm) {
       withdrawForm.reset();
     }
-    await Promise.all([loadWalletSummary(), loadHistory()]);
+    await Promise.all([loadWalletSummary(), historySectionEl?.classList.contains('hidden') ? Promise.resolve() : loadHistory()]);
   } catch (error) {
     console.error(error);
     setWithdrawResult(String(error?.message || 'Withdrawal request failed.'), 'error');
@@ -1194,6 +1208,12 @@ function bindEvents() {
     setActionMessage('Transfer flow will be enabled in next release.');
   });
 
+  historyBtn?.addEventListener('click', async () => {
+    historySectionEl?.classList.remove('hidden');
+    await loadHistory();
+    historySectionEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
   document.querySelectorAll('[data-modal-close]').forEach((node) => {
     node.addEventListener('click', () => {
       const modalId = node.getAttribute('data-modal-close');
@@ -1277,5 +1297,4 @@ function bindEvents() {
   renderWithdrawalHistory();
   bindEvents();
   loadWalletSummary();
-  loadHistory();
 })();

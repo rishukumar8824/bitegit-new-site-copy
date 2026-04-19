@@ -152,7 +152,7 @@
     .assets-summary-line.success{color:#bdf8d4;}
   </style>
   <script src="/app-nav.js?v=20260416d" defer></script>
-  <script src="/assets.js?v=20260419d" defer></script>
+  <script src="/assets.js?v=20260419e" defer></script>
 </head>
 <body class="has-mobile-nav">
 
@@ -230,7 +230,7 @@
       </span>
       <span class="act-label">Transfer</span>
     </button>
-    <button class="act-btn" type="button">
+    <button class="act-btn" id="assetsHistoryBtn" type="button">
       <span class="act-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
@@ -292,7 +292,7 @@
   <div data-assets-panel="spot" class="asset-list hidden" id="assetsCoinListSpot"></div>
   <div data-assets-panel="funding" class="asset-list hidden" id="assetsCoinListFunding"></div>
 
-  <section class="withdraw-history" aria-labelledby="assetsHistoryTitle">
+  <section class="withdraw-history hidden" id="assetsHistorySection" aria-labelledby="assetsHistoryTitle">
     <div class="withdraw-history-head">
       <h2 class="withdraw-history-title" id="assetsHistoryTitle">History</h2>
       <div class="history-head-actions">

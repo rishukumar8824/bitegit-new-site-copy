@@ -1148,7 +1148,14 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     const rows = await adminDeposits
       .find({
         userId: normalizedUserId,
-        type: { $ne: 'MANUAL_ADJUSTMENT' }
+        type: { $nin: ['MANUAL_ADJUSTMENT', 'ADMIN_ADJUSTMENT', 'BALANCE_ADJUSTMENT'] },
+        $or: [
+          { source: { $in: ['api.deposits', 'assets_deposit', 'user_deposit'] } },
+          { type: { $in: ['ONCHAIN', 'CRYPTO', 'CRYPTO_DEPOSIT', 'USER_DEPOSIT'] } },
+          { txHash: { $exists: true, $ne: '' } },
+          { txid: { $exists: true, $ne: '' } },
+          { proofUrl: { $exists: true, $ne: '' } }
+        ]
       })
       .sort({ createdAt: -1 })
       .limit(limit)
