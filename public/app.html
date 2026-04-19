@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#000000"/>
+  <title>Bitegit App</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+    .hidden{display:none!important}
+
+    /* ── SCREEN ── */
+    .screen{
+      position:absolute;inset:0;
+      background:#000;
+      display:flex;flex-direction:column;
+      transform:translateX(100%);
+      transition:transform .25s cubic-bezier(.4,0,.2,1);
+      z-index:10;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    .screen.active{transform:translateX(0)}
+    .screen.slide-back{transform:translateX(100%)}
+
+    /* ── HEADER ── */
+    .s-hdr{display:flex;align-items:center;gap:.7rem;padding:.85rem 1rem;border-bottom:1px solid rgba(255,255,255,.07);background:#000;position:sticky;top:0;z-index:50;flex-shrink:0}
+    .s-back{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:.05rem .4rem;line-height:1;display:flex;align-items:center}
+    .s-title{flex:1;font-size:1.02rem;font-weight:700;text-align:center}
+    .s-right{background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.82rem;white-space:nowrap;padding:.2rem .3rem}
+
+    /* ── BOTTOM NAV ── */
+    .bnav{
+      position:fixed;bottom:0;left:0;right:0;
+      background:#0d0d0d;
+      border-top:1px solid rgba(255,255,255,.08);
+      display:flex;align-items:center;
+      padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom));
+      z-index:500;
+    }
+    .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:.2rem;cursor:pointer;padding:.15rem 0}
+    .bnav-ico{font-size:1.25rem;line-height:1}
+    .bnav-lbl{font-size:.65rem;color:#8a9bb5;font-weight:500}
+    .bnav-lbl.on{color:#fff}
+
+    /* ── BUTTONS ── */
+    .g-btn{display:block;width:calc(100% - 2rem);margin:0 auto;padding:.88rem;background:#c8f439;border:none;border-radius:50px;font-size:.98rem;font-weight:800;color:#000;cursor:pointer;text-align:center}
+    .w-btn{display:block;width:calc(100% - 2rem);margin:0 auto;padding:.88rem;background:#fff;border:none;border-radius:50px;font-size:.98rem;font-weight:800;color:#000;cursor:pointer;text-align:center}
+    .ghost-btn{background:#1a1a1a;border:none;border-radius:50px;color:#fff;font-size:.82rem;font-weight:600;padding:.5rem 1.2rem;cursor:pointer}
+
+    /* ── EMPTY STATE ── */
+    .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:.75rem;padding:3rem 1rem}
+    .empty-ico{opacity:.3}
+    .empty-txt{font-size:.85rem;color:#8a9bb5}
+
+    /* ── LIST ROWS ── */
+    .menu-list{padding:0 1rem}
+    .mrow{display:flex;align-items:center;justify-content:space-between;padding:.92rem 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+    .mrow:last-child{border-bottom:none}
+    .mrow-lbl{font-size:.94rem;color:#fff}
+    .mrow-right{display:flex;align-items:center;gap:.35rem;color:#8a9bb5;font-size:.83rem}
+    .mchev{color:#8a9bb5;font-size:.8rem}
+
+    /* ── SELECT LIST ── */
+    .sel-list{padding:0 1rem}
+    .sel-row{display:flex;align-items:center;justify-content:space-between;padding:.92rem 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;font-size:.94rem;color:#fff}
+    .sel-row:last-child{border-bottom:none}
+    .chk{color:#c8f439;font-size:1rem}
+
+    /* ── TABS ── */
+    .tab-bar{display:flex;border-bottom:1px solid rgba(255,255,255,.08);background:#000;flex-shrink:0;position:sticky;top:57px;z-index:40}
+    .tab-btn{flex:1;background:none;border:none;border-bottom:2.5px solid transparent;color:#8a9bb5;font-size:.88rem;font-weight:600;padding:.7rem .4rem;cursor:pointer;font-family:inherit;white-space:nowrap}
+    .tab-btn.on{color:#fff;border-bottom-color:#fff}
+    .sub-tabs{display:flex;gap:.5rem;padding:.7rem 1rem;background:#000;flex-shrink:0}
+    .sub-tab{background:#1a1a1a;border:none;border-radius:50px;color:#8a9bb5;font-size:.8rem;font-weight:600;padding:.38rem .85rem;cursor:pointer;font-family:inherit}
+    .sub-tab.on{background:#2c2c2c;color:#fff}
+
+    /* ── SEARCH ── */
+    .srch-wrap{padding:.7rem 1rem}
+    .srch-box{display:flex;align-items:center;gap:.45rem;background:#1a1a1a;border-radius:22px;padding:.5rem .82rem}
+    .srch-box input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:.9rem}
+    .srch-box .clr{background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.95rem}
+
+    /* ── COIN ROW ── */
+    .coin-row{display:flex;align-items:center;gap:.75rem;padding:.72rem 1rem;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
+    .coin-row:last-child{border-bottom:none}
+    .coin-ico{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.88rem;flex-shrink:0}
+    .coin-name{font-weight:700;font-size:.9rem}
+    .coin-sub{font-size:.76rem;color:#8a9bb5}
+    .sec-title{font-size:.73rem;color:#8a9bb5;font-weight:600;padding:.55rem 1rem .3rem}
+    .alpha-idx{position:fixed;right:3px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:1px;z-index:100}
+    .alpha-idx span{font-size:.55rem;color:#8a9bb5;padding:1px 4px;cursor:pointer}
+
+    /* ── DEPOSIT DETAIL ── */
+    .qr-box{display:flex;justify-content:center;padding:1.3rem 1rem .8rem}
+    .dep-field-label{font-size:.76rem;color:#8a9bb5;margin-bottom:.3rem}
+    .dep-addr-box{background:#1a1a1a;border-radius:10px;padding:.65rem .85rem;margin:0 1rem;display:flex;align-items:center;gap:.5rem}
+    .dep-addr-txt{flex:1;font-size:.77rem;color:#fff;word-break:break-all;line-height:1.45}
+    .copy-btn{background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.95rem;padding:.1rem .3rem;flex-shrink:0}
+    .dep-drop{display:flex;align-items:center;justify-content:space-between;background:#1a1a1a;border-radius:10px;padding:.65rem .9rem;margin:0 1rem;cursor:pointer;border:none;width:calc(100% - 2rem);color:#fff;font-size:.9rem}
+    .inline-row{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.06)}
+    .inline-key{font-size:.86rem;color:#8a9bb5}
+    .inline-val{font-size:.86rem;font-weight:600;color:#fff}
+    .dep-note{font-size:.74rem;color:#8a9bb5;padding:0 1rem .45rem;line-height:1.6;display:flex;gap:.4rem}
+    .dep-note::before{content:"•";flex-shrink:0}
+
+    /* ── TRANSFER ── */
+    .tf-label{font-size:.76rem;color:#8a9bb5;margin-bottom:.38rem}
+    .tf-account{font-size:1.02rem;font-weight:700;display:flex;align-items:center;gap:.3rem;cursor:pointer}
+    .tf-divider{display:flex;justify-content:center;padding:.45rem 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);margin:0 1rem}
+    .tf-swap{background:#1a1a1a;border:none;border-radius:50%;width:40px;height:40px;color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .tf-cur-box{background:#1a1a1a;border-radius:10px;padding:.68rem .88rem;display:flex;align-items:center;gap:.5rem;cursor:pointer}
+    .tf-cur-ico{width:28px;height:28px;border-radius:50%;background:#26a17b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+    .tf-qty-box{background:#1a1a1a;border-radius:10px;padding:.68rem .88rem;display:flex;align-items:center;gap:.5rem;margin-top:.5rem}
+    .tf-qty-input{flex:1;background:none;border:none;outline:none;color:#8a9bb5;font-size:.86rem;font-family:inherit}
+    .tf-all{color:#c8f439;font-size:.8rem;font-weight:700;background:none;border:none;cursor:pointer}
+    .tf-max{display:flex;justify-content:flex-end;font-size:.76rem;color:#8a9bb5;padding:.4rem .88rem 0}
+
+    /* ── PROFILE ── */
+    .prof-top{display:flex;flex-direction:column;align-items:center;padding:1.8rem 1rem 1rem;gap:.45rem}
+    .av-circle{width:72px;height:72px;border-radius:50%;background:#3d4a5c;display:flex;align-items:center;justify-content:center;position:relative}
+    .av-edit{position:absolute;bottom:0;right:0;width:22px;height:22px;background:#2a2a2a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#8a9bb5}
+    .prof-email{font-size:.9rem;font-weight:500}
+    .prof-uid{font-size:.76rem;color:#8a9bb5;display:flex;align-items:center;gap:.3rem}
+
+    /* ── MODAL ── */
+    .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;display:flex;align-items:flex-end}
+    .modal-sheet{background:#111;border-radius:16px 16px 0 0;width:100%;max-height:87vh;overflow-y:auto;padding:1.2rem 1rem calc(1.5rem + env(safe-area-inset-bottom))}
+    .modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.7rem}
+    .modal-ttl{font-size:1.02rem;font-weight:700}
+    .modal-cls{background:none;border:none;color:#8a9bb5;font-size:1.3rem;cursor:pointer}
+    .net-card{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.85rem 1rem;margin-bottom:.6rem;cursor:pointer}
+    .net-card.sel{border-color:#c8f439}
+    .net-name{font-size:.93rem;font-weight:700;margin-bottom:.22rem}
+    .net-det{font-size:.76rem;color:#8a9bb5;line-height:1.5}
+    .net-suspended{font-size:.72rem;color:#ff4d4d;font-weight:600;margin-bottom:.12rem}
+    .acct-card{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.82rem 1rem;margin-bottom:.6rem;cursor:pointer;font-size:.93rem;font-weight:600}
+    .acct-card.sel{border-color:#c8f439}
+
+    /* ── SECURITY MODAL ── */
+    .sec-prog{font-size:2.2rem;font-weight:800;margin:.35rem 0 1rem}
+    .sec-prog span{color:#3a3a3a}
+    .sec-item{border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.82rem 1rem;margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:.93rem;font-weight:600}
+
+    /* ── REFERRAL ── */
+    .ref-hero{text-align:center;padding:1.4rem 1.2rem .9rem}
+    .ref-ttl{font-size:1.38rem;font-weight:900;line-height:1.35;margin-bottom:.7rem}
+    .ref-ttl .hl{background:#c8f439;color:#000;border-radius:6px;padding:0 .32rem}
+    .ref-sub{font-size:.76rem;color:#8a9bb5;line-height:1.6;margin-bottom:.7rem}
+    .ref-card{background:#111;border-radius:14px;margin:0 1rem .85rem;padding:.95rem}
+    .ref-card-ttl{font-size:.9rem;font-weight:700;text-align:center;margin-bottom:.7rem}
+    .ref-field{background:#1a1a1a;border-radius:10px;padding:.6rem .85rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+    .ref-fl{font-size:.72rem;color:#8a9bb5}
+    .ref-fv{font-size:.86rem;font-weight:600}
+    .ref-stat{background:#111;border-radius:14px;margin:0 1rem .85rem;padding:.95rem}
+    .ref-strow{display:flex;gap:1rem;margin-bottom:.55rem}
+    .ref-stcol{flex:1}
+    .ref-stlbl{font-size:.7rem;color:#8a9bb5;margin-bottom:.22rem}
+    .ref-stval{font-size:1.02rem;font-weight:700}
+    .ref-tabs2{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.08);margin:0 1rem}
+    .ref-tab2{background:none;border:none;border-bottom:2px solid transparent;color:#8a9bb5;font-size:.86rem;font-weight:600;padding:.58rem .85rem;cursor:pointer;font-family:inherit}
+    .ref-tab2.on{color:#fff;border-bottom-color:#fff}
+    .info-bar{display:flex;align-items:center;gap:.5rem;padding:.6rem 1rem;background:#1a1a1a;font-size:.74rem;color:#8a9bb5;margin:.75rem 0 0}
+    .info-ico{width:17px;height:17px;border-radius:50%;border:1px solid #8a9bb5;display:flex;align-items:center;justify-content:center;font-size:.62rem;flex-shrink:0}
+
+    /* ── HOT SEARCH ── */
+    .hs-pair-row{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
+    .hs-rank{font-size:.9rem;font-weight:700;width:22px;flex-shrink:0}
+    .hs-coin{display:flex;align-items:center;gap:.5rem;flex:1}
+    .hs-pair-name{font-size:.92rem;font-weight:600}
+    .hs-price{text-align:right}
+    .hs-price-val{font-size:.9rem;font-weight:600}
+    .hs-chg{font-size:.75rem;color:#ff5f82}
+
+    /* ── NICK ── */
+    .nick-input{width:100%;background:#1a1a1a;border:none;border-radius:10px;padding:.82rem 1rem;color:#8a9bb5;font-size:.9rem;font-family:inherit;outline:none}
+    .nick-rule{display:flex;gap:.45rem;font-size:.76rem;color:#8a9bb5;line-height:1.55;margin-bottom:.45rem}
+    .nick-rule::before{content:"•";flex-shrink:0}
+
+    /* ── COLOR OPTION ── */
+    .col-opt{display:flex;align-items:center;gap:.7rem;padding:.92rem 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+    .col-opt:last-child{border-bottom:none}
+    .col-lbl{flex:1;font-size:.9rem;font-weight:600}
+
+    /* ── REWARDS BNAV ── */
+    .rbnav{display:flex;border-top:1px solid rgba(255,255,255,.08);background:#111;flex-shrink:0;margin-top:auto}
+    .rbnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer;padding:.5rem 0}
+    .rbnav-ico{font-size:1.25rem}
+    .rbnav-lbl{font-size:.65rem;color:#8a9bb5}
+    .rbnav-lbl.on{color:#fff}
+
+    /* SPACER for bnav */
+    .bnav-spacer{height:calc(64px + env(safe-area-inset-bottom));flex-shrink:0}
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+  HOME SCREEN
+════════════════════════════════════════════ -->
+<div class="screen active" id="sHome">
+  <div class="s-hdr" style="border-bottom:none;padding:1rem">
+    <span style="font-size:1.1rem;font-weight:800;color:#00e5ff">BITEGIT</span>
+    <span style="flex:1"></span>
+    <button class="s-back" style="font-size:1rem;color:#8a9bb5" onclick="go('sHotSearch')">🔍</button>
+  </div>
+  <div style="padding:1rem">
+    <div style="font-size:1.5rem;font-weight:800;margin-bottom:.3rem">Total Assets (USDT)</div>
+    <div style="font-size:2.2rem;font-weight:900;margin-bottom:.15rem">0.0000</div>
+    <div style="font-size:.82rem;color:#8a9bb5;margin-bottom:1.5rem">≈ $0.00</div>
+    <!-- Quick actions -->
+    <div style="display:flex;gap:.6rem;margin-bottom:1.5rem">
+      <button onclick="go('sDeposit')" style="flex:1;background:#c8f439;border:none;border-radius:10px;padding:.65rem;font-weight:800;font-size:.88rem;color:#000;cursor:pointer">Deposit</button>
+      <button onclick="go('sWithdrawRecord')" style="flex:1;background:#1a1a1a;border:none;border-radius:10px;padding:.65rem;font-weight:700;font-size:.88rem;color:#fff;cursor:pointer">Withdraw</button>
+      <button onclick="go('sTransfer')" style="flex:1;background:#1a1a1a;border:none;border-radius:10px;padding:.65rem;font-weight:700;font-size:.88rem;color:#fff;cursor:pointer">Transfer</button>
+    </div>
+    <!-- Sections -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+      <div onclick="go('sProfile')" style="background:#111;border-radius:14px;padding:1rem;cursor:pointer">
+        <div style="font-size:1.5rem;margin-bottom:.35rem">👤</div>
+        <div style="font-size:.88rem;font-weight:700">Profile</div>
+        <div style="font-size:.72rem;color:#8a9bb5">Account & Security</div>
+      </div>
+      <div onclick="go('sGeneralSettings')" style="background:#111;border-radius:14px;padding:1rem;cursor:pointer">
+        <div style="font-size:1.5rem;margin-bottom:.35rem">⚙️</div>
+        <div style="font-size:.88rem;font-weight:700">Settings</div>
+        <div style="font-size:.72rem;color:#8a9bb5">Language, Color…</div>
+      </div>
+      <div onclick="go('sRewards')" style="background:#111;border-radius:14px;padding:1rem;cursor:pointer">
+        <div style="font-size:1.5rem;margin-bottom:.35rem">🎁</div>
+        <div style="font-size:.88rem;font-weight:700">Rewards</div>
+        <div style="font-size:.72rem;color:#8a9bb5">Bonuses & Referral</div>
+      </div>
+      <div onclick="go('sRecord')" style="background:#111;border-radius:14px;padding:1rem;cursor:pointer">
+        <div style="font-size:1.5rem;margin-bottom:.35rem">📋</div>
+        <div style="font-size:.88rem;font-weight:700">Records</div>
+        <div style="font-size:.72rem;color:#8a9bb5">Deposit & Withdraw</div>
+      </div>
+    </div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  HOT SEARCH
+════════════════════════════════════════════ -->
+<div class="screen" id="sHotSearch">
+  <div class="s-hdr" style="border-bottom:none">
+    <div class="srch-box" style="flex:1">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="🔥 BTC"/>
+      <button class="clr">✕</button>
+    </div>
+    <button onclick="back()" style="background:none;border:none;color:#c8f439;font-size:.88rem;font-weight:600;cursor:pointer;padding:.2rem .3rem;margin-left:.5rem">Cancel</button>
+  </div>
+  <div style="padding:.75rem 1rem .35rem;font-size:.88rem;font-weight:700">Hot Search</div>
+  <div class="sub-tabs" style="padding:.5rem 1rem .7rem">
+    <button class="sub-tab on">Spot</button>
+    <button class="sub-tab">Futures</button>
+    <button class="sub-tab">Earn</button>
+  </div>
+  <div class="hs-pair-row"><span class="hs-rank" style="color:#e84142">1</span><div class="hs-coin"><span class="coin-ico" style="background:#f7931a;width:28px;height:28px;font-size:.75rem">₿</span><span class="hs-pair-name">BTC/USDT</span></div><div class="hs-price"><div class="hs-price-val">75,575.99</div><div class="hs-chg">-2.15%</div></div></div>
+  <div class="hs-pair-row"><span class="hs-rank" style="color:#e8a142">2</span><div class="hs-coin"><span class="coin-ico" style="background:#627eea;width:28px;height:28px;font-size:.75rem">Ξ</span><span class="hs-pair-name">ETH/USDT</span></div><div class="hs-price"><div class="hs-price-val">2,346.75</div><div class="hs-chg">-3.05%</div></div></div>
+  <div class="hs-pair-row"><span class="hs-rank" style="color:#c8a83b">3</span><div class="hs-coin"><span class="coin-ico" style="background:#6b4b28;width:28px;height:28px;font-size:.6rem">WZB</span><span class="hs-pair-name">WZB/USDT</span></div><div class="hs-price"><div class="hs-price-val">3.1972</div><div class="hs-chg">-0.51%</div></div></div>
+  <div class="hs-pair-row"><span class="hs-rank">4</span><div class="hs-coin"><span class="coin-ico" style="background:#2ebac6;width:28px;height:28px;font-size:.6rem">AA</span><span class="hs-pair-name">AAVE/USDT</span></div><div class="hs-price"><div class="hs-price-val">98.88</div><div class="hs-chg">-14.18%</div></div></div>
+  <div class="hs-pair-row"><span class="hs-rank">5</span><div class="hs-coin"><span class="coin-ico" style="background:#0033ad;width:28px;height:28px;font-size:.75rem">₳</span><span class="hs-pair-name">ADA/USDT</span></div><div class="hs-price"><div class="hs-price-val">0.2481</div><div class="hs-chg">-3.57%</div></div></div>
+  <div class="hs-pair-row"><span class="hs-rank">6</span><div class="hs-coin"><span class="coin-ico" style="background:#ff0420;width:28px;height:28px;font-size:.65rem">OP</span><span class="hs-pair-name">OP/USDT</span></div><div class="hs-price"><div class="hs-price-val">0.1236</div><div class="hs-chg">-6.99%</div></div></div>
+  <div class="hs-pair-row"><span class="hs-rank">7</span><div class="hs-coin"><span class="coin-ico" style="background:#ba9f33;width:28px;height:28px;font-size:.65rem">🐕</span><span class="hs-pair-name">DOGE/USDT</span></div><div class="hs-price"><div class="hs-price-val">0.09486</div><div class="hs-chg">-4.3%</div></div></div>
+  <div class="hs-pair-row"><span class="hs-rank">8</span><div class="hs-coin"><span class="coin-ico" style="background:#e84142;width:28px;height:28px;font-size:.65rem">AV</span><span class="hs-pair-name">AVAX/USDT</span></div><div class="hs-price"><div class="hs-price-val">9.27</div><div class="hs-chg">-4.53%</div></div></div>
+  <div class="hs-pair-row"><span class="hs-rank">9</span><div class="hs-coin"><span class="coin-ico" style="background:#627eea;width:28px;height:28px;font-size:.65rem">Ξ</span><span class="hs-pair-name">ETH/USDC</span></div><div class="hs-price"><div class="hs-price-val">2,347.71</div><div class="hs-chg">-3.06%</div></div></div>
+  <div class="hs-pair-row"><span class="hs-rank">10</span><div class="hs-coin"><span class="coin-ico" style="background:#f0b90b;width:28px;height:28px;font-size:.65rem">🅱</span><span class="hs-pair-name">BNB/USDT</span></div><div class="hs-price"><div class="hs-price-val">627.73</div><div class="hs-chg">-2.55%</div></div></div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  DEPOSIT — COIN LIST
+════════════════════════════════════════════ -->
+<div class="screen" id="sDeposit">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">Deposit</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="srch-wrap">
+    <div class="srch-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search"/>
+      <button class="clr">✕</button>
+    </div>
+  </div>
+  <div class="sec-title">Popular Coins</div>
+  <div class="coin-row" onclick="go('sDepositDetail')"><div class="coin-ico" style="background:#26a17b;color:#fff">₮</div><div><div class="coin-name">USDT</div><div class="coin-sub">Tether USDT</div></div></div>
+  <div class="coin-row" onclick="go('sDepositDetail')"><div class="coin-ico" style="background:#2775ca;color:#fff">$</div><div><div class="coin-name">USDC</div><div class="coin-sub">USDC</div></div></div>
+  <div class="coin-row" onclick="go('sDepositDetail')"><div class="coin-ico" style="background:#f7931a;color:#fff">₿</div><div><div class="coin-name">BTC</div><div class="coin-sub">BTC</div></div></div>
+  <div class="coin-row" onclick="go('sDepositDetail')"><div class="coin-ico" style="background:#627eea;color:#fff">Ξ</div><div><div class="coin-name">ETH</div><div class="coin-sub">ETH</div></div></div>
+  <div class="sec-title">0</div>
+  <div class="coin-row" onclick="go('sDepositDetail')"><div class="coin-ico" style="background:#9b59b6;color:#fff">0G</div><div><div class="coin-name">0G</div><div class="coin-sub">0G</div></div></div>
+  <div class="sec-title">1</div>
+  <div class="coin-row" onclick="go('sDepositDetail')"><div class="coin-ico" style="background:#1b314f;color:#fff">1↑</div><div><div class="coin-name">1INCH</div><div class="coin-sub">1INCH</div></div></div>
+  <div class="sec-title">A</div>
+  <div class="coin-row" onclick="go('sDepositDetail')"><div class="coin-ico" style="background:#2ebac6;color:#fff">A</div><div><div class="coin-name">AAVE</div><div class="coin-sub">AAVE</div></div></div>
+  <div class="coin-row" onclick="go('sDepositDetail')"><div class="coin-ico" style="background:#0033ad;color:#fff">₳</div><div><div class="coin-name">ADA</div><div class="coin-sub">Cardano</div></div></div>
+  <div class="coin-row" onclick="go('sDepositDetail')"><div class="coin-ico" style="background:#e84142;color:#fff">AV</div><div><div class="coin-name">AVAX</div><div class="coin-sub">Avalanche</div></div></div>
+  <div class="alpha-idx"><span>0</span><span>1</span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span><span>K</span><span>L</span><span>M</span><span>N</span><span>O</span><span>P</span><span>R</span><span>S</span><span>T</span><span>U</span><span>V</span><span>W</span><span>X</span><span>Y</span><span>Z</span></div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  DEPOSIT USDT DETAIL
+════════════════════════════════════════════ -->
+<div class="screen" id="sDepositDetail">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">Deposit USDT</span>
+    <button class="s-right" onclick="go('sRecord')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 12h6M9 17h4"/><circle cx="17" cy="17" r="3"/><path d="M17 15v2l1 1"/></svg>
+    </button>
+  </div>
+  <div class="qr-box">
+    <svg viewBox="0 0 100 100" width="178" height="178" style="background:#fff;border-radius:12px;padding:8px">
+      <rect width="100" height="100" fill="white"/>
+      <rect x="5" y="5" width="30" height="30" fill="black"/><rect x="10" y="10" width="20" height="20" fill="white"/><rect x="15" y="15" width="10" height="10" fill="black"/>
+      <rect x="65" y="5" width="30" height="30" fill="black"/><rect x="70" y="10" width="20" height="20" fill="white"/><rect x="75" y="15" width="10" height="10" fill="black"/>
+      <rect x="5" y="65" width="30" height="30" fill="black"/><rect x="10" y="70" width="20" height="20" fill="white"/><rect x="15" y="75" width="10" height="10" fill="black"/>
+      <rect x="40" y="5" width="5" height="5" fill="black"/><rect x="50" y="5" width="5" height="5" fill="black"/><rect x="40" y="15" width="5" height="5" fill="black"/><rect x="55" y="15" width="5" height="5" fill="black"/>
+      <rect x="45" y="25" width="5" height="5" fill="black"/><rect x="5" y="40" width="5" height="5" fill="black"/><rect x="15" y="40" width="5" height="5" fill="black"/>
+      <rect x="40" y="40" width="5" height="5" fill="black"/><rect x="50" y="40" width="5" height="5" fill="black"/><rect x="60" y="40" width="5" height="5" fill="black"/><rect x="70" y="40" width="5" height="5" fill="black"/><rect x="80" y="40" width="5" height="5" fill="black"/><rect x="90" y="40" width="5" height="5" fill="black"/>
+      <rect x="40" y="50" width="5" height="5" fill="black"/><rect x="55" y="50" width="5" height="5" fill="black"/><rect x="70" y="50" width="5" height="5" fill="black"/><rect x="85" y="50" width="5" height="5" fill="black"/>
+      <rect x="45" y="60" width="5" height="5" fill="black"/><rect x="60" y="60" width="5" height="5" fill="black"/><rect x="75" y="60" width="5" height="5" fill="black"/>
+      <rect x="40" y="70" width="5" height="5" fill="black"/><rect x="50" y="75" width="5" height="5" fill="black"/><rect x="65" y="70" width="5" height="5" fill="black"/>
+      <rect x="40" y="85" width="5" height="5" fill="black"/><rect x="55" y="85" width="5" height="5" fill="black"/><rect x="70" y="85" width="5" height="5" fill="black"/><rect x="85" y="85" width="5" height="5" fill="black"/>
+      <rect x="5" y="50" width="5" height="5" fill="black"/><rect x="20" y="55" width="5" height="5" fill="black"/><rect x="10" y="60" width="5" height="5" fill="black"/>
+      <rect x="10" y="75" width="5" height="5" fill="black"/><rect x="20" y="80" width="5" height="5" fill="black"/>
+    </svg>
+  </div>
+  <div style="margin-bottom:.5rem">
+    <div class="dep-field-label" style="padding:0 1rem .3rem">Deposit Network</div>
+    <button class="dep-drop" onclick="openModal('mNetwork')">
+      <span id="selNet">Tron (TRC20)</span><span style="color:#8a9bb5;font-size:.8rem">▼</span>
+    </button>
+  </div>
+  <div style="padding:.7rem 1rem .3rem">
+    <div class="dep-field-label" style="margin-bottom:.32rem">Deposit Address</div>
+    <div class="dep-addr-box">
+      <span class="dep-addr-txt">THCKNyyLC3ZDqu27WLoTAExAWhTjbjdPSt</span>
+      <button class="copy-btn" onclick="copyTxt('THCKNyyLC3ZDqu27WLoTAExAWhTjbjdPSt')">⧉</button>
+    </div>
+  </div>
+  <div class="inline-row"><span class="inline-key">Deposit Account</span><span style="display:flex;align-items:center;gap:.3rem"><span class="inline-val">Spot</span><button onclick="openModal('mSwitchAccount')" style="background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.7rem">▼</button></span></div>
+  <div class="inline-row"><span class="inline-key">Minimum Deposit Amount</span><span class="inline-val">1 USDT</span></div>
+  <div class="inline-row"><span class="inline-key">Deposit Arrival</span><span class="inline-val">20 Block Confirmations</span></div>
+  <div class="inline-row"><span class="inline-key">Withdrawal Unlock</span><span class="inline-val">25 Block Confirmations</span></div>
+  <div class="inline-row" style="margin-bottom:.75rem"><span class="inline-key">Contract Info</span><span class="inline-val">TR7N***Lj6t</span></div>
+  <div style="font-size:.9rem;font-weight:700;padding:.7rem 1rem .3rem">Deposit Instructions</div>
+  <div class="dep-note">Note: Please ensure you have confirmed the currency and address before making a deposit. Deposits made to other addresses cannot be retrieved!</div>
+  <div class="dep-note">Minimum deposit: 1 USDT. Deposits less than the minimum amount will not be credited and cannot be refunded.</div>
+  <div class="dep-note" style="margin-bottom:1.2rem">After deposit, 20 network confirmations required for crediting.</div>
+  <div style="padding:.5rem 0 1.5rem"><button class="g-btn" onclick="alert('QR saved!')">Save QR Code</button></div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  RECORD (Deposit / Withdraw)
+════════════════════════════════════════════ -->
+<div class="screen" id="sRecord">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">Record</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="tab-bar" style="top:57px">
+    <button class="tab-btn on" id="rDepTab" onclick="switchTab('dep')">Deposit</button>
+    <button class="tab-btn" id="rWdTab" onclick="switchTab('wd')">Withdraw</button>
+  </div>
+  <div id="rDepCont"><div class="empty"><svg width="68" height="68" viewBox="0 0 80 80" fill="none" class="empty-ico"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/><path d="M50 55L70 65L60 75Z" fill="#333"/></svg><div class="empty-txt">No Data yet</div></div></div>
+  <div id="rWdCont" class="hidden">
+    <div class="sub-tabs"><button class="sub-tab on" id="rOnChain" onclick="switchSub('on')">On-chain transfer</button><button class="sub-tab" id="rInternal" onclick="switchSub('in')">Internal transfer</button></div>
+    <div class="empty"><svg width="68" height="68" viewBox="0 0 80 80" fill="none" class="empty-ico"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/><path d="M50 55L70 65L60 75Z" fill="#333"/></svg><div class="empty-txt">No Data yet</div></div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  WITHDRAW RECORD (same layout)
+════════════════════════════════════════════ -->
+<div class="screen" id="sWithdrawRecord">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">Record</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="tab-bar" style="top:57px">
+    <button class="tab-btn" onclick="go('sRecord')">Deposit</button>
+    <button class="tab-btn on">Withdraw</button>
+  </div>
+  <div class="sub-tabs"><button class="sub-tab on">On-chain transfer</button><button class="sub-tab">Internal transfer</button></div>
+  <div class="empty"><svg width="68" height="68" viewBox="0 0 80 80" fill="none" class="empty-ico"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/><path d="M50 55L70 65L60 75Z" fill="#333"/></svg><div class="empty-txt">No Data yet</div></div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  TRANSFER
+════════════════════════════════════════════ -->
+<div class="screen" id="sTransfer">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">Transfer</span>
+    <button class="s-right" onclick="go('sTransferRecord')">Transfer Record</button>
+  </div>
+  <div style="padding:1rem 1rem .5rem">
+    <div class="tf-label">From</div>
+    <div class="tf-account" onclick="openModal('mSwitchAccount')"><span>Spot Account</span><span style="color:#8a9bb5;font-size:.85rem">▾</span></div>
+  </div>
+  <div class="tf-divider"><button class="tf-swap">⇅</button></div>
+  <div style="padding:.5rem 1rem 1rem">
+    <div class="tf-label">To</div>
+    <div class="tf-account" onclick="openModal('mSwitchAccount')"><span id="tfTo">Funding Account</span><span style="color:#8a9bb5;font-size:.85rem">▾</span></div>
+  </div>
+  <div style="padding:.8rem 1rem .4rem"><div class="tf-label">Currency</div><div class="tf-cur-box" onclick="go('sCoinSelect')"><div class="tf-cur-ico">₮</div><span style="flex:1;font-size:.9rem;font-weight:600">USDT</span><span style="color:#8a9bb5;font-size:.8rem">▼</span></div></div>
+  <div style="padding:.6rem 1rem 1rem"><div class="tf-label">Quantity</div><div class="tf-qty-box"><input class="tf-qty-input" type="number" placeholder="Please enter the transfer quantity"/><div style="display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:#8a9bb5"><span>USDT</span><button class="tf-all">All</button></div></div><div class="tf-max">Maximum transferable: <strong style="color:#fff;margin-left:.3rem">0.0000 USDT</strong></div></div>
+  <div style="padding:1.5rem 0 1rem"><button class="g-btn">Transfer Now</button></div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  TRANSFER RECORD
+════════════════════════════════════════════ -->
+<div class="screen" id="sTransferRecord">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">Transfer Record</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="empty"><svg width="68" height="68" viewBox="0 0 80 80" fill="none" class="empty-ico"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/><path d="M50 55L70 65L60 75Z" fill="#333"/></svg><div class="empty-txt">No Data yet</div></div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  COIN SELECTION
+════════════════════════════════════════════ -->
+<div class="screen" id="sCoinSelect">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">Coin Selection</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="srch-wrap"><div class="srch-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" placeholder="Search"/><button class="clr">✕</button></div></div>
+  <div class="sec-title">B</div>
+  <div class="coin-row" onclick="back()"><div class="coin-ico" style="background:#f7931a;color:#fff">₿</div><div><div class="coin-name">BTC <span style="color:#8a9bb5;font-weight:400;font-size:.8rem">BTC</span></div></div></div>
+  <div class="sec-title">U</div>
+  <div class="coin-row" onclick="back()"><div class="coin-ico" style="background:#26a17b;color:#fff">₮</div><div><div class="coin-name">USDT <span style="color:#8a9bb5;font-weight:400;font-size:.8rem">USDT</span></div></div></div>
+  <div class="alpha-idx"><span>B</span><span>U</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  PROFILE
+════════════════════════════════════════════ -->
+<div class="screen" id="sProfile">
+  <div class="s-hdr" style="border-bottom:none">
+    <button class="s-back" onclick="back()">‹</button>
+    <span style="flex:1"></span>
+  </div>
+  <div class="prof-top">
+    <div class="av-circle">
+      <svg viewBox="0 0 44 44" fill="none" width="44" height="44"><circle cx="22" cy="16" r="8" fill="#6b7280"/><ellipse cx="22" cy="36" rx="14" ry="9" fill="#6b7280"/></svg>
+      <div class="av-edit">✏</div>
+    </div>
+    <div class="prof-email">s****4@gmail.com</div>
+    <div class="prof-uid">UID:1132288 <button style="background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.75rem">⧉</button></div>
+  </div>
+  <div class="menu-list">
+    <div class="mrow" onclick="go('sNickname')"><span class="mrow-lbl">User Nickname</span><span class="mchev">›</span></div>
+    <div class="mrow" onclick="openModal('mSecurity')"><span class="mrow-lbl">Identity Verification</span><div class="mrow-right"><span style="color:#ff9f43">Uncompleted</span><span class="mchev">›</span></div></div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  EDIT NICKNAME
+════════════════════════════════════════════ -->
+<div class="screen" id="sNickname">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">Edit user nickname</span>
+    <span style="width:32px"></span>
+  </div>
+  <div style="padding:1.2rem 1rem .5rem"><div style="font-size:.86rem;color:#8a9bb5;margin-bottom:.5rem">My Nickname:</div><input class="nick-input" type="text" placeholder="Please enter the nickname" maxlength="12"/></div>
+  <div style="padding:.6rem 1rem 1.5rem">
+    <div class="nick-rule">Please enter 1-12 characters</div>
+    <div class="nick-rule">Only Chinese, English, and digits are supported. Special symbols are not supported</div>
+    <div class="nick-rule">Nicknames are removed using words such as verbal insults, political sensitivities, etc</div>
+    <div class="nick-rule">The Platform will review audited nicknames from time to time. If judged non-compliant, it may be cleared and you need to re-submit for review</div>
+  </div>
+  <button class="g-btn" onclick="alert('Saved!')">Save</button>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  GENERAL SETTINGS
+════════════════════════════════════════════ -->
+<div class="screen" id="sGeneralSettings">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">General Settings</span>
+    <span style="width:32px"></span>
+  </div>
+  <div style="font-size:1.3rem;font-weight:800;padding:1.1rem 1rem .4rem">General Settings</div>
+  <div class="menu-list">
+    <div class="mrow" onclick="go('sLanguage')"><span class="mrow-lbl">Language Setting</span><div class="mrow-right"><span>English</span><span class="mchev">›</span></div></div>
+    <div class="mrow" onclick="go('sPricing')"><span class="mrow-lbl">Pricing Method</span><div class="mrow-right"><span>USD</span><span class="mchev">›</span></div></div>
+    <div class="mrow" onclick="go('sChangeColor')"><span class="mrow-lbl">Change Color</span><div class="mrow-right"><span style="color:#00b897;font-size:.85rem">↑</span><span style="color:#ff5f82;font-size:.85rem">↓</span><span class="mchev">›</span></div></div>
+    <div class="mrow" onclick="go('sLineSwitch')"><span class="mrow-lbl">Line Switch</span><div class="mrow-right"><span>cn11</span><span style="background:#00b897;color:#000;font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:4px">0 ms</span><span class="mchev">›</span></div></div>
+    <div class="mrow" onclick="go('sNotification')"><span class="mrow-lbl">Message Notification</span><div class="mrow-right"><span>All Notifications</span><span class="mchev">›</span></div></div>
+    <div class="mrow" onclick="go('sPaymentMethod')"><span class="mrow-lbl">Payment Method</span><span class="mchev">›</span></div>
+    <div class="mrow" onclick="go('sCodeReception')"><span class="mrow-lbl">Code reception method</span><span class="mchev">›</span></div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  LANGUAGE
+════════════════════════════════════════════ -->
+<div class="screen" id="sLanguage">
+  <div class="s-hdr"><button class="s-back" onclick="back()">‹</button><span class="s-title">Language</span><span style="width:32px"></span></div>
+  <div class="sel-list" id="langList">
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>English</span><span class="chk">✓</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>Español</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>Français</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>Italiano</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>日本語</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>한국어</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>Português (Brasil)</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>Русский</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>Việt nam</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>简体中文</span></div>
+    <div class="sel-row" onclick="pickSel(this,'langList')"><span>繁体中文</span></div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  PRICING METHOD
+════════════════════════════════════════════ -->
+<div class="screen" id="sPricing">
+  <div class="s-hdr"><button class="s-back" onclick="back()">‹</button><span class="s-title">Pricing Method</span><span style="width:32px"></span></div>
+  <div class="sel-list" id="pricingList">
+    <div class="sel-row" onclick="pickSel(this,'pricingList')"><span>USD - $</span><span class="chk">✓</span></div>
+    <div class="sel-row" onclick="pickSel(this,'pricingList')"><span>CNY - ¥</span></div>
+    <div class="sel-row" onclick="pickSel(this,'pricingList')"><span>KRW - ₩</span></div>
+    <div class="sel-row" onclick="pickSel(this,'pricingList')"><span>JPY - ¥</span></div>
+    <div class="sel-row" onclick="pickSel(this,'pricingList')"><span>RUB - ₽</span></div>
+    <div class="sel-row" onclick="pickSel(this,'pricingList')"><span>VND - ₫</span></div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  CHANGE COLOR
+════════════════════════════════════════════ -->
+<div class="screen" id="sChangeColor">
+  <div class="s-hdr"><button class="s-back" onclick="back()">‹</button><span class="s-title">Change Color</span><span style="width:32px"></span></div>
+  <div class="menu-list" id="colorList">
+    <div class="col-opt" onclick="pickColor(this)">
+      <div style="display:flex;gap:3px"><span style="color:#00b897">↑</span><span style="color:#ff5f82">↓</span></div>
+      <span class="col-lbl">Green for Rising and Red for Falling</span>
+      <span class="chk">✓</span>
+    </div>
+    <div class="col-opt" onclick="pickColor(this)">
+      <div style="display:flex;gap:3px"><span style="color:#ff5f82">↑</span><span style="color:#00b897">↓</span></div>
+      <span class="col-lbl">Red for Rising and Green for Falling</span>
+    </div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  MESSAGE NOTIFICATION
+════════════════════════════════════════════ -->
+<div class="screen" id="sNotification">
+  <div class="s-hdr"><button class="s-back" onclick="back()">‹</button><span class="s-title">Message Notification</span><span style="width:32px"></span></div>
+  <div class="sel-list" id="notifList">
+    <div class="sel-row" onclick="pickSel(this,'notifList')"><span>All Notifications</span><span class="chk">✓</span></div>
+    <div class="sel-row" onclick="pickSel(this,'notifList')"><span>Disable Notifications</span></div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  PAYMENT METHOD
+════════════════════════════════════════════ -->
+<div class="screen" id="sPaymentMethod">
+  <div class="s-hdr"><button class="s-back" onclick="back()">‹</button><span class="s-title">Payment method</span><span style="width:32px"></span></div>
+  <div class="empty" style="padding-bottom:calc(3rem + 80px)"><svg width="68" height="68" viewBox="0 0 80 80" fill="none" class="empty-ico"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/><path d="M50 55L70 65L60 75Z" fill="#333"/></svg><div class="empty-txt">No Data yet</div></div>
+  <div style="padding:0 0 1.5rem"><button class="w-btn">AddPayment method</button></div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  CODE RECEPTION
+════════════════════════════════════════════ -->
+<div class="screen" id="sCodeReception">
+  <div class="s-hdr"><button class="s-back" onclick="back()">‹</button><span class="s-title">Code reception method</span><span style="width:32px"></span></div>
+  <div class="sel-list" id="codeList">
+    <div class="sel-row" onclick="pickSel(this,'codeList')"><span>SMS</span><span class="chk">✓</span></div>
+    <div class="sel-row" onclick="pickSel(this,'codeList')"><span>Email</span></div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  LINE SWITCH
+════════════════════════════════════════════ -->
+<div class="screen" id="sLineSwitch">
+  <div class="s-hdr"><button class="s-back" onclick="back()">‹</button><span class="s-title">Line Switch</span><span style="width:32px"></span></div>
+  <div class="sel-list" id="lineList">
+    <div class="sel-row" onclick="pickSel(this,'lineList')"><span style="display:flex;align-items:center;gap:.5rem">cn11 <span style="background:#00b897;color:#000;font-size:.62rem;font-weight:700;padding:1px 5px;border-radius:4px">0 ms</span></span><span class="chk">✓</span></div>
+    <div class="sel-row" onclick="pickSel(this,'lineList')"><span>sg01 <span style="color:#8a9bb5;font-size:.76rem">-- ms</span></span></div>
+    <div class="sel-row" onclick="pickSel(this,'lineList')"><span>us01 <span style="color:#8a9bb5;font-size:.76rem">-- ms</span></span></div>
+  </div>
+  <div class="bnav-spacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  MY REWARDS
+════════════════════════════════════════════ -->
+<div class="screen" id="sRewards">
+  <div class="s-hdr">
+    <button class="s-back" onclick="back()">‹</button>
+    <span class="s-title">My Rewards</span>
+    <button class="s-right"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 12h6M9 17h4"/><circle cx="17" cy="17" r="3"/><path d="M17 15v2l1 1"/></svg></button>
+  </div>
+  <div class="tab-bar" style="top:57px">
+    <button class="tab-btn on" id="rwdAll" onclick="switchRwd('all')">All Types(0)</button>
+    <button class="tab-btn" id="rwdFee" onclick="switchRwd('fee')">Contract experience fee(0)</button>
+  </div>
+  <div id="rwdAllC"><div class="empty" style="padding-bottom:calc(3rem + 80px)"><svg width="68" height="68" viewBox="0 0 80 80" fill="none" class="empty-ico"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/><path d="M50 55L70 65L60 75Z" fill="#333"/></svg><div class="empty-txt">No Data yet</div></div></div>
+  <div id="rwdFeeC" class="hidden"><div class="empty" style="padding-bottom:calc(3rem + 80px)"><svg width="68" height="68" viewBox="0 0 80 80" fill="none" class="empty-ico"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/><path d="M50 55L70 65L60 75Z" fill="#333"/></svg><div class="empty-txt">No Data yet</div></div></div>
+  <div class="rbnav">
+    <div class="rbnav-item" onclick="go('sWelfareCenter')"><div class="rbnav-ico">🏅</div><div class="rbnav-lbl">Welfare Center</div></div>
+    <div class="rbnav-item"><div class="rbnav-ico">🎁</div><div class="rbnav-lbl on">My Rewards</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  WELFARE CENTER
+════════════════════════════════════════════ -->
+<div class="screen" id="sWelfareCenter">
+  <div class="s-hdr"><button class="s-back" onclick="back()">‹</button><span class="s-title">Welfare Center</span><span style="width:32px"></span></div>
+  <div class="empty" style="padding-bottom:calc(3rem + 80px)"><svg width="68" height="68" viewBox="0 0 80 80" fill="none" class="empty-ico"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/><path d="M50 55L70 65L60 75Z" fill="#333"/></svg><div class="empty-txt">No Data yet</div></div>
+  <div class="rbnav">
+    <div class="rbnav-item"><div class="rbnav-ico">🏅</div><div class="rbnav-lbl on">Welfare Center</div></div>
+    <div class="rbnav-item" onclick="back()"><div class="rbnav-ico">🎁</div><div class="rbnav-lbl">My Rewards</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  REFERRAL COMMISSION
+════════════════════════════════════════════ -->
+<div class="screen" id="sReferral">
+  <div class="s-hdr"><button class="s-back" onclick="back()">‹</button><span class="s-title">Referral Commission</span><span style="width:32px"></span></div>
+  <div class="ref-hero">
+    <div class="ref-ttl">Invite Your Friends to Get It.<br><span class="hl">20%</span>Contract Trading<br>Commission Rebate</div>
+    <div class="ref-sub">Once your friend has completed registration and completed at least one contract transaction, they will be eligible for commission rebates.</div>
+    <button class="ghost-btn">View Rules</button>
+  </div>
+  <div class="ref-card">
+    <div class="ref-card-ttl">Invite Friends</div>
+    <div class="ref-field"><div><div class="ref-fl">Referral Code</div></div><div style="display:flex;align-items:center;gap:.4rem"><span class="ref-fv">FMl1x5lk</span><button class="copy-btn" onclick="copyTxt('FMl1x5lk')">⧉</button></div></div>
+    <div class="ref-field"><div><div class="ref-fl">Referral Link</div></div><div style="display:flex;align-items:center;gap:.4rem;max-width:60%"><span class="ref-fv" style="font-size:.76rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">https://bitegit.com/r...</span><button class="copy-btn" onclick="copyTxt('https://bitegit.com/r/FMl1x5lk')">⧉</button></div></div>
+    <div style="margin-top:.7rem"><button class="g-btn">Share Poster</button></div>
+  </div>
+  <div class="ref-stat">
+    <div class="ref-strow"><div class="ref-stcol"><div class="ref-stlbl">Number of Invited Friends</div><div class="ref-stval">0</div></div><div class="ref-stcol"><div class="ref-stlbl">My Rebate Percentage</div><div class="ref-stval">20.00%</div></div></div>
+    <div><div class="ref-stlbl">Total Commission Amount (USDT)</div><div class="ref-stval">0</div></div>
+  </div>
+  <div class="ref-tabs2">
+    <button class="ref-tab2 on" id="refRec" onclick="switchRef('rec')">Rebate Records</button>
+    <button class="ref-tab2" id="refDet" onclick="switchRef('det')">Invitation Details</button>
+  </div>
+  <div id="refRecC" style="padding:2.5rem 1rem;display:flex;flex-direction:column;align-items:center;gap:.6rem"><svg width="55" height="55" viewBox="0 0 80 80" fill="none" style="opacity:.3"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/></svg><div class="empty-txt">No Data yet</div></div>
+  <div id="refDetC" class="hidden" style="padding:2.5rem 1rem;display:flex;flex-direction:column;align-items:center;gap:.6rem"><div class="empty-txt">No Data yet</div></div>
+  <div class="info-bar"><div class="info-ico">!</div><span>Commission rebate settlement time is between 00:00 and 06:00 the following day.</span></div>
+  <div style="height:1.5rem"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  MODALS
+════════════════════════════════════════════ -->
+<!-- Network -->
+<div class="modal-ov hidden" id="mNetwork" onclick="closeModal('mNetwork',event)">
+  <div class="modal-sheet">
+    <div class="modal-hdr"><span class="modal-ttl">Select Network</span><button class="modal-cls" onclick="closeModalBtn('mNetwork')">✕</button></div>
+    <div style="font-size:.76rem;color:#8a9bb5;margin-bottom:1rem;line-height:1.5">Please ensure the network you choose matches the network you select when depositing and withdrawing, otherwise it may cause asset loss!</div>
+    <div class="net-card sel" onclick="pickNet('Tron (TRC20)',this)"><div class="net-name">Tron（TRC20）</div><div class="net-det">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div></div>
+    <div class="net-card" onclick="pickNet('Ethereum (ERC20)',this)"><div class="net-name">Ethereum（ERC20）</div><div class="net-det">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 2minutes</div></div>
+    <div class="net-card" onclick="pickNet('BNB Smart Chain (BEP20)',this)"><div class="net-name">BNB Smart Chain（BEP20）</div><div class="net-det">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div></div>
+    <div class="net-card" onclick="pickNet('Polygon (POLYGON)',this)"><div class="net-name">Polygon（POLYGON）</div><div class="net-det">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div></div>
+    <div class="net-card" onclick="pickNet('Arbitrum (ARBITRUM)',this)"><div class="net-name">Arbitrum（ARBITRUM）</div><div class="net-det">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div></div>
+    <div class="net-card" onclick="pickNet('AVAX C-Chain (AVAX-C)',this)"><div class="net-name">AVAX C-Chain（AVAX-C）</div><div class="net-det">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div></div>
+    <div class="net-card" onclick="pickNet('Solana (SOL)',this)"><div class="net-name">Solana（SOL）</div><div class="net-det">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div></div>
+    <div class="net-card" onclick="pickNet('Optimism (OPTIMISM)',this)"><div class="net-name">Optimism（OPTIMISM）</div><div class="net-det">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 2minutes</div></div>
+    <div class="net-card" style="cursor:default"><div class="net-suspended">Suspended</div><div class="net-name" style="color:#8a9bb5">Base（BASE20）</div><div class="net-det">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 2minutes</div></div>
+  </div>
+</div>
+<!-- Switch Account -->
+<div class="modal-ov hidden" id="mSwitchAccount" onclick="closeModal('mSwitchAccount',event)">
+  <div class="modal-sheet">
+    <div class="modal-hdr"><span class="modal-ttl">Switch Account</span><button class="modal-cls" onclick="closeModalBtn('mSwitchAccount')">✕</button></div>
+    <div style="height:.4rem"></div>
+    <div class="acct-card sel" onclick="pickAcct('Spot',this)">Spot</div>
+    <div class="acct-card" onclick="pickAcct('Funding',this)">Funding</div>
+    <div class="acct-card" onclick="pickAcct('Futures',this)">Futures</div>
+    <div class="acct-card" onclick="pickAcct('Earn',this)">Earn</div>
+    <div class="acct-card" onclick="pickAcct('Copy Trading',this)">Copy Trading</div>
+    <div class="acct-card" onclick="pickAcct('Event Contracts',this)">Event Contracts</div>
+  </div>
+</div>
+<!-- Security -->
+<div class="modal-ov hidden" id="mSecurity" onclick="closeModal('mSecurity',event)">
+  <div class="modal-sheet">
+    <div class="modal-hdr"><span class="modal-ttl">Security verification requirements</span><button class="modal-cls" onclick="closeModalBtn('mSecurity')">✕</button></div>
+    <div style="font-size:.76rem;color:#8a9bb5;margin-bottom:.75rem">Please bind at least 2 security verification methods.</div>
+    <div class="sec-prog">1<span>/2</span></div>
+    <div class="sec-item"><span>Google Authenticator</span><span style="color:#8a9bb5">›</span></div>
+    <div class="sec-item"><span>Email</span><span style="color:#c8f439">✓</span></div>
+    <div class="sec-item"><span>phone</span><span style="color:#8a9bb5">›</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+  BOTTOM NAV (global)
+════════════════════════════════════════════ -->
+<div class="bnav" id="globalBnav">
+  <div class="bnav-item" onclick="goHome()"><div class="bnav-ico">🏠</div><div class="bnav-lbl on" id="bnHome">Home</div></div>
+  <div class="bnav-item" onclick="go('sDeposit')"><div class="bnav-ico">💰</div><div class="bnav-lbl" id="bnWallet">Wallet</div></div>
+  <div class="bnav-item" onclick="go('sGeneralSettings')"><div class="bnav-ico">⚙️</div><div class="bnav-lbl" id="bnSettings">Settings</div></div>
+  <div class="bnav-item" onclick="go('sRewards')"><div class="bnav-ico">🎁</div><div class="bnav-lbl" id="bnRewards">Rewards</div></div>
+  <div class="bnav-item" onclick="go('sProfile')"><div class="bnav-ico">👤</div><div class="bnav-lbl" id="bnProfile">Profile</div></div>
+</div>
+
+<script>
+  var stack = [];
+  var rewardsScreens = ['sRewards','sWelfareCenter','sReferral'];
+
+  function go(id) {
+    var cur = document.querySelector('.screen.active');
+    if(cur && cur.id === id) return;
+    if(cur) { stack.push(cur.id); cur.classList.remove('active'); }
+    var next = document.getElementById(id);
+    if(next) { next.classList.add('active'); next.scrollTop = 0; }
+    // hide global bnav on rewards screens (they have their own)
+    var gb = document.getElementById('globalBnav');
+    if(rewardsScreens.indexOf(id) !== -1) gb.style.display='none';
+    else gb.style.display='flex';
+    updateBnav(id);
+  }
+
+  function back() {
+    if(stack.length === 0) { goHome(); return; }
+    var prevId = stack.pop();
+    var cur = document.querySelector('.screen.active');
+    if(cur) cur.classList.remove('active');
+    var prev = document.getElementById(prevId);
+    if(prev) { prev.classList.add('active'); prev.scrollTop = 0; }
+    var gb = document.getElementById('globalBnav');
+    if(rewardsScreens.indexOf(prevId) !== -1) gb.style.display='none';
+    else gb.style.display='flex';
+    updateBnav(prevId);
+  }
+
+  function goHome() {
+    stack = [];
+    var screens = document.querySelectorAll('.screen');
+    screens.forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById('sHome').classList.add('active');
+    document.getElementById('globalBnav').style.display='flex';
+    updateBnav('sHome');
+  }
+
+  function updateBnav(id) {
+    ['bnHome','bnWallet','bnSettings','bnRewards','bnProfile'].forEach(function(b){ document.getElementById(b).classList.remove('on'); });
+    if(id==='sHome') document.getElementById('bnHome').classList.add('on');
+    else if(['sDeposit','sDepositDetail','sRecord','sWithdrawRecord','sTransfer','sTransferRecord','sCoinSelect'].indexOf(id)!==-1) document.getElementById('bnWallet').classList.add('on');
+    else if(['sGeneralSettings','sLanguage','sPricing','sChangeColor','sNotification','sPaymentMethod','sCodeReception','sLineSwitch'].indexOf(id)!==-1) document.getElementById('bnSettings').classList.add('on');
+    else if(['sRewards','sWelfareCenter','sReferral'].indexOf(id)!==-1) document.getElementById('bnRewards').classList.add('on');
+    else if(['sProfile','sNickname'].indexOf(id)!==-1) document.getElementById('bnProfile').classList.add('on');
+  }
+
+  // Modals
+  function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+  function closeModal(id,e) { if(e.target.id===id) closeModalBtn(id); }
+  function closeModalBtn(id) { document.getElementById(id).classList.add('hidden'); }
+
+  function pickNet(name, el) {
+    document.getElementById('selNet').textContent = name;
+    document.querySelectorAll('#mNetwork .net-card').forEach(function(c){ c.classList.remove('sel'); });
+    el.classList.add('sel');
+    closeModalBtn('mNetwork');
+  }
+  function pickAcct(name, el) {
+    document.querySelectorAll('#mSwitchAccount .acct-card').forEach(function(c){ c.classList.remove('sel'); });
+    el.classList.add('sel');
+    var tfTo = document.getElementById('tfTo');
+    if(tfTo) tfTo.textContent = name + ' Account';
+    closeModalBtn('mSwitchAccount');
+  }
+
+  function pickSel(el, listId) {
+    document.querySelectorAll('#'+listId+' .chk').forEach(function(c){ c.remove(); });
+    var chk = document.createElement('span'); chk.className='chk'; chk.textContent='✓';
+    el.appendChild(chk);
+  }
+  function pickColor(el) {
+    document.querySelectorAll('#colorList .col-opt .chk').forEach(function(c){ c.remove(); });
+    var chk = document.createElement('span'); chk.className='chk'; chk.textContent='✓';
+    el.appendChild(chk);
+  }
+
+  function switchTab(tab) {
+    document.getElementById('rDepTab').classList.toggle('on', tab==='dep');
+    document.getElementById('rWdTab').classList.toggle('on', tab==='wd');
+    document.getElementById('rDepCont').classList.toggle('hidden', tab!=='dep');
+    document.getElementById('rWdCont').classList.toggle('hidden', tab!=='wd');
+  }
+  function switchSub(sub) {
+    document.getElementById('rOnChain').classList.toggle('on', sub==='on');
+    document.getElementById('rInternal').classList.toggle('on', sub==='in');
+  }
+  function switchRwd(t) {
+    document.getElementById('rwdAll').classList.toggle('on', t==='all');
+    document.getElementById('rwdFee').classList.toggle('on', t==='fee');
+    document.getElementById('rwdAllC').classList.toggle('hidden', t!=='all');
+    document.getElementById('rwdFeeC').classList.toggle('hidden', t!=='fee');
+  }
+  function switchRef(t) {
+    document.getElementById('refRec').classList.toggle('on', t==='rec');
+    document.getElementById('refDet').classList.toggle('on', t==='det');
+    document.getElementById('refRecC').classList.toggle('hidden', t!=='rec');
+    document.getElementById('refDetC').classList.toggle('hidden', t!=='det');
+  }
+
+  function copyTxt(txt) {
+    navigator.clipboard && navigator.clipboard.writeText(txt);
+    alert('Copied!');
+  }
+</script>
+</body>
+</html>
