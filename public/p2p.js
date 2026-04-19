@@ -6578,8 +6578,25 @@ async function loadMerchantBadge() {
       if (!b) return;
       // Store globally so ad cards can use it as fallback
       _myMerchantBadge = data.badge;
-      // Re-render offer cards so the badge appears immediately
-      if (typeof renderOffers === 'function') renderOffers();
+      // Patch existing ad cards in the DOM so badge appears without re-fetch
+      (function _patchAdCardBadges() {
+        if (!currentUser || !currentUser.username) return;
+        var bConf = MERCHANT_BADGES[_myMerchantBadge];
+        if (!bConf) return;
+        var badgeHtml = '<span class="gt-merchant-badge-live" title="' + bConf.name + ' Merchant" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:' + bConf.color + ';color:#000;font-size:9px;font-weight:900;margin-left:2px;vertical-align:middle;">' + bConf.icon + '</span>';
+        document.querySelectorAll('.gt-user-row').forEach(function(row) {
+          var nameEl = row.querySelector('.gt-username');
+          if (!nameEl || nameEl.textContent.trim() !== currentUser.username) return;
+          if (row.querySelector('.gt-merchant-badge-live')) return; // already added
+          nameEl.insertAdjacentHTML('afterend', badgeHtml);
+        });
+        // Also patch desktop table rows
+        document.querySelectorAll('.adv-name').forEach(function(el) {
+          if (!el.textContent.includes(currentUser.username)) return;
+          if (el.querySelector('.gt-merchant-badge-live')) return;
+          el.insertAdjacentHTML('beforeend', badgeHtml);
+        });
+      })();
       // Show badge in profile
       var badgeEl = document.getElementById('mobMerchantBadge');
       if (badgeEl) {
