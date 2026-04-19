@@ -1896,12 +1896,44 @@ function openProfileEditModal() {
     // Prefill
     var nicknameInput = document.getElementById('editNicknameInput');
     if (nicknameInput) nicknameInput.value = currentUser.nickname || currentUser.username || '';
+    // Show remaining name-change quota
+    var left = _nameChangesLeft();
+    var quotaEl = document.getElementById('editNicknameChangesLeft');
+    var saveBtn = document.getElementById('editNicknameSaveBtn');
+    var msgEl = document.getElementById('editNicknameMsg');
+    if (quotaEl) quotaEl.textContent = left + ' username change' + (left === 1 ? '' : 's') + ' remaining this month';
+    if (saveBtn) {
+      saveBtn.disabled = left <= 0;
+      saveBtn.style.opacity = left <= 0 ? '0.4' : '1';
+      saveBtn.style.cursor = left <= 0 ? 'not-allowed' : 'pointer';
+    }
+    if (msgEl) { msgEl.textContent = ''; }
     if (profileScreen) { profileScreen.classList.add('hidden'); profileScreen.style.display = 'none'; }
     editScreen.classList.remove('hidden');
     editScreen.style.setProperty('display', 'flex', 'important');
     editScreen.style.flexDirection = 'column';
   }
 }
+
+// ── Name-change quota: 3 times per rolling 30 days ───────────────────────────
+function _getNameChanges() {
+  try {
+    var raw = localStorage.getItem('_p2p_name_changes');
+    var arr = raw ? JSON.parse(raw) : [];
+    var now = Date.now();
+    // Keep only changes within last 30 days
+    arr = arr.filter(function(ts) { return now - ts < 30 * 24 * 60 * 60 * 1000; });
+    return arr;
+  } catch(_) { return []; }
+}
+function _recordNameChange() {
+  try {
+    var arr = _getNameChanges();
+    arr.push(Date.now());
+    localStorage.setItem('_p2p_name_changes', JSON.stringify(arr));
+  } catch(_) {}
+}
+function _nameChangesLeft() { return Math.max(0, 3 - _getNameChanges().length); }
 
 function saveProfileNickname() {
   var nicknameInput = document.getElementById('editNicknameInput');
@@ -1915,6 +1947,11 @@ function saveProfileNickname() {
     if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Only letters, numbers and underscores allowed.'; }
     return;
   }
+  // Enforce 3x/month limit (client-side guard)
+  if (_nameChangesLeft() <= 0) {
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'You can only change your username 3 times per month.'; }
+    return;
+  }
   if (msg) { msg.style.color = 'rgba(255,255,255,0.5)'; msg.textContent = 'Saving...'; }
   fetch('/api/p2p/profile', {
     method: 'PUT', credentials: 'include',
@@ -1922,9 +1959,25 @@ function saveProfileNickname() {
     body: JSON.stringify({ nickname: nickname })
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.ok || d.success || d.nickname) {
-      if (msg) { msg.style.color = '#16c784'; msg.textContent = '✓ Username updated!'; }
+      _recordNameChange();
+      if (msg) {
+        var left = _nameChangesLeft();
+        msg.style.color = '#16c784';
+        msg.textContent = '✓ Username updated! (' + left + ' change' + (left === 1 ? '' : 's') + ' left this month)';
+      }
       // Update currentUser everywhere
       if (currentUser) { currentUser.username = nickname; currentUser.nickname = nickname; }
+      // Persist to localStorage so name survives refresh
+      try {
+        localStorage.setItem('_p2p_hint', JSON.stringify({
+          id: getCurrentUserId(),
+          username: nickname,
+          email: currentUser ? currentUser.email : '',
+          role: currentUser ? currentUser.role : '',
+          avatar: currentUser ? (currentUser.avatar || '') : '',
+          createdAt: currentUser ? (currentUser.createdAt || null) : null
+        }));
+      } catch(_) {}
       var el;
       if ((el = document.getElementById('profileNameMobile'))) el.textContent = nickname;
       if ((el = document.getElementById('profileName'))) el.textContent = nickname;
@@ -6581,7 +6634,8 @@ var MERCHANT_BADGES = {
 };
 
 // Global: current user's own merchant badge number (1/2/3), set after loadMerchantBadge()
-var _myMerchantBadge = null;
+// Seed from localStorage so cards render badge on first load without waiting for API
+var _myMerchantBadge = (function() { try { return JSON.parse(localStorage.getItem('_p2p_badge') || 'null'); } catch(_) { return null; } })();
 
 async function loadMerchantBadge() {
   try {
@@ -6593,6 +6647,7 @@ async function loadMerchantBadge() {
       // Store globally so ad cards can use it as fallback
       var _prevBadge = _myMerchantBadge;
       _myMerchantBadge = data.badge;
+      try { localStorage.setItem('_p2p_badge', JSON.stringify(data.badge)); } catch(_) {}
       // If badge changed, clear cache and re-fetch fresh from server
       if (_prevBadge !== _myMerchantBadge) {
         _offersResponseCache && _offersResponseCache.clear && _offersResponseCache.clear();
@@ -6615,6 +6670,7 @@ async function loadMerchantBadge() {
       if (applyItem) applyItem.querySelector('span') && (applyItem.querySelector('.bg-menu-label').textContent = b.name + ' Merchant ✓');
     } else {
       _myMerchantBadge = null;
+      try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
     }
   } catch(e) {}
 }
