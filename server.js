@@ -2986,6 +2986,25 @@ async function createP2PAdController(req, res) {
       payload: req.body || {}
     });
 
+    // If this merchant already has an approved badge, stamp it on the new offer immediately
+    try {
+      const cols = getCollections();
+      const userId = String(req.p2pUser.id || '').trim();
+      const username = String(req.p2pUser.username || '').trim();
+      let approvedBadge = null;
+      for (const [, app] of merchantApplications) {
+        if (app.status === 'approved' && app.assignedBadge) {
+          if ((userId && String(app.userId) === userId) || (username && app.username === username)) {
+            approvedBadge = app.assignedBadge;
+            break;
+          }
+        }
+      }
+      if (approvedBadge && savedOffer?.id) {
+        await cols.p2pOffers.updateOne({ id: savedOffer.id }, { $set: { merchantBadge: approvedBadge } });
+      }
+    } catch (_) {}
+
     return res.status(201).json({
       message: 'Ad created successfully.',
       offer: savedOffer
@@ -3191,6 +3210,16 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
       app.reviewedAt = new Date().toISOString();
       merchantApplications.set(id, app);
       await saveMerchantApp(app);
+      // Remove badge from all offers for this merchant
+      try {
+        const cols = getCollections();
+        const matchQ = { $or: [] };
+        if (app.userId) matchQ.$or.push({ createdByUserId: String(app.userId) });
+        if (app.username) matchQ.$or.push({ advertiser: app.username });
+        if (matchQ.$or.length) {
+          await cols.p2pOffers.updateMany(matchQ, { $unset: { merchantBadge: '' } });
+        }
+      } catch (_) {}
       return res.json({ success: true, message: 'Application rejected.' });
     }
 
@@ -3204,6 +3233,17 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
     app.reviewedAt = new Date().toISOString();
     merchantApplications.set(id, app);
     await saveMerchantApp(app);
+
+    // Stamp badge onto all of this merchant's offer documents so buyers always see it
+    try {
+      const cols = getCollections();
+      const matchQ = { $or: [] };
+      if (app.userId) matchQ.$or.push({ createdByUserId: String(app.userId) });
+      if (app.username) matchQ.$or.push({ advertiser: app.username });
+      if (matchQ.$or.length) {
+        await cols.p2pOffers.updateMany(matchQ, { $set: { merchantBadge: badgeNum } });
+      }
+    } catch (_) {}
 
     return res.json({ success: true, message: `Badge ${badgeNum} assigned to ${app.username}.`, application: app });
   } catch (err) {
