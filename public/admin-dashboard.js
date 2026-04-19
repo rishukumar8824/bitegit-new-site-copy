@@ -51,7 +51,8 @@ const viewLoaders = {
   settings: loadSettings,
   monitoring: loadMonitoring,
   audit: loadAudit,
-  adminusers: loadAdminUsers
+  adminusers: loadAdminUsers,
+  merchants: loadMerchants
 };
 
 const PAGE_TITLES = {
@@ -71,7 +72,8 @@ const PAGE_TITLES = {
   settings: 'Platform Settings',
   monitoring: 'Monitoring',
   audit: 'Audit Logs',
-  adminusers: 'Admin Users'
+  adminusers: 'Admin Users',
+  merchants: 'Merchant Applications'
 };
 
 function formatNumber(value, digits = 2) {
@@ -1701,6 +1703,17 @@ async function createAdmin(email, username, password, role) {
     method: 'POST',
     body: JSON.stringify({ email, username, password, role })
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Merchant Applications
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function loadMerchants() {
+  // Delegate to the inline loadMerchantApplications function defined in admin-dashboard.html
+  if (typeof loadMerchantApplications === 'function') {
+    try { await loadMerchantApplications(); } catch(e) { /* ignore */ }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
