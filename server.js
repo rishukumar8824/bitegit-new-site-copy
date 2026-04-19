@@ -72,9 +72,22 @@ const P2P_ORDER_TTL_MS = 1000 * 60 * 15;
 const P2P_EXPIRY_SWEEP_INTERVAL_MS = 30 * 1000;
 const MERCHANT_ACTIVATION_DEPOSIT = 500;
 
-// In-memory merchant applications store
+// In-memory merchant applications store (backed by MongoDB)
 const merchantApplications = new Map(); // id -> application
 let merchantAppCounter = 1;
+
+async function saveMerchantApp(app) {
+  try {
+    const collections = getCollections();
+    await collections.merchantApplications.updateOne(
+      { id: app.id },
+      { $set: app },
+      { upsert: true }
+    );
+  } catch (e) {
+    console.error('[merchants] MongoDB save failed:', e.message);
+  }
+}
 const SIGNUP_OTP_TTL_MS = Math.max(
   60 * 1000,
   Number.parseInt(String(process.env.SIGNUP_OTP_TTL_MS || '600000'), 10) || 600000
@@ -3095,6 +3108,7 @@ app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
       reviewedAt: null
     };
     merchantApplications.set(id, application);
+    await saveMerchantApp(application);
 
     return res.json({ success: true, message: 'Application submitted! Admin will review within 2-5 business days.', applicationId: id });
   } catch (err) {
@@ -3122,6 +3136,7 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
       app.assignedBadge = null;
       app.reviewedAt = new Date().toISOString();
       merchantApplications.set(id, app);
+      await saveMerchantApp(app);
       return res.json({ success: true, message: 'Application rejected.' });
     }
 
@@ -3134,6 +3149,7 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
     app.assignedBadge = badgeNum;
     app.reviewedAt = new Date().toISOString();
     merchantApplications.set(id, app);
+    await saveMerchantApp(app);
 
     return res.json({ success: true, message: `Badge ${badgeNum} assigned to ${app.username}.`, application: app });
   } catch (err) {
@@ -4087,6 +4103,19 @@ async function boot() {
       }
     });
     p2pOrderExpiryService = createP2POrderExpiryService({ walletService });
+
+    // Load merchant applications from MongoDB into in-memory map
+    try {
+      const savedApps = await collections.merchantApplications.find({}).toArray();
+      for (const doc of savedApps) {
+        merchantApplications.set(doc.id, doc);
+        const num = parseInt(String(doc.id || '').replace('MRC-', ''), 10);
+        if (!isNaN(num) && num >= merchantAppCounter) merchantAppCounter = num + 1;
+      }
+      console.log(`[merchants] loaded ${savedApps.length} applications from MongoDB`);
+    } catch (e) {
+      console.error('[merchants] failed to load from MongoDB:', e.message);
+    }
 
     // Run expireOrders in background every 30 seconds — NOT on each request
     setInterval(async () => {
