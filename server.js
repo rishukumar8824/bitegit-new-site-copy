@@ -3076,13 +3076,13 @@ app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
 });
 
 // ── Merchant Application: Admin list all ──
-app.get('/api/admin/merchant-applications', requiresAdmin, (req, res) => {
+app.get('/api/admin/merchant-applications', requiresAdminSession, (req, res) => {
   const list = Array.from(merchantApplications.values()).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
   return res.json({ success: true, applications: list });
 });
 
 // ── Merchant Application: Admin assign badge ──
-app.post('/api/admin/merchant-applications/:id/badge', requiresAdmin, async (req, res) => {
+app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, async (req, res) => {
   try {
     const { id } = req.params;
     const { badge, action } = req.body; // badge: 1|2|3, action: 'approve'|'reject'
