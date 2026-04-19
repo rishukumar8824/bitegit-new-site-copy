@@ -2980,6 +2980,32 @@ app.post('/api/p2p/orders/:orderId/cancel', requiresP2PUser, async (req, res) =>
 
 async function createP2PAdController(req, res) {
   try {
+    const userId = String(req.p2pUser.id || '').trim();
+    const username = String(req.p2pUser.username || '').trim();
+
+    // Only approved merchants can post ads
+    let isMerchant = false;
+    for (const [, app] of merchantApplications) {
+      if (app.status === 'approved' && app.assignedBadge) {
+        if ((userId && String(app.userId) === userId) || (username && app.username === username)) {
+          isMerchant = true; break;
+        }
+      }
+    }
+    if (!isMerchant) {
+      return res.status(403).json({ message: 'Only approved merchants can post ads. Apply to become a merchant first.' });
+    }
+
+    // Enforce 1-ad limit
+    const cols = getCollections();
+    const existingAds = await cols.p2pOffers.countDocuments({
+      $or: [{ createdByUserId: userId }, { advertiser: username }],
+      status: { $ne: 'DELETED' }
+    });
+    if (existingAds >= 1) {
+      return res.status(400).json({ message: 'You can only have one active ad. Delete your existing ad first.' });
+    }
+
     const savedOffer = await walletService.createEscrowAd({
       actor: req.p2pUser,
       offerId: await createOfferId(),

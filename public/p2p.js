@@ -7182,9 +7182,29 @@ function submitKycAdvance() {
 }
 
 // ===== MOBILE POST AD SCREEN =====
+// ── Post Ad Tab: non-merchants redirected to merchant screen ────────────────
+async function handlePostAdTabClick() {
+  if (!currentUser) { setAuthModalOpen(true); return; }
+  // Check merchant status via API (most reliable)
+  try {
+    var res = await fetch('/api/merchant/application-status', { credentials: 'include' });
+    var data = await res.json();
+    var isMerchant = data.success && data.status === 'approved' && data.badge;
+    if (!isMerchant) {
+      // Not a merchant — redirect to merchant info/apply screen
+      openP2PScreen('merchantScreen');
+      return;
+    }
+  } catch(_) {
+    // On network error fall through to show the screen anyway
+  }
+  showMobScreen('mobPostAdScreen');
+  initMobPostAdScreen();
+}
+
 var _mobPostAdInited = false;
 function initMobPostAdScreen() {
-  // Load my ads list
+  // Load my ads list + enforce 1-ad limit on the create tab
   (async function() {
     var listEl = document.getElementById('mobMyAdsList');
     if (!listEl) return;
@@ -7194,6 +7214,19 @@ function initMobPostAdScreen() {
       var res = await fetch('/api/p2p/my-ads');
       var data = await res.json();
       var offers = Array.isArray(data.offers) ? data.offers : (Array.isArray(data) ? data : []);
+      // Enforce 1-ad limit: hide create form if merchant already has an ad
+      var createSection = document.getElementById('mobPostAdCreate');
+      var adLimitMsg = document.getElementById('mobAdLimitMsg');
+      if (offers.length > 0) {
+        if (createSection) createSection.style.display = 'none';
+        if (adLimitMsg) { adLimitMsg.style.display = 'block'; adLimitMsg.textContent = 'You already have an active ad. Delete it first to post a new one.'; }
+        // Switch to My Ads tab automatically
+        var myadsTab = document.querySelector('.mob-ptab[data-ptab="myads"]');
+        if (myadsTab) myadsTab.click();
+      } else {
+        if (createSection) createSection.style.display = 'block';
+        if (adLimitMsg) adLimitMsg.style.display = 'none';
+      }
       if (!offers.length) { listEl.innerHTML = '<p class="mob-myads-empty">No ads posted yet.</p>'; return; }
       listEl.innerHTML = offers.map(function(o) {
         var isActive = o.status === 'ACTIVE';
@@ -7388,7 +7421,7 @@ window.deleteMobAd = async function(offerId) {
       tab.classList.add('active');
       if (mob === 'profile') showMobScreen('mobProfileScreen');
       else if (mob === 'orders') showMobScreen('mobOrdersScreen');
-      else if (mob === 'post') { showMobScreen('mobPostAdScreen'); initMobPostAdScreen(); }
+      else if (mob === 'post') { handlePostAdTabClick(); }
       else hideMobScreens();
       return;
     }
