@@ -2797,10 +2797,16 @@ function renderOffers(data, append) {
     const rowClass = index === 0 ? 'top-pick-row offer-highlight' : '';
     const topPickTag = index === 0 ? '<p class="top-pick-label">Top Picks for New Users</p>' : '';
     const actionText = isOwnAd ? 'Your Ad' : currentUser ? actionLabel : 'Login';
-    const verificationBadge =
-      Number(offer.completionRate || 0) >= 95
-        ? '<span class="verification-badge" title="Verified">✔</span>'
-        : '<span class="verification-badge muted" title="Basic">•</span>';
+    // Admin-assigned merchant badge (only show if admin approved)
+    const _BADGE_MAP = {
+      1: { icon: '✓', color: '#00e5ff', label: 'Verified Merchant' },
+      2: { icon: '★', color: '#f7931a', label: 'Pro Merchant' },
+      3: { icon: '♛', color: '#a855f7', label: 'Elite Merchant' }
+    };
+    const _mb = offer.merchantBadge ? _BADGE_MAP[offer.merchantBadge] : null;
+    const verificationBadge = _mb
+      ? `<span title="${_mb.label}" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:${_mb.color};color:#000;font-size:9px;font-weight:900;margin-left:2px;vertical-align:middle;">${_mb.icon}</span>`
+      : '';
     const initial = String(offer.advertiser || 'U')
       .trim()
       .slice(0, 1)
@@ -2849,7 +2855,7 @@ function renderOffers(data, append) {
         <div class="gt-left">
           <div class="gt-user-row">
             <span class="gt-username">${escapeHtml(offer.advertiser)}</span>
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 1L14 6.5L8 15L2 6.5Z" fill="#2563eb"/><line x1="2" y1="6.5" x2="14" y2="6.5" stroke="white" stroke-width="1"/></svg>
+            ${verificationBadge}
           </div>
           <div class="gt-stats">
             <span>${repOrders} Orders</span>
