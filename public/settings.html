@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#000000"/>
+  <title>Settings — Bitegit</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;min-height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow-x:hidden}
+    .hidden{display:none!important}
+    .screen{position:fixed;inset:0;background:#000;z-index:10;display:flex;flex-direction:column;overflow-y:auto}
+    /* HEADER */
+    .s-header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;border-bottom:1px solid rgba(255,255,255,.07);background:#000;position:sticky;top:0;z-index:50;flex-shrink:0}
+    .s-back{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:.1rem .3rem;line-height:1}
+    .s-title{flex:1;font-size:1.05rem;font-weight:700;text-align:center}
+    /* MENU LIST */
+    .menu-list{padding:0 1rem}
+    .menu-item{display:flex;align-items:center;justify-content:space-between;padding:.95rem 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;gap:.5rem}
+    .menu-item:last-child{border-bottom:none}
+    .menu-label{font-size:.95rem;color:#fff}
+    .menu-right{display:flex;align-items:center;gap:.4rem;color:#8a9bb5;font-size:.85rem}
+    .menu-chev{color:#8a9bb5;font-size:.8rem}
+    /* SELECT LIST */
+    .select-list{padding:0 1rem}
+    .select-item{display:flex;align-items:center;justify-content:space-between;padding:.95rem 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;font-size:.95rem;color:#fff}
+    .select-item:last-child{border-bottom:none}
+    .check-mark{color:#c8f439;font-size:1rem}
+    /* GREEN BTN */
+    .g-btn{display:block;width:calc(100% - 2rem);margin:auto;padding:.9rem;background:#c8f439;border:none;border-radius:50px;font-size:1rem;font-weight:800;color:#000;cursor:pointer;text-align:center;text-decoration:none}
+    /* PROFILE */
+    .profile-top{display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 1rem;gap:.5rem}
+    .avatar-circle{width:72px;height:72px;border-radius:50%;background:#4a5568;display:flex;align-items:center;justify-content:center;position:relative}
+    .avatar-circle svg{width:44px;height:44px;opacity:.8}
+    .avatar-edit{position:absolute;bottom:0;right:0;width:22px;height:22px;background:#2a2a2a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#8a9bb5}
+    .profile-email{font-size:.9rem;color:#fff;font-weight:500}
+    .profile-uid{font-size:.78rem;color:#8a9bb5;display:flex;align-items:center;gap:.3rem}
+    /* SECURITY MODAL */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:flex-end}
+    .modal-sheet{background:#111;border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:1.2rem 1rem 2rem}
+    .modal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem}
+    .modal-title{font-size:1.05rem;font-weight:700}
+    .modal-close{background:none;border:none;color:#8a9bb5;font-size:1.3rem;cursor:pointer}
+    .sec-progress{font-size:2.2rem;font-weight:800;margin:0 0 1rem}
+    .sec-progress span{font-size:2.2rem;color:#3a3a3a;font-weight:800}
+    .sec-item{border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.85rem 1rem;margin-bottom:.65rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:.95rem;font-weight:600}
+    .sec-check{color:#c8f439;font-size:1rem}
+    .sec-chev{color:#8a9bb5;font-size:.9rem}
+    .sec-subtitle{font-size:.78rem;color:#8a9bb5;margin-bottom:1rem;line-height:1.5}
+    /* NICKNAME */
+    .nick-section{padding:1.2rem 1rem .5rem}
+    .nick-label{font-size:.88rem;color:#8a9bb5;margin-bottom:.5rem}
+    .nick-input{width:100%;background:#1a1a1a;border:none;border-radius:10px;padding:.85rem 1rem;color:#8a9bb5;font-size:.92rem;font-family:inherit;outline:none}
+    .nick-rules{padding:.75rem 1rem 1.5rem;display:flex;flex-direction:column;gap:.5rem}
+    .nick-rule{display:flex;gap:.5rem;font-size:.78rem;color:#8a9bb5;line-height:1.5}
+    .nick-rule::before{content:"•";flex-shrink:0}
+    /* COLOR OPTION */
+    .color-option{display:flex;align-items:center;gap:.75rem;padding:.95rem 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+    .color-option:last-child{border-bottom:none}
+    .color-arrows{display:flex;gap:3px;font-size:1rem}
+    .color-label{flex:1;font-size:.92rem;font-weight:600}
+    /* GENERAL SETTINGS LARGE TITLE */
+    .large-title{font-size:1.4rem;font-weight:800;padding:1.2rem 1rem .5rem}
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 1: PROFILE
+════════════════════════════════════════════════ -->
+<div class="screen" id="screenProfile">
+  <div class="s-header" style="border-bottom:none">
+    <button class="s-back" onclick="history.back()">‹</button>
+    <span style="flex:1"></span>
+  </div>
+  <div class="profile-top">
+    <div class="avatar-circle">
+      <svg viewBox="0 0 44 44" fill="none"><circle cx="22" cy="16" r="8" fill="#6b7280"/><ellipse cx="22" cy="36" rx="14" ry="9" fill="#6b7280"/></svg>
+      <div class="avatar-edit">✏</div>
+    </div>
+    <div class="profile-email">s****4@gmail.com</div>
+    <div class="profile-uid">UID:1132288 <button style="background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.75rem">⧉</button></div>
+  </div>
+  <div class="menu-list">
+    <div class="menu-item" onclick="showScreen('screenNickname')">
+      <span class="menu-label">User Nickname</span>
+      <span class="menu-chev">›</span>
+    </div>
+    <div class="menu-item" onclick="openSecurityModal()">
+      <span class="menu-label">Identity Verification</span>
+      <div class="menu-right"><span style="color:#ff9f43">Uncompleted</span><span class="menu-chev">›</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 2: GENERAL SETTINGS
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenGeneralSettings">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title">General Settings</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="large-title" style="font-size:1.35rem">General Settings</div>
+  <div class="menu-list">
+    <div class="menu-item" onclick="showScreen('screenLanguage')">
+      <span class="menu-label">Language Setting</span>
+      <div class="menu-right"><span>English</span><span class="menu-chev">›</span></div>
+    </div>
+    <div class="menu-item" onclick="showScreen('screenPricing')">
+      <span class="menu-label">Pricing Method</span>
+      <div class="menu-right"><span>USD</span><span class="menu-chev">›</span></div>
+    </div>
+    <div class="menu-item" onclick="showScreen('screenChangeColor')">
+      <span class="menu-label">Change Color</span>
+      <div class="menu-right">
+        <span style="display:flex;gap:3px;align-items:center">
+          <span style="color:#00b897;font-size:.85rem">↑</span>
+          <span style="color:#ff5f82;font-size:.85rem">↓</span>
+        </span>
+        <span class="menu-chev">›</span>
+      </div>
+    </div>
+    <div class="menu-item" onclick="showScreen('screenLineSwitch')">
+      <span class="menu-label">Line Switch</span>
+      <div class="menu-right">
+        <span>cn11</span>
+        <span style="background:#00b897;color:#000;font-size:.65rem;font-weight:700;padding:2px 5px;border-radius:4px;margin-left:.3rem">0 ms</span>
+        <span class="menu-chev">›</span>
+      </div>
+    </div>
+    <div class="menu-item" onclick="showScreen('screenNotification')">
+      <span class="menu-label">Message Notification</span>
+      <div class="menu-right"><span>All Notifications</span><span class="menu-chev">›</span></div>
+    </div>
+    <div class="menu-item" onclick="showScreen('screenPaymentMethod')">
+      <span class="menu-label">Payment Method</span>
+      <span class="menu-chev">›</span>
+    </div>
+    <div class="menu-item" onclick="showScreen('screenCodeReception')">
+      <span class="menu-label">Code reception method</span>
+      <span class="menu-chev">›</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 3: LANGUAGE
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenLanguage">
+  <div class="s-header">
+    <button class="s-back" onclick="showScreen('screenGeneralSettings')">‹</button>
+    <span class="s-title">Language</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="select-list" id="langList">
+    <div class="select-item" onclick="selectLang(this,'English')">
+      <span>English</span><span class="check-mark">✓</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'Español')">
+      <span>Español</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'Français')">
+      <span>Français</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'Italiano')">
+      <span>Italiano</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'日本語')">
+      <span>日本語</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'한국어')">
+      <span>한국어</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'Português (Brasil)')">
+      <span>Português (Brasil)</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'Русский')">
+      <span>Русский</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'Việt nam')">
+      <span>Việt nam</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'简体中文')">
+      <span>简体中文</span>
+    </div>
+    <div class="select-item" onclick="selectLang(this,'繁体中文')">
+      <span>繁体中文</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 4: PRICING METHOD
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenPricing">
+  <div class="s-header">
+    <button class="s-back" onclick="showScreen('screenGeneralSettings')">‹</button>
+    <span class="s-title">Pricing Method</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="select-list">
+    <div class="select-item" onclick="selectPricing(this,'USD - $')">
+      <span>USD - $</span><span class="check-mark">✓</span>
+    </div>
+    <div class="select-item" onclick="selectPricing(this,'CNY - ¥')">
+      <span>CNY - ¥</span>
+    </div>
+    <div class="select-item" onclick="selectPricing(this,'KRW - ₩')">
+      <span>KRW - ₩</span>
+    </div>
+    <div class="select-item" onclick="selectPricing(this,'JPY - ¥')">
+      <span>JPY - ¥</span>
+    </div>
+    <div class="select-item" onclick="selectPricing(this,'RUB - ₽')">
+      <span>RUB - ₽</span>
+    </div>
+    <div class="select-item" onclick="selectPricing(this,'VND - ₫')">
+      <span>VND - ₫</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 5: CHANGE COLOR
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenChangeColor">
+  <div class="s-header">
+    <button class="s-back" onclick="showScreen('screenGeneralSettings')">‹</button>
+    <span class="s-title">Change Color</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="menu-list">
+    <div class="color-option" onclick="selectColor(this,'green-up')">
+      <div class="color-arrows">
+        <span style="color:#00b897">↑</span>
+        <span style="color:#ff5f82">↓</span>
+      </div>
+      <span class="color-label">Green for Rising and Red for Falling</span>
+      <span class="check-mark">✓</span>
+    </div>
+    <div class="color-option" onclick="selectColor(this,'red-up')">
+      <div class="color-arrows">
+        <span style="color:#ff5f82">↑</span>
+        <span style="color:#00b897">↓</span>
+      </div>
+      <span class="color-label">Red for Rising and Green for Falling</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 6: MESSAGE NOTIFICATION
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenNotification">
+  <div class="s-header">
+    <button class="s-back" onclick="showScreen('screenGeneralSettings')">‹</button>
+    <span class="s-title">Message Notification</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="select-list">
+    <div class="select-item" onclick="selectNotif(this,'All Notifications')">
+      <span>All Notifications</span><span class="check-mark">✓</span>
+    </div>
+    <div class="select-item" onclick="selectNotif(this,'Disable Notifications')">
+      <span>Disable Notifications</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 7: PAYMENT METHOD
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenPaymentMethod">
+  <div class="s-header">
+    <button class="s-back" onclick="showScreen('screenGeneralSettings')">‹</button>
+    <span class="s-title">Payment method</span>
+    <span style="width:32px"></span>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:3rem 1rem">
+    <svg width="72" height="72" viewBox="0 0 80 80" fill="none" style="opacity:.35;margin-bottom:.8rem">
+      <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
+      <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
+      <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
+      <path d="M50 55 L70 65 L60 75 Z" fill="#333"/>
+    </svg>
+    <div style="font-size:.88rem;color:#8a9bb5;margin-bottom:2.5rem">No Data yet</div>
+  </div>
+  <div style="padding:0 0 2rem">
+    <button class="g-btn" style="background:#fff;color:#000">AddPayment method</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 8: CODE RECEPTION METHOD
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenCodeReception">
+  <div class="s-header">
+    <button class="s-back" onclick="showScreen('screenGeneralSettings')">‹</button>
+    <span class="s-title">Code reception method</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="select-list">
+    <div class="select-item" onclick="selectCode(this,'SMS')">
+      <span>SMS</span><span class="check-mark">✓</span>
+    </div>
+    <div class="select-item" onclick="selectCode(this,'Email')">
+      <span>Email</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 9: LINE SWITCH
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenLineSwitch">
+  <div class="s-header">
+    <button class="s-back" onclick="showScreen('screenGeneralSettings')">‹</button>
+    <span class="s-title">Line Switch</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="select-list">
+    <div class="select-item" onclick="selectLine(this,'cn11')">
+      <span style="display:flex;align-items:center;gap:.5rem">
+        cn11
+        <span style="background:#00b897;color:#000;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:4px">0 ms</span>
+      </span>
+      <span class="check-mark">✓</span>
+    </div>
+    <div class="select-item" onclick="selectLine(this,'sg01')">
+      <span style="display:flex;align-items:center;gap:.5rem">sg01 <span style="color:#8a9bb5;font-size:.78rem">-- ms</span></span>
+    </div>
+    <div class="select-item" onclick="selectLine(this,'us01')">
+      <span style="display:flex;align-items:center;gap:.5rem">us01 <span style="color:#8a9bb5;font-size:.78rem">-- ms</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 10: EDIT NICKNAME
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenNickname">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title">Edit user nickname</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="nick-section">
+    <div class="nick-label">My Nickname:</div>
+    <input class="nick-input" type="text" placeholder="Please enter the nickname" maxlength="12"/>
+  </div>
+  <div class="nick-rules">
+    <div class="nick-rule">Please enter 1-12 characters</div>
+    <div class="nick-rule">Only Chinese, English, and digits are supported. Special symbols are not supported</div>
+    <div class="nick-rule">Nicknames are removed using words such as verbal insults, political sensitivities, etc</div>
+    <div class="nick-rule">The Platform will review audited nicknames from time to time. If your nickname is judged to be non-compliant, it may result in your nickname being cleared and you need to re-submit your nickname for review</div>
+  </div>
+  <div style="padding:.5rem 0 2rem">
+    <button class="g-btn" onclick="alert('Nickname saved!')">Save</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: SECURITY VERIFICATION
+════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modalSecurity" onclick="closeSecModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-title">Security verification requirements</span>
+      <button class="modal-close" onclick="closeSecModalBtn()">✕</button>
+    </div>
+    <div class="sec-subtitle">Please bind at least 2 security verification methods.</div>
+    <div class="sec-progress">1<span>/2</span></div>
+    <div class="sec-item" onclick="closeSecModalBtn()">
+      <span>Google Authenticator</span>
+      <span class="sec-chev">›</span>
+    </div>
+    <div class="sec-item">
+      <span>Email</span>
+      <span class="sec-check">✓</span>
+    </div>
+    <div class="sec-item" onclick="closeSecModalBtn()">
+      <span>phone</span>
+      <span class="sec-chev">›</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  var screenHistory = [];
+
+  function showScreen(id) {
+    var screens = document.querySelectorAll('.screen');
+    var current = null;
+    screens.forEach(function(s){ if(!s.classList.contains('hidden')) current = s.id; });
+    if(current && current !== id) screenHistory.push(current);
+    screens.forEach(function(s){ s.classList.add('hidden'); });
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function goBack() {
+    if(screenHistory.length > 0) {
+      var prev = screenHistory.pop();
+      var screens = document.querySelectorAll('.screen');
+      screens.forEach(function(s){ s.classList.add('hidden'); });
+      document.getElementById(prev).classList.remove('hidden');
+    } else { history.back(); }
+  }
+
+  function openSecurityModal() {
+    document.getElementById('modalSecurity').classList.remove('hidden');
+  }
+  function closeSecModal(e) {
+    if(e.target.id === 'modalSecurity') closeSecModalBtn();
+  }
+  function closeSecModalBtn() {
+    document.getElementById('modalSecurity').classList.add('hidden');
+  }
+
+  function selectLang(el, val) {
+    document.querySelectorAll('#langList .select-item .check-mark').forEach(function(c){ c.remove(); });
+    var check = document.createElement('span');
+    check.className = 'check-mark'; check.textContent = '✓';
+    el.appendChild(check);
+  }
+  function selectPricing(el, val) {
+    document.querySelectorAll('#screenPricing .select-item .check-mark').forEach(function(c){ c.remove(); });
+    var check = document.createElement('span');
+    check.className = 'check-mark'; check.textContent = '✓';
+    el.appendChild(check);
+  }
+  function selectColor(el, val) {
+    document.querySelectorAll('#screenChangeColor .color-option .check-mark').forEach(function(c){ c.remove(); });
+    var check = document.createElement('span');
+    check.className = 'check-mark'; check.textContent = '✓';
+    el.appendChild(check);
+  }
+  function selectNotif(el, val) {
+    document.querySelectorAll('#screenNotification .select-item .check-mark').forEach(function(c){ c.remove(); });
+    var check = document.createElement('span');
+    check.className = 'check-mark'; check.textContent = '✓';
+    el.appendChild(check);
+  }
+  function selectCode(el, val) {
+    document.querySelectorAll('#screenCodeReception .select-item .check-mark').forEach(function(c){ c.remove(); });
+    var check = document.createElement('span');
+    check.className = 'check-mark'; check.textContent = '✓';
+    el.appendChild(check);
+  }
+  function selectLine(el, val) {
+    document.querySelectorAll('#screenLineSwitch .select-item .check-mark').forEach(function(c){ c.remove(); });
+    var check = document.createElement('span');
+    check.className = 'check-mark'; check.textContent = '✓';
+    el.appendChild(check);
+  }
+
+  // Route from URL
+  var page = new URLSearchParams(location.search).get('page');
+  if(page === 'general') showScreen('screenGeneralSettings');
+  else if(page === 'language') { showScreen('screenGeneralSettings'); showScreen('screenLanguage'); }
+  else if(page === 'pricing') { showScreen('screenGeneralSettings'); showScreen('screenPricing'); }
+  else if(page === 'color') { showScreen('screenGeneralSettings'); showScreen('screenChangeColor'); }
+  else if(page === 'notification') { showScreen('screenGeneralSettings'); showScreen('screenNotification'); }
+  else if(page === 'payment') { showScreen('screenGeneralSettings'); showScreen('screenPaymentMethod'); }
+  else if(page === 'nickname') showScreen('screenNickname');
+</script>
+</body>
+</html>

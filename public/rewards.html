@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#000000"/>
+  <title>Rewards — Bitegit</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;min-height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow-x:hidden}
+    .hidden{display:none!important}
+    .screen{position:fixed;inset:0;background:#000;z-index:10;display:flex;flex-direction:column;overflow-y:auto}
+    .s-header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;border-bottom:1px solid rgba(255,255,255,.07);background:#000;position:sticky;top:0;z-index:50;flex-shrink:0}
+    .s-back{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:.1rem .3rem;line-height:1}
+    .s-title{flex:1;font-size:1.05rem;font-weight:700;text-align:center}
+    .s-action{background:none;border:none;color:#8a9bb5;font-size:1.2rem;cursor:pointer;padding:.1rem .3rem}
+    /* TABS */
+    .tab-bar{display:flex;border-bottom:1px solid rgba(255,255,255,.08);background:#000;flex-shrink:0}
+    .tab-btn{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:#8a9bb5;font-size:.88rem;font-weight:600;padding:.7rem;cursor:pointer;font-family:inherit;transition:color .15s;white-space:nowrap}
+    .tab-btn.active{color:#fff;border-bottom-color:#fff}
+    /* BOTTOM NAV */
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,.08);display:flex;padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom));z-index:100}
+    .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:.25rem;cursor:pointer;padding:.2rem 0}
+    .bnav-icon{font-size:1.3rem}
+    .bnav-label{font-size:.68rem;color:#8a9bb5;font-weight:500}
+    .bnav-label.active{color:#fff}
+    /* EMPTY STATE */
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:.8rem;padding:3rem 1rem;padding-bottom:calc(3rem + 80px)}
+    .empty-txt{font-size:.88rem;color:#8a9bb5}
+    /* GREEN BTN */
+    .g-btn{display:block;width:calc(100% - 2rem);margin:auto;padding:.9rem;background:#c8f439;border:none;border-radius:50px;font-size:1rem;font-weight:800;color:#000;cursor:pointer;text-align:center;text-decoration:none}
+    /* REFERRAL */
+    .ref-hero{text-align:center;padding:1.5rem 1.5rem 1rem}
+    .ref-hero-title{font-size:1.4rem;font-weight:900;line-height:1.35;margin-bottom:.75rem}
+    .ref-hero-title .highlight{background:#c8f439;color:#000;border-radius:6px;padding:0 .35rem}
+    .ref-hero-sub{font-size:.78rem;color:#8a9bb5;line-height:1.6;margin-bottom:.75rem}
+    .view-rules-btn{background:#1a1a1a;border:none;border-radius:50px;color:#fff;font-size:.85rem;font-weight:600;padding:.55rem 1.5rem;cursor:pointer}
+    .ref-card{background:#111;border-radius:14px;margin:0 1rem 1rem;padding:1rem}
+    .ref-card-title{font-size:.92rem;font-weight:700;text-align:center;margin-bottom:.75rem}
+    .ref-field{background:#1a1a1a;border-radius:10px;padding:.65rem .9rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem}
+    .ref-field-label{font-size:.75rem;color:#8a9bb5}
+    .ref-field-val{font-size:.88rem;font-weight:600;color:#fff}
+    .ref-copy{background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.95rem;padding:0 .2rem}
+    .ref-stats{background:#111;border-radius:14px;margin:0 1rem 1rem;padding:1rem}
+    .ref-stat-row{display:flex;gap:1rem;margin-bottom:.6rem}
+    .ref-stat-col{flex:1}
+    .ref-stat-label{font-size:.72rem;color:#8a9bb5;margin-bottom:.25rem}
+    .ref-stat-val{font-size:1.05rem;font-weight:700}
+    .ref-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.08);margin:0 1rem}
+    .ref-tab{background:none;border:none;border-bottom:2px solid transparent;color:#8a9bb5;font-size:.88rem;font-weight:600;padding:.6rem .9rem;cursor:pointer;font-family:inherit;transition:color .15s}
+    .ref-tab.active{color:#fff;border-bottom-color:#fff}
+    .ref-empty{display:flex;flex-direction:column;align-items:center;padding:2.5rem 1rem calc(2.5rem + 80px);gap:.6rem}
+    /* INFO BANNER */
+    .info-banner{display:flex;align-items:center;gap:.5rem;padding:.65rem 1rem;background:#1a1a1a;font-size:.75rem;color:#8a9bb5;position:fixed;bottom:calc(60px + env(safe-area-inset-bottom));left:0;right:0;border-top:1px solid rgba(255,255,255,.06)}
+    .info-icon{flex-shrink:0;width:18px;height:18px;border-radius:50%;border:1px solid #8a9bb5;display:flex;align-items:center;justify-content:center;font-size:.65rem}
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 1: MY REWARDS
+════════════════════════════════════════════════ -->
+<div class="screen" id="screenRewards">
+  <div class="s-header">
+    <button class="s-back" onclick="history.back()">‹</button>
+    <span class="s-title">My Rewards</span>
+    <button class="s-action">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 12h6M9 17h4"/><circle cx="17" cy="17" r="3"/><path d="M17 15v2l1 1"/></svg>
+    </button>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="rwdAllTab" onclick="switchRwdTab('all')">All Types(0)</button>
+    <button class="tab-btn" id="rwdContractTab" onclick="switchRwdTab('contract')">Contract experience fee(0)</button>
+  </div>
+  <div id="rwdAllContent">
+    <div class="empty-state">
+      <svg width="72" height="72" viewBox="0 0 80 80" fill="none" style="opacity:.35">
+        <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
+        <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
+        <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
+        <path d="M50 55 L70 65 L60 75 Z" fill="#333"/>
+      </svg>
+      <div class="empty-txt">No Data yet</div>
+    </div>
+  </div>
+  <div id="rwdContractContent" class="hidden">
+    <div class="empty-state">
+      <svg width="72" height="72" viewBox="0 0 80 80" fill="none" style="opacity:.35">
+        <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
+        <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
+        <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
+        <path d="M50 55 L70 65 L60 75 Z" fill="#333"/>
+      </svg>
+      <div class="empty-txt">No Data yet</div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="bnav-item" onclick="showScreen('screenWelfareCenter')">
+      <div class="bnav-icon">🏅</div>
+      <div class="bnav-label">Welfare Center</div>
+    </div>
+    <div class="bnav-item">
+      <div class="bnav-icon">🎁</div>
+      <div class="bnav-label active">My Rewards</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 2: WELFARE CENTER
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenWelfareCenter">
+  <div class="s-header">
+    <button class="s-back" onclick="showScreen('screenRewards')">‹</button>
+    <span class="s-title">Welfare Center</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="empty-state" style="padding-bottom:calc(3rem + 80px)">
+    <svg width="72" height="72" viewBox="0 0 80 80" fill="none" style="opacity:.35">
+      <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
+      <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
+      <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
+      <path d="M50 55 L70 65 L60 75 Z" fill="#333"/>
+    </svg>
+    <div class="empty-txt">No Data yet</div>
+  </div>
+  <div class="bottom-nav">
+    <div class="bnav-item">
+      <div class="bnav-icon">🏅</div>
+      <div class="bnav-label active">Welfare Center</div>
+    </div>
+    <div class="bnav-item" onclick="showScreen('screenRewards')">
+      <div class="bnav-icon">🎁</div>
+      <div class="bnav-label">My Rewards</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 3: REFERRAL COMMISSION
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenReferral">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title">Referral Commission</span>
+    <span style="width:32px"></span>
+  </div>
+
+  <div class="ref-hero">
+    <div class="ref-hero-title">
+      Invite Your Friends to Get It.<br>
+      <span class="highlight">20%</span>Contract Trading<br>Commission Rebate
+    </div>
+    <div class="ref-hero-sub">Once your friend has completed registration and completed at least one contract transaction, they will be eligible for commission rebates.</div>
+    <button class="view-rules-btn">View Rules</button>
+  </div>
+
+  <div class="ref-card">
+    <div class="ref-card-title">Invite Friends</div>
+    <div class="ref-field">
+      <div>
+        <div class="ref-field-label">Referral Code</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.4rem">
+        <span class="ref-field-val">FMl1x5lk</span>
+        <button class="ref-copy" onclick="copyText('FMl1x5lk')">⧉</button>
+      </div>
+    </div>
+    <div class="ref-field">
+      <div>
+        <div class="ref-field-label">Referral Link</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.4rem;max-width:60%">
+        <span class="ref-field-val" style="font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">https://bitegit.com/r...</span>
+        <button class="ref-copy" onclick="copyText('https://bitegit.com/r/FMl1x5lk')">⧉</button>
+      </div>
+    </div>
+    <div style="margin-top:.75rem">
+      <button class="g-btn">Share Poster</button>
+    </div>
+  </div>
+
+  <div class="ref-stats">
+    <div class="ref-stat-row">
+      <div class="ref-stat-col">
+        <div class="ref-stat-label">Number of Invited Friends</div>
+        <div class="ref-stat-val">0</div>
+      </div>
+      <div class="ref-stat-col">
+        <div class="ref-stat-label">My Rebate Percentage</div>
+        <div class="ref-stat-val">20.00%</div>
+      </div>
+    </div>
+    <div>
+      <div class="ref-stat-label">Total Commission Amount (USDT)</div>
+      <div class="ref-stat-val">0</div>
+    </div>
+  </div>
+
+  <div class="ref-tabs">
+    <button class="ref-tab active" id="refRecordsTab" onclick="switchRefTab('records')">Rebate Records</button>
+    <button class="ref-tab" id="refDetailsTab" onclick="switchRefTab('details')">Invitation Details</button>
+  </div>
+
+  <div id="refRecordsContent" class="ref-empty">
+    <svg width="60" height="60" viewBox="0 0 80 80" fill="none" style="opacity:.3">
+      <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
+      <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
+      <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
+    </svg>
+    <div class="empty-txt">No Data yet</div>
+  </div>
+  <div id="refDetailsContent" class="ref-empty hidden">
+    <svg width="60" height="60" viewBox="0 0 80 80" fill="none" style="opacity:.3">
+      <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
+      <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
+      <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
+    </svg>
+    <div class="empty-txt">No Data yet</div>
+  </div>
+
+  <!-- Info banner -->
+  <div class="info-banner">
+    <div class="info-icon">!</div>
+    <span>Commission rebate settlement time is between 00:00 and 06:00 the following day.</span>
+  </div>
+  <div style="height:calc(60px + env(safe-area-inset-bottom) + 2.5rem)"></div>
+</div>
+
+<script>
+  var screenHistory = [];
+
+  function showScreen(id) {
+    var screens = document.querySelectorAll('.screen');
+    var current = null;
+    screens.forEach(function(s){ if(!s.classList.contains('hidden')) current = s.id; });
+    if(current && current !== id) screenHistory.push(current);
+    screens.forEach(function(s){ s.classList.add('hidden'); });
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function goBack() {
+    if(screenHistory.length > 0) {
+      var prev = screenHistory.pop();
+      var screens = document.querySelectorAll('.screen');
+      screens.forEach(function(s){ s.classList.add('hidden'); });
+      document.getElementById(prev).classList.remove('hidden');
+    } else { history.back(); }
+  }
+
+  function switchRwdTab(tab) {
+    document.getElementById('rwdAllTab').classList.toggle('active', tab === 'all');
+    document.getElementById('rwdContractTab').classList.toggle('active', tab === 'contract');
+    document.getElementById('rwdAllContent').classList.toggle('hidden', tab !== 'all');
+    document.getElementById('rwdContractContent').classList.toggle('hidden', tab !== 'contract');
+  }
+
+  function switchRefTab(tab) {
+    document.getElementById('refRecordsTab').classList.toggle('active', tab === 'records');
+    document.getElementById('refDetailsTab').classList.toggle('active', tab === 'details');
+    document.getElementById('refRecordsContent').classList.toggle('hidden', tab !== 'records');
+    document.getElementById('refDetailsContent').classList.toggle('hidden', tab !== 'details');
+  }
+
+  function copyText(txt) {
+    navigator.clipboard && navigator.clipboard.writeText(txt);
+    alert('Copied!');
+  }
+
+  // Route from URL
+  var page = new URLSearchParams(location.search).get('page');
+  if(page === 'referral') showScreen('screenReferral');
+  else if(page === 'welfare') showScreen('screenWelfareCenter');
+</script>
+</body>
+</html>
