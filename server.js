@@ -3128,7 +3128,15 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
     const { id } = req.params;
     const { badge, action } = req.body; // badge: 1|2|3, action: 'approve'|'reject'
 
-    const app = merchantApplications.get(id);
+    let app = merchantApplications.get(id);
+    if (!app) {
+      // Fallback: load from MongoDB if not in memory (e.g. server restarted mid-session)
+      try {
+        const collections = getCollections();
+        const doc = await collections.merchantApplications.findOne({ id });
+        if (doc) { merchantApplications.set(id, doc); app = doc; }
+      } catch (_) {}
+    }
     if (!app) return res.status(404).json({ success: false, message: 'Application not found.' });
 
     if (action === 'reject') {
