@@ -3042,10 +3042,18 @@ app.post('/api/merchant/activate', requiresP2PUser, async (req, res) => {
 // ── Merchant Application: User submits application ──
 app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
   try {
-    const { photoUrl, socialMedia } = req.body || {};
+    const { photoBase64, currency, socialAccounts } = req.body || {};
     const userId = req.p2pUser.id;
     const username = req.p2pUser.username;
     const email = req.p2pUser.email;
+
+    // Validate required fields
+    if (!photoBase64) return res.status(400).json({ success: false, message: 'ID photo is required.' });
+    if (!currency) return res.status(400).json({ success: false, message: 'Please select a currency.' });
+    const social = socialAccounts || {};
+    if (!social.twitter && !social.telegram && !social.instagram) {
+      return res.status(400).json({ success: false, message: 'At least one social media account is required.' });
+    }
 
     // Check if already applied
     for (const [, app] of merchantApplications) {
@@ -3060,10 +3068,15 @@ app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
       userId,
       username,
       email,
-      photoUrl: photoUrl || '',
-      socialMedia: socialMedia || '',
+      photoBase64: photoBase64 || '',   // base64 data URL of ID photo
+      currency: currency || '',          // preferred fiat currency
+      socialAccounts: {                  // social media handles
+        twitter: social.twitter || '',
+        telegram: social.telegram || '',
+        instagram: social.instagram || ''
+      },
       status: 'pending', // pending | approved | rejected
-      badge: null,       // 1 = Verified, 2 = Pro, 3 = Elite
+      assignedBadge: null, // 1 = Verified, 2 = Pro, 3 = Elite
       submittedAt: new Date().toISOString(),
       reviewedAt: null
     };

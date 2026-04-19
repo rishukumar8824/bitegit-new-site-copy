@@ -269,14 +269,15 @@
             <table class="admin-table">
               <thead><tr>
                 <th class="admin-th">App ID</th>
-                <th class="admin-th">Username</th>
-                <th class="admin-th">Email</th>
+                <th class="admin-th">User</th>
                 <th class="admin-th">Submitted</th>
+                <th class="admin-th">Currency</th>
+                <th class="admin-th">Social</th>
                 <th class="admin-th">Status</th>
                 <th class="admin-th">Badge</th>
                 <th class="admin-th">Actions</th>
               </tr></thead>
-              <tbody id="merchantTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:24px;">Loading…</td></tr></tbody>
+              <tbody id="merchantTableBody"><tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:24px;">Loading…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -964,46 +965,124 @@ var MERCHANT_BADGE_INFO = {
   3: { label:'♛ Elite',   color:'#a855f7' }
 };
 
+// Cache all apps for detail modal
+var _merchantAppsCache = [];
+
 async function loadMerchantApplications() {
-  var filter = document.getElementById('merchantStatusFilter')?.value || '';
+  var filter = document.getElementById('merchantStatusFilter') ? document.getElementById('merchantStatusFilter').value : '';
   var tbody = document.getElementById('merchantTableBody');
   var countEl = document.getElementById('merchantCount');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:24px;">Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:24px;">Loading…</td></tr>';
   try {
     var res = await fetch('/api/admin/merchant-applications', { credentials:'include' });
     var data = await res.json();
-    var apps = (data.applications || []).filter(function(a){ return !filter || a.status === filter; });
+    _merchantAppsCache = data.applications || [];
+    var apps = _merchantAppsCache.filter(function(a){ return !filter || a.status === filter; });
     if (countEl) countEl.textContent = apps.length + ' applications';
-    var pending = (data.applications || []).filter(function(a){ return a.status === 'pending'; }).length;
-    var badge = document.getElementById('merchantPendingBadge');
-    if (badge) { badge.textContent = pending; badge.style.display = pending ? 'inline-flex' : 'none'; }
+    var pending = _merchantAppsCache.filter(function(a){ return a.status === 'pending'; }).length;
+    var badgeEl = document.getElementById('merchantPendingBadge');
+    if (badgeEl) { badgeEl.textContent = pending; badgeEl.style.display = pending ? 'inline-flex' : 'none'; }
     if (!apps.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:24px;">No applications found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:24px;">No applications found.</td></tr>';
       return;
     }
     tbody.innerHTML = apps.map(function(a) {
-      var bInfo = a.badge ? MERCHANT_BADGE_INFO[a.badge] : null;
+      var bInfo = (a.assignedBadge || a.badge) ? MERCHANT_BADGE_INFO[a.assignedBadge || a.badge] : null;
       var statusColor = a.status === 'approved' ? '#1bd67d' : a.status === 'rejected' ? '#f6465d' : '#ffd87a';
+      var social = a.socialAccounts || {};
+      var socialStr = [social.twitter ? 'X:'+social.twitter : '', social.telegram ? 'TG:'+social.telegram : '', social.instagram ? 'IG:'+social.instagram : ''].filter(Boolean).join(' · ') || '—';
       return '<tr>' +
         '<td class="admin-td" style="font-family:monospace;font-size:12px;">' + escH(a.id) + '</td>' +
-        '<td class="admin-td"><strong>' + escH(a.username) + '</strong></td>' +
-        '<td class="admin-td" style="font-size:12px;">' + escH(a.email) + '</td>' +
-        '<td class="admin-td" style="font-size:12px;">' + new Date(a.submittedAt).toLocaleString() + '</td>' +
+        '<td class="admin-td"><strong>' + escH(a.username) + '</strong><br><span style="font-size:11px;color:var(--text-2);">' + escH(a.email) + '</span></td>' +
+        '<td class="admin-td" style="font-size:11px;">' + new Date(a.submittedAt).toLocaleDateString() + '</td>' +
+        '<td class="admin-td" style="font-size:12px;color:#00e5ff;font-weight:700;">' + escH(a.currency || '—') + '</td>' +
+        '<td class="admin-td" style="font-size:11px;color:var(--text-2);max-width:140px;">' + escH(socialStr) + '</td>' +
         '<td class="admin-td"><span style="color:' + statusColor + ';font-weight:700;text-transform:capitalize;">' + escH(a.status) + '</span></td>' +
         '<td class="admin-td">' + (bInfo ? '<span style="color:' + bInfo.color + ';font-weight:800;">' + bInfo.label + '</span>' : '<span style="color:var(--text-2);">—</span>') + '</td>' +
         '<td class="admin-td">' +
-          (a.status === 'pending' ? [
+          '<button onclick="viewMerchantApp(\'' + a.id + '\')" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:11px;font-weight:600;cursor:pointer;">👁 View</button>' +
+          (a.status === 'pending' ? '<br>' + [
             '<button onclick="assignMerchantBadge(\'' + a.id + '\',1)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(0,229,255,0.12);color:#00e5ff;border:1px solid rgba(0,229,255,0.3);font-size:11px;font-weight:700;cursor:pointer;">✓ Verified</button>',
             '<button onclick="assignMerchantBadge(\'' + a.id + '\',2)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(247,147,26,0.12);color:#f7931a;border:1px solid rgba(247,147,26,0.3);font-size:11px;font-weight:700;cursor:pointer;">★ Pro</button>',
             '<button onclick="assignMerchantBadge(\'' + a.id + '\',3)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.3);font-size:11px;font-weight:700;cursor:pointer;">♛ Elite</button>',
             '<button onclick="rejectMerchantApp(\'' + a.id + '\')" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(246,70,93,0.12);color:#f6465d;border:1px solid rgba(246,70,93,0.3);font-size:11px;font-weight:700;cursor:pointer;">✕ Reject</button>'
-          ].join('') : '<span style="color:var(--text-2);font-size:12px;">Reviewed</span>') +
+          ].join('') : '') +
         '</td></tr>';
     }).join('');
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#f6465d;padding:24px;">Error loading applications.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#f6465d;padding:24px;">Error loading applications.</td></tr>';
   }
+}
+
+function viewMerchantApp(id) {
+  var a = _merchantAppsCache.find(function(x){ return x.id === id; });
+  if (!a) return;
+  var social = a.socialAccounts || {};
+  var bInfo = (a.assignedBadge || a.badge) ? MERCHANT_BADGE_INFO[a.assignedBadge || a.badge] : null;
+  var statusColor = a.status === 'approved' ? '#1bd67d' : a.status === 'rejected' ? '#f6465d' : '#ffd87a';
+
+  var modal = document.getElementById('merchantDetailModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'merchantDetailModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.onclick = function(e){ if(e.target===modal) modal.style.display='none'; };
+    document.body.appendChild(modal);
+  }
+
+  var photoHtml = a.photoBase64
+    ? '<img src="' + a.photoBase64 + '" style="max-width:100%;max-height:200px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);object-fit:contain;display:block;margin:0 auto 4px;">'
+    : '<div style="padding:24px;text-align:center;color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.05);border-radius:10px;">No photo uploaded</div>';
+
+  modal.innerHTML = '<div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">' +
+      '<h3 style="color:#fff;font-size:1rem;font-weight:700;margin:0;">Application ' + escH(a.id) + '</h3>' +
+      '<button onclick="document.getElementById(\'merchantDetailModal\').style.display=\'none\'" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;">✕</button>' +
+    '</div>' +
+    '<div style="display:grid;gap:14px;">' +
+      '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;">' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Applicant</div>' +
+        '<div style="font-weight:700;color:#fff;font-size:0.95rem;">' + escH(a.username) + '</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">' + escH(a.email) + '</div>' +
+      '</div>' +
+      '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;">' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">ID Photo</div>' +
+        photoHtml +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+        '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;">' +
+          '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Currency</div>' +
+          '<div style="font-weight:700;color:#00e5ff;font-size:1rem;">' + escH(a.currency || '—') + '</div>' +
+        '</div>' +
+        '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;">' +
+          '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Status</div>' +
+          '<div style="font-weight:700;color:' + statusColor + ';text-transform:capitalize;">' + escH(a.status) + '</div>' +
+          (bInfo ? '<div style="font-size:12px;color:' + bInfo.color + ';font-weight:700;margin-top:2px;">' + bInfo.label + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;">' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Social Media</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;">' +
+          (social.twitter ? '<div style="font-size:13px;color:#fff;">𝕏 Twitter/X: <span style="color:#00e5ff;">' + escH(social.twitter) + '</span></div>' : '') +
+          (social.telegram ? '<div style="font-size:13px;color:#fff;">✈ Telegram: <span style="color:#00e5ff;">' + escH(social.telegram) + '</span></div>' : '') +
+          (social.instagram ? '<div style="font-size:13px;color:#fff;">📷 Instagram: <span style="color:#00e5ff;">' + escH(social.instagram) + '</span></div>' : '') +
+          (!social.twitter && !social.telegram && !social.instagram ? '<div style="color:rgba(255,255,255,0.3);font-size:12px;">None provided</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;">' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Submitted</div>' +
+        '<div style="font-size:13px;color:rgba(255,255,255,0.75);">' + new Date(a.submittedAt).toLocaleString() + '</div>' +
+      '</div>' +
+      (a.status === 'pending' ? '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">' +
+        '<button onclick="assignMerchantBadge(\'' + a.id + '\',1);document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(0,229,255,0.15);color:#00e5ff;border:1px solid rgba(0,229,255,0.35);font-size:13px;font-weight:700;cursor:pointer;">✓ Verified</button>' +
+        '<button onclick="assignMerchantBadge(\'' + a.id + '\',2);document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(247,147,26,0.15);color:#f7931a;border:1px solid rgba(247,147,26,0.35);font-size:13px;font-weight:700;cursor:pointer;">★ Pro</button>' +
+        '<button onclick="assignMerchantBadge(\'' + a.id + '\',3);document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.35);font-size:13px;font-weight:700;cursor:pointer;">♛ Elite</button>' +
+        '<button onclick="rejectMerchantApp(\'' + a.id + '\');document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(246,70,93,0.15);color:#f6465d;border:1px solid rgba(246,70,93,0.35);font-size:13px;font-weight:700;cursor:pointer;">✕ Reject</button>' +
+      '</div>' : '') +
+    '</div>' +
+  '</div>';
+  modal.style.display = 'flex';
 }
 
 async function assignMerchantBadge(id, badge) {

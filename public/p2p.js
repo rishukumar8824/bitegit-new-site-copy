@@ -6432,12 +6432,89 @@ function closeP2PScreen(id) {
   });
 })();
 
+// ── Merchant Application Form State ──
+var merchantFormData = { idPhotoBase64: '', currency: '', twitter: '', telegram: '', instagram: '' };
+
+var _MERCH_GREEN_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function merchantPhotoChanged(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 6 * 1024 * 1024) { alert('Photo must be under 6MB.'); input.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    merchantFormData.idPhotoBase64 = e.target.result;
+    var prev = document.getElementById('merchantPhotoPreview');
+    var wrap = document.getElementById('merchantPhotoPreviewWrap');
+    var check = document.getElementById('merchantPhotoCheck');
+    var btn = document.getElementById('merchantPhotoAddBtn');
+    if (prev) prev.src = e.target.result;
+    if (wrap) wrap.style.display = 'block';
+    if (check) check.innerHTML = _MERCH_GREEN_SVG;
+    if (btn) { btn.textContent = 'Done'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.color = 'rgba(255,255,255,0.45)'; btn.onclick = null; }
+  };
+  reader.readAsDataURL(file);
+}
+
+function merchantToggleCurrency() {
+  var p = document.getElementById('merchantCurrencyPanel');
+  if (p) p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+}
+
+function merchantSelectCurrency(val) {
+  merchantFormData.currency = val;
+  var label = document.getElementById('merchantCurrencyLabel');
+  var check = document.getElementById('merchantCurrencyCheck');
+  var btn = document.getElementById('merchantCurrencyAddBtn');
+  var panel = document.getElementById('merchantCurrencyPanel');
+  if (label) label.textContent = '(' + val + ')';
+  if (check) check.innerHTML = _MERCH_GREEN_SVG;
+  if (panel) panel.style.display = 'none';
+  if (btn) { btn.textContent = 'Done'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.color = 'rgba(255,255,255,0.45)'; }
+}
+
+function merchantToggleSocial() {
+  var p = document.getElementById('merchantSocialPanel');
+  if (p) p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+}
+
+function merchantSaveSocial() {
+  var twitter = (document.getElementById('merchantTwitter') || {}).value || '';
+  var telegram = (document.getElementById('merchantTelegram') || {}).value || '';
+  var instagram = (document.getElementById('merchantInstagram') || {}).value || '';
+  twitter = twitter.trim(); telegram = telegram.trim(); instagram = instagram.trim();
+  if (!twitter && !telegram && !instagram) { alert('Please enter at least one social media account.'); return; }
+  merchantFormData.twitter = twitter;
+  merchantFormData.telegram = telegram;
+  merchantFormData.instagram = instagram;
+  var panel = document.getElementById('merchantSocialPanel');
+  var check = document.getElementById('merchantSocialCheck');
+  var btn = document.getElementById('merchantSocialAddBtn');
+  if (panel) panel.style.display = 'none';
+  if (check) check.innerHTML = _MERCH_GREEN_SVG;
+  if (btn) { btn.textContent = 'Done'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.color = 'rgba(255,255,255,0.45)'; }
+}
+
 async function submitMerchantApp() {
-  var cb = document.getElementById('merchantAgree');
-  if (!cb || !cb.checked) {
-    alert('Please agree to the Merchant Service Agreement first.');
+  // Validate all mandatory fields
+  if (!merchantFormData.idPhotoBase64) {
+    alert('⚠️ Please upload a photo of you holding your ID card.');
     return;
   }
+  if (!merchantFormData.currency) {
+    alert('⚠️ Please select your preferred trading currency.');
+    return;
+  }
+  if (!merchantFormData.twitter && !merchantFormData.telegram && !merchantFormData.instagram) {
+    alert('⚠️ Please add at least one social media account.');
+    return;
+  }
+  var cb = document.getElementById('merchantAgree');
+  if (!cb || !cb.checked) {
+    alert('⚠️ Please agree to the Merchant Service Agreement first.');
+    return;
+  }
+
   var submitBtn = document.querySelector('#merchantApplyScreen button[onclick="submitMerchantApp()"]');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting...'; }
   try {
@@ -6445,11 +6522,21 @@ async function submitMerchantApp() {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
+      body: JSON.stringify({
+        photoBase64: merchantFormData.idPhotoBase64,
+        currency: merchantFormData.currency,
+        socialAccounts: {
+          twitter: merchantFormData.twitter,
+          telegram: merchantFormData.telegram,
+          instagram: merchantFormData.instagram
+        }
+      })
     });
     var data = await res.json();
     if (data.success) {
       alert('✅ ' + data.message);
+      // Reset form state
+      merchantFormData = { idPhotoBase64: '', currency: '', twitter: '', telegram: '', instagram: '' };
       closeP2PScreen('merchantApplyScreen');
       closeP2PScreen('merchantScreen');
     } else {
@@ -6458,7 +6545,7 @@ async function submitMerchantApp() {
   } catch (e) {
     alert('Network error. Please try again.');
   } finally {
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit'; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Application'; }
   }
 }
 

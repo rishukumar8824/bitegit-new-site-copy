@@ -1591,67 +1591,123 @@
         <span></span>
       </div>
       <div style="padding:1.2rem 1rem 3rem;">
-        <!-- Apply now button at top -->
-        <button style="width:100%;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;margin-bottom:2rem;">Apply now</button>
 
-        <!-- Requirements -->
-        <h2 style="font-size:1rem;font-weight:700;color:#fff;text-align:center;margin:0 0 1.2rem;">Requirements</h2>
+        <!-- Hidden file input for ID photo -->
+        <input type="file" id="merchantIdPhotoInput" accept="image/*" style="display:none" onchange="merchantPhotoChanged(this)">
+
+        <h2 style="font-size:1rem;font-weight:700;color:#fff;text-align:center;margin:0 0 0.3rem;">Requirements</h2>
+        <p style="font-size:0.78rem;color:rgba(255,255,255,0.4);text-align:center;margin:0 0 1.2rem;">Fill all <span style="color:#f6465d;">*required</span> fields before submitting</p>
+
         <div style="display:grid;gap:0;">
-          <!-- req item -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span style="font-size:0.9rem;color:#fff;font-weight:500;">A photo of you holding your ID card.</span>
+
+          <!-- 1. ID Photo — MANDATORY -->
+          <div style="border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span id="merchantPhotoCheck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Photo holding your ID card <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
+              </div>
+              <button id="merchantPhotoAddBtn" onclick="document.getElementById('merchantIdPhotoInput').click()" style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
             </div>
-            <button style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span style="font-size:0.9rem;color:#fff;font-weight:500;">ID verification</span>
+            <div id="merchantPhotoPreviewWrap" style="display:none;padding:0 0 14px 34px;">
+              <img id="merchantPhotoPreview" style="max-width:130px;max-height:100px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);object-fit:cover;">
+              <div style="font-size:0.75rem;color:#00c853;margin-top:5px;">✓ Photo uploaded</div>
             </div>
-            <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Done</button>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span style="font-size:0.9rem;color:#fff;font-weight:500;">Bind email</span>
-            </div>
-            <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Done</button>
-          </div>
+
+          <!-- 2. ID Verification — auto done -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
             <div style="display:flex;align-items:center;gap:12px;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span style="font-size:0.9rem;color:#fff;font-weight:500;">Bind mobile</span>
+              <span style="font-size:0.88rem;color:#fff;font-weight:500;">ID verification</span>
             </div>
-            <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Done</button>
+            <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.45);font-size:0.8rem;font-weight:700;border:none;cursor:default;flex-shrink:0;">Done</button>
           </div>
+
+          <!-- 3. Bind email — auto done -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
             <div style="display:flex;align-items:center;gap:12px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span style="font-size:0.9rem;color:#fff;font-weight:500;">Select a currency</span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.88rem;color:#fff;font-weight:500;">Bind email</span>
             </div>
-            <button style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
+            <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.45);font-size:0.8rem;font-weight:700;border:none;cursor:default;flex-shrink:0;">Done</button>
           </div>
+
+          <!-- 4. Bind mobile — auto done -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.88rem;color:#fff;font-weight:500;">Bind mobile</span>
+            </div>
+            <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.45);font-size:0.8rem;font-weight:700;border:none;cursor:default;flex-shrink:0;">Done</button>
+          </div>
+
+          <!-- 5. Select Currency — MANDATORY -->
+          <div style="border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span id="merchantCurrencyCheck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Select a currency <span id="merchantCurrencyLabel" style="color:#00e5ff;font-weight:700;"></span> <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
+              </div>
+              <button id="merchantCurrencyAddBtn" onclick="merchantToggleCurrency()" style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
+            </div>
+            <div id="merchantCurrencyPanel" style="display:none;padding:0 0 16px 34px;">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <button onclick="merchantSelectCurrency('USD')" style="padding:7px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:0.82rem;cursor:pointer;">$ USD</button>
+                <button onclick="merchantSelectCurrency('EUR')" style="padding:7px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:0.82rem;cursor:pointer;">€ EUR</button>
+                <button onclick="merchantSelectCurrency('GBP')" style="padding:7px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:0.82rem;cursor:pointer;">£ GBP</button>
+                <button onclick="merchantSelectCurrency('AED')" style="padding:7px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:0.82rem;cursor:pointer;">AED</button>
+                <button onclick="merchantSelectCurrency('AUD')" style="padding:7px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:0.82rem;cursor:pointer;">A$ AUD</button>
+                <button onclick="merchantSelectCurrency('CAD')" style="padding:7px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:0.82rem;cursor:pointer;">C$ CAD</button>
+                <button onclick="merchantSelectCurrency('SGD')" style="padding:7px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:0.82rem;cursor:pointer;">S$ SGD</button>
+                <button onclick="merchantSelectCurrency('INR')" style="padding:7px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:0.82rem;cursor:pointer;">₹ INR</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Spot assets ≥ 500 USDT — auto done -->
           <div style="padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
               <div style="display:flex;align-items:flex-start;gap:12px;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <div>
-                  <div style="font-size:0.9rem;color:#fff;font-weight:600;margin-bottom:5px;">Spot account assets can't be less than 500 USDT.</div>
-                  <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);line-height:1.55;">After submitting your application, the corresponding amount of assets will be locked as a security margin. The assets can be unlocked after you withdraw from the BITEGIT merchant program by contacting customer service.</div>
+                  <div style="font-size:0.88rem;color:#fff;font-weight:600;margin-bottom:5px;">Spot account assets can't be less than 500 USDT.</div>
+                  <div style="font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;">After submitting, 500 USDT will be locked as a security margin. Unlocked after withdrawing from the merchant program via customer service.</div>
                 </div>
               </div>
-              <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Done</button>
+              <button style="padding:6px 16px;border-radius:8px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.45);font-size:0.8rem;font-weight:700;border:none;cursor:default;flex-shrink:0;">Done</button>
             </div>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span style="font-size:0.9rem;color:#fff;font-weight:500;">Social media accounts</span>
+
+          <!-- 7. Social Media — MANDATORY (at least one) -->
+          <div style="border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span id="merchantSocialCheck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Social media accounts <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
+              </div>
+              <button id="merchantSocialAddBtn" onclick="merchantToggleSocial()" style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
             </div>
-            <button style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
+            <div id="merchantSocialPanel" style="display:none;padding:0 0 16px 0;">
+              <p style="font-size:0.76rem;color:rgba(255,255,255,0.4);margin:0 0 10px;">Fill at least one account</p>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="position:relative;">
+                  <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:0.75rem;color:rgba(255,255,255,0.35);pointer-events:none;">Twitter/X</span>
+                  <input id="merchantTwitter" type="text" placeholder="@username" style="width:100%;padding:12px 12px 12px 82px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.88rem;box-sizing:border-box;outline:none;">
+                </div>
+                <div style="position:relative;">
+                  <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:0.75rem;color:rgba(255,255,255,0.35);pointer-events:none;">Telegram</span>
+                  <input id="merchantTelegram" type="text" placeholder="@username or link" style="width:100%;padding:12px 12px 12px 82px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.88rem;box-sizing:border-box;outline:none;">
+                </div>
+                <div style="position:relative;">
+                  <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:0.75rem;color:rgba(255,255,255,0.35);pointer-events:none;">Instagram</span>
+                  <input id="merchantInstagram" type="text" placeholder="@username" style="width:100%;padding:12px 12px 12px 82px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.88rem;box-sizing:border-box;outline:none;">
+                </div>
+                <button onclick="merchantSaveSocial()" style="width:100%;padding:12px;border-radius:10px;background:#00e5ff;color:#000;font-size:0.9rem;font-weight:700;border:none;cursor:pointer;margin-top:2px;">Save</button>
+              </div>
+            </div>
           </div>
+
         </div>
 
         <!-- Agreement + Submit -->
@@ -1660,7 +1716,7 @@
             <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#00e5ff;flex-shrink:0;" />
             <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#00e5ff;cursor:pointer;">Merchant Service Agreement</span></span>
           </label>
-          <button onclick="submitMerchantApp()" style="width:100%;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;">Submit</button>
+          <button onclick="submitMerchantApp()" style="width:100%;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;">Submit Application</button>
         </div>
       </div>
     </div>
