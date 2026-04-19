@@ -2566,6 +2566,12 @@ async function loadCurrentUser() {
       try { localStorage.setItem('_p2p_hint', JSON.stringify({ id: getCurrentUserId(), username: currentUser.username, email: currentUser.email, role: currentUser.role, avatar: currentUser.avatar || '', createdAt: currentUser.createdAt || null })); } catch(_) {}
       // Load merchant badge on login so ad cards show it immediately
       loadMerchantBadge && loadMerchantBadge();
+      // Poll badge every 30s so admin badge changes appear without page refresh
+      if (!window._badgePollTimer) {
+        window._badgePollTimer = setInterval(function() {
+          if (currentUser) loadMerchantBadge && loadMerchantBadge();
+        }, 30000);
+      }
       // Single call — fetchOrdersSafe shows cache instantly then fetches fresh
       fetchOrdersSafe();
       _startFallbackPoll(); // 15s fallback poll in case SSE is down
@@ -6576,12 +6582,15 @@ async function loadMerchantBadge() {
       var b = MERCHANT_BADGES[data.badge];
       if (!b) return;
       // Store globally so ad cards can use it as fallback
+      var _prevBadge = _myMerchantBadge;
       _myMerchantBadge = data.badge;
-      // Re-render cards with badge — use stored data if available, else re-fetch
-      if (_lastOffersData) {
+      // If badge changed, clear cache and re-fetch fresh from server
+      if (_prevBadge !== _myMerchantBadge) {
+        _offersResponseCache && _offersResponseCache.clear && _offersResponseCache.clear();
+        _lastOffersData = null;
+        if (typeof loadOffers === 'function') loadOffers();
+      } else if (_lastOffersData) {
         renderOffers(_lastOffersData, false);
-      } else {
-        setTimeout(function() { if (typeof loadOffers === 'function') loadOffers(); }, 800);
       }
       // Show badge in profile
       var badgeEl = document.getElementById('mobMerchantBadge');

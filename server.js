@@ -2769,15 +2769,19 @@ app.get('/api/p2p/offers', async (req, res) => {
         const userId = offer.createdByUserId;
         const advertiserName = offer.advertiser || '';
 
-        // Always look up merchant badge — by userId if available, always fallback to username
+        // Always look up merchant badge — pick the MOST RECENTLY approved application
         let merchantBadge = null;
+        let latestReviewedAt = null;
         for (const [, app] of merchantApplications) {
           if (app.status === 'approved' && app.assignedBadge) {
             const userIdMatch = userId && String(app.userId) === String(userId);
             const usernameMatch = advertiserName && app.username === advertiserName;
             if (userIdMatch || usernameMatch) {
-              merchantBadge = app.assignedBadge; // 1=Verified, 2=Pro, 3=Elite
-              break;
+              const reviewedAt = app.reviewedAt ? new Date(app.reviewedAt).getTime() : 0;
+              if (!latestReviewedAt || reviewedAt > latestReviewedAt) {
+                merchantBadge = app.assignedBadge;
+                latestReviewedAt = reviewedAt;
+              }
             }
           }
         }
@@ -3168,10 +3172,21 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
 // ── Merchant Application: User checks their status ──
 app.get('/api/merchant/application-status', requiresP2PUser, (req, res) => {
   const userId = req.p2pUser.id;
+  // Return most recently reviewed approved app, or latest pending
+  let best = null;
   for (const [, app] of merchantApplications) {
-    if (app.userId === userId) {
-      return res.json({ success: true, found: true, status: app.status, badge: app.assignedBadge || app.badge || null, applicationId: app.id });
-    }
+    if (app.userId !== userId) continue;
+    if (!best) { best = app; continue; }
+    // Prefer approved over non-approved
+    if (app.status === 'approved' && best.status !== 'approved') { best = app; continue; }
+    if (app.status !== 'approved' && best.status === 'approved') continue;
+    // Among same status, prefer most recently reviewed
+    const t1 = app.reviewedAt ? new Date(app.reviewedAt).getTime() : new Date(app.submittedAt || 0).getTime();
+    const t2 = best.reviewedAt ? new Date(best.reviewedAt).getTime() : new Date(best.submittedAt || 0).getTime();
+    if (t1 > t2) best = app;
+  }
+  if (best) {
+    return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || best.badge || null, applicationId: best.id });
   }
   return res.json({ success: true, found: false, status: null, badge: null });
 });
