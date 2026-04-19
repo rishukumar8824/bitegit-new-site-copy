@@ -670,14 +670,9 @@ function renderAssetList(container, panelKey) {
     const balance = panelKey === 'funding' && item.symbol === 'USDT'
       ? toNumber(state.balances.funding)
       : item.balance;
-    const badgeLabel = item.hasDeposit ? 'Live' : balance > 0 ? 'Held' : 'Watch';
-    const badgeTone = item.hasDeposit ? 'live' : balance > 0 ? 'held' : 'watch';
-    const subtitle =
-      item.hasDeposit
-        ? 'Admin deposit ready'
-        : panelKey === 'funding'
-          ? 'Funding wallet preview'
-          : 'Market asset';
+    const badgeLabel = balance > 0 ? 'Held' : '';
+    const badgeTone = balance > 0 ? 'held' : '';
+    const subtitle = panelKey === 'funding' ? 'Funding' : item.name;
 
     return `
       <div class="asset-row">
