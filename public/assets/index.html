@@ -61,15 +61,6 @@
     .asset-list{padding:0 0 12px;}
     .asset-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;}
     .asset-row-main{display:flex;align-items:center;gap:12px;min-width:0;}
-    .asset-row-icon{position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);}
-    .asset-row-icon img{position:relative;z-index:1;width:32px;height:32px;object-fit:contain;}
-    .asset-row-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:0.62rem;font-weight:800;color:#fff;background:rgba(255,255,255,0.06);}
-    .asset-row-copy{display:grid;gap:2px;min-width:0;}
-    .asset-row-copy strong{font-size:0.95rem;font-weight:800;}
-    .asset-row-copy small{font-size:0.75rem;color:rgba(255,255,255,0.42);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .asset-row-side{display:grid;justify-items:end;gap:3px;flex-shrink:0;}
-    .asset-row-amount{font-size:0.9rem;font-weight:800;}
-    .asset-row-badge{font-size:0.72rem;color:rgba(255,255,255,0.55);}
     .asset-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,0.06);}
     .asset-icon img{width:32px;height:32px;object-fit:contain;}
     .asset-icon-fallback{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;flex-shrink:0;}
@@ -80,23 +71,15 @@
     .asset-amount{font-size:0.9rem;font-weight:700;}
     .asset-usdt{font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:2px;}
 
-    /* ── History ── */
+    /* ── Withdrawal history ── */
     .withdraw-history{border-top:1px solid rgba(255,255,255,0.08);padding:14px 16px 10px;}
-    .withdraw-history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;}
+    .withdraw-history-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px;}
     .withdraw-history-title{font-size:0.92rem;font-weight:700;}
     .withdraw-history-refresh{min-height:32px;padding:0 12px;border-radius:8px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.78);font-size:0.76rem;font-weight:700;}
-    .history-head-actions{display:flex;align-items:center;gap:8px;min-width:0;}
-    .history-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:min(188px,48vw);}
-    .history-tab{min-height:32px;border-radius:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.55);font-size:0.74rem;font-weight:800;}
-    .history-tab.active{background:rgba(0,229,196,0.92);color:#03131a;}
     .withdraw-history-list{display:grid;}
     .withdraw-history-empty{padding:18px 0 8px;color:rgba(255,255,255,0.42);font-size:0.82rem;line-height:1.5;}
     .withdraw-history-row{display:grid;gap:8px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
     .withdraw-history-main,.withdraw-history-meta{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
-    .withdraw-history-coin{display:flex;align-items:center;gap:8px;min-width:0;}
-    .history-coin-icon{position:relative;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.08);}
-    .history-coin-icon img{position:relative;z-index:1;width:22px;height:22px;object-fit:contain;}
-    .history-coin-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:0.55rem;font-weight:800;color:#fff;}
     .withdraw-history-amount{font-size:0.92rem;font-weight:700;}
     .withdraw-history-id,.withdraw-history-address,.withdraw-history-date{min-width:0;color:rgba(255,255,255,0.42);font-size:0.74rem;line-height:1.45;word-break:break-word;}
     .withdraw-history-address{text-align:right;}
@@ -152,7 +135,7 @@
     .assets-summary-line.success{color:#bdf8d4;}
   </style>
   <script src="/app-nav.js?v=20260416d" defer></script>
-  <script src="/assets.js?v=20260419e" defer></script>
+  <script src="/assets.js?v=20260419a" defer></script>
 </head>
 <body class="has-mobile-nav">
 
@@ -230,7 +213,7 @@
       </span>
       <span class="act-label">Transfer</span>
     </button>
-    <button class="act-btn" id="assetsHistoryBtn" type="button">
+    <button class="act-btn" type="button">
       <span class="act-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
@@ -292,16 +275,10 @@
   <div data-assets-panel="spot" class="asset-list hidden" id="assetsCoinListSpot"></div>
   <div data-assets-panel="funding" class="asset-list hidden" id="assetsCoinListFunding"></div>
 
-  <section class="withdraw-history hidden" id="assetsHistorySection" aria-labelledby="assetsHistoryTitle">
+  <section class="withdraw-history" aria-labelledby="assetsWithdrawHistoryTitle">
     <div class="withdraw-history-head">
-      <h2 class="withdraw-history-title" id="assetsHistoryTitle">History</h2>
-      <div class="history-head-actions">
-        <div class="history-tabs" role="tablist" aria-label="Asset history">
-          <button class="history-tab" data-history-tab="deposit" type="button">Deposit</button>
-          <button class="history-tab active" data-history-tab="withdrawal" type="button">Withdrawal</button>
-        </div>
-        <button class="withdraw-history-refresh" id="assetsWithdrawHistoryRefreshBtn" type="button">Refresh</button>
-      </div>
+      <h2 class="withdraw-history-title" id="assetsWithdrawHistoryTitle">Withdrawal History</h2>
+      <button class="withdraw-history-refresh" id="assetsWithdrawHistoryRefreshBtn" type="button">Refresh</button>
     </div>
     <div class="withdraw-history-list" id="assetsWithdrawHistoryList">
       <p class="withdraw-history-empty">No withdrawal requests yet.</p>

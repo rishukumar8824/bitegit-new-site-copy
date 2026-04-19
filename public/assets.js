@@ -16,7 +16,6 @@ const panels = Array.from(document.querySelectorAll('[data-assets-panel]'));
 const depositBtn = document.getElementById('assetsDepositBtn');
 const withdrawBtn = document.getElementById('assetsWithdrawBtn');
 const transferBtn = document.getElementById('assetsTransferBtn');
-const historyBtn = document.getElementById('assetsHistoryBtn');
 
 const depositModal = document.getElementById('depositModal');
 const withdrawModal = document.getElementById('withdrawModal');
@@ -40,10 +39,8 @@ const withdrawScannerCloseBtn = document.getElementById('assetsWithdrawScannerCl
 const withdrawAmountInput = document.getElementById('assetsWithdrawAmount');
 const withdrawResultEl = document.getElementById('assetsWithdrawResult');
 const withdrawSubmitBtn = document.getElementById('assetsWithdrawSubmitBtn');
-const historySectionEl = document.getElementById('assetsHistorySection');
 const withdrawHistoryListEl = document.getElementById('assetsWithdrawHistoryList');
 const withdrawHistoryRefreshBtn = document.getElementById('assetsWithdrawHistoryRefreshBtn');
-const historyTabButtons = Array.from(document.querySelectorAll('[data-history-tab]'));
 
 const WALLET_ENDPOINTS = ['/api/wallet/summary', '/api/wallet', '/api/p2p/wallet'];
 const WITHDRAW_ENDPOINTS = [
@@ -114,9 +111,7 @@ const state = {
     USDT: 0
   },
   depositWallets: [],
-  deposits: [],
   withdrawals: [],
-  activeHistoryTab: 'withdrawal',
   scanner: {
     active: false,
     stream: null,
@@ -351,7 +346,7 @@ function shortenValue(value, start = 8, end = 6) {
 
 function getWithdrawalStatusView(rawStatus) {
   const normalized = String(rawStatus || 'pending').trim().toLowerCase();
-  if (['approved', 'sent', 'completed', 'complete', 'success', 'confirmed', 'credited'].includes(normalized)) {
+  if (['approved', 'sent', 'completed', 'complete', 'success'].includes(normalized)) {
     return { label: 'Approved', tone: 'approved' };
   }
   if (['rejected', 'cancelled', 'canceled', 'failed'].includes(normalized)) {
@@ -863,20 +858,9 @@ function renderWithdrawalHistory() {
     return;
   }
 
-  historyTabButtons.forEach((button) => {
-    const tab = String(button.getAttribute('data-history-tab') || '').trim();
-    const isActive = tab === state.activeHistoryTab;
-    button.classList.toggle('active', isActive);
-    button.setAttribute('aria-selected', isActive ? 'true' : 'false');
-  });
-
-  const isDepositHistory = state.activeHistoryTab === 'deposit';
-  const rows = isDepositHistory
-    ? (Array.isArray(state.deposits) ? state.deposits : [])
-    : (Array.isArray(state.withdrawals) ? state.withdrawals : []);
-
+  const rows = Array.isArray(state.withdrawals) ? state.withdrawals : [];
   if (!rows.length) {
-    withdrawHistoryListEl.innerHTML = `<p class="withdraw-history-empty">No ${isDepositHistory ? 'deposit' : 'withdrawal'} history yet.</p>`;
+    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">No withdrawal requests yet.</p>';
     return;
   }
 
@@ -884,34 +868,23 @@ function renderWithdrawalHistory() {
     .map((row) => {
       const status = getWithdrawalStatusView(row.status);
       const requestId = String(row.requestId || row.id || '').trim();
-      const address = String(row.address || row.toAddress || row.to || row.depositAddress || '').trim();
+      const address = String(row.address || row.toAddress || row.to || '').trim();
       const network = normalizeNetwork(row.network || row.chain || row.metadata?.network) || 'USDT';
       const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
       const createdAt = formatAssetDate(row.createdAt || row.created_at);
-      const title = isDepositHistory ? 'Deposit' : 'Withdrawal';
-      const txHash = String(row.txHash || row.txid || '').trim();
-      const bottomRight = isDepositHistory
-        ? (txHash ? shortenValue(txHash, 10, 8) : 'Tx pending')
-        : shortenValue(address || 'Address pending', 10, 8);
 
       return `
         <article class="withdraw-history-row">
           <div class="withdraw-history-main">
-            <div class="withdraw-history-coin">
-              <span class="history-coin-icon">
-                <img src="${getAssetIconUrl(currency.toLowerCase())}" alt="${escapeHtml(currency)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
-                <span class="history-coin-fallback">${escapeHtml(currency.slice(0, 4))}</span>
-              </span>
-              <div>
-                <p class="withdraw-history-amount">${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</p>
-                <p class="withdraw-history-id">${escapeHtml(title)} #${escapeHtml(shortenValue(requestId || title.toLowerCase(), 12, 6))}</p>
-              </div>
+            <div>
+              <p class="withdraw-history-amount">${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</p>
+              <p class="withdraw-history-id">#${escapeHtml(shortenValue(requestId || 'withdrawal', 12, 6))}</p>
             </div>
             <span class="withdraw-status ${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>
           </div>
           <div class="withdraw-history-meta">
             <p class="withdraw-history-date">${escapeHtml(network)}${createdAt ? ` - ${escapeHtml(createdAt)}` : ''}</p>
-            <p class="withdraw-history-address">${escapeHtml(bottomRight)}</p>
+            <p class="withdraw-history-address">${escapeHtml(shortenValue(address || 'Address pending', 10, 8))}</p>
           </div>
         </article>
       `;
@@ -919,72 +892,42 @@ function renderWithdrawalHistory() {
     .join('');
 }
 
-async function loadDepositHistory() {
-  const { response, payload } = await requestJson('/api/deposits?limit=25', { method: 'GET' });
-  if (response.status === 404 || response.status === 503) {
-    state.deposits = [];
-    return;
-  }
-  if (response.status === 401 || response.status === 403) {
-    throw new Error('Please login to view deposit history.');
-  }
-  if (!response.ok) {
-    throw new Error(String(payload?.message || 'Unable to load deposit history.'));
-  }
-  const deposits = Array.isArray(payload?.deposits)
-    ? payload.deposits
-    : Array.isArray(payload?.data?.deposits)
-      ? payload.data.deposits
-      : Array.isArray(payload)
-        ? payload
-        : [];
-  state.deposits = deposits.filter((row) => {
-    const type = String(row?.type || '').trim().toUpperCase();
-    const source = String(row?.source || row?.metadata?.source || '').trim().toLowerCase();
-    if (['MANUAL_ADJUSTMENT', 'ADMIN_ADJUSTMENT', 'BALANCE_ADJUSTMENT'].includes(type)) {
-      return false;
-    }
-    return (
-      ['ONCHAIN', 'CRYPTO', 'CRYPTO_DEPOSIT', 'USER_DEPOSIT'].includes(type) ||
-      ['api.deposits', 'assets_deposit', 'user_deposit'].includes(source) ||
-      Boolean(String(row?.txHash || row?.txid || row?.proofUrl || '').trim())
-    );
-  });
-}
-
 async function loadWithdrawalHistory() {
-  const { response, payload } = await requestJson('/api/withdrawals?limit=25', { method: 'GET' });
-  if (response.status === 404) {
-    state.withdrawals = [];
-    return;
-  }
-  if (response.status === 401 || response.status === 403) {
-    throw new Error('Please login to view withdrawal history.');
-  }
-  if (!response.ok) {
-    throw new Error(String(payload?.message || 'Unable to load withdrawal history.'));
-  }
-  state.withdrawals = Array.isArray(payload?.withdrawals)
-    ? payload.withdrawals
-    : Array.isArray(payload?.data?.withdrawals)
-      ? payload.data.withdrawals
-      : Array.isArray(payload)
-        ? payload
-        : [];
-}
-
-async function loadHistory() {
   if (!withdrawHistoryListEl) {
     return;
   }
 
   try {
-    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">Loading history...</p>';
-    await Promise.all([loadDepositHistory(), loadWithdrawalHistory()]);
+    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">Loading withdrawal history...</p>';
+    const { response, payload } = await requestJson('/api/withdrawals?limit=25', { method: 'GET' });
+
+    if (response.status === 404) {
+      state.withdrawals = [];
+      renderWithdrawalHistory();
+      return;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">Login to view withdrawal history.</p>';
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(String(payload?.message || 'Unable to load withdrawal history.'));
+    }
+
+    const withdrawals = Array.isArray(payload?.withdrawals)
+      ? payload.withdrawals
+      : Array.isArray(payload?.data?.withdrawals)
+        ? payload.data.withdrawals
+        : Array.isArray(payload)
+          ? payload
+          : [];
+    state.withdrawals = withdrawals;
     renderWithdrawalHistory();
   } catch (error) {
     console.error(error);
-    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">History is unavailable right now.</p>';
+    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">Withdrawal history is unavailable right now.</p>';
   }
 }
 
@@ -1054,7 +997,7 @@ async function handleWithdrawSubmit(event) {
     if (withdrawForm) {
       withdrawForm.reset();
     }
-    await Promise.all([loadWalletSummary(), historySectionEl?.classList.contains('hidden') ? Promise.resolve() : loadHistory()]);
+    await Promise.all([loadWalletSummary(), loadWithdrawalHistory()]);
   } catch (error) {
     console.error(error);
     setWithdrawResult(String(error?.message || 'Withdrawal request failed.'), 'error');
@@ -1208,12 +1151,6 @@ function bindEvents() {
     setActionMessage('Transfer flow will be enabled in next release.');
   });
 
-  historyBtn?.addEventListener('click', async () => {
-    historySectionEl?.classList.remove('hidden');
-    await loadHistory();
-    historySectionEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
   document.querySelectorAll('[data-modal-close]').forEach((node) => {
     node.addEventListener('click', () => {
       const modalId = node.getAttribute('data-modal-close');
@@ -1259,18 +1196,7 @@ function bindEvents() {
   });
 
   withdrawHistoryRefreshBtn?.addEventListener('click', () => {
-    loadHistory();
-  });
-
-  historyTabButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      const tab = String(button.getAttribute('data-history-tab') || '').trim();
-      if (!['deposit', 'withdrawal'].includes(tab)) {
-        return;
-      }
-      state.activeHistoryTab = tab;
-      renderWithdrawalHistory();
-    });
+    loadWithdrawalHistory();
   });
 
   withdrawForm?.addEventListener('submit', handleWithdrawSubmit);
@@ -1297,4 +1223,5 @@ function bindEvents() {
   renderWithdrawalHistory();
   bindEvents();
   loadWalletSummary();
+  loadWithdrawalHistory();
 })();
