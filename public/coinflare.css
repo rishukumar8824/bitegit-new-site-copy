@@ -3202,10 +3202,13 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 
   .cf-brand-word,
   .cf-drawer-brand span:last-child {
-    font-size: 1.45rem;
+    font-size: 0.95rem;
     font-weight: 900;
-    color: #ffffff;
     letter-spacing: 0.03em;
+  }
+
+  .cf-brand {
+    padding-left: 0.45rem;
   }
 
   .cf-actions {

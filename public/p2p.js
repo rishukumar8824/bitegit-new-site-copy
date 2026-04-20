@@ -7471,6 +7471,11 @@ window.deleteMobAd = async function(offerId) {
     else if (hash === 'profile-payment') { openPaymentMethodsScreen(); }
     else if (hash === 'profile-payment-add') { openPaymentMethodPickerScreen(); }
     else if (hash === 'orders') { showMobScreen('mobOrdersScreen'); }
+    else if (hash === 'buy') { setTimeout(function(){ var t = document.querySelector('.gt-side-tab[data-side="buy"],.side-tab[data-side="buy"]'); if(t) t.click(); }, 200); }
+    else if (hash === 'deposit') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); }, 300); }
+    else if (hash === 'withdraw') { setTimeout(function(){ if(typeof openWithdrawModal==='function') openWithdrawModal(); }, 400); }
+    else if (hash === 'support') { setTimeout(function(){ showMobScreen('mobSupportScreen'); }, 200); }
+    else if (hash === 'transfer') { setTimeout(function(){ var t = document.querySelector('.gt-side-tab[data-side="buy"],.side-tab[data-side="buy"]'); if(t) t.click(); }, 200); }
   })();
 
   // Unified click handler — nav tabs + back + KYC actions
