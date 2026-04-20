@@ -9,12 +9,12 @@
     <link rel="stylesheet" href="/mobile-nav.css?v=20260416c" />
   <script src="/app-nav.js?v=20260416c" defer></script>
   <script>
-    // Hide guest-only elements instantly if user was previously logged in — prevents flash
+    // Instantly apply auth state before render — prevents any flash
     try {
       if (localStorage.getItem('_p2p_hint')) {
         var s = document.createElement('style');
         s.id = '_auth_flash_fix';
-        s.textContent = '[data-auth-guest-only]{display:none!important}';
+        s.textContent = '[data-auth-guest-only]{display:none!important}[data-auth-user-only]{display:block!important}';
         document.head.appendChild(s);
       }
     } catch(e) {}
