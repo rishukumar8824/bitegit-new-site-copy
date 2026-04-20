@@ -261,9 +261,9 @@ const KYC_TARGET_IMAGE_BYTES = 320 * 1024;
 var PM_ICONS = {
   UPI: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#f0f0f0"/><text x="9" y="27" font-size="14" font-weight="900" fill="#888" font-family="Arial,sans-serif" font-style="italic">UPI</text><polygon points="30,14 36,22 30,22" fill="#f26522"/><polygon points="30,22 36,22 30,30" fill="#1a9b3c"/></svg>',
   'Bank Transfer(India)': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#1565c0"/><polygon points="20,7 34,16 6,16" fill="#fff"/><rect x="8" y="17" width="3.5" height="12" rx="1" fill="#fff"/><rect x="14" y="17" width="3.5" height="12" rx="1" fill="#fff"/><rect x="20" y="17" width="3.5" height="12" rx="1" fill="#fff"/><rect x="26" y="17" width="3.5" height="12" rx="1" fill="#fff"/><rect x="6" y="30" width="28" height="2.5" rx="1" fill="#fff"/></svg>',
-  Paytm: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#fff"/><text x="6" y="26" font-size="13" font-weight="900" fill="#002970" font-family="Arial,sans-serif">pay</text><text x="25" y="26" font-size="13" font-weight="900" fill="#00b9f1" font-family="Arial,sans-serif">tm</text></svg>',
+  Paytm: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#fff"/><text x="4" y="27" font-size="14" font-weight="900" fill="#002870" font-family="Arial Black,Arial,sans-serif">pay</text><text x="24" y="27" font-size="14" font-weight="900" fill="#00b9f2" font-family="Arial Black,Arial,sans-serif">tm</text></svg>',
   PhonePe: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#5f259f"/><text x="20" y="28" text-anchor="middle" font-size="22" font-weight="900" fill="#fff" font-family="Noto Sans Devanagari,Arial,sans-serif">पे</text></svg>',
-  'Google Pay': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="20" fill="#fff" stroke="#e0e0e0" stroke-width="1.5"/><g transform="translate(6,12)"><path d="M11.5 8.5 C11.5 5.5 13.8 3 17 3 C18.5 3 19.7 3.6 20.6 4.5 L19 6.1 C18.4 5.5 17.8 5.2 17 5.2 C15 5.2 13.5 6.8 13.5 8.5 C13.5 10.2 15 11.8 17 11.8 C18.6 11.8 19.7 10.9 20 9.6 L17 9.6 L17 7.5 L22.2 7.5 C22.3 7.9 22.3 8.2 22.3 8.6 C22.3 12 20 14 17 14 C13.8 14 11.5 11.5 11.5 8.5Z" fill="#4285f4"/><path d="M3.5 8.5 C3.5 4 7 1 11.5 1" stroke="#ea4335" stroke-width="2" fill="none" stroke-linecap="round"/><text x="25" y="12" font-size="9" font-weight="700" fill="#444" font-family="Arial,sans-serif">Pay</text></g></svg>',
+  'Google Pay': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#fff" stroke="#e0e0e0" stroke-width="1"/><circle cx="14" cy="20" r="7" fill="none" stroke="#4285f4" stroke-width="2.5"/><path d="M14 13 A7 7 0 0 1 20.5 17" stroke="#ea4335" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M20.5 17 A7 7 0 0 1 20.5 23" stroke="#34a853" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M20.5 23 A7 7 0 0 1 14 27" stroke="#fbbc05" stroke-width="2.5" fill="none" stroke-linecap="round"/><line x1="14" y1="20" x2="21" y2="20" stroke="#4285f4" stroke-width="2"/><text x="28" y="24" text-anchor="middle" font-size="9" font-weight="700" fill="#444" font-family="Arial,sans-serif">Pay</text></svg>',
   'Bank Transfer(Union Bank)': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#be4b08"/><rect x="5" y="12" width="30" height="5" rx="2.5" fill="#f0c040"/><rect x="5" y="19" width="30" height="5" rx="2.5" fill="#f0c040"/><rect x="5" y="26" width="30" height="5" rx="2.5" fill="#f0c040"/></svg>',
   GoPay: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#00aed6"/><circle cx="20" cy="20" r="12" fill="#fff"/><text x="20" y="24.5" text-anchor="middle" font-size="12" font-weight="900" fill="#00aed6" font-family="Arial,sans-serif">Go</text></svg>',
   'Bank Jago': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#ff4500"/><text x="20.5" y="30" text-anchor="middle" font-size="26" font-weight="900" fill="#fff" font-family="Georgia,serif">J</text></svg>',
@@ -6463,7 +6463,12 @@ async function deletePaymentMethod(pmId) {
     var typeRow = event.target.closest('[data-payment-type]');
     if (typeRow) {
       event.preventDefault();
-      openPaymentMethodFormFor(typeRow.getAttribute('data-payment-type'));
+      var pType = typeRow.getAttribute('data-payment-type');
+      if (pType === 'Bank Transfer(India)') {
+        showProfileFlowScreen('mobBankSubOptionsScreen', 'profile-payment-bank-sub');
+      } else {
+        openPaymentMethodFormFor(pType);
+      }
       return;
     }
     var editRow = event.target.closest('[data-payment-edit]');
@@ -7393,7 +7398,7 @@ window.deleteMobAd = async function(offerId) {
 
 // ===== MOB-SCREEN NAV (profile / orders screens) =====
 (function initMobScreenNav() {
-  var profileFlowScreens = new Set(['mobProfileScreen', 'mobProfileEditScreen', 'mobPaymentMethodsScreen', 'mobPaymentMethodTypesScreen', 'mobPaymentMethodFormScreen', 'mobTradingDataScreen', 'mobSupportScreen', 'mobSupportChatScreen']);
+  var profileFlowScreens = new Set(['mobProfileScreen', 'mobProfileEditScreen', 'mobPaymentMethodsScreen', 'mobPaymentMethodTypesScreen', 'mobBankSubOptionsScreen', 'mobPaymentMethodFormScreen', 'mobTradingDataScreen', 'mobSupportScreen', 'mobSupportChatScreen']);
   function showMobScreen(screenId) {
     var all = document.querySelectorAll('.mob-screen');
     all.forEach(function(s){ s.style.display = 'none'; s.classList.remove('mob-screen-visible'); });

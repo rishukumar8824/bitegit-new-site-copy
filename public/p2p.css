@@ -2520,6 +2520,18 @@ body.mob-screen-open .p2p-secondary-nav {
   font-weight: 300;
 }
 
+.mob-payment-row-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
 .mob-payment-label {
   display: block;
   color: rgba(255,255,255,0.76);
