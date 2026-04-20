@@ -180,6 +180,10 @@ function updateHomeAuthUi(user) {
   if (heroUserName) {
     heroUserName.textContent = currentSessionUser?.username || currentSessionUser?.email || 'Bitegit User';
   }
+  var heroWelcomeName = document.getElementById('heroWelcomeName');
+  if (heroWelcomeName) {
+    heroWelcomeName.textContent = currentSessionUser?.username || currentSessionUser?.email || 'User';
+  }
   if (heroUserMeta) {
     if (currentSessionUser?.email) {
       const kycStatus = String(currentSessionUser?.kyc?.statusLabel || currentSessionUser?.kyc?.status || 'Not submitted')
