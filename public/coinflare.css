@@ -549,6 +549,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px 0;
+  width: 100%;
   max-width: 100%;
   padding: 0 16px;
   margin: 0 auto;
