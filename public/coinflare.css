@@ -548,36 +548,36 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 .cf-action-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 24px 0;
+  gap: 20px 0;
   max-width: 100%;
-  padding: 0 12px;
+  padding: 0 16px;
   margin: 0 auto;
 }
 .cf-action-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 9px;
+  gap: 7px;
   text-decoration: none;
   background: transparent;
   border: none;
   padding: 0;
 }
 .cf-action-icon {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .cf-action-icon svg {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
 }
 .cf-action-label {
-  font-size: 0.73rem;
+  font-size: 0.68rem;
   font-weight: 400;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.88);
   text-align: center;
   line-height: 1.2;
 }
