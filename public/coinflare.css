@@ -542,54 +542,42 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 /* Logged-in user action grid */
 .cf-user-action-section {
   width: 100%;
-  padding: 28px 20px 24px;
+  padding: 24px 16px 28px;
   background: #000;
-}
-.cf-user-welcome {
-  text-align: center;
-  color: rgba(255,255,255,0.7);
-  font-size: 0.9rem;
-  margin: 0 0 20px;
-}
-.cf-user-welcome span {
-  color: #fff;
-  font-weight: 700;
 }
 .cf-action-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  max-width: 480px;
+  gap: 16px 8px;
+  max-width: 400px;
   margin: 0 auto;
 }
 .cf-action-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   text-decoration: none;
-  padding: 14px 6px 12px;
-  border-radius: 14px;
-  background: #0d0d0d;
-  border: 1px solid rgba(255,255,255,0.06);
-  transition: background 0.15s;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
-.cf-action-card:active { background: #161616; }
+.cf-action-card:active .cf-action-icon svg rect:first-child { fill: #2a2a2e; }
 .cf-action-icon {
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .cf-action-icon svg {
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
 }
 .cf-action-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.85);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #fff;
   text-align: center;
   line-height: 1.2;
 }
