@@ -542,41 +542,42 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 /* Logged-in user action grid */
 .cf-user-action-section {
   width: 100%;
-  padding: 24px 16px 28px;
+  padding: 28px 0 32px;
   background: #000;
 }
 .cf-action-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px 4px;
-  max-width: 360px;
+  gap: 24px 0;
+  max-width: 100%;
+  padding: 0 12px;
   margin: 0 auto;
 }
 .cf-action-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   text-decoration: none;
   background: transparent;
   border: none;
   padding: 0;
 }
 .cf-action-icon {
-  width: 52px;
-  height: 52px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .cf-action-icon svg {
-  width: 52px;
-  height: 52px;
+  width: 60px;
+  height: 60px;
 }
 .cf-action-label {
-  font-size: 0.72rem;
+  font-size: 0.73rem;
   font-weight: 400;
-  color: #fff;
+  color: rgba(255,255,255,0.9);
   text-align: center;
   line-height: 1.2;
 }
