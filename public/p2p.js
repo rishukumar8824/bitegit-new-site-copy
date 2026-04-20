@@ -6438,14 +6438,16 @@ async function deletePaymentMethod(pmId) {
   var takePhotoBtn = document.getElementById('paymentMethodTakePhotoBtn');
   if (takePhotoBtn && cameraInput) {
     takePhotoBtn.addEventListener('click', function() {
-      cameraInput.click();
+      closePaymentQrSheet();
+      setTimeout(function() { cameraInput.click(); }, 200);
     });
   }
 
   var selectAlbumBtn = document.getElementById('paymentMethodSelectAlbumBtn');
   if (selectAlbumBtn && albumInput) {
     selectAlbumBtn.addEventListener('click', function() {
-      albumInput.click();
+      closePaymentQrSheet();
+      setTimeout(function() { albumInput.click(); }, 200);
     });
   }
 
