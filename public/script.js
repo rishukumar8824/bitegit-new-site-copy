@@ -158,6 +158,11 @@ function updateHomeAuthUi(user) {
   currentSessionUser = user || null;
   const loggedIn = Boolean(currentSessionUser);
 
+  // Remove the flash-prevention style tag now that real state is known
+  var flashFix = document.getElementById('_auth_flash_fix');
+  if (flashFix) flashFix.remove();
+  if (!loggedIn) localStorage.removeItem('_p2p_hint');
+
   guestOnlyNodes.forEach((node) => {
     node.classList.toggle('hidden', loggedIn);
   });
