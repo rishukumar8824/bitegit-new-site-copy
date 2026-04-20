@@ -6408,7 +6408,8 @@ async function deletePaymentMethod(pmId) {
   var qrBtn = document.getElementById('paymentMethodQrBtn');
   if (qrBtn) {
     qrBtn.addEventListener('click', function() {
-      openPaymentQrSheet();
+      var albumInput = document.getElementById('paymentMethodQrAlbumInput');
+      if (albumInput) albumInput.click();
     });
   }
 
@@ -6477,6 +6478,7 @@ async function deletePaymentMethod(pmId) {
     var paymentBack = event.target.closest('[data-payment-back]');
     if (paymentBack) {
       event.preventDefault();
+      closePaymentQrSheet();
       var target = paymentBack.getAttribute('data-payment-back');
       if (target === 'profile') {
         showProfileFlowScreen('mobProfileScreen', 'profile');
@@ -6506,6 +6508,7 @@ function openP2PScreen(id) {
   document.body.classList.add('mob-screen-open');
 }
 function closeP2PScreen(id) {
+  closePaymentQrSheet();
   var el = document.getElementById(id);
   if (el) el.style.display = 'none';
   // only remove mob-screen-open if no other screen is open
