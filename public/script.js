@@ -161,7 +161,10 @@ function updateHomeAuthUi(user) {
   // Remove the flash-prevention style tag now that real state is known
   var flashFix = document.getElementById('_auth_flash_fix');
   if (flashFix) flashFix.remove();
-  if (!loggedIn) localStorage.removeItem('_p2p_hint');
+  if (!loggedIn) {
+    localStorage.removeItem('_p2p_hint');
+    localStorage.removeItem('bitegit_token');
+  }
 
   guestOnlyNodes.forEach((node) => {
     node.classList.toggle('hidden', loggedIn);
@@ -215,6 +218,9 @@ async function logoutHomeSession() {
   } catch (_) {
     // Ignore logout network failures and reset local UI state anyway.
   }
+  localStorage.removeItem('bitegit_token');
+  localStorage.removeItem('bitegit_refresh_token');
+  localStorage.removeItem('_p2p_hint');
   updateHomeAuthUi(null);
   setHomeNavOpen(false);
   window.location.href = '/';
