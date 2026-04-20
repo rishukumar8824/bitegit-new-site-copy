@@ -11,7 +11,7 @@
   <script>
     // Instantly apply auth state before render — prevents any flash
     try {
-      if (localStorage.getItem('_p2p_hint')) {
+      if (localStorage.getItem('_p2p_hint') || localStorage.getItem('bitegit_token')) {
         var s = document.createElement('style');
         s.id = '_auth_flash_fix';
         s.textContent = '[data-auth-guest-only]{display:none!important}[data-auth-user-only]{display:flex!important}';
