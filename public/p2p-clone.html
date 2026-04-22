@@ -697,53 +697,8 @@
         <div class="filter-badge">1</div>
       </div>
     </div>
-    <div class="trader-list">
-      <!-- Sorted: lowest price first -->
-      <div class="trader-card top-pick" onclick="openTraderProfile('DiwakarINS','av-d','D','95.88','342','98','958.80 - 23,970','PhonePe')">
-        <div class="top-pick-badge">⭐ Best Price ↓</div>
-        <div class="trader-header">
-          <div class="trader-info"><div class="trader-avatar av-d">D</div><div class="trader-name">DiwakarINS 🏅</div></div>
-          <div class="trader-time"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>45m</div>
-        </div>
-        <div class="trader-stats">342 Order(s) &nbsp; 98%</div>
-        <div class="trader-price"><span>INR</span>95.88</div>
-        <div class="trader-details">Available 250.0000 USDT</div>
-        <div class="trader-limits">Limits 958.80 - 23,970.00 INR</div>
-        <div class="trader-footer"><div class="payment-method">PhonePe</div><button class="btn-buy-card" onclick="event.stopPropagation();goToTrade('DiwakarINS','av-d','D','95.88','342','98','958.80 - 23,970','250.0000','PhonePe',15)">Buy</button></div>
-      </div>
-      <div class="trader-card" onclick="openTraderProfile('Akash Goldar','av-a','A','98.49','17','100','15,000 - 31,420','Cash Deposit to Bank')">
-        <div class="trader-header">
-          <div class="trader-info"><div class="trader-avatar av-a">A</div><div class="trader-name">Akash Goldar</div></div>
-          <div class="trader-time"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>30m</div>
-        </div>
-        <div class="trader-stats">17 Order(s) &nbsp; 100%</div>
-        <div class="trader-price"><span>INR</span>98.49</div>
-        <div class="trader-details">Available 319.0175 USDT</div>
-        <div class="trader-limits">Limits 15,000.00 - 31,420.03 INR</div>
-        <div class="trader-footer"><div class="payment-method">Cash Deposit to Bank</div><button class="btn-buy-card" onclick="event.stopPropagation();goToTrade('Akash Goldar','av-a','A','98.49','17','100','15,000 - 31,420','319.0175','Cash Deposit to Bank',30)">Buy</button></div>
-      </div>
-      <div class="trader-card" onclick="openTraderProfile('ZEP_PAYMENT_INR','av-z','Z','98.75','512','99','5,000 - 50,000','UPI')">
-        <div class="trader-header">
-          <div class="trader-info"><div class="trader-avatar av-z">Z</div><div class="trader-name">ZEP_PAYMENT_INR</div></div>
-          <div class="trader-time"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>15m</div>
-        </div>
-        <div class="trader-stats">512 Order(s) &nbsp; 99%</div>
-        <div class="trader-price"><span>INR</span>98.75</div>
-        <div class="trader-details">Available 1,200.0000 USDT</div>
-        <div class="trader-limits">Limits 5,000.00 - 50,000.00 INR</div>
-        <div class="trader-footer"><div class="payment-method">UPI</div><button class="btn-buy-card" onclick="event.stopPropagation();goToTrade('ZEP_PAYMENT_INR','av-z','Z','98.75','512','99','5,000 - 50,000','1,200.0000','UPI',15)">Buy</button></div>
-      </div>
-      <div class="trader-card" onclick="openTraderProfile('VIRAT-18','av-v','V','99.90','823','99','2,000 - 2,500','Digital eRupee')">
-        <div class="trader-header">
-          <div class="trader-info"><div class="trader-avatar av-v">V</div><div class="trader-name">VIRAT-18 🔥</div></div>
-          <div class="trader-time"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>15m</div>
-        </div>
-        <div class="trader-stats">823 Order(s) &nbsp; 99%</div>
-        <div class="trader-price"><span>INR</span>99.90</div>
-        <div class="trader-details">Available 658.7591 USDT</div>
-        <div class="trader-limits">Limits 2,000.00 - 2,500.00 INR</div>
-        <div class="trader-footer"><div class="payment-method">Digital eRupee</div><button class="btn-buy-card" onclick="event.stopPropagation();goToTrade('VIRAT-18','av-v','V','99.90','823','99','2,000 - 2,500','658.7591','Digital eRupee',20)">Buy</button></div>
-      </div>
+    <div class="trader-list" id="buy-list-wrap">
+      <div style="height:60px;"></div>
     </div>
   </div>
 </div>
@@ -2168,98 +2123,8 @@
 
     <div style="padding:0 16px 10px;font-size:12px;color:#555;">People who want to buy USDT from you</div>
 
-    <div class="trader-list">
-      <!-- Buyer Ad 1 -->
-      <div class="sell-trader-card" onclick="openTraderProfile('Nitesh_P2P','av-v','N','99.95','1,240','99.8','5,000 - 50,000','UPI')">
-        <div class="stc-header">
-          <div class="stc-name-row">
-            <div class="trader-avatar av-v" style="width:28px;height:28px;font-size:12px;">N</div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#fff;">Nitesh_P2P 🏅</div>
-              <div style="font-size:11px;color:#555;">1,240 orders · 99.8%</div>
-            </div>
-          </div>
-        </div>
-        <div class="stc-price"><span>INR </span>99.95</div>
-        <div class="stc-stats">Available 2,000.00 USDT</div>
-        <div class="stc-limit">Limit ₹5,000.00 – ₹50,000.00</div>
-        <div class="trader-footer" style="margin-top:8px;">
-          <div style="display:flex;gap:6px;">
-            <span style="background:#1a1a1a;border-radius:4px;padding:3px 8px;font-size:11px;color:#aaa;">UPI</span>
-            <span style="background:#1a1a1a;border-radius:4px;padding:3px 8px;font-size:11px;color:#aaa;">PhonePe</span>
-          </div>
-          <button class="btn-sell-card" onclick="event.stopPropagation();goToSellTrade('Nitesh_P2P','av-v','N','99.95','1240','99.8','5,000 - 50,000','UPI',30)">Sell</button>
-        </div>
-      </div>
-
-      <!-- Buyer Ad 2 -->
-      <div class="sell-trader-card" onclick="openTraderProfile('RajTrader','av-a','R','99.80','580','98.5','10,000 - 100,000','PhonePe')">
-        <div class="stc-header">
-          <div class="stc-name-row">
-            <div class="trader-avatar av-a" style="width:28px;height:28px;font-size:12px;">R</div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#fff;">RajTrader</div>
-              <div style="font-size:11px;color:#555;">580 orders · 98.5%</div>
-            </div>
-          </div>
-        </div>
-        <div class="stc-price"><span>INR </span>99.80</div>
-        <div class="stc-stats">Available 850.00 USDT</div>
-        <div class="stc-limit">Limit ₹10,000.00 – ₹1,00,000.00</div>
-        <div class="trader-footer" style="margin-top:8px;">
-          <div style="display:flex;gap:6px;">
-            <span style="background:#1a1a1a;border-radius:4px;padding:3px 8px;font-size:11px;color:#aaa;">PhonePe</span>
-            <span style="background:#1a1a1a;border-radius:4px;padding:3px 8px;font-size:11px;color:#aaa;">Google Pay</span>
-          </div>
-          <button class="btn-sell-card" onclick="event.stopPropagation();goToSellTrade('RajTrader','av-a','R','99.80','580','98.5','10,000 - 100,000','PhonePe',15)">Sell</button>
-        </div>
-      </div>
-
-      <!-- Buyer Ad 3 -->
-      <div class="sell-trader-card" onclick="openTraderProfile('CryptoMohit','av-d','C','99.70','320','97.2','1,000 - 20,000','Paytm')">
-        <div class="stc-header">
-          <div class="stc-name-row">
-            <div class="trader-avatar av-d" style="width:28px;height:28px;font-size:12px;">C</div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#fff;">CryptoMohit</div>
-              <div style="font-size:11px;color:#555;">320 orders · 97.2%</div>
-            </div>
-          </div>
-        </div>
-        <div class="stc-price"><span>INR </span>99.70</div>
-        <div class="stc-stats">Available 430.00 USDT</div>
-        <div class="stc-limit">Limit ₹1,000.00 – ₹20,000.00</div>
-        <div class="trader-footer" style="margin-top:8px;">
-          <div style="display:flex;gap:6px;">
-            <span style="background:#1a1a1a;border-radius:4px;padding:3px 8px;font-size:11px;color:#aaa;">Paytm</span>
-            <span style="background:#1a1a1a;border-radius:4px;padding:3px 8px;font-size:11px;color:#aaa;">UPI</span>
-          </div>
-          <button class="btn-sell-card" onclick="event.stopPropagation();goToSellTrade('CryptoMohit','av-d','C','99.70','320','97.2','1,000 - 20,000','Paytm',20)">Sell</button>
-        </div>
-      </div>
-
-      <!-- Buyer Ad 4 -->
-      <div class="sell-trader-card" onclick="openTraderProfile('FastBuyer99','av-v','F','99.60','2,100','99.1','500 - 5,000','Bank Transfer')">
-        <div class="stc-header">
-          <div class="stc-name-row">
-            <div class="trader-avatar av-v" style="width:28px;height:28px;font-size:12px;background:#e91e8c;">F</div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#fff;">FastBuyer99 🔥</div>
-              <div style="font-size:11px;color:#555;">2,100 orders · 99.1%</div>
-            </div>
-          </div>
-        </div>
-        <div class="stc-price"><span>INR </span>99.60</div>
-        <div class="stc-stats">Available 5,000.00 USDT</div>
-        <div class="stc-limit">Limit ₹500.00 – ₹5,000.00</div>
-        <div class="trader-footer" style="margin-top:8px;">
-          <div style="display:flex;gap:6px;">
-            <span style="background:#1a1a1a;border-radius:4px;padding:3px 8px;font-size:11px;color:#aaa;">UPI</span>
-            <span style="background:#1a1a1a;border-radius:4px;padding:3px 8px;font-size:11px;color:#aaa;">IMPS</span>
-          </div>
-          <button class="btn-sell-card" onclick="event.stopPropagation();goToSellTrade('FastBuyer99','av-v','F','99.60','2100','99.1','500 - 5,000','UPI',10)">Sell</button>
-        </div>
-      </div>
+    <div class="trader-list" id="sell-list-wrap">
+      <div style="height:60px;"></div>
     </div>
   </div>
 </div>
@@ -4942,6 +4807,12 @@ function swipeGoBack() {
     }
   }, { passive: true });
 })();
+</script>
+<script>
+  // On local dev port 4800 (static preview), route API to Node.js on 4000
+  window.BITCOVEX_API_BASE = (window.location.port === '4800')
+    ? 'http://localhost:4000/api'
+    : window.location.origin + '/api';
 </script>
 <script src="/p2p-live.js?v=20260422"></script>
 </body>

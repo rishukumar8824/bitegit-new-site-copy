@@ -2753,6 +2753,37 @@ app.get('/api/leads', requiresAdminSession, async (req, res) => {
   }
 });
 
+// ── /api/p2p/public — used by p2p-live.js to load buy/sell ads ──
+app.get('/api/p2p/public', async (req, res) => {
+  try {
+    const allOffers = await repos.listOffers({ activeOnly: true, availableOnly: true, excludeDemo: true });
+    const mapAd = (o) => ({
+      id: o.id || o._id,
+      advertiser: o.advertiser,
+      price: o.price,
+      availableUsdt: Number(o.available || o.availableAmount || 0),
+      totalUsdt: Number(o.totalAmount || o.available || 0),
+      minLimit: o.minLimit,
+      maxLimit: o.maxLimit,
+      paymentMethods: Array.isArray(o.payments) ? o.payments : (o.payMethod ? [o.payMethod] : []),
+      completionRate: o.completionRate || 100,
+      totalOrders: o.totalOrders || 0,
+      status: o.status === 'ACTIVE' ? 'active' : 'paused',
+      createdAt: o.createdAt,
+      asset: o.asset || 'USDT',
+      side: o.side,
+      createdByUserId: o.createdByUserId,
+      merchantBadge: o.merchantBadge,
+    });
+    const sell_ads = allOffers.filter(o => o.side === 'sell').map(mapAd);
+    const buy_ads  = allOffers.filter(o => o.side === 'buy').map(mapAd);
+    const payment_methods = ['UPI','PhonePe','Paytm','Google Pay','IMPS','Bank Transfer','Digital eRupee','NEFT','RTGS'];
+    return res.json({ status: 'success', data: { sell_ads, buy_ads, payment_methods } });
+  } catch (err) {
+    return res.status(500).json({ status: 'error', message: 'Failed to load P2P public data.' });
+  }
+});
+
 app.get('/api/p2p/offers', async (req, res) => {
   const side = String(req.query.side || 'buy').toLowerCase();
   const asset = String(req.query.asset || 'USDT').toUpperCase();
