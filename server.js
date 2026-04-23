@@ -3950,6 +3950,9 @@ app.get('/markets', (req, res) => {
 app.get('/assets', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'assets', 'index.html'));
 });
+app.get('/banking', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'banking.html'));
+});
 app.get('/chart', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chart.html'));
 });
