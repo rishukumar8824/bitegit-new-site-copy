@@ -3963,7 +3963,7 @@ app.get('/auth', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'auth.html'));
 });
 app.get('/p2p', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'p2p.html'));
+  res.sendFile(path.join(__dirname, 'public', 'p2p-clone.html'));
 });
 
 app.get('/p2p-buy', (req, res) => {
