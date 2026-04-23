@@ -3022,6 +3022,15 @@ async function createP2PAdController(req, res) {
       return res.status(403).json({ message: 'Only approved merchants can post ads. Apply to become a merchant first.' });
     }
 
+    // Balance check: user must have USDT balance > 0
+    try {
+      const wallet = await walletService.getWallet(userId);
+      const available = Number(wallet?.availableBalance ?? wallet?.balance ?? 0);
+      if (available <= 0) {
+        return res.status(400).json({ message: 'Insufficient balance. Please deposit USDT before posting an ad.' });
+      }
+    } catch (_) {}
+
     // Must have at least one payment method
     const cols = getCollections();
     try {
@@ -4470,7 +4479,8 @@ async function boot() {
     });
     registerP2POrderRoutes(app, {
       requiresP2PUser,
-      controller: p2pOrderController
+      controller: p2pOrderController,
+      getCollections
     });
 
     adminStore = createAdminStore({
