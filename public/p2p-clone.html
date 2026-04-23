@@ -6071,9 +6071,7 @@
   }
 
   function goToScreen(id) {
-    document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
-    const el = document.getElementById(id);
-    if (el) el.classList.add('active');
+    const _nxt = document.getElementById(id); if (_nxt) _nxt.classList.add('active'); document.querySelectorAll('.screen').forEach((screen) => { if (screen !== _nxt) screen.classList.remove('active'); });
     window.scrollTo(0, 0);
 
     if (id === 'screen-pay' && !payTimerInterval && payTimerSecs > 0) startPayTimer();
@@ -6880,9 +6878,7 @@
 
   // ── Navigation (handles all screens) ──
   function goToScreen(id) {
-    document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
-    const el = document.getElementById(id);
-    if (el) el.classList.add('active');
+    const _nxt2 = document.getElementById(id); if (_nxt2) _nxt2.classList.add('active'); document.querySelectorAll('.screen').forEach((s) => { if (s !== _nxt2) s.classList.remove('active'); });
     window.scrollTo(0, 0);
 
     // Persist active screen for refresh restoration
@@ -7045,7 +7041,7 @@
       goToScreen(initialScreen);
     } catch (error) {
       console.error('[Bitcovex P2P] Failed to activate initial screen', error);
-      document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
+      const _nxt = document.getElementById(id); if (_nxt) _nxt.classList.add('active'); document.querySelectorAll('.screen').forEach((screen) => { if (screen !== _nxt) screen.classList.remove('active'); });
       const fallbackScreen = document.getElementById(initialScreen) || document.getElementById('screen-list');
       if (fallbackScreen) fallbackScreen.classList.add('active');
       updateNavBar(fallbackScreen?.id || 'screen-list');
