@@ -5,7 +5,6 @@ function registerP2POrderRoutes(app, deps = {}) {
 
   const requiresP2PUser = deps.requiresP2PUser;
   const controller = deps.controller;
-  const getCollections = deps.getCollections;
 
   if (typeof requiresP2PUser !== 'function') {
     throw new Error('requiresP2PUser middleware is required for P2P order routes.');
@@ -24,27 +23,7 @@ function registerP2POrderRoutes(app, deps = {}) {
     throw new Error('cancelOrder handler is required for P2P order routes.');
   }
 
-  async function checkOneActiveOrder(req, res, next) {
-    try {
-      const userId = String(req.p2pUser?.id || '').trim();
-      if (userId && getCollections) {
-        const cols = getCollections();
-        const activeCount = await cols.p2pOrders.countDocuments({
-          $or: [{ buyerId: userId }, { sellerId: userId }],
-          status: { $in: ['CREATED', 'PAYMENT_SENT'] }
-        });
-        if (activeCount >= 1) {
-          return res.status(400).json({
-            success: false,
-            message: 'You already have an active order. Complete or cancel it first.'
-          });
-        }
-      }
-    } catch (_) {}
-    next();
-  }
-
-  app.post('/api/p2p/orders', requiresP2PUser, checkOneActiveOrder, controller.createOrder);
+  app.post('/api/p2p/orders', requiresP2PUser, controller.createOrder);
   app.post('/api/p2p/orders/:id/mark-paid', requiresP2PUser, controller.markPaymentSent);
   app.post('/api/p2p/orders/:id/release', requiresP2PUser, controller.releaseCrypto);
   app.post('/api/p2p/orders/:id/cancel', requiresP2PUser, controller.cancelOrder);

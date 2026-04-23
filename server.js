@@ -4477,10 +4477,27 @@ async function boot() {
       p2pEmailService,
       broadcastUserEvent
     });
+    // One active order per user check
+    app.post('/api/p2p/orders', requiresP2PUser, async (req, res, next) => {
+      try {
+        const userId = String(req.p2pUser?.id || '').trim();
+        if (userId) {
+          const cols = getCollections();
+          const activeCount = await cols.p2pOrders.countDocuments({
+            $or: [{ buyerId: userId }, { sellerId: userId }],
+            status: { $in: ['CREATED', 'PAYMENT_SENT'] }
+          });
+          if (activeCount >= 1) {
+            return res.status(400).json({ success: false, message: 'You already have an active order. Complete or cancel it first.' });
+          }
+        }
+      } catch (_) {}
+      next();
+    });
+
     registerP2POrderRoutes(app, {
       requiresP2PUser,
-      controller: p2pOrderController,
-      getCollections
+      controller: p2pOrderController
     });
 
     adminStore = createAdminStore({
