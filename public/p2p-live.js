@@ -902,6 +902,44 @@
       .join("");
   };
 
+  editAd = window.editAd = function (adId) {
+    const allAds = [...liveState.myAds, ...liveState.publicSellAds, ...liveState.publicBuyAds];
+    const ad = allAds.find((a) => String(a.id) === String(adId));
+    if (!ad) { showToast("Ad not found.", "!"); return; }
+
+    window._editingAdId = adId;
+
+    // Fill form fields
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
+    set("ad-price", ad.price);
+    set("ad-min-limit", ad.minLimit);
+    set("ad-max-limit", ad.maxLimit);
+    set("ad-total-usdt", ad.totalUsdt || ad.availableUsdt);
+    set("ad-auto-reply", ad.autoReply);
+    set("ad-terms", ad.terms);
+
+    // Set ad type toggle
+    if (typeof switchAdType === "function") switchAdType(ad.type || "sell");
+
+    // Set payment methods
+    const pmWrap = document.getElementById("ad-payment-methods");
+    if (pmWrap && ad.paymentMethods && ad.paymentMethods.length) {
+      pmWrap.querySelectorAll(".rating-tag").forEach((tag) => {
+        const match = ad.paymentMethods.some((m) => m.trim().toLowerCase() === tag.textContent.trim().toLowerCase());
+        tag.classList.toggle("selected", match);
+      });
+    }
+
+    // Update button + title
+    const btn = document.querySelector('#screen-create-ad .sticky-bottom .btn-white-pill[onclick="publishAd()"]');
+    if (btn) btn.textContent = "Update Ad";
+    const title = document.querySelector("#screen-create-ad .topbar-title");
+    if (title) title.textContent = "Edit Ad";
+
+    if (typeof goToScreen === "function") goToScreen("screen-create-ad");
+    if (typeof updateAdPreview === "function") updateAdPreview();
+  };
+
   renderBuyerOrders = window.renderBuyerOrders = function () {
     const actorKey = getCurrentBitcovexActorKey();
     const orders = liveOrders()

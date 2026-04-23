@@ -2770,11 +2770,11 @@
     <div class="form-row">
       <div>
         <label class="form-label" id="ad-min-lbl">Min Limit (INR)</label>
-        <input class="form-input" id="ad-min" type="number" placeholder="500" style="-webkit-appearance:none;-moz-appearance:textfield;" />
+        <input class="form-input" id="ad-min-limit" type="number" placeholder="500" style="-webkit-appearance:none;-moz-appearance:textfield;" />
       </div>
       <div>
         <label class="form-label" id="ad-max-lbl">Max Limit (INR)</label>
-        <input class="form-input" id="ad-max" type="number" placeholder="50000" style="-webkit-appearance:none;-moz-appearance:textfield;" />
+        <input class="form-input" id="ad-max-limit" type="number" placeholder="50000" style="-webkit-appearance:none;-moz-appearance:textfield;" />
       </div>
     </div>
 
@@ -2782,7 +2782,7 @@
     <div class="form-group">
       <label class="form-label" id="ad-total-lbl">Total USDT to Trade</label>
       <div style="position:relative;">
-        <input class="form-input" id="ad-total" type="number" placeholder="e.g. 250" style="-webkit-appearance:none;-moz-appearance:textfield;" />
+        <input class="form-input" id="ad-total-usdt" type="number" placeholder="e.g. 250" style="-webkit-appearance:none;-moz-appearance:textfield;" />
         <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:#555;" id="ad-total-unit">USDT</span>
       </div>
     </div>
@@ -2790,7 +2790,7 @@
     <!-- Payment Methods -->
     <div class="form-group">
       <label class="form-label">Payment Methods</label>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <div id="ad-payment-methods" style="display:flex;flex-wrap:wrap;gap:8px;">
         <div class="rating-tag selected" onclick="toggleRatingTag(this)">UPI</div>
         <div class="rating-tag selected" onclick="toggleRatingTag(this)">PhonePe</div>
         <div class="rating-tag" onclick="toggleRatingTag(this)">Paytm</div>
@@ -2810,13 +2810,13 @@
     <!-- Auto-reply -->
     <div class="form-group">
       <label class="form-label">Auto Reply Message (shown to buyer)</label>
-      <textarea class="form-input" rows="3" placeholder="e.g. Please pay exactly the shown amount. Do not add any remarks." style="height:80px;resize:none;line-height:1.5;"></textarea>
+      <textarea class="form-input" id="ad-auto-reply" rows="3" placeholder="e.g. Please pay exactly the shown amount. Do not add any remarks." style="height:80px;resize:none;line-height:1.5;"></textarea>
     </div>
 
     <!-- Trade Terms -->
     <div class="form-group">
       <label class="form-label">Trade Terms</label>
-      <textarea class="form-input" rows="3" placeholder="e.g. KYC required. Only serious buyers." style="height:70px;resize:none;line-height:1.5;"></textarea>
+      <textarea class="form-input" id="ad-terms" rows="3" placeholder="e.g. KYC required. Only serious buyers." style="height:70px;resize:none;line-height:1.5;"></textarea>
     </div>
 
     <!-- Preview card -->
