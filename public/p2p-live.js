@@ -1542,6 +1542,23 @@
     }
 
     // ── CREATE MODE ──
+    // Block if user already has an ad
+    if (liveState.myAds && liveState.myAds.length > 0) {
+      showToast("You already have an active ad. Delete it first before posting a new one.", "!");
+      goToScreen("screen-ads");
+      return;
+    }
+
+    // Block if wallet balance is 0
+    const walletRes = await p2pRequest("/p2p/wallet");
+    if (walletRes.ok) {
+      const avail = Number(walletRes.availableBalance ?? walletRes.balance ?? 0);
+      if (avail <= 0) {
+        showToast("Insufficient balance. Please deposit USDT before posting an ad.", "!");
+        return;
+      }
+    }
+
     const response = await p2pRequest("/p2p/ads", {
       method: "POST",
       body: payload,
@@ -1611,6 +1628,14 @@
         btn.classList.remove("btn-loading");
       }
       showToast("Enter a valid INR amount.", "!");
+      return;
+    }
+
+    // Block if user already has an active order
+    const myActiveRes = await p2pRequest("/p2p/orders/my-active");
+    if (myActiveRes.ok && Array.isArray(myActiveRes.orders) && myActiveRes.orders.length > 0) {
+      showToast("You already have an active order. Complete or cancel it first.", "!");
+      if (btn) { btn.innerHTML = "Buy USDT"; btn.classList.remove("btn-loading"); }
       return;
     }
 
