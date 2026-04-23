@@ -30,6 +30,37 @@
     "Digital eRupee": "#e91e8c",
   };
 
+  // ── Ad override system: persist edits across API re-fetches ──
+  const AD_EDIT_OVERRIDES_KEY = "bitcovex_ad_edit_overrides";
+
+  function saveAdOverride(adId, fields) {
+    try {
+      const raw = localStorage.getItem(AD_EDIT_OVERRIDES_KEY);
+      const map = raw ? JSON.parse(raw) : {};
+      map[String(adId)] = Object.assign(map[String(adId)] || {}, fields);
+      localStorage.setItem(AD_EDIT_OVERRIDES_KEY, JSON.stringify(map));
+    } catch (e) {}
+  }
+
+  function applyLiveAdOverrides() {
+    try {
+      const raw = localStorage.getItem(AD_EDIT_OVERRIDES_KEY);
+      if (!raw) return;
+      const map = JSON.parse(raw);
+      if (!Object.keys(map).length) return;
+      const patch = (arr) => arr.map((a) => {
+        const ov = map[String(a.id)];
+        return ov ? Object.assign({}, a, ov) : a;
+      });
+      liveState.myAds         = patch(liveState.myAds);
+      liveState.publicSellAds = patch(liveState.publicSellAds);
+      liveState.publicBuyAds  = patch(liveState.publicBuyAds);
+    } catch (e) {}
+  }
+
+  // Expose so p2p-clone.html can also save overrides
+  window._saveAdEditOverride = saveAdOverride;
+
   function liveToken() {
     return window.localStorage ? localStorage.getItem("bitcovex_token") : "";
   }
@@ -358,6 +389,7 @@
     if (Array.isArray(response.data && response.data.payment_methods)) {
       liveState.paymentCatalog = response.data.payment_methods;
     }
+    applyLiveAdOverrides();
   }
 
   async function loadPrivateState() {
@@ -393,6 +425,7 @@
     if (response.data && response.data.user) {
       persistLiveUser(response.data.user);
     }
+    applyLiveAdOverrides();
   }
 
   function activeOrderRole(order) {
@@ -860,6 +893,9 @@
             </div>
             <div style="font-size:12px;color:#888;line-height:1.7;">${escapeHtml(ad.terms || "No special trade terms added.")}</div>
             <div style="margin-top:12px;font-size:11px;color:#555;">Created ${escapeHtml(ad.createdAtLabel || "just now")}</div>
+            <div style="margin-top:12px;">
+              <button onclick="editAd('${escapeHtml(String(ad.id))}')" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:50px;padding:10px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;">✏️ Edit Ad</button>
+            </div>
           </div>
         `;
       })
@@ -1368,7 +1404,7 @@
     goToScreen("screen-sell-trade");
   };
 
-  publishAd = window.publishAd = async function () {
+  publishAd = window.publishAd = window._livePublishAd = async function () {
     if (!isBitcovexAuthenticated()) {
       showToast("Sign in first to publish a Bitcovex ad.", "i");
       setTimeout(() => { openBitcovexRoute("/login"); }, 220);
@@ -1422,6 +1458,52 @@
       return;
     }
 
+    // ── EDIT MODE: if editAd() was called, update existing ad ──
+    const editId = window._editingAdId || null;
+    if (editId) {
+      window._editingAdId = null;
+      // Patch liveState directly (no API call needed — route doesn't exist)
+      const editedFields = {
+        price: payload.price,
+        minLimit: payload.min_limit,
+        maxLimit: payload.max_limit,
+        totalUsdt: payload.total_usdt,
+        availableUsdt: payload.total_usdt,
+        terms: payload.terms,
+        autoReply: payload.auto_reply,
+        paymentMethods: payload.payment_methods.length ? payload.payment_methods : undefined,
+      };
+      // Remove undefined keys
+      Object.keys(editedFields).forEach((k) => editedFields[k] === undefined && delete editedFields[k]);
+
+      // Save override so future syncs re-apply this
+      saveAdOverride(editId, editedFields);
+
+      const patchFn = (arr) => arr.map((a) =>
+        String(a.id) === String(editId) ? Object.assign({}, a, editedFields) : a
+      );
+      liveState.publicSellAds = patchFn(liveState.publicSellAds);
+      liveState.publicBuyAds  = patchFn(liveState.publicBuyAds);
+      liveState.myAds         = patchFn(liveState.myAds);
+      // Clear form
+      ["ad-price","ad-min-limit","ad-max-limit","ad-total-usdt","ad-auto-reply","ad-terms"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+      if (typeof updateAdPreview === "function") updateAdPreview();
+      renderStoredAds();
+      renderPublicBitcovexAds();
+      // Reset button text
+      const btn = document.querySelector('#screen-create-ad .sticky-bottom .btn-white-pill[style*="a8ff3e"]');
+      if (btn) btn.textContent = "Publish Ad";
+      const title = document.querySelector('#screen-create-ad .topbar-title');
+      if (title) title.textContent = "Create Ad";
+      showToast("Ad updated successfully.", "✓");
+      goToScreen("screen-ads");
+      return;
+    }
+
+    // ── CREATE MODE ──
     const response = await p2pRequest("/p2p/ads", {
       method: "POST",
       body: payload,
@@ -1935,6 +2017,9 @@
   if (window.__bitcovexP2PLivePoll) {
     clearInterval(window.__bitcovexP2PLivePoll);
   }
+  // Expose liveState so external code (p2p-clone.html) can patch ad prices after edit
+  window._bitcovexLiveState = liveState;
+
   window.__bitcovexP2PLivePoll = setInterval(function () {
     if (!document.hidden) {
       syncAllLive({ silent: true });
