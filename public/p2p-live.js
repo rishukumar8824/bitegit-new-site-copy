@@ -1632,8 +1632,11 @@
     }
 
     // Block if user already has an active order
-    const myActiveRes = await p2pRequest("/p2p/orders/my-active");
-    if (myActiveRes.ok && Array.isArray(myActiveRes.orders) && myActiveRes.orders.length > 0) {
+    const activeStatuses = ['CREATED', 'PENDING', 'PAYMENT_SENT', 'PAID', 'DISPUTED'];
+    const hasActiveOrder = Array.isArray(liveState.orders) && liveState.orders.some(
+      (o) => activeStatuses.includes(String(o.status || '').toUpperCase())
+    );
+    if (hasActiveOrder) {
       showToast("You already have an active order. Complete or cancel it first.", "!");
       if (btn) { btn.innerHTML = "Buy USDT"; btn.classList.remove("btn-loading"); }
       return;
