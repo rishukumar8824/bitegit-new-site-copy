@@ -9,24 +9,18 @@
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{width:100%;min-height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow-x:hidden}
     .hidden{display:none!important}
-    /* ── SCREEN BASE ── */
     .screen{position:fixed;inset:0;background:#000;z-index:10;display:flex;flex-direction:column;overflow-y:auto}
     /* ── HEADER ── */
-    .s-header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;border-bottom:1px solid rgba(255,255,255,.07);background:#000;position:sticky;top:0;z-index:50}
-    .s-back{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:.1rem .3rem;line-height:1}
+    .s-header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;background:#000;position:sticky;top:0;z-index:50}
+    .s-back{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:.1rem .3rem;line-height:1}
     .s-title{flex:1;font-size:1.05rem;font-weight:700;text-align:center}
-    .s-action{background:none;border:none;color:#8a9bb5;font-size:1.2rem;cursor:pointer;padding:.1rem .3rem}
+    .s-action{background:none;border:none;color:#8a9bb5;cursor:pointer;padding:.1rem .3rem;display:flex;align-items:center}
     /* ── EMPTY STATE ── */
     .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:.8rem;padding:3rem 1rem}
     .empty-icon{width:72px;height:72px;opacity:.35}
     .empty-txt{font-size:.88rem;color:#8a9bb5}
-    /* ── GREEN BTN ── */
-    .g-btn{display:block;width:calc(100% - 2rem);margin:auto;padding:.9rem;background:#c8f439;border:none;border-radius:50px;font-size:1rem;font-weight:800;color:#000;cursor:pointer;text-align:center;text-decoration:none}
-    .g-btn-sm{display:inline-block;padding:.65rem 1.8rem;background:#c8f439;border:none;border-radius:50px;font-size:.95rem;font-weight:800;color:#000;cursor:pointer}
-    /* ── WHITE BTN ── */
-    .w-btn{display:block;width:calc(100% - 2rem);margin:auto;padding:.9rem;background:#fff;border:none;border-radius:50px;font-size:1rem;font-weight:800;color:#000;cursor:pointer;text-align:center}
-    /* ── DARK CARD ── */
-    .d-card{background:#111;border-radius:12px;margin:0 1rem .75rem}
+    /* ── BUTTONS ── */
+    .w-btn-full{display:block;width:calc(100% - 2rem);margin:1rem auto;padding:.9rem;background:#fff;border:none;border-radius:50px;font-size:1rem;font-weight:700;color:#000;cursor:pointer;text-align:center}
     /* ── SEARCH BOX ── */
     .search-wrap{padding:.75rem 1rem}
     .search-box{display:flex;align-items:center;gap:.5rem;background:#1a1a1a;border-radius:24px;padding:.55rem .85rem}
@@ -41,46 +35,37 @@
     .coin-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0}
     .coin-name{font-weight:700;font-size:.92rem}
     .coin-full{font-size:.78rem;color:#8a9bb5}
-    /* ── ALPHA INDEX ── */
     .alpha-index{position:fixed;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:1px;z-index:100}
     .alpha-index span{font-size:.58rem;color:#8a9bb5;padding:1px 3px;cursor:pointer}
-    /* ── DEPOSIT DETAIL ── */
-    .dep-qr{display:flex;justify-content:center;padding:1.5rem 1rem 1rem}
-    .dep-qr img,.dep-qr canvas,.dep-qr svg{width:180px;height:180px;background:#fff;border-radius:12px;padding:8px}
-    .dep-qr-placeholder{width:180px;height:180px;background:#fff;border-radius:12px;padding:8px;display:flex;align-items:center;justify-content:center}
-    .form-row{padding:.75rem 1rem;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.06)}
-    .form-label{font-size:.8rem;color:#8a9bb5;margin-bottom:.25rem}
-    .form-value{font-size:.92rem;font-weight:500;color:#fff;word-break:break-all}
-    .form-row-inline{padding:.8rem 1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
-    .form-row-key{font-size:.88rem;color:#8a9bb5}
-    .form-row-val{font-size:.88rem;font-weight:600;color:#fff}
-    .copy-btn{background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:1rem;padding:.1rem .3rem;flex-shrink:0}
-    .address-box{background:#1a1a1a;border-radius:10px;padding:.7rem .9rem;margin:0 1rem;display:flex;align-items:center;gap:.5rem}
-    .address-txt{flex:1;font-size:.78rem;color:#fff;word-break:break-all;line-height:1.4}
-    .drop-select{display:flex;align-items:center;justify-content:space-between;background:#1a1a1a;border-radius:10px;padding:.7rem .9rem;margin:0 1rem;cursor:pointer;border:none;width:calc(100% - 2rem);color:#fff;font-size:.92rem}
-    .drop-arrow{color:#8a9bb5;font-size:.8rem}
-    .dep-section-title{font-size:.92rem;font-weight:700;padding:.8rem 1rem .35rem}
-    .dep-note{font-size:.75rem;color:#8a9bb5;padding:0 1rem .5rem;line-height:1.6;display:flex;gap:.4rem}
-    .dep-note::before{content:"•";flex-shrink:0;margin-top:1px}
-    /* ── NETWORK MODAL ── */
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:flex-end}
-    .modal-sheet{background:#111;border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:1.2rem 1rem 2rem}
-    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
-    .modal-title{font-size:1.05rem;font-weight:700}
-    .modal-close{background:none;border:none;color:#8a9bb5;font-size:1.3rem;cursor:pointer}
-    .modal-subtitle{font-size:.78rem;color:#8a9bb5;margin-bottom:1rem;line-height:1.5}
-    .network-card{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.9rem 1rem;margin-bottom:.65rem;cursor:pointer;transition:border-color .15s}
-    .network-card.selected{border-color:#c8f439}
-    .network-card.suspended .net-name{color:#8a9bb5}
-    .net-name{font-size:.95rem;font-weight:700;margin-bottom:.25rem}
-    .net-details{font-size:.78rem;color:#8a9bb5;line-height:1.5}
-    .net-suspended{font-size:.75rem;color:#ff4d4d;font-weight:600;margin-bottom:.15rem}
+    /* ── DEPOSIT DETAIL (Bitget style) ── */
+    .dep-qr-wrap{display:flex;flex-direction:column;align-items:center;padding:1.8rem 1rem .6rem}
+    .dep-qr-box{width:190px;height:190px;background:#fff;border-radius:16px;padding:10px;display:flex;align-items:center;justify-content:center;position:relative}
+    .dep-qr-box svg{width:170px;height:170px}
+    .dep-qr-logo{position:absolute;width:36px;height:36px;background:#26a17b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;font-weight:700;border:2px solid #fff}
+    .dep-personal-link{margin-top:.7rem;font-size:.82rem;color:#8a9bb5;border-bottom:1px dashed #8a9bb5;cursor:pointer;padding-bottom:1px;display:flex;align-items:center;gap:.25rem}
+    .dep-network-card{margin:.8rem 1rem .3rem;background:#111;border-radius:14px;padding:1rem 1rem .9rem}
+    .dep-net-label{font-size:.75rem;color:#8a9bb5;margin-bottom:.25rem}
+    .dep-net-row{display:flex;align-items:center;justify-content:space-between}
+    .dep-net-name{font-size:1rem;font-weight:700;color:#fff}
+    .dep-net-swap{background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:1rem;padding:.1rem}
+    .dep-contract{font-size:.78rem;color:#8a9bb5;margin-top:.2rem}
+    .dep-divider{height:1px;background:rgba(255,255,255,.08);margin:.85rem 0}
+    .dep-addr-label{font-size:.78rem;color:#8a9bb5;margin-bottom:.45rem;display:flex;align-items:center;gap:.2rem;cursor:pointer}
+    .dep-addr-row{display:flex;align-items:center;gap:.7rem}
+    .dep-addr-txt{flex:1;font-size:.9rem;color:#fff;word-break:break-all;line-height:1.5}
+    .dep-copy-btn{background:#fff;border:none;border-radius:8px;color:#000;font-size:.82rem;font-weight:700;padding:.45rem .9rem;cursor:pointer;flex-shrink:0;white-space:nowrap}
+    .dep-info-list{margin:.5rem 0 1.5rem}
+    .dep-info-row{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.05)}
+    .dep-info-row:last-child{border-bottom:none}
+    .dep-info-key{font-size:.88rem;color:#8a9bb5}
+    .dep-info-val{font-size:.88rem;color:#fff;font-weight:500;display:flex;align-items:center;gap:.25rem}
+    .dep-info-arrow{color:#8a9bb5;font-size:.72rem}
     /* ── TABS ── */
     .tab-bar{display:flex;border-bottom:1px solid rgba(255,255,255,.08);background:#000;position:sticky;top:57px;z-index:40}
-    .tab-btn{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:#8a9bb5;font-size:.92rem;font-weight:600;padding:.7rem;cursor:pointer;font-family:inherit;transition:color .15s}
+    .tab-btn{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:#8a9bb5;font-size:.92rem;font-weight:600;padding:.7rem;cursor:pointer;font-family:inherit}
     .tab-btn.active{color:#fff;border-bottom-color:#fff}
     .sub-tab-bar{display:flex;gap:.5rem;padding:.75rem 1rem;background:#000}
-    .sub-tab-btn{background:#1a1a1a;border:none;border-radius:50px;color:#8a9bb5;font-size:.82rem;font-weight:600;padding:.4rem .9rem;cursor:pointer;font-family:inherit;transition:all .15s}
+    .sub-tab-btn{background:#1a1a1a;border:none;border-radius:50px;color:#8a9bb5;font-size:.82rem;font-weight:600;padding:.4rem .9rem;cursor:pointer;font-family:inherit}
     .sub-tab-btn.active{background:#2a2a2a;color:#fff}
     /* ── TRANSFER ── */
     .tf-from-to{padding:1rem}
@@ -97,19 +82,39 @@
     .tf-qty-box{background:#1a1a1a;border-radius:10px;padding:.7rem .9rem;display:flex;align-items:center;gap:.5rem;margin-top:.5rem}
     .tf-qty-input{flex:1;background:none;border:none;outline:none;color:#8a9bb5;font-size:.88rem;font-family:inherit}
     .tf-qty-right{display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:#8a9bb5}
-    .tf-all-btn{color:#c8f439;font-size:.82rem;font-weight:700;background:none;border:none;cursor:pointer}
+    .tf-all-btn{color:#00e5ff;font-size:.82rem;font-weight:700;background:none;border:none;cursor:pointer}
     .tf-max-row{display:flex;justify-content:flex-end;font-size:.78rem;color:#8a9bb5;padding:.4rem .9rem 0}
-    /* ── SWITCH ACCOUNT MODAL ── */
-    .acct-card{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.85rem 1rem;margin-bottom:.65rem;cursor:pointer;font-size:.95rem;font-weight:600;transition:border-color .15s}
-    .acct-card.selected{border-color:#c8f439}
-    /* ── COIN SELECTION ── */
+    /* ── DEPOSIT HISTORY ── */
+    .dep-hist-filter{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.06)}
+    .dep-hist-coin{display:flex;align-items:center;gap:.3rem;font-size:.88rem;font-weight:600;color:#fff;cursor:pointer}
+    .dep-hist-date{font-size:.75rem;color:#8a9bb5;padding:.3rem 1rem .5rem}
+    .dep-hist-retrieve{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.08);font-size:.85rem;color:#8a9bb5;cursor:pointer}
+    .dep-hist-row{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;border-bottom:1px solid rgba(255,255,255,.05)}
+    .dep-hist-left .dep-hist-coin-name{font-size:.95rem;font-weight:700;color:#fff}
+    .dep-hist-left .dep-hist-time{font-size:.78rem;color:#8a9bb5;margin-top:.15rem}
+    .dep-hist-right{text-align:right}
+    .dep-hist-amount{font-size:.95rem;font-weight:700;color:#fff}
+    .dep-hist-status{font-size:.78rem;color:#4caf50;margin-top:.15rem;display:flex;align-items:center;gap:.25rem;justify-content:flex-end}
+    .dep-hist-status::before{content:"•";font-size:.9rem}
+    /* ── MODALS ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:flex-end}
+    .modal-sheet{background:#111;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:0 0 2rem}
+    .modal-drag{width:40px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:.75rem auto .5rem}
+    .modal-title-row{padding:.5rem 1rem 1rem;font-size:1.05rem;font-weight:700}
+    .net-warn{display:flex;align-items:flex-start;gap:.5rem;background:#1e1e1e;border-radius:10px;padding:.7rem .85rem;margin:0 1rem .9rem;font-size:.8rem;color:#ccc;line-height:1.5}
+    .net-warn-icon{flex-shrink:0;margin-top:.05rem}
+    .network-card{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.9rem 1rem;margin:0 1rem .65rem;cursor:pointer}
+    .network-card.selected{border-color:#fff}
+    .net-name{font-size:.95rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+    .net-details{font-size:.78rem;color:#8a9bb5;line-height:1.6}
+    .acct-card{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.85rem 1rem;margin:0 1rem .65rem;cursor:pointer;font-size:.95rem;font-weight:600}
+    .acct-card.selected{border-color:#fff}
+    /* ── RECORD CARD ── */
     .cs-coin-row{display:flex;align-items:center;gap:.75rem;padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
     .cs-coin-row:last-child{border-bottom:none}
-    /* ── RECORD CARD ── */
-    .rec-card{background:#111;border-radius:10px;padding:.85rem 1rem;margin:0 1rem .6rem;display:flex;justify-content:space-between;align-items:center}
-    /* ── INFO BANNER ── */
-    .info-banner{display:flex;align-items:center;gap:.5rem;background:#1a1a1a;border-radius:8px;margin:0 1rem .75rem;padding:.6rem .8rem;font-size:.78rem;color:#8a9bb5}
-    .info-banner .info-icon{font-size:.85rem;flex-shrink:0}
+    .form-row-inline{padding:.8rem 1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
+    .form-row-key{font-size:.88rem;color:#8a9bb5}
+    .form-row-val{font-size:.88rem;font-weight:600;color:#fff}
   </style>
 </head>
 <body>
@@ -132,188 +137,258 @@
   </div>
   <div class="coin-list" id="depositCoinList">
     <div class="coin-section-title">Popular Coins</div>
-    <div class="coin-row" onclick="openDepositUsdt('USDT')">
+    <div class="coin-row" onclick="openDepositDetail('USDT')">
       <div class="coin-icon" style="background:#26a17b;color:#fff">₮</div>
       <div><div class="coin-name">USDT</div><div class="coin-full">Tether USDT</div></div>
     </div>
-    <div class="coin-row" onclick="openDepositUsdt('USDC')">
+    <div class="coin-row" onclick="openDepositDetail('USDC')">
       <div class="coin-icon" style="background:#2775ca;color:#fff">$</div>
       <div><div class="coin-name">USDC</div><div class="coin-full">USDC</div></div>
     </div>
-    <div class="coin-row" onclick="openDepositUsdt('BTC')">
+    <div class="coin-row" onclick="openDepositDetail('BTC')">
       <div class="coin-icon" style="background:#f7931a;color:#fff">₿</div>
-      <div><div class="coin-name">BTC</div><div class="coin-full">BTC</div></div>
+      <div><div class="coin-name">BTC</div><div class="coin-full">Bitcoin</div></div>
     </div>
-    <div class="coin-row" onclick="openDepositUsdt('ETH')">
+    <div class="coin-row" onclick="openDepositDetail('ETH')">
       <div class="coin-icon" style="background:#627eea;color:#fff">Ξ</div>
-      <div><div class="coin-name">ETH</div><div class="coin-full">ETH</div></div>
-    </div>
-    <div class="coin-section-title">0</div>
-    <div class="coin-row" onclick="openDepositUsdt('0G')">
-      <div class="coin-icon" style="background:#9b59b6;color:#fff">0G</div>
-      <div><div class="coin-name">0G</div><div class="coin-full">0G</div></div>
-    </div>
-    <div class="coin-section-title">1</div>
-    <div class="coin-row" onclick="openDepositUsdt('1INCH')">
-      <div class="coin-icon" style="background:#1b314f;color:#fff">1↑</div>
-      <div><div class="coin-name">1INCH</div><div class="coin-full">1INCH</div></div>
+      <div><div class="coin-name">ETH</div><div class="coin-full">Ethereum</div></div>
     </div>
     <div class="coin-section-title">A</div>
-    <div class="coin-row" onclick="openDepositUsdt('AAVE')">
-      <div class="coin-icon" style="background:#2ebac6;color:#fff">A</div>
-      <div><div class="coin-name">AAVE</div><div class="coin-full">AAVE</div></div>
-    </div>
-    <div class="coin-row" onclick="openDepositUsdt('ACT')">
-      <div class="coin-icon" style="background:#3498db;color:#fff">AC</div>
-      <div><div class="coin-name">ACT</div><div class="coin-full">ACT</div></div>
-    </div>
-    <div class="coin-row" onclick="openDepositUsdt('ADA')">
+    <div class="coin-row" onclick="openDepositDetail('ADA')">
       <div class="coin-icon" style="background:#0033ad;color:#fff">₳</div>
       <div><div class="coin-name">ADA</div><div class="coin-full">Cardano</div></div>
     </div>
-    <div class="coin-row" onclick="openDepositUsdt('AVAX')">
+    <div class="coin-row" onclick="openDepositDetail('AVAX')">
       <div class="coin-icon" style="background:#e84142;color:#fff">AV</div>
       <div><div class="coin-name">AVAX</div><div class="coin-full">Avalanche</div></div>
     </div>
+    <div class="coin-section-title">B</div>
+    <div class="coin-row" onclick="openDepositDetail('BNB')">
+      <div class="coin-icon" style="background:#f3ba2f;color:#000">B</div>
+      <div><div class="coin-name">BNB</div><div class="coin-full">BNB</div></div>
+    </div>
+    <div class="coin-section-title">D</div>
+    <div class="coin-row" onclick="openDepositDetail('DOGE')">
+      <div class="coin-icon" style="background:#c2a633;color:#fff">Ð</div>
+      <div><div class="coin-name">DOGE</div><div class="coin-full">Dogecoin</div></div>
+    </div>
+    <div class="coin-section-title">S</div>
+    <div class="coin-row" onclick="openDepositDetail('SOL')">
+      <div class="coin-icon" style="background:#9945ff;color:#fff">◎</div>
+      <div><div class="coin-name">SOL</div><div class="coin-full">Solana</div></div>
+    </div>
+    <div class="coin-section-title">X</div>
+    <div class="coin-row" onclick="openDepositDetail('XRP')">
+      <div class="coin-icon" style="background:#346aa9;color:#fff">✕</div>
+      <div><div class="coin-name">XRP</div><div class="coin-full">Ripple</div></div>
+    </div>
   </div>
   <div class="alpha-index" id="alphaIndex">
-    <span>0</span><span>1</span><span>2</span><span>4</span>
     <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span>
     <span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
     <span>K</span><span>L</span><span>M</span><span>N</span><span>O</span>
     <span>P</span><span>Q</span><span>R</span><span>S</span><span>T</span>
-    <span>U</span><span>V</span><span>W</span><span>X</span><span>Y</span>
-    <span>Z</span><span>#</span>
+    <span>U</span><span>V</span><span>W</span><span>X</span><span>Y</span><span>Z</span>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
-     SCREEN 2: DEPOSIT USDT Detail
+     SCREEN 2: DEPOSIT DETAIL (Bitget style)
 ════════════════════════════════════════════════ -->
 <div class="screen hidden" id="screenDepositDetail">
   <div class="s-header">
-    <button class="s-back" onclick="showScreen('screenDeposit')">‹</button>
+    <button class="s-back" onclick="goBack()">‹</button>
     <span class="s-title" id="depDetailTitle">Deposit USDT</span>
-    <button class="s-action" onclick="showScreen('screenRecord')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 12h6M9 17h4"/><circle cx="17" cy="17" r="3"/><path d="M17 15v2l1 1"/></svg>
+    <button class="s-action" style="margin-right:.2rem" onclick="">
+      <!-- ? icon -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="#1a1a1a"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-2 3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.5" r=".8" fill="#fff"/></svg>
+    </button>
+    <button class="s-action" onclick="showScreen('screenDepositHistory')">
+      <!-- history icon -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="#1a1a1a"/><circle cx="12" cy="12" r="6" stroke="#fff" stroke-width="1.7"/><path d="M12 8v4l2.5 2.5" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg>
     </button>
   </div>
 
   <!-- QR Code -->
-  <div class="dep-qr">
-    <div class="dep-qr-placeholder" id="depQRBox">
-      <svg viewBox="0 0 100 100" width="164" height="164">
-        <!-- QR code visual representation -->
+  <div class="dep-qr-wrap">
+    <div class="dep-qr-box">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="100" height="100" fill="white"/>
-        <!-- Top-left finder pattern -->
-        <rect x="5" y="5" width="30" height="30" fill="black"/>
-        <rect x="10" y="10" width="20" height="20" fill="white"/>
-        <rect x="15" y="15" width="10" height="10" fill="black"/>
-        <!-- Top-right finder pattern -->
-        <rect x="65" y="5" width="30" height="30" fill="black"/>
-        <rect x="70" y="10" width="20" height="20" fill="white"/>
-        <rect x="75" y="15" width="10" height="10" fill="black"/>
-        <!-- Bottom-left finder pattern -->
-        <rect x="5" y="65" width="30" height="30" fill="black"/>
-        <rect x="10" y="70" width="20" height="20" fill="white"/>
-        <rect x="15" y="75" width="10" height="10" fill="black"/>
-        <!-- Data modules (simplified pattern) -->
-        <rect x="40" y="5" width="5" height="5" fill="black"/>
-        <rect x="50" y="5" width="5" height="5" fill="black"/>
-        <rect x="40" y="15" width="5" height="5" fill="black"/>
-        <rect x="55" y="15" width="5" height="5" fill="black"/>
-        <rect x="45" y="25" width="5" height="5" fill="black"/>
-        <rect x="5" y="40" width="5" height="5" fill="black"/>
-        <rect x="15" y="40" width="5" height="5" fill="black"/>
-        <rect x="25" y="45" width="5" height="5" fill="black"/>
-        <rect x="40" y="40" width="5" height="5" fill="black"/>
-        <rect x="50" y="40" width="5" height="5" fill="black"/>
-        <rect x="60" y="40" width="5" height="5" fill="black"/>
-        <rect x="70" y="40" width="5" height="5" fill="black"/>
-        <rect x="80" y="40" width="5" height="5" fill="black"/>
-        <rect x="90" y="40" width="5" height="5" fill="black"/>
-        <rect x="40" y="50" width="5" height="5" fill="black"/>
-        <rect x="55" y="50" width="5" height="5" fill="black"/>
-        <rect x="70" y="50" width="5" height="5" fill="black"/>
-        <rect x="85" y="50" width="5" height="5" fill="black"/>
-        <rect x="45" y="60" width="5" height="5" fill="black"/>
-        <rect x="60" y="60" width="5" height="5" fill="black"/>
-        <rect x="75" y="60" width="5" height="5" fill="black"/>
-        <rect x="90" y="60" width="5" height="5" fill="black"/>
-        <rect x="40" y="70" width="5" height="5" fill="black"/>
-        <rect x="50" y="75" width="5" height="5" fill="black"/>
-        <rect x="65" y="70" width="5" height="5" fill="black"/>
-        <rect x="80" y="75" width="5" height="5" fill="black"/>
-        <rect x="90" y="70" width="5" height="5" fill="black"/>
-        <rect x="40" y="85" width="5" height="5" fill="black"/>
-        <rect x="55" y="85" width="5" height="5" fill="black"/>
-        <rect x="70" y="85" width="5" height="5" fill="black"/>
-        <rect x="85" y="85" width="5" height="5" fill="black"/>
-        <rect x="5" y="50" width="5" height="5" fill="black"/>
-        <rect x="20" y="55" width="5" height="5" fill="black"/>
-        <rect x="10" y="60" width="5" height="5" fill="black"/>
-        <rect x="25" y="65" width="5" height="5" fill="black"/>
-        <rect x="10" y="75" width="5" height="5" fill="black"/>
-        <rect x="20" y="80" width="5" height="5" fill="black"/>
-        <rect x="5" y="90" width="5" height="5" fill="black"/>
-        <rect x="15" y="90" width="5" height="5" fill="black"/>
-        <rect x="25" y="90" width="5" height="5" fill="black"/>
+        <!-- TL finder -->
+        <rect x="5" y="5" width="28" height="28" fill="black"/>
+        <rect x="9" y="9" width="20" height="20" fill="white"/>
+        <rect x="13" y="13" width="12" height="12" fill="black"/>
+        <!-- TR finder -->
+        <rect x="67" y="5" width="28" height="28" fill="black"/>
+        <rect x="71" y="9" width="20" height="20" fill="white"/>
+        <rect x="75" y="13" width="12" height="12" fill="black"/>
+        <!-- BL finder -->
+        <rect x="5" y="67" width="28" height="28" fill="black"/>
+        <rect x="9" y="71" width="20" height="20" fill="white"/>
+        <rect x="13" y="75" width="12" height="12" fill="black"/>
+        <!-- Data modules -->
+        <rect x="37" y="5" width="4" height="4" fill="black"/>
+        <rect x="45" y="5" width="4" height="4" fill="black"/>
+        <rect x="53" y="5" width="4" height="4" fill="black"/>
+        <rect x="61" y="5" width="4" height="4" fill="black"/>
+        <rect x="37" y="13" width="4" height="4" fill="black"/>
+        <rect x="53" y="13" width="4" height="4" fill="black"/>
+        <rect x="61" y="13" width="4" height="4" fill="black"/>
+        <rect x="41" y="21" width="4" height="4" fill="black"/>
+        <rect x="57" y="21" width="4" height="4" fill="black"/>
+        <rect x="37" y="29" width="4" height="4" fill="black"/>
+        <rect x="45" y="29" width="4" height="4" fill="black"/>
+        <rect x="61" y="29" width="4" height="4" fill="black"/>
+        <rect x="5" y="37" width="4" height="4" fill="black"/>
+        <rect x="13" y="37" width="4" height="4" fill="black"/>
+        <rect x="21" y="37" width="4" height="4" fill="black"/>
+        <rect x="29" y="37" width="4" height="4" fill="black"/>
+        <rect x="37" y="37" width="4" height="4" fill="black"/>
+        <rect x="49" y="37" width="4" height="4" fill="black"/>
+        <rect x="57" y="37" width="4" height="4" fill="black"/>
+        <rect x="65" y="37" width="4" height="4" fill="black"/>
+        <rect x="73" y="37" width="4" height="4" fill="black"/>
+        <rect x="81" y="37" width="4" height="4" fill="black"/>
+        <rect x="89" y="37" width="4" height="4" fill="black"/>
+        <rect x="5" y="45" width="4" height="4" fill="black"/>
+        <rect x="17" y="45" width="4" height="4" fill="black"/>
+        <rect x="29" y="45" width="4" height="4" fill="black"/>
+        <rect x="41" y="45" width="4" height="4" fill="black"/>
+        <rect x="53" y="45" width="4" height="4" fill="black"/>
+        <rect x="69" y="45" width="4" height="4" fill="black"/>
+        <rect x="85" y="45" width="4" height="4" fill="black"/>
+        <rect x="9" y="53" width="4" height="4" fill="black"/>
+        <rect x="21" y="53" width="4" height="4" fill="black"/>
+        <rect x="37" y="53" width="4" height="4" fill="black"/>
+        <rect x="49" y="53" width="4" height="4" fill="black"/>
+        <rect x="61" y="53" width="4" height="4" fill="black"/>
+        <rect x="77" y="53" width="4" height="4" fill="black"/>
+        <rect x="89" y="53" width="4" height="4" fill="black"/>
+        <rect x="37" y="61" width="4" height="4" fill="black"/>
+        <rect x="45" y="61" width="4" height="4" fill="black"/>
+        <rect x="57" y="61" width="4" height="4" fill="black"/>
+        <rect x="69" y="61" width="4" height="4" fill="black"/>
+        <rect x="81" y="61" width="4" height="4" fill="black"/>
+        <rect x="89" y="61" width="4" height="4" fill="black"/>
+        <rect x="37" y="69" width="4" height="4" fill="black"/>
+        <rect x="53" y="69" width="4" height="4" fill="black"/>
+        <rect x="65" y="69" width="4" height="4" fill="black"/>
+        <rect x="77" y="69" width="4" height="4" fill="black"/>
+        <rect x="41" y="77" width="4" height="4" fill="black"/>
+        <rect x="57" y="77" width="4" height="4" fill="black"/>
+        <rect x="73" y="77" width="4" height="4" fill="black"/>
+        <rect x="85" y="77" width="4" height="4" fill="black"/>
+        <rect x="37" y="85" width="4" height="4" fill="black"/>
+        <rect x="49" y="85" width="4" height="4" fill="black"/>
+        <rect x="61" y="85" width="4" height="4" fill="black"/>
+        <rect x="89" y="85" width="4" height="4" fill="black"/>
+        <rect x="37" y="93" width="4" height="4" fill="black"/>
+        <rect x="53" y="93" width="4" height="4" fill="black"/>
+        <rect x="69" y="93" width="4" height="4" fill="black"/>
+        <rect x="85" y="93" width="4" height="4" fill="black"/>
+        <rect x="5" y="53" width="4" height="4" fill="black"/>
+        <rect x="25" y="61" width="4" height="4" fill="black"/>
+        <rect x="13" y="65" width="4" height="4" fill="black"/>
+        <rect x="5" y="73" width="4" height="4" fill="black"/>
+        <rect x="21" y="77" width="4" height="4" fill="black"/>
+        <rect x="9" y="85" width="4" height="4" fill="black"/>
+        <rect x="25" y="85" width="4" height="4" fill="black"/>
+        <rect x="17" y="93" width="4" height="4" fill="black"/>
+        <rect x="5" y="93" width="4" height="4" fill="black"/>
+        <rect x="29" y="93" width="4" height="4" fill="black"/>
       </svg>
+      <div class="dep-qr-logo">₮</div>
+    </div>
+    <div class="dep-personal-link" onclick="">
+      View personal info
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </div>
   </div>
 
-  <div style="margin-bottom:.5rem">
-    <div class="form-label" style="padding:0 1rem .35rem;font-size:.78rem;color:#8a9bb5">Deposit Network</div>
-    <button class="drop-select" onclick="openNetworkModal()">
-      <span id="selectedNetwork">Tron (TRC20)</span>
-      <span class="drop-arrow">▼</span>
-    </button>
-  </div>
-
-  <div style="padding:.75rem 1rem .35rem">
-    <div class="form-label" style="margin-bottom:.35rem">Deposit Address</div>
-    <div class="address-box">
-      <span class="address-txt" id="depAddress">THCKNyyLC3ZDqu27WLoTAExAWhTjbjdPSt</span>
-      <button class="copy-btn" onclick="copyAddress()">⧉</button>
+  <!-- Network + Address card -->
+  <div class="dep-network-card">
+    <div class="dep-net-label">Network</div>
+    <div class="dep-net-row">
+      <span class="dep-net-name" id="depNetName">ERC20 (Ethereum)</span>
+      <button class="dep-net-swap" onclick="openNetworkModal()">
+        <svg width="20" height="14" viewBox="0 0 20 14" fill="none"><path d="M1 4h18M5 1 1 4l4 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 10H1M15 7l4 3-4 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="dep-contract" id="depContract">Contract address ****31ec7</div>
+    <div class="dep-divider"></div>
+    <div class="dep-addr-label" onclick="">
+      Deposit address
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
+    <div class="dep-addr-row">
+      <span class="dep-addr-txt" id="depAddress">0xf832c974d57a47ff5ecc52dd74a1d04ac0f52ee5</span>
+      <button class="dep-copy-btn" onclick="copyDepAddress()">Copy</button>
     </div>
   </div>
 
-  <div class="form-row-inline">
-    <span class="form-row-key">Deposit Account</span>
-    <span style="display:flex;align-items:center;gap:.3rem">
-      <span class="form-row-val">Spot</span>
-      <button onclick="openSwitchAccount()" style="background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.7rem">▼</button>
-    </span>
-  </div>
-  <div class="form-row-inline">
-    <span class="form-row-key">Minimum Deposit Amount</span>
-    <span class="form-row-val">1 USDT</span>
-  </div>
-  <div class="form-row-inline">
-    <span class="form-row-key">Deposit Arrival</span>
-    <span class="form-row-val">20 Block Confirmations</span>
-  </div>
-  <div class="form-row-inline">
-    <span class="form-row-key">Withdrawal Unlock</span>
-    <span class="form-row-val">25 Block Confirmations</span>
-  </div>
-  <div class="form-row-inline" style="margin-bottom:.75rem">
-    <span class="form-row-key">Contract Info</span>
-    <span class="form-row-val">TR7N***Lj6t</span>
+  <!-- Info rows -->
+  <div class="dep-info-list">
+    <div class="dep-info-row">
+      <span class="dep-info-key">Auto-transfer after deposit</span>
+      <span class="dep-info-val">Spot <span class="dep-info-arrow">▼</span></span>
+    </div>
+    <div class="dep-info-row">
+      <span class="dep-info-key">Minimum deposit amount</span>
+      <span class="dep-info-val">0.01 USDT</span>
+    </div>
+    <div class="dep-info-row">
+      <span class="dep-info-key">Deposit confirmation</span>
+      <span class="dep-info-val" id="depConfirmations">12 confirmations</span>
+    </div>
+    <div class="dep-info-row">
+      <span class="dep-info-key">Withdrawal unlock</span>
+      <span class="dep-info-val" id="depWithdrawUnlock">64 confirmations</span>
+    </div>
   </div>
 
-  <div class="dep-section-title">Deposit Instructions</div>
-  <div class="dep-note">Note: Please ensure you have confirmed the currency and address before making a deposit. Deposits made to other addresses cannot be retrieved!</div>
-  <div class="dep-note">Minimum deposit: 1 USDT. Deposits less than the minimum amount will not be credited and cannot be refunded.</div>
-  <div class="dep-note" style="margin-bottom:1.5rem">Note: After you deposit to the address above, the entire network node confirmation is required. The deposit will be credited after 20 network confirmations, and you can withdraw coins after the deposit is credited.</div>
-
-  <div style="padding:1rem 0 2rem">
-    <button class="g-btn" onclick="alert('QR Code saved!')">Save QR Code</button>
+  <!-- Bottom button -->
+  <div style="padding:0 0 2.5rem">
+    <button class="w-btn-full" onclick="saveOrShareAddress()">Save or share address</button>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
-     SCREEN 3: RECORD
+     SCREEN 3: DEPOSIT HISTORY
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenDepositHistory">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title">Deposit history</span>
+    <button class="s-action">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </button>
+  </div>
+  <div class="dep-hist-filter">
+    <div class="dep-hist-coin">
+      USDT
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+  <div class="dep-hist-date">2025-04-25 – 2026-04-24</div>
+  <div class="dep-hist-retrieve">
+    Deposit not credited? Retrieve it here.
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </div>
+  <div id="depHistList">
+    <!-- Populated by JS or shows empty -->
+    <div class="empty-state" id="depHistEmpty">
+      <svg class="empty-icon" viewBox="0 0 80 80" fill="none">
+        <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
+        <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
+        <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
+      </svg>
+      <div class="empty-txt">No deposit records</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 4: RECORD
 ════════════════════════════════════════════════ -->
 <div class="screen hidden" id="screenRecord">
   <div class="s-header">
@@ -325,66 +400,48 @@
     <button class="tab-btn active" id="recDepTab" onclick="switchRecTab('dep')">Deposit</button>
     <button class="tab-btn" id="recWdTab" onclick="switchRecTab('wd')">Withdraw</button>
   </div>
-  <!-- Deposit tab -->
   <div id="recDepContent">
     <div class="empty-state">
-      <svg class="empty-icon" viewBox="0 0 80 80" fill="none">
-        <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
-        <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
-        <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
-        <path d="M50 55 L70 65 L60 75 Z" fill="#333"/>
-      </svg>
+      <svg class="empty-icon" viewBox="0 0 80 80" fill="none"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/></svg>
       <div class="empty-txt">No Data yet</div>
     </div>
   </div>
-  <!-- Withdraw sub-tabs -->
   <div id="recWdContent" class="hidden">
     <div class="sub-tab-bar">
       <button class="sub-tab-btn active" id="recOnChainTab" onclick="switchWdSubTab('onchain')">On-chain transfer</button>
       <button class="sub-tab-btn" id="recInternalTab" onclick="switchWdSubTab('internal')">Internal transfer</button>
     </div>
     <div class="empty-state">
-      <svg class="empty-icon" viewBox="0 0 80 80" fill="none">
-        <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
-        <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
-        <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
-        <path d="M50 55 L70 65 L60 75 Z" fill="#333"/>
-      </svg>
+      <svg class="empty-icon" viewBox="0 0 80 80" fill="none"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/></svg>
       <div class="empty-txt">No Data yet</div>
     </div>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
-     SCREEN 4: TRANSFER
+     SCREEN 5: TRANSFER
 ════════════════════════════════════════════════ -->
 <div class="screen hidden" id="screenTransfer">
   <div class="s-header">
     <button class="s-back" onclick="goBack()">‹</button>
     <span class="s-title">Transfer</span>
-    <button class="s-action" onclick="showScreen('screenTransferRecord')">Transfer Record</button>
+    <button class="s-action" onclick="showScreen('screenTransferRecord')" style="font-size:.78rem;color:#8a9bb5">Transfer Record</button>
   </div>
-
   <div class="tf-from-to" style="padding:1rem 1rem .5rem">
     <div class="tf-label">From</div>
     <div class="tf-account" onclick="openSwitchAccount('from')">
-      <span>Spot Account</span>
-      <span class="tf-chev">▾</span>
+      <span>Spot Account</span><span class="tf-chev">▾</span>
     </div>
   </div>
-
   <div class="tf-divider">
     <button class="tf-swap-btn" onclick="swapAccounts()">⇅</button>
   </div>
-
   <div class="tf-from-to" style="padding:.5rem 1rem 1rem">
     <div class="tf-label">To</div>
     <div class="tf-account" onclick="openSwitchAccount('to')">
-      <span id="tfToAccount">Funding Account</span>
-      <span class="tf-chev">▾</span>
+      <span id="tfToAccount">Funding Account</span><span class="tf-chev">▾</span>
     </div>
   </div>
-
   <div class="tf-section">
     <div class="tf-section-title">Currency</div>
     <div class="tf-currency-box" onclick="openCoinSelection()">
@@ -393,7 +450,6 @@
       <span style="color:#8a9bb5;font-size:.8rem">▼</span>
     </div>
   </div>
-
   <div class="tf-section" style="padding-top:.75rem">
     <div class="tf-section-title">Quantity</div>
     <div class="tf-qty-box">
@@ -405,14 +461,13 @@
     </div>
     <div class="tf-max-row">Maximum transferable: <strong style="color:#fff;margin-left:.3rem">0.0000 USDT</strong></div>
   </div>
-
   <div style="padding:2rem 0 1rem">
-    <button class="g-btn">Transfer Now</button>
+    <button class="w-btn-full">Transfer Now</button>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
-     SCREEN 5: TRANSFER RECORD
+     SCREEN 6: TRANSFER RECORD
 ════════════════════════════════════════════════ -->
 <div class="screen hidden" id="screenTransferRecord">
   <div class="s-header">
@@ -421,18 +476,13 @@
     <span style="width:32px"></span>
   </div>
   <div class="empty-state">
-    <svg class="empty-icon" viewBox="0 0 80 80" fill="none">
-      <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
-      <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
-      <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
-      <path d="M50 55 L70 65 L60 75 Z" fill="#333"/>
-    </svg>
+    <svg class="empty-icon" viewBox="0 0 80 80" fill="none"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/></svg>
     <div class="empty-txt">No Data yet</div>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
-     SCREEN 6: COIN SELECTION (for Transfer)
+     SCREEN 7: COIN SELECTION
 ════════════════════════════════════════════════ -->
 <div class="screen hidden" id="screenCoinSelection">
   <div class="s-header">
@@ -451,65 +501,44 @@
     <div class="coin-section-title">B</div>
     <div class="cs-coin-row" onclick="selectCoin('BTC'); showScreen('screenTransfer')">
       <div class="coin-icon" style="background:#f7931a;color:#fff">₿</div>
-      <div><div class="coin-name">BTC <span style="color:#8a9bb5;font-weight:400;font-size:.82rem">BTC</span></div></div>
+      <div><div class="coin-name">BTC <span style="color:#8a9bb5;font-weight:400;font-size:.82rem">Bitcoin</span></div></div>
     </div>
     <div class="coin-section-title">U</div>
     <div class="cs-coin-row" onclick="selectCoin('USDT'); showScreen('screenTransfer')">
       <div class="coin-icon" style="background:#26a17b;color:#fff">₮</div>
-      <div><div class="coin-name">USDT <span style="color:#8a9bb5;font-weight:400;font-size:.82rem">USDT</span></div></div>
+      <div><div class="coin-name">USDT <span style="color:#8a9bb5;font-weight:400;font-size:.82rem">Tether</span></div></div>
     </div>
-  </div>
-  <div class="alpha-index">
-    <span>B</span><span>U</span>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
-     MODAL: SELECT NETWORK
+     MODAL: CHOOSE NETWORK (Bitget style)
 ════════════════════════════════════════════════ -->
 <div class="modal-overlay hidden" id="modalNetwork" onclick="closeNetworkModal(event)">
   <div class="modal-sheet">
-    <div class="modal-header">
-      <span class="modal-title">Select Network</span>
-      <button class="modal-close" onclick="closeNetworkModalBtn()">✕</button>
+    <div class="modal-drag"></div>
+    <div class="modal-title-row">Choose network</div>
+    <div class="net-warn">
+      <span class="net-warn-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#333"/><path d="M12 8v4M12 16h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </span>
+      Ensure the network you select matches the withdrawal platform, or your assets may be lost
     </div>
-    <div class="modal-subtitle">Please ensure the network you choose matches the network you select when depositing and withdrawing, otherwise it may cause asset loss!</div>
-    <div class="network-card selected" onclick="selectNetwork('Tron (TRC20)')">
-      <div class="net-name">Tron（TRC20）</div>
-      <div class="net-details">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div>
+    <div class="network-card" id="netMorph" onclick="selectNetwork('MORPH')">
+      <div class="net-name">Morph (Morph)</div>
+      <div class="net-details">1 block confirmation(s)<br>Min deposit: 0.01 USDT<br>Crediting time ≈ 10 min</div>
     </div>
-    <div class="network-card" onclick="selectNetwork('Ethereum (ERC20)')">
-      <div class="net-name">Ethereum（ERC20）</div>
-      <div class="net-details">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 2minutes</div>
+    <div class="network-card" id="netTRC20" onclick="selectNetwork('TRC20')">
+      <div class="net-name">TRC20 (Tron)</div>
+      <div class="net-details">1 block confirmation(s)<br>Min deposit: 0.01 USDT<br>Crediting time ≈ 1 min</div>
     </div>
-    <div class="network-card" onclick="selectNetwork('BNB Smart Chain (BEP20)')">
-      <div class="net-name">BNB Smart Chain（BEP20）</div>
-      <div class="net-details">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div>
+    <div class="network-card" id="netBEP20" onclick="selectNetwork('BEP20')">
+      <div class="net-name">BEP20 (Binance Smart Chain)</div>
+      <div class="net-details">15 block confirmation(s)<br>Min deposit: 0.01 USDT<br>Crediting time ≈ 1 min</div>
     </div>
-    <div class="network-card" onclick="selectNetwork('Polygon (POLYGON)')">
-      <div class="net-name">Polygon（POLYGON）</div>
-      <div class="net-details">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div>
-    </div>
-    <div class="network-card" onclick="selectNetwork('Arbitrum (ARBITRUM)')">
-      <div class="net-name">Arbitrum（ARBITRUM）</div>
-      <div class="net-details">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div>
-    </div>
-    <div class="network-card" onclick="selectNetwork('AVAX C-Chain (AVAX-C)')">
-      <div class="net-name">AVAX C-Chain（AVAX-C）</div>
-      <div class="net-details">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div>
-    </div>
-    <div class="network-card" onclick="selectNetwork('Solana (SOL)')">
-      <div class="net-name">Solana（SOL）</div>
-      <div class="net-details">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 1minutes</div>
-    </div>
-    <div class="network-card" onclick="selectNetwork('Optimism (OPTIMISM)')">
-      <div class="net-name">Optimism（OPTIMISM）</div>
-      <div class="net-details">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 2minutes</div>
-    </div>
-    <div class="network-card suspended">
-      <div class="net-suspended">Suspended</div>
-      <div class="net-name">Base（BASE20）</div>
-      <div class="net-details">Min Deposit Amount: 1 USDT<br>Arrival Time ≈ 2minutes</div>
+    <div class="network-card selected" id="netERC20" onclick="selectNetwork('ERC20')">
+      <div class="net-name">ERC20 (Ethereum)</div>
+      <div class="net-details">12 block confirmation(s)<br>Min deposit: 0.01 USDT<br>Crediting time ≈ 1 min</div>
     </div>
   </div>
 </div>
@@ -519,17 +548,12 @@
 ════════════════════════════════════════════════ -->
 <div class="modal-overlay hidden" id="modalSwitchAccount" onclick="closeSwitchAccount(event)">
   <div class="modal-sheet">
-    <div class="modal-header">
-      <span class="modal-title">Switch Account</span>
-      <button class="modal-close" onclick="closeSwitchAccountBtn()">✕</button>
-    </div>
-    <div style="height:.5rem"></div>
+    <div class="modal-drag"></div>
+    <div class="modal-title-row">Switch Account</div>
     <div class="acct-card selected" onclick="pickAccount('Spot')">Spot</div>
     <div class="acct-card" onclick="pickAccount('Funding')">Funding</div>
     <div class="acct-card" onclick="pickAccount('Futures')">Futures</div>
     <div class="acct-card" onclick="pickAccount('Earn')">Earn</div>
-    <div class="acct-card" onclick="pickAccount('Copy Trading')">Copy Trading</div>
-    <div class="acct-card" onclick="pickAccount('Event Contracts')">Event Contracts</div>
   </div>
 </div>
 
@@ -537,45 +561,91 @@
   var screenHistory = [];
   var switchAccountContext = '';
 
+  var NETWORKS = {
+    'ERC20':  { name:'ERC20 (Ethereum)',           contract:'****31ec7', address:'0xf832c974d57a47ff5ecc52dd74a1d04ac0f52ee5', dep:12,  wd:64 },
+    'BEP20':  { name:'BEP20 (Binance Smart Chain)', contract:'****97955', address:'0xf832c974d57a47ff5ecc52dd74a1d04ac0f52ee5', dep:15,  wd:15 },
+    'TRC20':  { name:'TRC20 (Tron)',                contract:'****jLj6t', address:'TM1nE22SAvEaeY3i5BQwkTEXcnZsATUfnS',        dep:1,   wd:1  },
+    'MORPH':  { name:'Morph (Morph)',               contract:'****97955', address:'0xf832c974d57a47ff5ecc52dd74a1d04ac0f52ee5', dep:1,   wd:1  }
+  };
+  var currentNetwork = 'ERC20';
+
   function showScreen(id) {
     var screens = document.querySelectorAll('.screen');
     var current = null;
-    screens.forEach(function(s) { if(!s.classList.contains('hidden')) current = s.id; });
+    screens.forEach(function(s){ if(!s.classList.contains('hidden')) current = s.id; });
     if(current && current !== id) screenHistory.push(current);
-    screens.forEach(function(s) { s.classList.add('hidden'); });
+    screens.forEach(function(s){ s.classList.add('hidden'); });
     document.getElementById(id).classList.remove('hidden');
   }
 
   function goBack() {
     if(screenHistory.length > 0) {
       var prev = screenHistory.pop();
-      var screens = document.querySelectorAll('.screen');
-      screens.forEach(function(s) { s.classList.add('hidden'); });
+      document.querySelectorAll('.screen').forEach(function(s){ s.classList.add('hidden'); });
       document.getElementById(prev).classList.remove('hidden');
     } else {
       history.back();
     }
   }
 
-  function openDepositUsdt(coin) {
+  function openDepositDetail(coin) {
     document.getElementById('depDetailTitle').textContent = 'Deposit ' + coin;
+    updateNetworkUI('ERC20');
     showScreen('screenDepositDetail');
   }
 
+  function updateNetworkUI(netKey) {
+    currentNetwork = netKey;
+    var n = NETWORKS[netKey];
+    document.getElementById('depNetName').textContent = n.name;
+    document.getElementById('depContract').textContent = 'Contract address ' + n.contract;
+    document.getElementById('depAddress').textContent = n.address;
+    document.getElementById('depConfirmations').textContent = n.dep + ' confirmations';
+    document.getElementById('depWithdrawUnlock').textContent = n.wd + ' confirmations';
+  }
+
   function openNetworkModal() {
+    // Reset selection highlight
+    ['netMorph','netTRC20','netBEP20','netERC20'].forEach(function(id){
+      document.getElementById(id).classList.remove('selected');
+    });
+    var map = { 'ERC20':'netERC20','BEP20':'netBEP20','TRC20':'netTRC20','MORPH':'netMorph' };
+    if(map[currentNetwork]) document.getElementById(map[currentNetwork]).classList.add('selected');
     document.getElementById('modalNetwork').classList.remove('hidden');
   }
   function closeNetworkModal(e) {
-    if(e.target === document.getElementById('modalNetwork')) closeNetworkModalBtn();
+    if(e.target === document.getElementById('modalNetwork')) document.getElementById('modalNetwork').classList.add('hidden');
   }
-  function closeNetworkModalBtn() {
+  function selectNetwork(key) {
+    updateNetworkUI(key);
     document.getElementById('modalNetwork').classList.add('hidden');
   }
-  function selectNetwork(name) {
-    document.getElementById('selectedNetwork').textContent = name;
-    document.querySelectorAll('.network-card').forEach(function(c){ c.classList.remove('selected'); });
-    event.currentTarget.classList.add('selected');
-    closeNetworkModalBtn();
+
+  function copyDepAddress() {
+    var addr = document.getElementById('depAddress').textContent;
+    if(navigator.clipboard) {
+      navigator.clipboard.writeText(addr).then(function(){ showCopyToast(); });
+    } else {
+      var el = document.createElement('textarea');
+      el.value = addr; el.style.position='fixed'; el.style.opacity='0';
+      document.body.appendChild(el); el.select(); document.execCommand('copy');
+      document.body.removeChild(el); showCopyToast();
+    }
+  }
+  function showCopyToast() {
+    var t = document.createElement('div');
+    t.textContent = 'Address copied';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:.5rem 1.2rem;border-radius:20px;font-size:.85rem;z-index:9999;pointer-events:none';
+    document.body.appendChild(t);
+    setTimeout(function(){ document.body.removeChild(t); }, 1800);
+  }
+
+  function saveOrShareAddress() {
+    if(navigator.share) {
+      navigator.share({ text: document.getElementById('depAddress').textContent });
+    } else {
+      copyDepAddress();
+    }
   }
 
   function openSwitchAccount(ctx) {
@@ -583,68 +653,63 @@
     document.getElementById('modalSwitchAccount').classList.remove('hidden');
   }
   function closeSwitchAccount(e) {
-    if(e.target === document.getElementById('modalSwitchAccount')) closeSwitchAccountBtn();
-  }
-  function closeSwitchAccountBtn() {
-    document.getElementById('modalSwitchAccount').classList.add('hidden');
+    if(e.target === document.getElementById('modalSwitchAccount')) document.getElementById('modalSwitchAccount').classList.add('hidden');
   }
   function pickAccount(name) {
-    if(switchAccountContext === 'to') {
-      document.getElementById('tfToAccount').textContent = name + ' Account';
-    }
+    if(switchAccountContext === 'to') document.getElementById('tfToAccount').textContent = name + ' Account';
     document.querySelectorAll('.acct-card').forEach(function(c){ c.classList.remove('selected'); });
     event.currentTarget.classList.add('selected');
-    closeSwitchAccountBtn();
+    document.getElementById('modalSwitchAccount').classList.add('hidden');
   }
 
-  function openCoinSelection() {
-    showScreen('screenCoinSelection');
-  }
-  function selectCoin(coin) {
-    document.querySelector('.tf-currency-name').textContent = coin;
-  }
-
+  function openCoinSelection() { showScreen('screenCoinSelection'); }
+  function selectCoin(coin) { document.querySelector('.tf-currency-name').textContent = coin; }
   function swapAccounts() {
-    var from = document.querySelector('.tf-account:first-of-type span');
+    var from = document.querySelector('.tf-account span');
     var to = document.getElementById('tfToAccount');
-    var tmp = from.textContent;
-    from.textContent = to.textContent;
-    to.textContent = tmp;
+    var tmp = from.textContent; from.textContent = to.textContent; to.textContent = tmp;
   }
-
   function switchRecTab(tab) {
-    if(tab === 'dep') {
-      document.getElementById('recDepTab').classList.add('active');
-      document.getElementById('recWdTab').classList.remove('active');
-      document.getElementById('recDepContent').classList.remove('hidden');
-      document.getElementById('recWdContent').classList.add('hidden');
-    } else {
-      document.getElementById('recDepTab').classList.remove('active');
-      document.getElementById('recWdTab').classList.add('active');
-      document.getElementById('recDepContent').classList.add('hidden');
-      document.getElementById('recWdContent').classList.remove('hidden');
-    }
+    var isDep = tab === 'dep';
+    document.getElementById('recDepTab').classList.toggle('active', isDep);
+    document.getElementById('recWdTab').classList.toggle('active', !isDep);
+    document.getElementById('recDepContent').classList.toggle('hidden', !isDep);
+    document.getElementById('recWdContent').classList.toggle('hidden', isDep);
   }
-
   function switchWdSubTab(sub) {
     document.getElementById('recOnChainTab').classList.toggle('active', sub === 'onchain');
     document.getElementById('recInternalTab').classList.toggle('active', sub === 'internal');
   }
+  function filterDepositCoins(q) {}
 
-  function filterDepositCoins(q) { /* TODO: filter */ }
-
-  function copyAddress() {
-    var addr = document.getElementById('depAddress').textContent;
-    navigator.clipboard && navigator.clipboard.writeText(addr);
-    alert('Address copied!');
+  // Load deposit history from API
+  function loadDepositHistory() {
+    fetch('/api/deposits', { credentials:'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var list = (data && data.deposits) ? data.deposits : [];
+        var el = document.getElementById('depHistList');
+        if(!list.length) return;
+        document.getElementById('depHistEmpty').classList.add('hidden');
+        list.forEach(function(d) {
+          var row = document.createElement('div');
+          row.className = 'dep-hist-row';
+          var dt = new Date(d.createdAt || d.date || Date.now());
+          var dateStr = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0')+':'+String(dt.getSeconds()).padStart(2,'0');
+          row.innerHTML = '<div class="dep-hist-left"><div class="dep-hist-coin-name">'+(d.coin||'USDT')+'</div><div class="dep-hist-time">'+dateStr+'</div></div><div class="dep-hist-right"><div class="dep-hist-amount">+'+(d.amount||0)+'</div><div class="dep-hist-status">Successful</div></div>';
+          el.appendChild(row);
+        });
+      })
+      .catch(function(){});
   }
+  loadDepositHistory();
 
   // Route from URL params
   var params = new URLSearchParams(location.search);
   var page = params.get('page');
   if(page === 'transfer') showScreen('screenTransfer');
   else if(page === 'record') showScreen('screenRecord');
-  else if(page === 'transferrecord') showScreen('screenTransferRecord');
+  else if(page === 'history') showScreen('screenDepositHistory');
 </script>
 </body>
 </html>
