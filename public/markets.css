@@ -6,10 +6,10 @@
   --mk-line: rgba(201, 220, 255, 0.08);
   --mk-text: #f4f8ff;
   --mk-muted: #95a3bc;
-  --mk-brand: #00B4D8;
+  --mk-brand: #00f5ff;
   --mk-green: #19d27f;
   --mk-red: #ff5f82;
-  --mk-header-bg: rgba(0,0,0,0.92);
+  --mk-header-bg: #000;
 }
 
 * { box-sizing: border-box; }
@@ -35,10 +35,8 @@ body.markets-nav-open { overflow: hidden; }
   position: sticky;
   top: 0;
   z-index: 200;
-  background: var(--mk-header-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--mk-line);
+  background: #000;
+  border-bottom: none;
 }
 
 .mk-header-inner {
@@ -83,9 +81,11 @@ body.markets-nav-open { overflow: hidden; }
 }
 
 .mk-brand-word {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: var(--mk-text);
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--mk-brand);
 }
 
 .mk-nav {
@@ -115,22 +115,22 @@ body.markets-nav-open { overflow: hidden; }
 }
 
 .mk-login {
-  color: var(--mk-text);
+  color: var(--mk-brand);
   text-decoration: none;
   font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.4rem 1rem;
-  border: none;
+  font-weight: 700;
+  padding: 0.4rem 0.9rem;
+  border: 1.5px solid rgba(0,245,255,0.35);
   border-radius: 8px;
   transition: border-color 0.2s;
   white-space: nowrap;
 }
 
-.mk-login:hover { border-color: rgba(201,220,255,0.5); }
+.mk-login:hover { border-color: var(--mk-brand); }
 
 .mk-signup {
   background: var(--mk-brand);
-  color: #fff;
+  color: #000;
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 700;
@@ -268,7 +268,11 @@ body.markets-nav-open { overflow: hidden; }
 .mk-main {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 6rem;
+  padding: 1.2rem 0 6rem;
+}
+
+@media (min-width: 769px) {
+  .mk-main { padding: 2.5rem 1.5rem 6rem; }
 }
 
 /* ── Centered Tabs ── */
@@ -298,12 +302,12 @@ body.markets-nav-open { overflow: hidden; }
 }
 
 .mk-tabs button.active {
-  color: #00B4D8;
+  color: #00f5ff;
   border: none;
   border-radius: 10px;
   padding: 0.3rem 1.1rem;
-  background: rgba(0,180,216,0.08);
-  border-bottom: 2px solid #00B4D8;
+  background: rgba(0,245,255,0.08);
+  border-bottom: 2px solid #00f5ff;
 }
 
 .mk-tabs button:not(.active):hover { color: #f4f8ff; }
