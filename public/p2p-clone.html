@@ -8287,6 +8287,14 @@ function spEnsureTicket() {
 }
 
 // ── render messages ──────────────────────────────────────────
+function spScrollBottom(wrap) {
+  if (!wrap) return;
+  // requestAnimationFrame ensures DOM is painted before scrolling
+  requestAnimationFrame(() => {
+    wrap.scrollTop = wrap.scrollHeight + 9999;
+  });
+}
+
 function spRenderMessages(messages, wrap, userName) {
   if (!wrap) return;
   wrap.innerHTML = messages.map(m => `
@@ -8294,7 +8302,7 @@ function spRenderMessages(messages, wrap, userName) {
       <div class="sp-msg-text">${spEscape(m.text)}</div>
       <div class="sp-msg-meta">${m.from==='user'?'You':(m.from==='bot'?'🤖 Bot':'🎧 Admin')} · ${spFmtTime(m.ts)}</div>
     </div>`).join('');
-  wrap.scrollTop = wrap.scrollHeight;
+  spScrollBottom(wrap);
 }
 
 // ── show typing indicator ────────────────────────────────────
@@ -8303,11 +8311,12 @@ function spShowTyping(wrap) {
   d.className = 'sp-typing-wrap'; d.id = 'sp-typing';
   d.innerHTML = '<div class="sp-typing-dot"></div><div class="sp-typing-dot"></div><div class="sp-typing-dot"></div>';
   wrap.appendChild(d);
-  wrap.scrollTop = wrap.scrollHeight;
+  spScrollBottom(wrap);
 }
 function spHideTyping(wrap) {
   const el = document.getElementById('sp-typing');
   if (el) el.remove();
+  spScrollBottom(wrap);
 }
 
 // ── load chat on enter ───────────────────────────────────────
@@ -8330,6 +8339,8 @@ function spLoadChat() {
   } else {
     spRenderMessages(ticket.messages, wrap);
   }
+
+  spScrollBottom(wrap);
 
   // Hide chips if agent already connected
   const chips = document.getElementById('spFaqChips');
@@ -8688,7 +8699,7 @@ function admRenderChatMessages(ticket) {
       <div class="sp-msg-text">${spEscape(m.text)}</div>
       <div class="sp-msg-meta">${m.from==='user'?(ticket.userName||'User'):(m.from==='bot'?'🤖 Bot':'🎧 You (Admin)')} · ${spFmtTime(m.ts)}</div>
     </div>`).join('');
-  wrap.scrollTop = wrap.scrollHeight;
+  spScrollBottom(wrap);
 }
 
 function admSendReply() {
