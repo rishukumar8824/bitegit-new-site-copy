@@ -523,6 +523,10 @@
     .sp-chip:active { background:#2a2a2a; }
     .sp-chip-agent { background:rgba(170,255,0,0.1); border-color:rgba(170,255,0,0.35); color:#aaff00; font-weight:700; }
     .sp-chip-agent:active { background:rgba(170,255,0,0.2); }
+    .sp2-list-item { display:flex;align-items:flex-start;gap:12px;padding:13px 14px;cursor:pointer; }
+    .sp2-list-item:active { background:#161616; }
+    .sp2-grid-cell { background:#111;border:1px solid #1e1e1e;border-radius:14px;padding:14px 12px;cursor:pointer; }
+    .sp2-grid-cell:active { background:#161616; }
     .sp-typing-wrap { align-self:flex-start; background:#1e1e1e; border-radius:18px 18px 18px 4px; padding:10px 16px; display:flex; gap:5px; align-items:center; }
     .sp-typing-dot { width:6px; height:6px; border-radius:50%; background:#555; animation:sp-td 1.2s ease-in-out infinite; }
     .sp-typing-dot:nth-child(2) { animation-delay:0.2s; }
@@ -7307,171 +7311,185 @@
 </script>
 
 <!-- ═══════════════════════════════════════════════════
-     SCREEN: SUPPORT CENTER
+     SCREEN: SUPPORT CENTER  (Bitget style)
 ═══════════════════════════════════════════════════ -->
 <div class="screen" id="screen-support">
-  <div class="topbar">
-    <div class="topbar-back" onclick="goToScreen('screen-profile')">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:54px;background:#0a0a0a;border-bottom:1px solid #111;flex-shrink:0;">
+    <button onclick="goToScreen('screen-profile')" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;color:#fff;">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </div>
-    <div class="topbar-title">Support Center</div>
-    <div class="topbar-right" style="width:36px;"></div>
+    </button>
+    <div style="font-size:15px;font-weight:800;color:#fff;">BITCOVEX Support</div>
+    <button onclick="goToScreen('screen-profile')" style="background:none;border:none;padding:0;cursor:pointer;color:#666;font-size:20px;line-height:1;">×</button>
   </div>
-  <div class="page-scroll" style="padding-bottom:90px;">
 
-    <!-- Status -->
-    <div class="sp-status-bar">
-      <div class="sp-status-dot"></div>
-      <span style="font-size:12px;color:#aaff00;font-weight:700;">Support Online</span>
-      <span style="font-size:12px;color:#555;margin-left:4px;">· Avg reply &lt; 5 min</span>
-    </div>
+  <div class="page-scroll" style="padding-bottom:90px;background:#0a0a0a;">
 
     <!-- Announcements -->
-    <div style="height:16px;"></div>
-    <div class="sp-section-title">📢 Announcements</div>
-    <div class="sp-announce">
-      <div class="sp-announce-item">
-        <div class="sp-announce-dot"></div>
-        <div class="sp-announce-text">P2P trading now supports BNB & XRP for faster settlements</div>
-        <div class="sp-announce-time">2d ago</div>
-      </div>
-      <div class="sp-announce-item">
-        <div class="sp-announce-dot" style="background:#f59e0b;"></div>
-        <div class="sp-announce-text">Scheduled maintenance on Apr 28, 02:00–04:00 UTC</div>
-        <div class="sp-announce-time">3d ago</div>
-      </div>
-    </div>
-
-    <!-- Self-service grid -->
-    <div class="sp-section-title" style="margin-top:8px;">Quick Help</div>
-    <div class="sp-cat-grid">
-      <div class="sp-cat-cell" onclick="spOpenFaq('deposit')">
-        <div class="sp-cat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaff00" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
-        <div class="sp-cat-label">Crypto Deposit</div>
-      </div>
-      <div class="sp-cat-cell" onclick="spOpenFaq('p2p')">
-        <div class="sp-cat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaff00" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
-        <div class="sp-cat-label">P2P Disputes</div>
-      </div>
-      <div class="sp-cat-cell" onclick="spOpenFaq('kyc')">
-        <div class="sp-cat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaff00" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-        <div class="sp-cat-label">KYC & Identity</div>
-      </div>
-      <div class="sp-cat-cell" onclick="spOpenFaq('account')">
-        <div class="sp-cat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaff00" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-        <div class="sp-cat-label">Account & Security</div>
+    <div style="padding:20px 16px 8px;">
+      <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;">📢 Announcements</div>
+      <div style="background:#111;border-radius:14px;overflow:hidden;border:1px solid #1e1e1e;">
+        <div class="sp2-list-item" onclick="goToScreen('screen-support-chat')">
+          <div style="width:8px;height:8px;border-radius:50%;background:#aaff00;flex-shrink:0;margin-top:3px;"></div>
+          <div style="flex:1;">
+            <div style="font-size:13px;color:#ddd;line-height:1.4;">Support Hub Now Available</div>
+            <div style="font-size:11px;color:#555;margin-top:2px;">2d ago</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="height:1px;background:#1a1a1a;margin:0 14px;"></div>
+        <div class="sp2-list-item" onclick="goToScreen('screen-support-chat')">
+          <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0;margin-top:3px;"></div>
+          <div style="flex:1;">
+            <div style="font-size:13px;color:#ddd;line-height:1.4;">App Version Update Notice</div>
+            <div style="font-size:11px;color:#555;margin-top:2px;">3d ago</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
       </div>
     </div>
 
-    <!-- FAQ -->
-    <div class="sp-section-title" style="margin-top:8px;">Frequently Asked Questions</div>
-
-    <div class="sp-faq-item" id="sp-faq-deposit">
-      <div class="sp-faq-q" onclick="spToggleFaq(this)">
-        <span>How do I deposit crypto on Bitcovex?</span>
-        <svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    <!-- Top Questions -->
+    <div style="padding:8px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#fff;">Top questions</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
       </div>
-      <div class="sp-faq-a">Go to Wallet → Deposit → select your coin → copy the address and send from your external wallet. Deposits reflect after network confirmations (usually 1–6 blocks).</div>
+      <div style="background:#111;border-radius:14px;overflow:hidden;border:1px solid #1e1e1e;">
+        <div class="sp2-list-item" onclick="spAskAndGo('I haven\'t received my crypto deposit')">
+          <span style="font-size:13px;color:#ddd;flex:1;">I haven't received my crypto deposit</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="height:1px;background:#1a1a1a;margin:0 14px;"></div>
+        <div class="sp2-list-item" onclick="spAskAndGo('How to submit a withdrawal?')">
+          <span style="font-size:13px;color:#ddd;flex:1;">How to submit a withdrawal?</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="height:1px;background:#1a1a1a;margin:0 14px;"></div>
+        <div class="sp2-list-item" onclick="spAskAndGo('Verification code not received on SMS')">
+          <span style="font-size:13px;color:#ddd;flex:1;">Verification code not received – SMS</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="height:1px;background:#1a1a1a;margin:0 14px;"></div>
+        <div class="sp2-list-item" onclick="spAskAndGo('Verification code not received on email')">
+          <span style="font-size:13px;color:#ddd;flex:1;">Verification code not received – Email</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="height:1px;background:#1a1a1a;margin:0 14px;"></div>
+        <div class="sp2-list-item" onclick="spAskAndGo('I didn\'t receive my rewards')">
+          <span style="font-size:13px;color:#ddd;flex:1;">I didn't receive my rewards</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
     </div>
 
-    <div class="sp-faq-item" id="sp-faq-p2p">
-      <div class="sp-faq-q" onclick="spToggleFaq(this)">
-        <span>How does Bitcovex P2P work?</span>
-        <svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    <!-- Self-service -->
+    <div style="padding:8px 16px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#fff;">Self-service</div>
+        <span style="font-size:12px;color:#555;cursor:pointer;" onclick="goToScreen('screen-support-chat')">View all ›</span>
       </div>
-      <div class="sp-faq-a">P2P lets you buy or sell USDT directly with other users. Browse ads, click Buy/Sell, make the payment to the seller, and confirm — USDT releases once the seller verifies. Bitcovex holds funds in escrow to keep both sides safe.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="sp2-grid-cell" onclick="spAskAndGo('Crypto deposit not credited')">
+          <div style="width:38px;height:38px;border-radius:12px;background:#2a0a0a;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px;">🚫</div>
+          <div style="font-size:12px;font-weight:600;color:#ddd;line-height:1.35;">Crypto deposit not credited</div>
+        </div>
+        <div class="sp2-grid-cell" onclick="spAskAndGo('P2P order dispute help')">
+          <div style="width:38px;height:38px;border-radius:12px;background:#1a1500;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px;">⚖️</div>
+          <div style="font-size:12px;font-weight:600;color:#ddd;line-height:1.35;">P2P order disputes</div>
+        </div>
+        <div class="sp2-grid-cell" onclick="spAskAndGo('KYC verification issue')">
+          <div style="width:38px;height:38px;border-radius:12px;background:#001520;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px;">🪪</div>
+          <div style="font-size:12px;font-weight:600;color:#ddd;line-height:1.35;">KYC & Identity</div>
+        </div>
+        <div class="sp2-grid-cell" onclick="spAskAndGo('Account security issue')">
+          <div style="width:38px;height:38px;border-radius:12px;background:#0a0a20;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px;">🔐</div>
+          <div style="font-size:12px;font-weight:600;color:#ddd;line-height:1.35;">Account & Security</div>
+        </div>
+      </div>
     </div>
 
-    <div class="sp-faq-item">
-      <div class="sp-faq-q" onclick="spToggleFaq(this)">
-        <span>My P2P order is stuck — what do I do?</span>
-        <svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="sp-faq-a">If payment is done but seller hasn't confirmed, use the "Appeal" button inside the order. Our team reviews within 24 hours. Do NOT cancel after sending payment — this protects your funds.</div>
-    </div>
+    <!-- FAQ accordion -->
+    <div style="padding:16px 16px 0;">
+      <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;">FAQ</div>
 
-    <div class="sp-faq-item" id="sp-faq-kyc">
-      <div class="sp-faq-q" onclick="spToggleFaq(this)">
-        <span>How long does KYC verification take?</span>
-        <svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="sp-faq-item" id="sp-faq-deposit">
+        <div class="sp-faq-q" onclick="spToggleFaq(this)"><span>How do I deposit crypto on Bitcovex?</span><svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="sp-faq-a">Go to Wallet → Deposit → select your coin → copy the address and send from your external wallet. Deposits reflect after 1–6 confirmations.</div>
       </div>
-      <div class="sp-faq-a">KYC is usually reviewed within 24–48 hours. Make sure your documents are clear, valid, and match your registered details. Blurry or expired documents will be rejected.</div>
-    </div>
-
-    <div class="sp-faq-item" id="sp-faq-account">
-      <div class="sp-faq-q" onclick="spToggleFaq(this)">
-        <span>How do I reset my password?</span>
-        <svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="sp-faq-item" id="sp-faq-p2p">
+        <div class="sp-faq-q" onclick="spToggleFaq(this)"><span>My P2P order is stuck — what do I do?</span><svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="sp-faq-a">If payment is done but seller hasn't confirmed, use the Appeal button inside the order. Our team reviews within 24h. Do NOT cancel after paying.</div>
       </div>
-      <div class="sp-faq-a">On the login page, click "Forgot Password" → enter your registered email → check your inbox for the reset link. If you don't receive it, check spam or contact support.</div>
-    </div>
-
-    <div class="sp-faq-item">
-      <div class="sp-faq-q" onclick="spToggleFaq(this)">
-        <span>What payment methods are accepted on P2P?</span>
-        <svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="sp-faq-item" id="sp-faq-kyc">
+        <div class="sp-faq-q" onclick="spToggleFaq(this)"><span>How long does KYC verification take?</span><svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="sp-faq-a">KYC is reviewed within 24–48 hours. Ensure documents are clear and valid. Blurry or expired documents will be rejected.</div>
       </div>
-      <div class="sp-faq-a">Bitcovex P2P supports UPI, PhonePe, Google Pay, Paytm, IMPS, NEFT, and Bank Transfer. Payment methods available for each ad are shown on the listing card.</div>
-    </div>
-
-    <div class="sp-faq-item">
-      <div class="sp-faq-q" onclick="spToggleFaq(this)">
-        <span>How do I become a P2P merchant?</span>
-        <svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="sp-faq-item" id="sp-faq-account">
+        <div class="sp-faq-q" onclick="spToggleFaq(this)"><span>How do I reset my password?</span><svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="sp-faq-a">On the login page tap "Forgot Password" → enter your registered email → click the reset link in your inbox (check spam too).</div>
       </div>
-      <div class="sp-faq-a">Complete KYC, build a good trade history (at least 20 completed orders), and maintain a completion rate above 90%. Then contact support from this page to apply for merchant status.</div>
+      <div class="sp-faq-item">
+        <div class="sp-faq-q" onclick="spToggleFaq(this)"><span>What payment methods are accepted on P2P?</span><svg class="sp-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="sp-faq-a">UPI, PhonePe, Google Pay, Paytm, IMPS, NEFT, and Bank Transfer. Each ad shows which methods are accepted.</div>
+      </div>
     </div>
 
   </div>
 
-  <!-- Sticky: Connect Agent -->
-  <div class="sticky-bottom" style="padding:12px 16px;">
-    <button class="btn-white-pill" style="background:#aaff00;color:#000;font-weight:800;font-size:15px;" onclick="goToScreen('screen-support-chat')">
-      💬 &nbsp;Chat with Support Agent
+  <!-- Sticky bottom: Chat with us -->
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px 20px;background:#0a0a0a;border-top:1px solid #111;">
+    <button onclick="goToScreen('screen-support-chat')" style="width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;padding:15px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;color:#fff;font-size:14px;font-weight:700;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaff00" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Chat with us
     </button>
   </div>
 </div>
 
 
 <!-- ═══════════════════════════════════════════════════
-     SCREEN: SUPPORT CHAT
+     SCREEN: SUPPORT CHAT  (Bitget style)
 ═══════════════════════════════════════════════════ -->
 <div class="screen" id="screen-support-chat">
-  <div class="topbar">
-    <div class="topbar-back" onclick="goToScreen('screen-support')">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:58px;background:#0a0a0a;border-bottom:1px solid #111;flex-shrink:0;">
+    <button onclick="goToScreen('screen-support')" style="background:none;border:none;padding:0;cursor:pointer;">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:34px;height:34px;border-radius:50%;background:rgba(170,255,0,0.1);border:1.5px solid rgba(170,255,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;" id="spTopAvatar">🤖</div>
-      <div>
-        <div class="topbar-title" style="font-size:14px;text-align:left;margin:0;padding:0;" id="spTopName">Bitcovex Support</div>
-        <div id="sp-agent-status" style="font-size:11px;color:#aaff00;line-height:1.2;">● Bot · Online</div>
+    </button>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span id="spTopAvatar" style="font-size:18px;line-height:1;">🤖</span>
+        <span style="font-size:14px;font-weight:800;color:#fff;" id="spTopName">BITCOVEX Support</span>
       </div>
+      <div id="sp-agent-status" style="font-size:11px;color:#888;">Bot Assistant</div>
     </div>
-    <div class="topbar-right" style="width:36px;"></div>
+    <button onclick="goToScreen('screen-support')" style="background:none;border:none;padding:0;cursor:pointer;color:#666;font-size:20px;line-height:1;">×</button>
   </div>
 
-  <div style="height:calc(100vh - 56px);display:flex;flex-direction:column;overflow:hidden;">
-    <div class="sp-chat-messages" id="spChatMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;">
-      <!-- Messages populated by JS -->
+  <div style="height:calc(100vh - 58px);display:flex;flex-direction:column;overflow:hidden;background:#0a0a0a;">
+
+    <!-- Chat messages -->
+    <div id="spChatMessages" style="flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px;">
+      <!-- populated by JS -->
     </div>
 
-    <!-- FAQ quick chips — shown initially, hidden once chat starts -->
-    <div id="spFaqChips" style="padding:0 12px 10px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid #111;background:#0b0e11;">
-      <div style="width:100%;font-size:10px;color:#555;padding:8px 0 4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Quick Questions</div>
-      <button class="sp-chip" onclick="spAskFaq('How do I deposit crypto?')">💰 Deposit help</button>
-      <button class="sp-chip" onclick="spAskFaq('My P2P order is stuck')">⚠️ Order stuck</button>
-      <button class="sp-chip" onclick="spAskFaq('KYC verification not approved')">🪪 KYC issue</button>
-      <button class="sp-chip" onclick="spAskFaq('I forgot my password')">🔑 Password reset</button>
-      <button class="sp-chip" onclick="spAskFaq('Withdrawal not received')">📤 Withdrawal</button>
-      <button class="sp-chip sp-chip-agent" onclick="spRequestLiveAgent()">🎧 Connect Live Agent</button>
+    <!-- Live Agent Banner -->
+    <div id="spAgentBanner" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#0f0f0f;border-top:1px solid #1a1a1a;">
+      <div style="width:36px;height:36px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🎧</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;color:#fff;">Talk to a Live Agent</div>
+        <div style="font-size:11px;color:#666;" id="spAgentBannerSub">Avg. response time: ~2 min</div>
+      </div>
+      <button id="spConnectBtn" onclick="spRequestLiveAgent()" style="background:#aaff00;border:none;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:800;color:#000;cursor:pointer;flex-shrink:0;">Connect</button>
     </div>
 
-    <div class="sp-chat-bar">
+    <!-- Input bar -->
+    <div style="display:flex;align-items:flex-end;gap:8px;padding:10px 14px 14px;background:#0a0a0a;border-top:1px solid #111;">
       <textarea id="spChatInput" placeholder="Type your message..." rows="1"
+        style="flex:1;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:22px;padding:10px 16px;color:#fff;font-size:14px;resize:none;outline:none;min-height:40px;max-height:100px;font-family:inherit;line-height:1.4;"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();spSendUserMsg();}"
         oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
-      <button class="sp-send-btn" onclick="spSendUserMsg()">
+      <button onclick="spSendUserMsg()" style="width:40px;height:40px;border-radius:50%;background:#aaff00;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
@@ -8330,11 +8348,19 @@ function spLoadChat() {
 
   if (!ticket.messages.length) {
     const user = (typeof getStoredBitcovexUser === 'function') ? getStoredBitcovexUser() : null;
-    const firstName = (user && user.name) ? user.name.split(' ')[0] : 'there';
+    const firstName = (user && user.name) ? user.name.split(' ')[0] : 'Bitcovex user';
     wrap.innerHTML = `
+      <div style="text-align:center;font-size:11px;color:#444;padding:6px 0 10px;">Just now</div>
       <div class="sp-msg-bubble sp-msg-admin">
-        <div class="sp-msg-text">👋 Hey ${spEscape(firstName)}! Welcome to Bitcovex Support.<br>I'm your support bot. Ask me anything or use the quick buttons below.</div>
+        <div class="sp-msg-text">👋 Hey ${spEscape(firstName)}!<br>I'm Bunz Support. Select a topic or connect to a live agent.</div>
         <div class="sp-msg-meta">🤖 Bot · just now</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0;">
+        <button class="sp-chip" onclick="spAskFaq('Account security issue')">Account &amp; security</button>
+        <button class="sp-chip" onclick="spAskFaq('Deposit or withdrawal issue')">Deposit &amp; withdrawal</button>
+        <button class="sp-chip" onclick="spAskFaq('My P2P order is stuck')">P2P</button>
+        <button class="sp-chip" onclick="spAskFaq('KYC verification issue')">Identity verification</button>
+        <button class="sp-chip" onclick="spAskFaq('I didn\'t receive my rewards')">Promotion &amp; bonus</button>
       </div>`;
   } else {
     spRenderMessages(ticket.messages, wrap);
@@ -8342,9 +8368,8 @@ function spLoadChat() {
 
   spScrollBottom(wrap);
 
-  // Hide chips if agent already connected
-  const chips = document.getElementById('spFaqChips');
-  if (chips) chips.style.display = ticket.agentConnected ? 'none' : 'flex';
+  // Update agent banner
+  spUpdateAgentBanner(ticket);
 
   _spLastMsgCount = ticket.messages.length;
   spStartPolling();
@@ -8356,17 +8381,39 @@ function spUpdateTopbar(ticket) {
   const status = document.getElementById('sp-agent-status');
   if (ticket && ticket.agentConnected) {
     if (avatar) avatar.textContent = '🎧';
-    if (name)   name.textContent   = 'Live Agent';
-    if (status) { status.textContent = '● Connected · Live'; status.style.color = '#aaff00'; }
+    if (name)   name.textContent   = 'BITCOVEX Support';
+    if (status) { status.textContent = '● Live Agent Connected'; status.style.color = '#aaff00'; }
   } else if (ticket && ticket.agentRequested) {
     if (avatar) avatar.textContent = '⏳';
-    if (name)   name.textContent   = 'Connecting...';
-    if (status) { status.textContent = '● Waiting for agent'; status.style.color = '#f59e0b'; }
+    if (name)   name.textContent   = 'BITCOVEX Support';
+    if (status) { status.textContent = 'Connecting to agent...'; status.style.color = '#f59e0b'; }
   } else {
     if (avatar) avatar.textContent = '🤖';
-    if (name)   name.textContent   = 'Bitcovex Support';
-    if (status) { status.textContent = '● Bot · Online'; status.style.color = '#aaff00'; }
+    if (name)   name.textContent   = 'BITCOVEX Support';
+    if (status) { status.textContent = 'Bot Assistant'; status.style.color = '#888'; }
   }
+}
+
+function spUpdateAgentBanner(ticket) {
+  const banner  = document.getElementById('spAgentBanner');
+  const btn     = document.getElementById('spConnectBtn');
+  const sub     = document.getElementById('spAgentBannerSub');
+  if (!banner) return;
+  if (ticket && ticket.agentConnected) {
+    if (btn) { btn.textContent = '● Live'; btn.style.background = '#aaff00'; btn.disabled = true; }
+    if (sub) sub.textContent = 'You are connected to a live agent';
+  } else if (ticket && ticket.agentRequested) {
+    if (btn) { btn.textContent = 'Connecting…'; btn.style.background = '#f59e0b'; btn.disabled = true; }
+    if (sub) sub.textContent = 'Agent will join shortly';
+  } else {
+    if (btn) { btn.textContent = 'Connect'; btn.style.background = '#aaff00'; btn.disabled = false; }
+    if (sub) sub.textContent = 'Avg. response time: ~2 min';
+  }
+}
+
+function spAskAndGo(question) {
+  goToScreen('screen-support-chat');
+  setTimeout(() => { spAskFaq(question); }, 200);
 }
 
 // ── quick FAQ chip ───────────────────────────────────────────
@@ -8395,10 +8442,7 @@ function spRequestLiveAgent() {
 
   spRenderMessages(ticket.messages, wrap);
   spUpdateTopbar(ticket);
-
-  // Hide FAQ chips
-  const chips = document.getElementById('spFaqChips');
-  if (chips) chips.style.display = 'none';
+  spUpdateAgentBanner(ticket);
 
   admUpdateBadge();
   admShowNotif(ticket, '🎧 Live agent requested by ' + (ticket.userName || 'Guest'));
