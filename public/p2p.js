@@ -8722,12 +8722,7 @@ window.deleteMobAd = async function(offerId) {
     }
   });
 
-  window.fillDealModal = function(offer) {
-    if (offer && offer.id) {
-      cacheSelectedOffer(offer);
-      _navSafe(_buildOrderFlowUrl({ adId: offer.id, source: 'ad' }), 'Opening buy flow...');
-    }
-  };
+  // NOTE: fillDealModal override removed — use built-in inline deal modal in p2p.html
   window._p2pNavSafe = _navSafe;
 })();
 
