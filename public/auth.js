@@ -344,12 +344,10 @@ async function handleSendOtp() {
     return;
   }
 
-  // For signup: register account first (this sends verification OTP to email)
-  // For forgot: just send forgot-password email
+  // Send OTP only — actual registration happens on form submit
   const isForgot = state.otpPurpose === 'forgot';
-  const endpoint = isForgot ? '/auth/forgot-password' : '/auth/register';
-  const password = String(passwordInput?.value || '').trim();
-  const payload = isForgot ? { email } : { email, password: password || 'TempSetLater1!' };
+  const endpoint = isForgot ? '/auth/forgot-password/send-otp' : '/auth/signup/send-otp';
+  const payload = { email };
 
   try {
     sendOtpBtn.disabled = true;
@@ -414,12 +412,11 @@ async function handleSubmit(event) {
   let payload = { email, password };
 
   if (state.mode === MODE_SIGNUP) {
-    // In bitegit-backend, signup flow: register (sends OTP) → verify-email (with OTP)
-    endpoint = '/auth/verify-email';
-    payload = { otp: otpCode, token: otpCode };
+    endpoint = '/auth/register';
+    payload = { email, password, otpCode };
   } else if (state.mode === MODE_FORGOT) {
-    endpoint = '/auth/reset-password';
-    payload = { token: otpCode, otp: otpCode, newPassword: password };
+    endpoint = '/auth/forgot-password/reset';
+    payload = { email, otpCode, newPassword: password };
   }
 
   try {

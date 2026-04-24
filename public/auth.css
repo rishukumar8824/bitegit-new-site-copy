@@ -7,7 +7,7 @@
   --auth-text: #101826;
   --auth-muted: #6c7c95;
   --auth-danger: #ff5073;
-  --auth-accent: #00e5ff;
+  --auth-accent: #00f5ff;
 }
 
 [data-theme='dark'] {
@@ -69,9 +69,10 @@ body.auth-page {
 .auth-brand {
   text-decoration: none;
   color: var(--auth-accent);
-  font-size: 1.78rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-size: 1.55rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .auth-top-actions {
@@ -104,9 +105,9 @@ body.auth-page {
 }
 
 .auth-main {
-  width: min(310px, calc(100% - 2rem));
+  width: min(360px, calc(100% - 1.5rem));
   margin: 0 auto;
-  padding: 0.5rem 0 1rem;
+  padding: 0.3rem 0 1rem;
 }
 
 .auth-card {
