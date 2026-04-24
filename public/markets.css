@@ -37,6 +37,8 @@ body.markets-nav-open { overflow: hidden; }
   z-index: 200;
   background: #000;
   border-bottom: none;
+  width: 100%;
+  overflow: hidden;
 }
 
 .mk-header-inner {
@@ -234,6 +236,8 @@ body.markets-nav-open { overflow: hidden; }
 /* ── Ticker bar ── */
 .mk-ticker-bar {
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
   background: rgba(255,255,255,0.02);
   border-bottom: 1px solid var(--mk-line);
   padding: 0.4rem 0;
