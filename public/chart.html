@@ -320,6 +320,19 @@
       </div>
     </div>
     <div class="ch-hicons">
+      <button class="ch-hico" id="chHeaderCandleBtn" title="Chart type" style="position:relative">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="5" y="4" width="3" height="8" rx="0.5"/>
+          <rect x="6" y="1" width="1" height="3"/>
+          <rect x="6" y="12" width="1" height="3"/>
+          <rect x="10" y="3" width="3" height="6" rx="0.5"/>
+          <rect x="11" y="1" width="1" height="2"/>
+          <rect x="11" y="9" width="1" height="2"/>
+          <rect x="1" y="5" width="3" height="5" rx="0.5"/>
+          <rect x="2" y="2" width="1" height="3"/>
+          <rect x="2" y="10" width="1" height="3"/>
+        </svg>
+      </button>
       <button class="ch-hico" id="chFavBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       </button>
@@ -839,9 +852,9 @@
     // ── Watermark ──
     ctx.save();
     ctx.font='bold 40px -apple-system,sans-serif';
-    ctx.fillStyle='rgba(220,175,40,0.18)';
+    ctx.fillStyle='rgba(255,255,255,0.10)';
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('Bitegit', plotW/2, TOP_PAD+plotH/2);
+    ctx.fillText('BITEGIT', plotW/2, TOP_PAD+plotH/2);
     ctx.restore();
 
     // ── Volume bars ──
@@ -1125,10 +1138,8 @@
     });
   });
 
-  // ── Candle type selector ──
+  // ── Candle type selector (shared for both toolbar btn + header btn) ──
   (function(){
-    const btn = document.getElementById('chCandleTypeBtn');
-    if(!btn) return;
     const types = [
       {key:'candle', label:'Candlestick', svg:'<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="5" y="4" width="3" height="8" rx="0.5"/><rect x="6" y="1" width="1" height="3"/><rect x="6" y="12" width="1" height="3"/></svg>'},
       {key:'bar',    label:'Bar chart',   svg:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="5" y1="5" x2="8" y2="5"/><line x1="8" y1="10" x2="11" y2="10"/></svg>'},
@@ -1136,11 +1147,11 @@
     ];
     let menu = null;
     function closeMenu(){ if(menu){ menu.remove(); menu=null; } }
-    btn.addEventListener('click', function(e){
-      e.stopPropagation();
-      if(menu){ closeMenu(); return; }
+    function openMenu(triggerBtn){
+      closeMenu();
       menu = document.createElement('div');
       menu.className = 'ch-candle-menu';
+      menu.style.cssText = 'position:absolute;top:100%;right:0;z-index:500;';
       types.forEach(t=>{
         const b = document.createElement('button');
         b.innerHTML = t.svg + ' ' + t.label;
@@ -1153,7 +1164,18 @@
         });
         menu.appendChild(b);
       });
-      btn.closest('.ch-tools').appendChild(menu);
+      triggerBtn.style.position='relative';
+      triggerBtn.appendChild(menu);
+    }
+    const btn1 = document.getElementById('chCandleTypeBtn');
+    const btn2 = document.getElementById('chHeaderCandleBtn');
+    [btn1, btn2].forEach(btn=>{
+      if(!btn) return;
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(menu && btn.contains(menu)){ closeMenu(); return; }
+        openMenu(btn);
+      });
     });
     document.addEventListener('click', closeMenu);
   })();
