@@ -1455,19 +1455,38 @@
     var net = WD_NETWORKS[currentWdNetwork];
     if(!addr) { showToast('Please enter withdrawal address'); return; }
     if(!amt || amt < net.min) { showToast('Minimum withdrawal is ' + net.min + ' USDT'); return; }
-    if(confirm('Withdraw ' + amt + ' USDT via ' + net.name + ' to\n' + addr + '?\n\nFee: ' + net.fee + ' USDT\nYou receive: ' + (amt - net.fee).toFixed(2) + ' USDT')) {
-      fetch('/api/withdrawals', {
-        method:'POST', credentials:'include',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ address:addr, amount:amt, network:currentWdNetwork })
-      })
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if(d.success || d.id) { showToast('Withdrawal submitted successfully'); showScreen('screenWithdrawHistory'); }
-        else showToast(d.message || 'Withdrawal failed');
-      })
-      .catch(function(){ showToast('Network error. Please try again.'); });
-    }
+    // Store for confirm modal
+    _pendingWithdraw = { addr:addr, amt:amt, net:net, netKey:currentWdNetwork };
+    // Populate confirm modal
+    document.getElementById('wdcNetwork').textContent = net.name;
+    document.getElementById('wdcAmount').textContent = amt + ' USDT';
+    document.getElementById('wdcFee').textContent = net.fee + ' USDT';
+    document.getElementById('wdcReceive').textContent = (amt - net.fee).toFixed(2) + ' USDT';
+    document.getElementById('wdcAddress').textContent = addr;
+    document.getElementById('modalWdConfirm').classList.remove('hidden');
+  }
+
+  function closeWdConfirm() {
+    document.getElementById('modalWdConfirm').classList.add('hidden');
+    _pendingWithdraw = null;
+  }
+
+  function doWithdraw() {
+    if(!_pendingWithdraw) return;
+    var p = _pendingWithdraw;
+    document.getElementById('modalWdConfirm').classList.add('hidden');
+    fetch('/api/withdrawals', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ address:p.addr, amount:p.amt, network:p.netKey, currency:'USDT' })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.success || d.id) { showToast('Withdrawal submitted successfully'); showScreen('screenWithdrawHistory'); }
+      else showToast(d.message || 'Withdrawal failed');
+    })
+    .catch(function(){ showToast('Network error. Please try again.'); });
+    _pendingWithdraw = null;
   }
 
   function showToast(msg) {
