@@ -114,6 +114,7 @@ body.markets-nav-open { overflow: hidden; }
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  margin-left: auto;
 }
 
 .mk-login {
