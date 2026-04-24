@@ -7,7 +7,7 @@
   const CACHE = {};
   const PRELOAD = [
     '/', '/markets', '/chart?symbol=BTCUSDT',
-    '/assets', '/p2p', '/auth'
+    '/wallet.html', '/p2p', '/auth'
   ];
 
   // ── Inject transition styles once ──
