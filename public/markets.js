@@ -73,13 +73,34 @@ function fmtVol(v) {
   return n.toFixed(2);
 }
 
+const COIN_SVGS = {
+  BTC:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#f7931a"/><text x="18" y="24" text-anchor="middle" font-size="16" font-weight="900" fill="#fff" font-family="Arial">₿</text></svg>`,
+  ETH:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#627eea"/><polygon points="18,7 11,18 18,22 25,18" fill="rgba(255,255,255,0.9)"/><polygon points="18,24 11,20 18,29 25,20" fill="rgba(255,255,255,0.7)"/></svg>`,
+  BNB:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#f3ba2f"/><polygon points="18,9 21,15 27,16 22,21 23,27 18,24 13,27 14,21 9,16 15,15" fill="#fff"/></svg>`,
+  XRP:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#346aa9"/><text x="18" y="23" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial">XRP</text></svg>`,
+  SOL:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#9945ff"/><rect x="10" y="12" width="16" height="3" rx="1.5" fill="#fff"/><rect x="10" y="17" width="16" height="3" rx="1.5" fill="#fff"/><rect x="10" y="22" width="16" height="3" rx="1.5" fill="#fff"/></svg>`,
+  TRX:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#e50915"/><polygon points="18,9 27,23 9,23" fill="none" stroke="#fff" stroke-width="2.5"/></svg>`,
+  ADA:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#0033ad"/><text x="18" y="23" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial">ADA</text></svg>`,
+  DOGE:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#c2a633"/><text x="18" y="23" text-anchor="middle" font-size="15" font-weight="900" fill="#fff" font-family="Arial">Ð</text></svg>`,
+  AVAX:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#e84142"/><polygon points="18,9 27,25 9,25" fill="#fff"/></svg>`,
+  LINK:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#2a5ada"/><text x="18" y="23" text-anchor="middle" font-size="12" font-weight="900" fill="#fff" font-family="Arial">LINK</text></svg>`,
+  DOT:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#e6007a"/><circle cx="18" cy="18" r="5" fill="#fff"/><circle cx="18" cy="9" r="3" fill="#fff"/><circle cx="18" cy="27" r="3" fill="#fff"/><circle cx="9" cy="18" r="3" fill="#fff"/><circle cx="27" cy="18" r="3" fill="#fff"/></svg>`,
+  LTC:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#bfbbbb"/><text x="18" y="24" text-anchor="middle" font-size="16" font-weight="900" fill="#fff" font-family="Arial">Ł</text></svg>`,
+  MATIC:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#8247e5"/><text x="18" y="23" text-anchor="middle" font-size="11" font-weight="900" fill="#fff" font-family="Arial">MATIC</text></svg>`,
+  UNI:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#ff007a"/><text x="18" y="23" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial">UNI</text></svg>`,
+  ATOM:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#2e3148"/><text x="18" y="23" text-anchor="middle" font-size="11" font-weight="900" fill="#fff" font-family="Arial">ATOM</text></svg>`,
+  NEAR:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#000"/><text x="18" y="23" text-anchor="middle" font-size="11" font-weight="900" fill="#fff" font-family="Arial">NEAR</text></svg>`,
+  APT:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#2dd8aa"/><text x="18" y="23" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial">APT</text></svg>`,
+  ARB:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#2d374b"/><text x="18" y="23" text-anchor="middle" font-size="13" font-weight="900" fill="#96bedc" font-family="Arial">ARB</text></svg>`,
+  OP:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#ff0420"/><text x="18" y="23" text-anchor="middle" font-size="14" font-weight="900" fill="#fff" font-family="Arial">OP</text></svg>`,
+  WIF:`<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="18" fill="#a67c52"/><text x="18" y="23" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Arial">WIF</text></svg>`,
+};
+
 function coinIco(base) {
-  const code = COIN_CODES[base];
-  const fb   = (base || '?').slice(0, 1);
-  const img  = code
-    ? `<img src="https://assets.coincap.io/assets/icons/${code}@2x.png" alt="${base}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'" />`
-    : '';
-  return `<span class="mk-coin-ico">${img}<span class="mk-coin-fb">${fb}</span></span>`;
+  const svg = COIN_SVGS[base];
+  if (svg) return `<span class="mk-coin-ico" style="background:none;overflow:visible">${svg}</span>`;
+  const fb = (base || '?').slice(0, 1);
+  return `<span class="mk-coin-ico"><span class="mk-coin-fb">${fb}</span></span>`;
 }
 
 // ── Render ──
@@ -134,7 +155,6 @@ function renderTable() {
           ${coinIco(base)}
           <div class="mk-coin-names">
             <span class="mk-coin-sym">${base}/USDT</span>
-            <span class="mk-coin-name">${name}</span>
           </div>
         </div>
       </td>
