@@ -536,7 +536,16 @@
       <div class="ch-tp-pair-name" id="chTpPair">BTC/USDT <span style="font-size:.75rem;color:#8a9bb5">&#9660;</span></div>
       <div style="display:flex;align-items:center;gap:.4rem">
         <span class="ch-tp-pair-chg dn" id="chTpChg">--</span>
-        <button class="ch-tp-ico">&#9783;</button>
+        <button class="ch-tp-ico" onclick="(function(){var t=document.querySelector('.ch-tab[data-tab=\'chart\']');document.querySelectorAll('.ch-tab').forEach(b=>b.classList.remove('active'));t&&t.classList.add('active');['chart','data','square','about'].forEach(function(n){var el=document.getElementById('tab'+n.charAt(0).toUpperCase()+n.slice(1));if(el)el.classList.toggle('hidden',n!=='chart');})})()" title="View Chart" style="display:flex;align-items:center;justify-content:center;padding:3px 5px;">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor" style="display:block">
+            <rect x="4" y="3" width="2.5" height="10" rx="0.5"/>
+            <line x1="5.25" y1="1.5" x2="5.25" y2="3" stroke="currentColor" stroke-width="1.2"/>
+            <line x1="5.25" y1="13" x2="5.25" y2="14.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="9.5" y="5" width="2.5" height="7" rx="0.5"/>
+            <line x1="10.75" y1="3.5" x2="10.75" y2="5" stroke="currentColor" stroke-width="1.2"/>
+            <line x1="10.75" y1="12" x2="10.75" y2="13.5" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+        </button>
         <button class="ch-tp-ico">&#8943;</button>
       </div>
     </div>
@@ -851,8 +860,8 @@
 
     // ── Watermark ──
     ctx.save();
-    ctx.font='bold 40px -apple-system,sans-serif';
-    ctx.fillStyle='rgba(255,255,255,0.22)';
+    ctx.font='bold 44px -apple-system,sans-serif';
+    ctx.fillStyle='rgba(255,255,255,0.38)';
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('BITEGIT', plotW/2, TOP_PAD+plotH/2);
     ctx.restore();
