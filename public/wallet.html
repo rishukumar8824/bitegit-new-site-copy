@@ -590,9 +590,43 @@
     </div>
   </div>
 
+  <!-- Screenshot Upload Section -->
+  <div style="margin:1rem 1rem 0;background:#111;border-radius:14px;padding:1rem">
+    <div style="font-size:.88rem;font-weight:700;color:#fff;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      Upload Payment Screenshot
+    </div>
+    <input type="file" id="depScreenshotInput" accept="image/*" style="display:none" onchange="depPreviewScreenshot(this)"/>
+    <div id="depScreenshotBox" onclick="document.getElementById('depScreenshotInput').click()"
+      style="border:1.5px dashed rgba(255,255,255,.2);border-radius:12px;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;cursor:pointer;padding:1rem;position:relative;overflow:hidden">
+      <img id="depScreenshotPreview" src="" alt="" style="display:none;width:100%;border-radius:8px;object-fit:cover;max-height:200px"/>
+      <div id="depScreenshotPlaceholder" style="display:flex;flex-direction:column;align-items:center;gap:.4rem">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+        <span style="font-size:.8rem;color:#8a9bb5">Tap to upload screenshot</span>
+        <span style="font-size:.72rem;color:#555">JPG, PNG supported</span>
+      </div>
+      <button id="depScreenshotRemove" onclick="depRemoveScreenshot(event)" style="display:none;position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:.85rem;display:none;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="font-size:.75rem;color:#8a9bb5;margin-top:.55rem">Upload screenshot of your transfer to speed up verification</div>
+  </div>
+
+  <!-- TxID input -->
+  <div style="margin:.75rem 1rem 0;background:#111;border-radius:14px;padding:.85rem 1rem">
+    <div style="font-size:.78rem;color:#8a9bb5;margin-bottom:.45rem">Transaction ID (TxID) — Optional</div>
+    <input id="depTxidInput" type="text" placeholder="Paste your TxID here"
+      style="width:100%;background:none;border:none;outline:none;color:#fff;font-size:.9rem;font-family:inherit"/>
+  </div>
+
+  <!-- Submit Button -->
+  <div style="padding:.85rem 1rem 0">
+    <button onclick="depSubmitProof()" style="width:100%;padding:.9rem;background:#00e5ff;border:none;border-radius:50px;font-size:1rem;font-weight:700;color:#000;cursor:pointer;font-family:inherit">
+      Submit Deposit Proof
+    </button>
+  </div>
+
   <!-- Bottom button -->
-  <div style="padding:0 0 2.5rem">
-    <button class="w-btn-full" onclick="saveOrShareAddress()">Save or share address</button>
+  <div style="padding:.65rem 0 2.5rem">
+    <button class="w-btn-full" style="background:#1a1a1a;color:#fff" onclick="saveOrShareAddress()">Save or share address</button>
   </div>
 </div>
 
@@ -1176,6 +1210,43 @@
     }
   }
   function showCopyToast() { showToast('Address copied'); }
+
+  function depPreviewScreenshot(input) {
+    if(!input.files || !input.files[0]) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var preview = document.getElementById('depScreenshotPreview');
+      var placeholder = document.getElementById('depScreenshotPlaceholder');
+      var removeBtn = document.getElementById('depScreenshotRemove');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      placeholder.style.display = 'none';
+      removeBtn.style.display = 'flex';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+
+  function depRemoveScreenshot(e) {
+    e.stopPropagation();
+    document.getElementById('depScreenshotInput').value = '';
+    document.getElementById('depScreenshotPreview').style.display = 'none';
+    document.getElementById('depScreenshotPreview').src = '';
+    document.getElementById('depScreenshotPlaceholder').style.display = 'flex';
+    document.getElementById('depScreenshotRemove').style.display = 'none';
+  }
+
+  function depSubmitProof() {
+    var hasImg = document.getElementById('depScreenshotPreview').src && document.getElementById('depScreenshotPreview').style.display !== 'none';
+    var txid = document.getElementById('depTxidInput').value.trim();
+    if(!hasImg && !txid) {
+      showToast('Please upload a screenshot or enter TxID');
+      return;
+    }
+    // Show success state
+    showToast('Deposit proof submitted! We\'ll verify shortly.');
+    depRemoveScreenshot({stopPropagation:function(){}});
+    document.getElementById('depTxidInput').value = '';
+  }
 
   function saveOrShareAddress() {
     if(navigator.share) {
