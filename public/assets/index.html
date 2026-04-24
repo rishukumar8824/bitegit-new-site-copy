@@ -395,11 +395,19 @@
     </div>
   </div>
 
-  <!-- ── Empty deposit btn wires to deposit modal ── -->
+  <!-- ── Deposit/Withdraw redirect to wallet.html ── -->
   <script>
+    document.getElementById('assetsDepositBtn')?.addEventListener('click', function(e) {
+      e.stopImmediatePropagation();
+      window.location.href = '/wallet.html';
+    }, true);
     document.getElementById('assetsEmptyDepositBtn')?.addEventListener('click', function() {
-      document.getElementById('assetsDepositBtn')?.click();
+      window.location.href = '/wallet.html';
     });
+    document.getElementById('assetsWithdrawBtn')?.addEventListener('click', function(e) {
+      e.stopImmediatePropagation();
+      window.location.href = '/wallet.html?page=withdraw';
+    }, true);
   </script>
 
   <!-- ── Bottom nav ── -->
