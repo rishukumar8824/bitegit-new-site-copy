@@ -11,12 +11,15 @@
   <script>
     // Instantly apply auth state before render — prevents any flash
     try {
-      if (localStorage.getItem('_p2p_hint') || localStorage.getItem('bitegit_token')) {
-        var s = document.createElement('style');
-        s.id = '_auth_flash_fix';
+      var _isAuthed = !!(localStorage.getItem('_p2p_hint') || localStorage.getItem('bitegit_token'));
+      var s = document.createElement('style');
+      s.id = '_auth_flash_fix';
+      if (_isAuthed) {
         s.textContent = '[data-auth-guest-only]{display:none!important}[data-auth-user-only]{display:flex!important}';
-        document.head.appendChild(s);
+      } else {
+        s.textContent = '[data-auth-user-only]{display:none!important}';
       }
+      document.head.appendChild(s);
     } catch(e) {}
   </script>
   <style>
@@ -53,8 +56,8 @@
         <div class="cf-actions">
           <a id="topLoginBtn" class="cf-login" href="/auth.html" data-auth-guest-only>Log In</a>
           <a id="topSignupBtn" href="/auth.html?mode=signup" class="cf-signup" data-auth-guest-only>Sign Up</a>
-          <a id="topAssetsBtn" href="/wallet.html" class="cf-login hidden" data-auth-user-only>Assets</a>
-          <button id="topLogoutBtn" type="button" class="cf-login hidden" data-auth-user-only>Logout</button>
+          <a id="topAssetsBtn" href="/wallet.html" class="cf-login" data-auth-user-only>Assets</a>
+          <button id="topLogoutBtn" type="button" class="cf-login" data-auth-user-only>Logout</button>
           <button id="homeNavToggle" class="cf-nav-toggle" type="button" aria-label="Open navigation" aria-controls="homeNavDrawer" aria-expanded="false">
             <span></span>
             <span></span>
@@ -85,7 +88,7 @@
         <a href="/p2p.html">P2P</a>
         <a href="/">Support</a>
         <a href="/wallet.html">Assets</a>
-        <button id="drawerLogoutBtn" type="button" class="hidden" data-auth-user-only style="background:none;border:none;border-top:1px solid rgba(255,255,255,0.07);text-align:left;padding:0.75rem 0;font-size:1.05rem;font-weight:600;color:#ff4d4d;cursor:pointer;font-family:inherit;width:100%;">Logout</button>
+        <button id="drawerLogoutBtn" type="button" data-auth-user-only style="background:none;border:none;border-top:1px solid rgba(255,255,255,0.07);text-align:left;padding:0.75rem 0;font-size:1.05rem;font-weight:600;color:#ff4d4d;cursor:pointer;font-family:inherit;width:100%;">Logout</button>
       </nav>
       <div class="cf-nav-drawer-actions"></div>
     </aside>
@@ -116,7 +119,7 @@
       </div>
 
       <!-- Logged-in user action grid -->
-      <div data-auth-user-only class="hidden cf-user-action-section" style="position:relative;z-index:5;">
+      <div data-auth-user-only class="cf-user-action-section" style="position:relative;z-index:5;">
         <div class="cf-action-grid">
           <!-- Rewards: gift box white icon -->
           <a href="/p2p.html#rewards" class="cf-action-card">
@@ -166,7 +169,7 @@
       <section class="cf-hero cf-reveal is-visible" style="min-height:0;padding-top:0;padding-bottom:0;">
         <div class="cf-hero-left" style="display:none;">
 
-          <div id="heroUserPanel" class="cf-user-panel hidden" data-auth-user-only>
+          <div id="heroUserPanel" class="cf-user-panel" data-auth-user-only>
             <span class="cf-user-badge">Signed in</span>
             <h2 id="heroUserName">Bitegit User</h2>
             <p id="heroUserMeta">Your account is ready for markets and assets.</p>
