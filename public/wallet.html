@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <meta name="theme-color" content="#000000"/>
-  <title>Wallet — Bitegit</title>
+  <title>Wallet — Bitcovex</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -147,14 +147,173 @@
     .wd-hist-status-pending{font-size:.78rem;color:#f5a623;margin-top:.15rem;display:flex;align-items:center;gap:.25rem;justify-content:flex-end}
     .wd-hist-status-pending::before{content:"•";font-size:.9rem}
     .wd-hist-amount-neg{font-size:.95rem;font-weight:700;color:#fff}
+    /* ── OVERVIEW ── */
+    .ov-topbar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem .5rem;background:#000}
+    .ov-topbar-title{font-size:1.08rem;font-weight:700;color:#fff}
+    .ov-topbar-right{display:flex;align-items:center;gap:.6rem}
+    .ov-icon-btn{background:none;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%}
+    .ov-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,.08);background:#000;padding:0 1rem}
+    .ov-tab{background:none;border:none;border-bottom:2px solid transparent;color:#8a9bb5;font-size:.92rem;font-weight:600;padding:.6rem .7rem;cursor:pointer;font-family:inherit;margin-right:.3rem}
+    .ov-tab.active{color:#fff;border-bottom-color:#fff}
+    .ov-balance-section{padding:1.4rem 1rem .8rem;background:#000}
+    .ov-bal-label{font-size:.82rem;color:#8a9bb5;margin-bottom:.5rem;display:flex;align-items:center;gap:.35rem}
+    .ov-eye{background:none;border:none;color:#8a9bb5;font-size:.9rem;cursor:pointer;padding:0;display:flex;align-items:center}
+    .ov-bal-row{display:flex;align-items:baseline;gap:.45rem;margin-bottom:.22rem}
+    .ov-bal-amount{font-size:2.1rem;font-weight:800;color:#fff;letter-spacing:-.02em}
+    .ov-bal-unit{font-size:1rem;font-weight:600;color:#fff;display:flex;align-items:center;gap:.2rem;cursor:pointer}
+    .ov-bal-unit svg{opacity:.6}
+    .ov-bal-btc{font-size:.82rem;color:#8a9bb5;margin-bottom:.15rem}
+    .ov-pnl-row{font-size:.8rem;color:#8a9bb5;display:flex;align-items:center;gap:.3rem;margin-top:.1rem;cursor:pointer}
+    .ov-pnl-row span.pnl-val{color:#8a9bb5}
+    .ov-pnl-arrow{font-size:.75rem;color:#8a9bb5}
+    .ov-actions{display:flex;justify-content:space-around;padding:.9rem 0 1.1rem;background:#000}
+    .ov-action-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:.45rem;cursor:pointer;color:#fff;font-family:inherit;flex:1}
+    .ov-action-circle{width:46px;height:46px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04)}
+    .ov-action-label{font-size:.78rem;font-weight:500;color:#ccc}
+    .ov-convert-bar{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:#111;margin:.1rem 0;cursor:pointer}
+    .ov-convert-left{display:flex;align-items:center;gap:.55rem}
+    .ov-convert-icon{width:28px;height:28px;border-radius:50%;background:#1e2a3a;display:flex;align-items:center;justify-content:center}
+    .ov-convert-txt{font-size:.88rem;font-weight:600;color:#fff}
+    .ov-convert-arrow{color:#8a9bb5;font-size:.85rem}
+    .ov-assets-header{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem .55rem;background:#000}
+    .ov-assets-title{font-size:.95rem;font-weight:700;color:#fff}
+    .ov-assets-icons{display:flex;align-items:center;gap:.5rem}
+    .ov-assets-icon-btn{background:none;border:none;color:#8a9bb5;cursor:pointer;display:flex;align-items:center;font-size:1.1rem}
+    .ov-asset-row{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;background:#000}
+    .ov-asset-row:last-child{border-bottom:none}
+    .ov-asset-info{flex:1}
+    .ov-asset-name{font-size:.92rem;font-weight:700;color:#fff}
+    .ov-asset-full{font-size:.75rem;color:#8a9bb5;margin-top:.1rem}
+    .ov-asset-right{text-align:right}
+    .ov-asset-bal{font-size:.92rem;font-weight:700;color:#fff}
+    .ov-asset-usdt{font-size:.75rem;color:#8a9bb5;margin-top:.1rem}
+    .ov-empty{display:flex;flex-direction:column;align-items:center;padding:3rem 1rem 4rem;gap:.7rem;background:#000}
+    .ov-empty-icon{opacity:.25;margin-bottom:.3rem}
+    .ov-empty-txt{font-size:.88rem;color:#8a9bb5}
+    .ov-section-title{font-size:.88rem;font-weight:700;color:#fff;padding:.5rem 1rem .4rem}
   </style>
 </head>
 <body>
 
 <!-- ══════════════════════════════════════════════
+     SCREEN 0: OVERVIEW
+════════════════════════════════════════════════ -->
+<div class="screen" id="screenOverview">
+
+  <!-- Top bar -->
+  <div class="ov-topbar">
+    <span class="ov-topbar-title">Assets</span>
+    <div class="ov-topbar-right">
+      <!-- history icon -->
+      <button class="ov-icon-btn" onclick="showScreen('screenRecord')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs: Overview · Spot · Futures · Earn -->
+  <div class="ov-tabs">
+    <button class="ov-tab active" id="ovTabOverview" onclick="ovSwitchTab('overview')">Overview</button>
+    <button class="ov-tab" id="ovTabSpot" onclick="ovSwitchTab('spot')">Spot</button>
+    <button class="ov-tab" id="ovTabFutures" onclick="ovSwitchTab('futures')">Futures</button>
+    <button class="ov-tab" id="ovTabEarn" onclick="ovSwitchTab('earn')">Earn</button>
+  </div>
+
+  <!-- Balance -->
+  <div class="ov-balance-section">
+    <div class="ov-bal-label">
+      Total Assets
+      <button class="ov-eye" onclick="toggleBalVis()" id="eyeBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <div class="ov-bal-row">
+      <span class="ov-bal-amount" id="balVal">0.00</span>
+      <span class="ov-bal-unit">
+        USD
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </span>
+    </div>
+    <div class="ov-bal-btc">≈0.00000000 BTC</div>
+    <div class="ov-pnl-row">
+      Today's PnL: <span class="pnl-val">0.00 USD (+0.00%)</span>
+      <span class="ov-pnl-arrow">›</span>
+    </div>
+  </div>
+
+  <!-- 4 Action Buttons -->
+  <div class="ov-actions">
+    <button class="ov-action-btn" onclick="showScreen('screenDeposit')">
+      <div class="ov-action-circle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      </div>
+      <span class="ov-action-label">Deposit</span>
+    </button>
+    <button class="ov-action-btn" onclick="showScreen('screenWithdraw')">
+      <div class="ov-action-circle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      </div>
+      <span class="ov-action-label">Withdraw</span>
+    </button>
+    <button class="ov-action-btn" onclick="showScreen('screenTransfer')">
+      <div class="ov-action-circle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      </div>
+      <span class="ov-action-label">Transfer</span>
+    </button>
+    <button class="ov-action-btn">
+      <div class="ov-action-circle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><line x1="5" y1="17" x2="19" y2="7"/></svg>
+      </div>
+      <span class="ov-action-label">Convert</span>
+    </button>
+  </div>
+
+  <!-- Convert Small Balance row -->
+  <div class="ov-convert-bar">
+    <div class="ov-convert-left">
+      <div class="ov-convert-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b9bd5" stroke-width="2"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><line x1="5" y1="17" x2="19" y2="7"/><polyline points="17 1 21 5 17 9"/></svg>
+      </div>
+      <span class="ov-convert-txt">Convert Small Balance</span>
+    </div>
+    <span class="ov-convert-arrow">›</span>
+  </div>
+
+  <!-- Assets section header -->
+  <div class="ov-assets-header">
+    <span class="ov-assets-title">Assets</span>
+    <div class="ov-assets-icons">
+      <button class="ov-assets-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="ov-assets-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="ovAssetList">
+    <div class="ov-empty">
+      <!-- magnifying glass illustration -->
+      <div class="ov-empty-icon">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <circle cx="27" cy="27" r="18" stroke="#444" stroke-width="3"/>
+          <line x1="40" y1="40" x2="54" y2="54" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="27" cy="27" r="10" stroke="#333" stroke-width="2" stroke-dasharray="3 3"/>
+        </svg>
+      </div>
+      <span class="ov-empty-txt">No assets</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
      SCREEN 1: DEPOSIT — Coin List
 ════════════════════════════════════════════════ -->
-<div class="screen" id="screenDeposit">
+<div class="screen hidden" id="screenDeposit">
   <div class="s-header">
     <button class="s-back" onclick="goBack()">‹</button>
     <span class="s-title">Deposit</span>
@@ -756,9 +915,47 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════
+     MODAL: WITHDRAW CONFIRM
+════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modalWdConfirm">
+  <div class="modal-sheet" style="padding-bottom:2.5rem">
+    <div class="modal-drag"></div>
+    <div class="modal-title-row" style="font-size:1.1rem;padding-bottom:.3rem">Confirm Withdrawal</div>
+    <div style="padding:.2rem 1rem 1.2rem">
+      <div style="background:#1a1a1a;border-radius:14px;padding:1rem 1.1rem;margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.07)">
+          <span style="font-size:.85rem;color:#8a9bb5">Coin</span><span style="font-size:.85rem;font-weight:700" id="wdcCoin">USDT</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.07)">
+          <span style="font-size:.85rem;color:#8a9bb5">Network</span><span style="font-size:.85rem;font-weight:700" id="wdcNetwork">-</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.07)">
+          <span style="font-size:.85rem;color:#8a9bb5">Amount</span><span style="font-size:.85rem;font-weight:700" id="wdcAmount">-</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.07)">
+          <span style="font-size:.85rem;color:#8a9bb5">Fee</span><span style="font-size:.85rem;font-weight:700" id="wdcFee">-</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:.45rem 0">
+          <span style="font-size:.85rem;color:#8a9bb5">You receive</span><span style="font-size:.95rem;font-weight:700;color:#00e5ff" id="wdcReceive">-</span>
+        </div>
+      </div>
+      <div style="background:#1a1a1a;border-radius:14px;padding:.75rem 1rem;margin-bottom:1.2rem">
+        <div style="font-size:.75rem;color:#8a9bb5;margin-bottom:.25rem">Withdrawal Address</div>
+        <div style="font-size:.82rem;color:#fff;word-break:break-all;line-height:1.5" id="wdcAddress">-</div>
+      </div>
+      <div style="display:flex;gap:.75rem">
+        <button onclick="closeWdConfirm()" style="flex:1;padding:.9rem;background:#1a1a1a;border:none;border-radius:50px;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer">Cancel</button>
+        <button onclick="doWithdraw()" style="flex:1;padding:.9rem;background:#fff;border:none;border-radius:50px;color:#000;font-size:.95rem;font-weight:700;cursor:pointer">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   var screenHistory = [];
   var switchAccountContext = '';
+  var _pendingWithdraw = null;
 
   var NETWORKS = {
     'ERC20':  { name:'ERC20 (Ethereum)',           contract:'****31ec7', address:'0xf832c974d57a47ff5ecc52dd74a1d04ac0f52ee5', dep:12,  wd:64 },
@@ -775,6 +972,23 @@
     if(current && current !== id) screenHistory.push(current);
     screens.forEach(function(s){ s.classList.add('hidden'); });
     document.getElementById(id).classList.remove('hidden');
+  }
+
+  var balVisible = true;
+  function toggleBalVis() {
+    balVisible = !balVisible;
+    document.getElementById('balVal').textContent = balVisible ? '0.00' : '****';
+    var eyeBtn = document.getElementById('eyeBtn');
+    eyeBtn.innerHTML = balVisible
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  }
+
+  function ovSwitchTab(tab) {
+    ['overview','spot','futures','earn'].forEach(function(t){
+      var btn = document.getElementById('ovTab'+t.charAt(0).toUpperCase()+t.slice(1));
+      if(btn) btn.classList.toggle('active', t===tab);
+    });
   }
 
   function goBack() {
