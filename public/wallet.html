@@ -703,44 +703,97 @@
   <div class="s-header">
     <button class="s-back" onclick="goBack()">‹</button>
     <span class="s-title">Transfer</span>
-    <button class="s-action" onclick="showScreen('screenTransferRecord')" style="font-size:.78rem;color:#8a9bb5">Transfer Record</button>
+    <button class="s-action" onclick="showScreen('screenTransferRecord')" style="font-size:.78rem;color:#8a9bb5">Record</button>
   </div>
-  <div class="tf-from-to" style="padding:1rem 1rem .5rem">
-    <div class="tf-label">From</div>
-    <div class="tf-account" onclick="openSwitchAccount('from')">
-      <span>Spot Account</span><span class="tf-chev">▾</span>
-    </div>
-  </div>
-  <div class="tf-divider">
-    <button class="tf-swap-btn" onclick="swapAccounts()">⇅</button>
-  </div>
-  <div class="tf-from-to" style="padding:.5rem 1rem 1rem">
-    <div class="tf-label">To</div>
-    <div class="tf-account" onclick="openSwitchAccount('to')">
-      <span id="tfToAccount">Funding Account</span><span class="tf-chev">▾</span>
-    </div>
-  </div>
-  <div class="tf-section">
-    <div class="tf-section-title">Currency</div>
-    <div class="tf-currency-box" onclick="openCoinSelection()">
-      <div class="tf-currency-icon">₮</div>
-      <span class="tf-currency-name">USDT</span>
-      <span style="color:#8a9bb5;font-size:.8rem">▼</span>
-    </div>
-  </div>
-  <div class="tf-section" style="padding-top:.75rem">
-    <div class="tf-section-title">Quantity</div>
-    <div class="tf-qty-box">
-      <input class="tf-qty-input" type="number" placeholder="Please enter the transfer quantity"/>
-      <div class="tf-qty-right">
-        <span>USDT</span>
-        <button class="tf-all-btn">All</button>
+
+  <!-- From / To Cards -->
+  <div style="padding:1rem 1rem 0">
+
+    <!-- FROM card -->
+    <div style="background:#111;border-radius:14px;padding:.9rem 1rem;margin-bottom:.5rem">
+      <div style="font-size:.72rem;color:#8a9bb5;margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.05em">From</div>
+      <div onclick="openSwitchAccount('from')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:.55rem">
+          <div style="width:32px;height:32px;border-radius:50%;background:#1e2a3a;display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b9bd5" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <div>
+            <div id="tfFromLabel" style="font-size:.95rem;font-weight:700;color:#fff">Spot Account</div>
+            <div style="font-size:.75rem;color:#8a9bb5;margin-top:.05rem">Available: <span id="tfFromBal">0.00 USDT</span></div>
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb5" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </div>
-    <div class="tf-max-row">Maximum transferable: <strong style="color:#fff;margin-left:.3rem">0.0000 USDT</strong></div>
+
+    <!-- Swap button -->
+    <div style="display:flex;justify-content:center;margin:-.1rem 0;position:relative;z-index:2">
+      <button onclick="swapAccounts()" style="width:36px;height:36px;border-radius:50%;background:#222;border:2px solid #000;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      </button>
+    </div>
+
+    <!-- TO card -->
+    <div style="background:#111;border-radius:14px;padding:.9rem 1rem;margin-top:.5rem">
+      <div style="font-size:.72rem;color:#8a9bb5;margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.05em">To</div>
+      <div onclick="openSwitchAccount('to')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:.55rem">
+          <div style="width:32px;height:32px;border-radius:50%;background:#1e2a3a;display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b9bd5" stroke-width="2"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+          </div>
+          <div>
+            <div id="tfToLabel" style="font-size:.95rem;font-weight:700;color:#fff">Funding Account</div>
+            <div style="font-size:.75rem;color:#8a9bb5;margin-top:.05rem">Internal transfer · Free</div>
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb5" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
   </div>
-  <div style="padding:2rem 0 1rem">
-    <button class="w-btn-full">Transfer Now</button>
+
+  <!-- Currency selector -->
+  <div style="padding:.85rem 1rem .4rem">
+    <div style="font-size:.78rem;color:#8a9bb5;margin-bottom:.45rem">Currency</div>
+    <div onclick="openCoinSelection()" style="background:#111;border-radius:14px;padding:.85rem 1rem;display:flex;align-items:center;gap:.7rem;cursor:pointer">
+      <div id="tfCoinIcon" style="flex-shrink:0">
+        <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658s2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658s-2.895 1.485-6.775 1.657zm0-3.59v-2.366h5.414V8H8.664v3.427h5.414v2.365c-4.4.202-7.708 1.074-7.708 2.128s3.308 1.926 7.708 2.129v7.617h3.844v-7.619c4.393-.202 7.694-1.073 7.694-2.127s-3.301-1.926-7.694-2.127z" fill="#fff"/></svg>
+      </div>
+      <div style="flex:1">
+        <div id="tfCoinName" style="font-size:.95rem;font-weight:700;color:#fff">USDT</div>
+        <div id="tfCoinFull" style="font-size:.75rem;color:#8a9bb5;margin-top:.05rem">Tether USDT</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb5" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+
+  <!-- Quantity input -->
+  <div style="padding:.4rem 1rem .4rem">
+    <div style="font-size:.78rem;color:#8a9bb5;margin-bottom:.45rem">Quantity</div>
+    <div style="background:#111;border-radius:14px;padding:.85rem 1rem">
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <input id="tfQtyInput" type="number" placeholder="0.00" style="flex:1;background:none;border:none;outline:none;color:#fff;font-size:1.25rem;font-weight:700;font-family:inherit"/>
+        <div style="display:flex;align-items:center;gap:.5rem;flex-shrink:0">
+          <span id="tfQtyUnit" style="font-size:.85rem;font-weight:600;color:#8a9bb5">USDT</span>
+          <button onclick="tfSetAll()" style="background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);border-radius:20px;color:#00e5ff;font-size:.75rem;font-weight:700;padding:.2rem .6rem;cursor:pointer;font-family:inherit">All</button>
+        </div>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,.07);margin:.7rem 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:.78rem">
+        <span style="color:#8a9bb5">Maximum transferable</span>
+        <span id="tfMaxBal" style="color:#fff;font-weight:600">0.0000 USDT</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info row -->
+  <div style="padding:.3rem 1rem .8rem;display:flex;align-items:center;gap:.35rem">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8a9bb5" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span style="font-size:.75rem;color:#8a9bb5">Transfer fee: <strong style="color:#fff">Free</strong> · Instant settlement</span>
+  </div>
+
+  <!-- Transfer button -->
+  <div style="padding:0 1rem 2.5rem">
+    <button onclick="doTransferNow()" style="width:100%;padding:.95rem;background:#fff;border:none;border-radius:50px;font-size:1rem;font-weight:700;color:#000;cursor:pointer;font-family:inherit">Transfer Now</button>
   </div>
 </div>
 
@@ -775,18 +828,29 @@
       <button class="clear-btn">✕</button>
     </div>
   </div>
-  <div class="coin-list">
-    <div class="coin-section-title">B</div>
-    <div class="cs-coin-row" onclick="selectCoin('BTC'); showScreen('screenTransfer')">
-      <div class="coin-icon" style="background:#f7931a;color:#fff">₿</div>
-      <div><div class="coin-name">BTC <span style="color:#8a9bb5;font-weight:400;font-size:.82rem">Bitcoin</span></div></div>
-    </div>
-    <div class="coin-section-title">U</div>
-    <div class="cs-coin-row" onclick="selectCoin('USDT'); showScreen('screenTransfer')">
-      <div class="coin-icon" style="background:#26a17b;color:#fff">₮</div>
-      <div><div class="coin-name">USDT <span style="color:#8a9bb5;font-weight:400;font-size:.82rem">Tether</span></div></div>
-    </div>
-  </div>
+  <div class="coin-list" id="tfCoinSelList"></div>
+  <script>
+    (function(){
+      var coins = [
+        {sym:'USDT',full:'Tether USDT'},
+        {sym:'BTC', full:'Bitcoin'},
+        {sym:'ETH', full:'Ethereum'},
+        {sym:'BNB', full:'BNB Chain'},
+        {sym:'XRP', full:'Ripple'},
+        {sym:'SOL', full:'Solana'},
+        {sym:'ADA', full:'Cardano'},
+        {sym:'DOGE',full:'Dogecoin'}
+      ];
+      var html = '<div class="coin-section-title">Popular</div>';
+      coins.forEach(function(c){
+        html += '<div class="cs-coin-row" onclick="selectCoin(\''+c.sym+'\');showScreen(\'screenTransfer\')">'
+          +'<div class="coin-icon" style="background:none;padding:0">'+COIN_ICONS[c.sym]+'</div>'
+          +'<div><div class="coin-name">'+c.sym+' <span style="color:#8a9bb5;font-weight:400;font-size:.82rem">'+c.full+'</span></div></div>'
+          +'</div>';
+      });
+      document.getElementById('tfCoinSelList').innerHTML = html;
+    })();
+  </script>
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -1271,11 +1335,31 @@
   }
 
   function openCoinSelection() { showScreen('screenCoinSelection'); }
-  function selectCoin(coin) { document.querySelector('.tf-currency-name').textContent = coin; }
+
+  var TF_COIN_FULL = { USDT:'Tether USDT', BTC:'Bitcoin', ETH:'Ethereum', BNB:'BNB Chain', XRP:'Ripple', SOL:'Solana', ADA:'Cardano', DOGE:'Dogecoin' };
+  function selectCoin(coin) {
+    document.getElementById('tfCoinName').textContent = coin;
+    document.getElementById('tfCoinFull').textContent = TF_COIN_FULL[coin] || coin;
+    document.getElementById('tfCoinIcon').innerHTML = COIN_ICONS[coin] ? COIN_ICONS[coin].replace('width="36"','width="32"').replace('height="36"','height="32"') : '';
+    document.getElementById('tfQtyUnit').textContent = coin;
+    document.getElementById('tfMaxBal').textContent = '0.0000 ' + coin;
+  }
+
+  function tfSetAll() { document.getElementById('tfQtyInput').value = '0'; }
+
   function swapAccounts() {
-    var from = document.querySelector('.tf-account span');
-    var to = document.getElementById('tfToAccount');
-    var tmp = from.textContent; from.textContent = to.textContent; to.textContent = tmp;
+    var fromEl = document.getElementById('tfFromLabel');
+    var toEl   = document.getElementById('tfToLabel');
+    var tmp = fromEl.textContent;
+    fromEl.textContent = toEl.textContent;
+    toEl.textContent = tmp;
+  }
+
+  function doTransferNow() {
+    var qty = document.getElementById('tfQtyInput').value;
+    if(!qty || parseFloat(qty) <= 0) { showToast('Please enter transfer quantity'); return; }
+    showToast('Transfer submitted successfully');
+    document.getElementById('tfQtyInput').value = '';
   }
   function switchRecTab(tab) {
     var isDep = tab === 'dep';
