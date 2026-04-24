@@ -115,6 +115,37 @@
     .form-row-inline{padding:.8rem 1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
     .form-row-key{font-size:.88rem;color:#8a9bb5}
     .form-row-val{font-size:.88rem;font-weight:600;color:#fff}
+    /* ── WITHDRAW DETAIL ── */
+    .wd-section{padding:.9rem 1rem .4rem}
+    .wd-section-label{font-size:.78rem;color:#8a9bb5;margin-bottom:.5rem}
+    .wd-net-box{background:#111;border-radius:12px;padding:.85rem 1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+    .wd-net-left .wd-net-name{font-size:.95rem;font-weight:700;color:#fff}
+    .wd-net-left .wd-net-sub{font-size:.75rem;color:#8a9bb5;margin-top:.1rem}
+    .wd-net-chevron{color:#8a9bb5}
+    .wd-addr-box{background:#111;border-radius:12px;padding:.85rem 1rem;display:flex;align-items:center;gap:.5rem}
+    .wd-addr-input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:.92rem;font-family:inherit}
+    .wd-addr-input::placeholder{color:#555}
+    .wd-addr-paste{background:none;border:none;color:#00e5ff;font-size:.82rem;font-weight:700;cursor:pointer;flex-shrink:0}
+    .wd-addr-scan{background:none;border:none;color:#8a9bb5;cursor:pointer;flex-shrink:0;display:flex;align-items:center}
+    .wd-amt-box{background:#111;border-radius:12px;padding:.85rem 1rem}
+    .wd-amt-row{display:flex;align-items:center;gap:.5rem}
+    .wd-amt-input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:.95rem;font-family:inherit}
+    .wd-amt-input::placeholder{color:#555}
+    .wd-amt-coin{font-size:.88rem;font-weight:700;color:#fff}
+    .wd-amt-all{background:none;border:none;color:#00e5ff;font-size:.82rem;font-weight:700;cursor:pointer}
+    .wd-amt-bal{font-size:.75rem;color:#8a9bb5;margin-top:.5rem}
+    .wd-info-list{margin:.4rem 0}
+    .wd-info-row{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;border-bottom:1px solid rgba(255,255,255,.05)}
+    .wd-info-row:last-child{border-bottom:none}
+    .wd-info-key{font-size:.85rem;color:#8a9bb5}
+    .wd-info-val{font-size:.85rem;color:#fff;font-weight:500}
+    .wd-receive-box{margin:.5rem 1rem 0;background:#111;border-radius:12px;padding:.85rem 1rem;display:flex;align-items:center;justify-content:space-between}
+    .wd-receive-key{font-size:.85rem;color:#8a9bb5}
+    .wd-receive-val{font-size:.95rem;font-weight:700;color:#fff}
+    /* ── WITHDRAW HISTORY ── */
+    .wd-hist-status-pending{font-size:.78rem;color:#f5a623;margin-top:.15rem;display:flex;align-items:center;gap:.25rem;justify-content:flex-end}
+    .wd-hist-status-pending::before{content:"•";font-size:.9rem}
+    .wd-hist-amount-neg{font-size:.95rem;font-weight:700;color:#fff}
   </style>
 </head>
 <body>
@@ -512,6 +543,170 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
+     SCREEN: WITHDRAW — Coin List
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenWithdraw">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title">Withdraw</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="search-wrap">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search"/>
+      <button class="clear-btn">✕</button>
+    </div>
+  </div>
+  <div class="coin-list">
+    <div class="coin-section-title">Popular Coins</div>
+    <div class="coin-row" onclick="openWithdrawDetail('USDT')">
+      <div class="coin-icon" style="background:#26a17b;color:#fff">₮</div>
+      <div><div class="coin-name">USDT</div><div class="coin-full">Tether USDT</div></div>
+    </div>
+    <div class="coin-row" onclick="openWithdrawDetail('USDC')">
+      <div class="coin-icon" style="background:#2775ca;color:#fff">$</div>
+      <div><div class="coin-name">USDC</div><div class="coin-full">USDC</div></div>
+    </div>
+    <div class="coin-row" onclick="openWithdrawDetail('BTC')">
+      <div class="coin-icon" style="background:#f7931a;color:#fff">₿</div>
+      <div><div class="coin-name">BTC</div><div class="coin-full">Bitcoin</div></div>
+    </div>
+    <div class="coin-row" onclick="openWithdrawDetail('ETH')">
+      <div class="coin-icon" style="background:#627eea;color:#fff">Ξ</div>
+      <div><div class="coin-name">ETH</div><div class="coin-full">Ethereum</div></div>
+    </div>
+    <div class="coin-section-title">B</div>
+    <div class="coin-row" onclick="openWithdrawDetail('BNB')">
+      <div class="coin-icon" style="background:#f3ba2f;color:#000">B</div>
+      <div><div class="coin-name">BNB</div><div class="coin-full">BNB</div></div>
+    </div>
+    <div class="coin-section-title">S</div>
+    <div class="coin-row" onclick="openWithdrawDetail('SOL')">
+      <div class="coin-icon" style="background:#9945ff;color:#fff">◎</div>
+      <div><div class="coin-name">SOL</div><div class="coin-full">Solana</div></div>
+    </div>
+    <div class="coin-section-title">X</div>
+    <div class="coin-row" onclick="openWithdrawDetail('XRP')">
+      <div class="coin-icon" style="background:#346aa9;color:#fff">✕</div>
+      <div><div class="coin-name">XRP</div><div class="coin-full">Ripple</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: WITHDRAW DETAIL (Bitget style)
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenWithdrawDetail">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title" id="wdDetailTitle">Withdraw USDT</span>
+    <button class="s-action" onclick="">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="#1a1a1a"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-2 3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.5" r=".8" fill="#fff"/></svg>
+    </button>
+    <button class="s-action" onclick="showScreen('screenWithdrawHistory')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="#1a1a1a"/><circle cx="12" cy="12" r="6" stroke="#fff" stroke-width="1.7"/><path d="M12 8v4l2.5 2.5" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+
+  <!-- Network selector -->
+  <div class="wd-section">
+    <div class="wd-section-label">Network</div>
+    <div class="wd-net-box" onclick="openWdNetworkModal()">
+      <div class="wd-net-left">
+        <div class="wd-net-name" id="wdNetName">TRC20 (Tron)</div>
+        <div class="wd-net-sub" id="wdNetSub">Fee: 1 USDT · Min: 2 USDT</div>
+      </div>
+      <span class="wd-net-chevron">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </span>
+    </div>
+  </div>
+
+  <!-- Address input -->
+  <div class="wd-section">
+    <div class="wd-section-label">Withdraw Address</div>
+    <div class="wd-addr-box">
+      <input class="wd-addr-input" id="wdAddrInput" type="text" placeholder="Enter or paste address"/>
+      <button class="wd-addr-paste" onclick="pasteWdAddress()">Paste</button>
+      <button class="wd-addr-scan">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx=".5"/><rect x="13" y="7" width="4" height="4" rx=".5"/><rect x="7" y="13" width="4" height="4" rx=".5"/><rect x="13" y="13" width="4" height="4" rx=".5"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Amount input -->
+  <div class="wd-section">
+    <div class="wd-section-label">Amount</div>
+    <div class="wd-amt-box">
+      <div class="wd-amt-row">
+        <input class="wd-amt-input" id="wdAmtInput" type="number" placeholder="Minimum 2" oninput="updateWdReceive()"/>
+        <span class="wd-amt-coin" id="wdAmtCoin">USDT</span>
+        <button class="wd-amt-all" onclick="setWdAll()">All</button>
+      </div>
+      <div class="wd-amt-bal">Available: <span id="wdAvailBal">0.00</span> USDT</div>
+    </div>
+  </div>
+
+  <!-- Fee & receive info -->
+  <div class="wd-info-list">
+    <div class="wd-info-row">
+      <span class="wd-info-key">Withdraw fee</span>
+      <span class="wd-info-val" id="wdFee">1 USDT</span>
+    </div>
+    <div class="wd-info-row">
+      <span class="wd-info-key">Minimum withdrawal</span>
+      <span class="wd-info-val" id="wdMin">2 USDT</span>
+    </div>
+    <div class="wd-info-row">
+      <span class="wd-info-key">24h remaining limit</span>
+      <span class="wd-info-val">999,990 USDT</span>
+    </div>
+  </div>
+
+  <!-- Receive amount -->
+  <div class="wd-receive-box">
+    <span class="wd-receive-key">You will receive</span>
+    <span class="wd-receive-val"><span id="wdReceiveAmt">0.00</span> USDT</span>
+  </div>
+
+  <!-- Withdraw button -->
+  <div style="padding:1.5rem 0 2.5rem">
+    <button class="w-btn-full" onclick="submitWithdraw()">Withdraw</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: WITHDRAW HISTORY
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenWithdrawHistory">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title">Withdraw history</span>
+    <button class="s-action">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </button>
+  </div>
+  <div class="dep-hist-filter">
+    <div class="dep-hist-coin">
+      USDT
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+  <div class="dep-hist-date">2025-04-25 – 2026-04-24</div>
+  <div id="wdHistList">
+    <div class="empty-state" id="wdHistEmpty">
+      <svg class="empty-icon" viewBox="0 0 80 80" fill="none">
+        <rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/>
+        <rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/>
+        <rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/>
+      </svg>
+      <div class="empty-txt">No withdraw records</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
      MODAL: CHOOSE NETWORK (Bitget style)
 ════════════════════════════════════════════════ -->
 <div class="modal-overlay hidden" id="modalNetwork" onclick="closeNetworkModal(event)">
@@ -539,6 +734,38 @@
     <div class="network-card selected" id="netERC20" onclick="selectNetwork('ERC20')">
       <div class="net-name">ERC20 (Ethereum)</div>
       <div class="net-details">12 block confirmation(s)<br>Min deposit: 0.01 USDT<br>Crediting time ≈ 1 min</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL: WITHDRAW NETWORK
+════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modalWdNetwork" onclick="closeWdNetworkModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-drag"></div>
+    <div class="modal-title-row">Choose network</div>
+    <div class="net-warn">
+      <span class="net-warn-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#333"/><path d="M12 8v4M12 16h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </span>
+      Ensure the network you select matches the deposit platform, or your assets may be lost
+    </div>
+    <div class="network-card selected" id="wdNetMorph" onclick="selectWdNetwork('MORPH')">
+      <div class="net-name">Morph (Morph)</div>
+      <div class="net-details">Fee: 1 USDT · Min withdrawal: 2 USDT<br>Crediting time ≈ 10 min</div>
+    </div>
+    <div class="network-card" id="wdNetTRC20" onclick="selectWdNetwork('TRC20')">
+      <div class="net-name">TRC20 (Tron)</div>
+      <div class="net-details">Fee: 1 USDT · Min withdrawal: 2 USDT<br>Crediting time ≈ 1 min</div>
+    </div>
+    <div class="network-card" id="wdNetBEP20" onclick="selectWdNetwork('BEP20')">
+      <div class="net-name">BEP20 (Binance Smart Chain)</div>
+      <div class="net-details">Fee: 1 USDT · Min withdrawal: 2 USDT<br>Crediting time ≈ 1 min</div>
+    </div>
+    <div class="network-card" id="wdNetERC20" onclick="selectWdNetwork('ERC20')">
+      <div class="net-name">ERC20 (Ethereum)</div>
+      <div class="net-details">Fee: 5 USDT · Min withdrawal: 10 USDT<br>Crediting time ≈ 5 min</div>
     </div>
   </div>
 </div>
@@ -632,13 +859,7 @@
       document.body.removeChild(el); showCopyToast();
     }
   }
-  function showCopyToast() {
-    var t = document.createElement('div');
-    t.textContent = 'Address copied';
-    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:.5rem 1.2rem;border-radius:20px;font-size:.85rem;z-index:9999;pointer-events:none';
-    document.body.appendChild(t);
-    setTimeout(function(){ document.body.removeChild(t); }, 1800);
-  }
+  function showCopyToast() { showToast('Address copied'); }
 
   function saveOrShareAddress() {
     if(navigator.share) {
@@ -682,6 +903,109 @@
   }
   function filterDepositCoins(q) {}
 
+  // ── WITHDRAW ──
+  var WD_NETWORKS = {
+    'MORPH': { name:'Morph (Morph)',               fee:1,  min:2,  sub:'Fee: 1 USDT · Min: 2 USDT' },
+    'TRC20': { name:'TRC20 (Tron)',                fee:1,  min:2,  sub:'Fee: 1 USDT · Min: 2 USDT' },
+    'BEP20': { name:'BEP20 (Binance Smart Chain)', fee:1,  min:2,  sub:'Fee: 1 USDT · Min: 2 USDT' },
+    'ERC20': { name:'ERC20 (Ethereum)',             fee:5,  min:10, sub:'Fee: 5 USDT · Min: 10 USDT' }
+  };
+  var currentWdNetwork = 'TRC20';
+
+  function openWithdrawDetail(coin) {
+    document.getElementById('wdDetailTitle').textContent = 'Withdraw ' + coin;
+    document.getElementById('wdAmtCoin').textContent = coin;
+    document.getElementById('wdAmtInput').value = '';
+    document.getElementById('wdAddrInput').value = '';
+    updateWdNetworkUI('TRC20');
+    loadWdBalance();
+    showScreen('screenWithdrawDetail');
+  }
+
+  function updateWdNetworkUI(key) {
+    currentWdNetwork = key;
+    var n = WD_NETWORKS[key];
+    document.getElementById('wdNetName').textContent = n.name;
+    document.getElementById('wdNetSub').textContent = n.sub;
+    document.getElementById('wdFee').textContent = n.fee + ' USDT';
+    document.getElementById('wdMin').textContent = n.min + ' USDT';
+    updateWdReceive();
+    // highlight modal card
+    ['wdNetMorph','wdNetTRC20','wdNetBEP20','wdNetERC20'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.classList.remove('selected');
+    });
+    var map = {'MORPH':'wdNetMorph','TRC20':'wdNetTRC20','BEP20':'wdNetBEP20','ERC20':'wdNetERC20'};
+    if(map[key] && document.getElementById(map[key])) document.getElementById(map[key]).classList.add('selected');
+  }
+
+  function openWdNetworkModal() {
+    updateWdNetworkUI(currentWdNetwork);
+    document.getElementById('modalWdNetwork').classList.remove('hidden');
+  }
+  function closeWdNetworkModal(e) {
+    if(e.target === document.getElementById('modalWdNetwork')) document.getElementById('modalWdNetwork').classList.add('hidden');
+  }
+  function selectWdNetwork(key) {
+    updateWdNetworkUI(key);
+    document.getElementById('modalWdNetwork').classList.add('hidden');
+  }
+
+  function updateWdReceive() {
+    var amt = parseFloat(document.getElementById('wdAmtInput').value) || 0;
+    var fee = WD_NETWORKS[currentWdNetwork].fee;
+    var receive = Math.max(0, amt - fee);
+    document.getElementById('wdReceiveAmt').textContent = receive.toFixed(2);
+  }
+
+  function setWdAll() {
+    var bal = parseFloat(document.getElementById('wdAvailBal').textContent) || 0;
+    document.getElementById('wdAmtInput').value = bal > 0 ? bal : '';
+    updateWdReceive();
+  }
+
+  function pasteWdAddress() {
+    if(navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function(t){ document.getElementById('wdAddrInput').value = t; }).catch(function(){});
+    }
+  }
+
+  function loadWdBalance() {
+    fetch('/api/wallet/balance', { credentials:'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d && d.balance != null) document.getElementById('wdAvailBal').textContent = parseFloat(d.balance).toFixed(2); })
+      .catch(function(){});
+  }
+
+  function submitWithdraw() {
+    var addr = document.getElementById('wdAddrInput').value.trim();
+    var amt = parseFloat(document.getElementById('wdAmtInput').value);
+    var net = WD_NETWORKS[currentWdNetwork];
+    if(!addr) { showToast('Please enter withdrawal address'); return; }
+    if(!amt || amt < net.min) { showToast('Minimum withdrawal is ' + net.min + ' USDT'); return; }
+    if(confirm('Withdraw ' + amt + ' USDT via ' + net.name + ' to\n' + addr + '?\n\nFee: ' + net.fee + ' USDT\nYou receive: ' + (amt - net.fee).toFixed(2) + ' USDT')) {
+      fetch('/api/withdrawals', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ address:addr, amount:amt, network:currentWdNetwork })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(d.success || d.id) { showToast('Withdrawal submitted successfully'); showScreen('screenWithdrawHistory'); }
+        else showToast(d.message || 'Withdrawal failed');
+      })
+      .catch(function(){ showToast('Network error. Please try again.'); });
+    }
+  }
+
+  function showToast(msg) {
+    var t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:.5rem 1.2rem;border-radius:20px;font-size:.85rem;z-index:9999;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center';
+    document.body.appendChild(t);
+    setTimeout(function(){ document.body.removeChild(t); }, 2200);
+  }
+
   // Load deposit history from API
   function loadDepositHistory() {
     fetch('/api/deposits', { credentials:'include' })
@@ -710,6 +1034,8 @@
   if(page === 'transfer') showScreen('screenTransfer');
   else if(page === 'record') showScreen('screenRecord');
   else if(page === 'history') showScreen('screenDepositHistory');
+  else if(page === 'withdraw') showScreen('screenWithdraw');
+  else if(page === 'wdhistory') showScreen('screenWithdrawHistory');
 </script>
 </body>
 </html>
