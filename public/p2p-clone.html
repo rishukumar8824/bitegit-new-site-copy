@@ -519,6 +519,16 @@
     .sp-msg-user { align-self:flex-end; text-align:right; }
     .sp-msg-admin { align-self:flex-start; }
     .sp-msg-meta { font-size:10px; color:#555; margin-top:3px; padding:0 4px; }
+    .sp-chip { background:#1a1a1a; border:1px solid #2a2a2a; border-radius:20px; padding:7px 14px; font-size:12px; color:#ccc; cursor:pointer; white-space:nowrap; font-family:inherit; }
+    .sp-chip:active { background:#2a2a2a; }
+    .sp-chip-agent { background:rgba(170,255,0,0.1); border-color:rgba(170,255,0,0.35); color:#aaff00; font-weight:700; }
+    .sp-chip-agent:active { background:rgba(170,255,0,0.2); }
+    .sp-typing-wrap { align-self:flex-start; background:#1e1e1e; border-radius:18px 18px 18px 4px; padding:10px 16px; display:flex; gap:5px; align-items:center; }
+    .sp-typing-dot { width:6px; height:6px; border-radius:50%; background:#555; animation:sp-td 1.2s ease-in-out infinite; }
+    .sp-typing-dot:nth-child(2) { animation-delay:0.2s; }
+    .sp-typing-dot:nth-child(3) { animation-delay:0.4s; }
+    @keyframes sp-td { 0%,80%,100%{transform:scale(0.7);opacity:0.4} 40%{transform:scale(1.1);opacity:1} }
+    .sp-agent-banner { background:#0f1a00; border:1px solid #1a3300; border-radius:12px; padding:12px 14px; margin:0 0 8px; display:flex; align-items:center; gap:10px; }
     .sp-chat-bar { padding:10px 12px; border-top:1px solid #1a1a1a; display:flex; gap:8px; align-items:flex-end; background:#0b0e11; }
     .sp-chat-bar textarea { flex:1; background:#1e1e1e; border:1.5px solid #2a2a2a; border-radius:20px; padding:10px 16px; color:#fff; font-size:14px; resize:none; outline:none; min-height:40px; max-height:100px; font-family:inherit; }
     .sp-chat-bar textarea:focus { border-color:#aaff00; }
@@ -7432,21 +7442,35 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:34px;height:34px;border-radius:50%;background:rgba(170,255,0,0.1);border:1.5px solid rgba(170,255,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">🤖</div>
+      <div style="width:34px;height:34px;border-radius:50%;background:rgba(170,255,0,0.1);border:1.5px solid rgba(170,255,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;" id="spTopAvatar">🤖</div>
       <div>
-        <div class="topbar-title" style="font-size:14px;text-align:left;margin:0;padding:0;">Bitcovex Support</div>
-        <div id="sp-agent-status" style="font-size:11px;color:#aaff00;line-height:1;">● Online</div>
+        <div class="topbar-title" style="font-size:14px;text-align:left;margin:0;padding:0;" id="spTopName">Bitcovex Support</div>
+        <div id="sp-agent-status" style="font-size:11px;color:#aaff00;line-height:1.2;">● Bot · Online</div>
       </div>
     </div>
     <div class="topbar-right" style="width:36px;"></div>
   </div>
 
-  <div class="sp-chat-outer" style="height:calc(100vh - 56px);display:flex;flex-direction:column;">
-    <div class="sp-chat-messages" id="spChatMessages">
+  <div style="height:calc(100vh - 56px);display:flex;flex-direction:column;overflow:hidden;">
+    <div class="sp-chat-messages" id="spChatMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;">
       <!-- Messages populated by JS -->
     </div>
-    <div class="sp-chat-bar" id="spChatBar">
-      <textarea id="spChatInput" placeholder="Type your message..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();spSendUserMsg();}"></textarea>
+
+    <!-- FAQ quick chips — shown initially, hidden once chat starts -->
+    <div id="spFaqChips" style="padding:0 12px 10px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid #111;background:#0b0e11;">
+      <div style="width:100%;font-size:10px;color:#555;padding:8px 0 4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Quick Questions</div>
+      <button class="sp-chip" onclick="spAskFaq('How do I deposit crypto?')">💰 Deposit help</button>
+      <button class="sp-chip" onclick="spAskFaq('My P2P order is stuck')">⚠️ Order stuck</button>
+      <button class="sp-chip" onclick="spAskFaq('KYC verification not approved')">🪪 KYC issue</button>
+      <button class="sp-chip" onclick="spAskFaq('I forgot my password')">🔑 Password reset</button>
+      <button class="sp-chip" onclick="spAskFaq('Withdrawal not received')">📤 Withdrawal</button>
+      <button class="sp-chip sp-chip-agent" onclick="spRequestLiveAgent()">🎧 Connect Live Agent</button>
+    </div>
+
+    <div class="sp-chat-bar">
+      <textarea id="spChatInput" placeholder="Type your message..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();spSendUserMsg();}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
       <button class="sp-send-btn" onclick="spSendUserMsg()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
@@ -7458,9 +7482,22 @@
 <!-- ═══════════════════════════════════════════════════
      ADMIN SUPPORT PANEL (floating, hidden by default)
 ═══════════════════════════════════════════════════ -->
+<!-- Admin live notification toast -->
+<div id="admLiveNotif" style="display:none;position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:10001;background:#0f0f0f;border:1.5px solid #aaff00;border-radius:14px;padding:12px 16px;min-width:240px;max-width:88vw;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="width:36px;height:36px;border-radius:50%;background:#1a2e00;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💬</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;font-weight:700;color:#fff;" id="admNotifTitle">New Message</div>
+      <div style="font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="admNotifText">Customer sent a message</div>
+    </div>
+    <button onclick="admOpenFromNotif()" style="background:#aaff00;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800;color:#000;cursor:pointer;flex-shrink:0;">Reply</button>
+    <button onclick="document.getElementById('admLiveNotif').style.display='none'" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;padding:0 0 0 4px;line-height:1;">×</button>
+  </div>
+</div>
+
 <button class="adm-fab" id="admFab" onclick="admOpenPanel()" title="Admin Support">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-  <div id="admFabBadge" style="display:none;position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#ff4d4d;font-size:9px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;"></div>
+  <div id="admFabBadge" style="display:none;position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#ff4d4d;font-size:9px;font-weight:800;color:#fff;align-items:center;justify-content:center;"></div>
 </button>
 
 <div class="adm-overlay" id="admOverlay" onclick="if(event.target===this)admClosePanel()">
@@ -8193,61 +8230,55 @@ async function confirm2FADisable() {
 }
 
 // ════════════════════════════════════════════════════════════
-//  SUPPORT CENTER  (customer chat + admin panel)
+//  SUPPORT CENTER  — live chat + bot + admin panel
 // ════════════════════════════════════════════════════════════
-const SP_TICKETS_KEY = 'bitcovex_support_tickets';
-const SP_ACTIVE_KEY  = 'bitcovex_support_active_ticket';
-const SP_ADMIN_KEY   = 'btxadmin_mode';
+const SP_TICKETS_KEY  = 'bitcovex_support_tickets';
+const SP_ACTIVE_KEY   = 'bitcovex_support_active_ticket';
+const SP_ADMIN_KEY    = 'btxadmin_mode';
+let _spPollTimer      = null;
+let _spLastMsgCount   = 0;
+let _admNotifTimeout  = null;
 
-// ── helpers ──────────────────────────────────────────────────
+// ── helpers ─────────────────────────────────────────────────
 function spGetTickets() {
   try { return JSON.parse(localStorage.getItem(SP_TICKETS_KEY) || '[]'); } catch(e) { return []; }
 }
 function spSaveTickets(arr) {
   try { localStorage.setItem(SP_TICKETS_KEY, JSON.stringify(arr)); } catch(e) {}
 }
-function spGetActiveTicketId() {
-  return localStorage.getItem(SP_ACTIVE_KEY) || null;
-}
+function spGetActiveTicketId() { return localStorage.getItem(SP_ACTIVE_KEY) || null; }
 function spSetActiveTicketId(id) {
-  if (id) localStorage.setItem(SP_ACTIVE_KEY, id);
-  else localStorage.removeItem(SP_ACTIVE_KEY);
+  id ? localStorage.setItem(SP_ACTIVE_KEY, id) : localStorage.removeItem(SP_ACTIVE_KEY);
 }
 function spFmtTime(ts) {
-  const d = new Date(ts);
-  return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+  return new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
 }
 function spGenId() { return 'sp_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+function spEscape(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
 
-// ── open support FAQ anchor ─────────────────────────────────
+// ── FAQ open ─────────────────────────────────────────────────
 function spOpenFaq(category) {
   goToScreen('screen-support');
   setTimeout(() => {
     const el = document.getElementById('sp-faq-' + category);
-    if (el) {
-      el.classList.add('sp-open');
-      el.scrollIntoView({behavior:'smooth',block:'center'});
-    }
+    if (el) { el.classList.add('sp-open'); el.scrollIntoView({behavior:'smooth',block:'center'}); }
   }, 200);
 }
-
-// ── FAQ toggle ──────────────────────────────────────────────
 function spToggleFaq(qEl) {
   const item = qEl.closest('.sp-faq-item');
-  if (!item) return;
-  item.classList.toggle('sp-open');
+  if (item) item.classList.toggle('sp-open');
 }
 
-// ── get/create current user ticket ─────────────────────────
+// ── ensure ticket ────────────────────────────────────────────
 function spEnsureTicket() {
   let tid = spGetActiveTicketId();
   let tickets = spGetTickets();
   let ticket = tid ? tickets.find(t => t.id === tid) : null;
   if (!ticket) {
     const user = (typeof getStoredBitcovexUser === 'function') ? getStoredBitcovexUser() : null;
-    const name = (user && (user.name || user.email)) ? (user.name || user.email) : 'Guest';
-    const email = (user && user.email) ? user.email : 'unknown';
-    ticket = { id: spGenId(), userName: name, userEmail: email, messages: [], status: 'open', createdAt: Date.now(), unreadAdmin: 0 };
+    const name  = (user && (user.name || user.email)) ? (user.name || user.email) : 'Guest';
+    const email = (user && user.email) ? user.email : 'guest';
+    ticket = { id:spGenId(), userName:name, userEmail:email, messages:[], status:'open', createdAt:Date.now(), unreadAdmin:0, agentRequested:false, agentConnected:false };
     tickets.push(ticket);
     spSaveTickets(tickets);
     spSetActiveTicketId(ticket.id);
@@ -8255,42 +8286,116 @@ function spEnsureTicket() {
   return ticket;
 }
 
-// ── load chat screen ────────────────────────────────────────
+// ── render messages ──────────────────────────────────────────
+function spRenderMessages(messages, wrap, userName) {
+  if (!wrap) return;
+  wrap.innerHTML = messages.map(m => `
+    <div class="sp-msg-bubble ${m.from==='user'?'sp-msg-user':'sp-msg-admin'}">
+      <div class="sp-msg-text">${spEscape(m.text)}</div>
+      <div class="sp-msg-meta">${m.from==='user'?'You':(m.from==='bot'?'🤖 Bot':'🎧 Admin')} · ${spFmtTime(m.ts)}</div>
+    </div>`).join('');
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+// ── show typing indicator ────────────────────────────────────
+function spShowTyping(wrap) {
+  const d = document.createElement('div');
+  d.className = 'sp-typing-wrap'; d.id = 'sp-typing';
+  d.innerHTML = '<div class="sp-typing-dot"></div><div class="sp-typing-dot"></div><div class="sp-typing-dot"></div>';
+  wrap.appendChild(d);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+function spHideTyping(wrap) {
+  const el = document.getElementById('sp-typing');
+  if (el) el.remove();
+}
+
+// ── load chat on enter ───────────────────────────────────────
 function spLoadChat() {
   const ticket = spEnsureTicket();
-  const wrap = document.getElementById('spChatMessages');
+  const wrap   = document.getElementById('spChatMessages');
   if (!wrap) return;
 
+  // Update topbar agent status
+  spUpdateTopbar(ticket);
+
   if (!ticket.messages.length) {
-    // Welcome bot message
     const user = (typeof getStoredBitcovexUser === 'function') ? getStoredBitcovexUser() : null;
     const firstName = (user && user.name) ? user.name.split(' ')[0] : 'there';
     wrap.innerHTML = `
       <div class="sp-msg-bubble sp-msg-admin">
-        <div class="sp-msg-text">👋 Hey ${firstName}! I'm the Bitcovex Support Agent. How can I help you today?</div>
-        <div class="sp-msg-meta">Support · just now</div>
-      </div>
-      <div class="sp-msg-bubble sp-msg-admin">
-        <div class="sp-msg-text">You can ask me about:<br>• P2P orders &amp; disputes<br>• Deposits &amp; withdrawals<br>• KYC verification<br>• Account issues</div>
-        <div class="sp-msg-meta">Support · just now</div>
+        <div class="sp-msg-text">👋 Hey ${spEscape(firstName)}! Welcome to Bitcovex Support.<br>I'm your support bot. Ask me anything or use the quick buttons below.</div>
+        <div class="sp-msg-meta">🤖 Bot · just now</div>
       </div>`;
   } else {
     spRenderMessages(ticket.messages, wrap);
   }
-  wrap.scrollTop = wrap.scrollHeight;
+
+  // Hide chips if agent already connected
+  const chips = document.getElementById('spFaqChips');
+  if (chips) chips.style.display = ticket.agentConnected ? 'none' : 'flex';
+
+  _spLastMsgCount = ticket.messages.length;
+  spStartPolling();
 }
 
-function spRenderMessages(messages, wrap) {
-  wrap.innerHTML = messages.map(m => `
-    <div class="sp-msg-bubble ${m.from === 'user' ? 'sp-msg-user' : 'sp-msg-admin'}">
-      <div class="sp-msg-text">${m.text.replace(/\n/g,'<br>')}</div>
-      <div class="sp-msg-meta">${m.from === 'user' ? 'You' : '🤖 Support'} · ${spFmtTime(m.ts)}</div>
-    </div>`).join('');
+function spUpdateTopbar(ticket) {
+  const avatar = document.getElementById('spTopAvatar');
+  const name   = document.getElementById('spTopName');
+  const status = document.getElementById('sp-agent-status');
+  if (ticket && ticket.agentConnected) {
+    if (avatar) avatar.textContent = '🎧';
+    if (name)   name.textContent   = 'Live Agent';
+    if (status) { status.textContent = '● Connected · Live'; status.style.color = '#aaff00'; }
+  } else if (ticket && ticket.agentRequested) {
+    if (avatar) avatar.textContent = '⏳';
+    if (name)   name.textContent   = 'Connecting...';
+    if (status) { status.textContent = '● Waiting for agent'; status.style.color = '#f59e0b'; }
+  } else {
+    if (avatar) avatar.textContent = '🤖';
+    if (name)   name.textContent   = 'Bitcovex Support';
+    if (status) { status.textContent = '● Bot · Online'; status.style.color = '#aaff00'; }
+  }
 }
 
-// ── send user message ───────────────────────────────────────
-function spSendUserMsg() {
+// ── quick FAQ chip ───────────────────────────────────────────
+function spAskFaq(question) {
   const inp = document.getElementById('spChatInput');
+  if (inp) inp.value = question;
+  spSendUserMsg();
+}
+
+// ── request live agent ───────────────────────────────────────
+function spRequestLiveAgent() {
+  const ticket  = spEnsureTicket();
+  const wrap    = document.getElementById('spChatMessages');
+  if (!wrap) return;
+
+  ticket.agentRequested = true;
+  ticket.unreadAdmin    = (ticket.unreadAdmin || 0) + 1;
+
+  // System message
+  ticket.messages.push({ from:'bot', text:'🎧 Connecting you to a live support agent... Please hold on.', ts:Date.now() });
+
+  let tickets = spGetTickets();
+  const idx   = tickets.findIndex(t => t.id === ticket.id);
+  if (idx >= 0) tickets[idx] = ticket; else tickets.push(ticket);
+  spSaveTickets(tickets);
+
+  spRenderMessages(ticket.messages, wrap);
+  spUpdateTopbar(ticket);
+
+  // Hide FAQ chips
+  const chips = document.getElementById('spFaqChips');
+  if (chips) chips.style.display = 'none';
+
+  admUpdateBadge();
+  admShowNotif(ticket, '🎧 Live agent requested by ' + (ticket.userName || 'Guest'));
+}
+
+// ── send user message ────────────────────────────────────────
+function spSendUserMsg() {
+  const inp  = document.getElementById('spChatInput');
   if (!inp) return;
   const text = inp.value.trim();
   if (!text) return;
@@ -8298,80 +8403,131 @@ function spSendUserMsg() {
   inp.style.height = 'auto';
 
   const ticket = spEnsureTicket();
-  const msg = { from: 'user', text, ts: Date.now() };
+  const msg    = { from:'user', text, ts:Date.now() };
   ticket.messages.push(msg);
   ticket.unreadAdmin = (ticket.unreadAdmin || 0) + 1;
 
   let tickets = spGetTickets();
-  const idx = tickets.findIndex(t => t.id === ticket.id);
+  const idx   = tickets.findIndex(t => t.id === ticket.id);
   if (idx >= 0) tickets[idx] = ticket; else tickets.push(ticket);
   spSaveTickets(tickets);
 
-  // Re-render
   const wrap = document.getElementById('spChatMessages');
-  if (wrap) {
-    spRenderMessages(ticket.messages, wrap);
-    wrap.scrollTop = wrap.scrollHeight;
-  }
+  spRenderMessages(ticket.messages, wrap);
 
-  // Auto-bot reply after 1.5s
-  spBotReply(ticket, text);
+  // Hide chips after first message
+  const chips = document.getElementById('spFaqChips');
+  if (chips) chips.style.display = 'none';
 
-  // Update admin badge
   admUpdateBadge();
+  admShowNotif(ticket, text);
+
+  // If no live agent, bot replies
+  if (!ticket.agentConnected) {
+    spBotReply(ticket, text);
+  }
 }
 
-// ── bot auto-reply logic ────────────────────────────────────
+// ── bot reply ────────────────────────────────────────────────
 function spBotReply(ticket, userText) {
-  const lc = userText.toLowerCase();
-  let reply = '';
+  const wrap = document.getElementById('spChatMessages');
+  const lc   = userText.toLowerCase();
 
-  if (/deposit|send|crypto|coin|btc|usdt|eth/.test(lc)) {
-    reply = 'For deposit issues, go to Wallet → Deposit → select coin → confirm the network matches. Transactions take 1–30 mins depending on network congestion. Share the TxID if it's been over an hour.';
-  } else if (/p2p|buy|sell|order|stuck|release|seller|buyer/.test(lc)) {
-    reply = 'For P2P issues: if payment is done but not released, use the Appeal button inside the order. Our team reviews all appeals within 24 hours and funds are protected in escrow.';
-  } else if (/kyc|verify|identity|document/.test(lc)) {
-    reply = 'KYC is reviewed within 24–48 hours. Ensure your ID is clear and not expired. If still pending after 48 hours, reply here with your registered email and we\'ll escalate.';
-  } else if (/password|login|account|hack|access/.test(lc)) {
-    reply = 'For account access issues, use Forgot Password on the login page. If your account may be compromised, we recommend enabling 2FA immediately from Profile → Security.';
-  } else if (/withdraw|withdrawal/.test(lc)) {
-    reply = 'Withdrawals are processed within 24 hours. Large amounts may require additional verification. Check Wallet → History for status updates.';
-  } else if (/fee|charge|cost/.test(lc)) {
-    reply = 'P2P trading on Bitcovex is fee-free for buyers. Sellers may set their own rates. Crypto withdrawals have a small network fee shown before confirmation.';
+  // Show typing
+  if (wrap && document.getElementById('screen-support-chat')?.classList.contains('active')) {
+    spShowTyping(wrap);
+  }
+
+  let reply = '';
+  if (/deposit|send|crypto|coin|btc|usdt|eth|xrp|bnb/.test(lc)) {
+    reply = '💰 For deposit issues:\n1. Go to Wallet → Deposit\n2. Select your coin & network\n3. Copy the address & paste in your external wallet\n\nDeposits usually take 1–30 mins. Share the TxID if it\'s been over an hour and I\'ll escalate it.';
+  } else if (/p2p|order stuck|not released|payment done|seller not|buyer not/.test(lc)) {
+    reply = '⚠️ If your P2P payment is done but not confirmed:\n1. Go to Orders → open the order\n2. Click the "Appeal" button\n3. Upload your payment proof\n\nOur team reviews appeals within 24h. Your funds are safe in escrow.';
+  } else if (/kyc|verify|identity|document|id proof/.test(lc)) {
+    reply = '🪪 KYC tips:\n• Ensure photo is clear & not blurry\n• ID must not be expired\n• Name must match your Bitcovex account\n\nReview takes 24–48 hours. If still pending, tap "Connect Live Agent" below.';
+  } else if (/password|forgot|login|sign in|can\'t login|cant login/.test(lc)) {
+    reply = '🔑 Password reset:\n1. Open the Bitcovex login page\n2. Tap "Forgot Password"\n3. Enter your registered email\n4. Click the link in your inbox (check spam too)\n\nIf you don\'t receive the email within 5 minutes, reply here.';
+  } else if (/withdraw|withdrawal|not received/.test(lc)) {
+    reply = '📤 Withdrawals are processed within 24 hours. Large amounts may need extra verification. Check Wallet → History for live status. If it shows "Pending" for over 24h, tap Connect Live Agent.';
+  } else if (/fee|charge|cost|how much/.test(lc)) {
+    reply = '💸 P2P trading on Bitcovex is 0 fee for buyers. Sellers set their own rates. Crypto withdrawals have a small network fee shown before you confirm the transaction.';
+  } else if (/merchant|become merchant|apply/.test(lc)) {
+    reply = '🏅 To become a merchant:\n• Complete KYC verification\n• Complete 20+ orders with 90%+ completion rate\n• Then request merchant status via this chat\n\nWould you like to connect with a live agent to apply?';
+  } else if (/hello|hi |hey|helo|sup |namaste/.test(lc)) {
+    reply = '👋 Hi there! I\'m here to help with all your Bitcovex queries. What can I assist you with today?';
   } else {
-    reply = 'Thanks for reaching out! A live support agent will review your message shortly. In the meantime, check our FAQ section for quick answers. We typically respond within 5 minutes during business hours.';
+    reply = '🤔 I didn\'t quite catch that. Here\'s what I can help with:\n• P2P orders & disputes\n• Crypto deposits & withdrawals\n• KYC verification\n• Account & password issues\n\nOr tap "Connect Live Agent" for direct help.';
   }
 
   setTimeout(() => {
-    ticket.messages.push({ from: 'admin', text: reply, ts: Date.now() });
+    spHideTyping(wrap);
+    ticket.messages.push({ from:'bot', text:reply, ts:Date.now() });
     let tickets = spGetTickets();
-    const idx = tickets.findIndex(t => t.id === ticket.id);
+    const idx   = tickets.findIndex(t => t.id === ticket.id);
     if (idx >= 0) tickets[idx] = ticket; else tickets.push(ticket);
     spSaveTickets(tickets);
 
-    const wrap = document.getElementById('spChatMessages');
     if (wrap && document.getElementById('screen-support-chat')?.classList.contains('active')) {
       spRenderMessages(ticket.messages, wrap);
-      wrap.scrollTop = wrap.scrollHeight;
     }
-    admUpdateBadge();
-  }, 1400);
+  }, 1200 + Math.random()*600);
 }
 
-// ── when entering support chat screen ──────────────────────
-const _origGoToScreen2 = window.goToScreen;
-document.addEventListener('DOMContentLoaded', function() {
-  // Nothing extra needed — goToScreen wrapper is set up already
+// ── polling: check for new admin messages ────────────────────
+function spStartPolling() {
+  if (_spPollTimer) clearInterval(_spPollTimer);
+  _spPollTimer = setInterval(() => {
+    if (!document.getElementById('screen-support-chat')?.classList.contains('active')) return;
+    const tid = spGetActiveTicketId();
+    if (!tid) return;
+    const tickets  = spGetTickets();
+    const ticket   = tickets.find(t => t.id === tid);
+    if (!ticket) return;
+    if (ticket.messages.length !== _spLastMsgCount) {
+      _spLastMsgCount = ticket.messages.length;
+      const wrap = document.getElementById('spChatMessages');
+      spRenderMessages(ticket.messages, wrap);
+      spUpdateTopbar(ticket);
+    }
+  }, 1500);
+}
+
+// ── real-time via storage events (cross-tab) ─────────────────
+window.addEventListener('storage', function(e) {
+  if (e.key !== SP_TICKETS_KEY) return;
+
+  // Customer side: refresh chat if new admin message arrived
+  const sc = document.getElementById('screen-support-chat');
+  if (sc && sc.classList.contains('active')) {
+    const tid = spGetActiveTicketId();
+    if (!tid) return;
+    const tickets = spGetTickets();
+    const ticket  = tickets.find(t => t.id === tid);
+    if (ticket && ticket.messages.length !== _spLastMsgCount) {
+      _spLastMsgCount = ticket.messages.length;
+      const wrap = document.getElementById('spChatMessages');
+      spRenderMessages(ticket.messages, wrap);
+      spUpdateTopbar(ticket);
+    }
+  }
+
+  // Admin side: refresh badge + active chat
+  if (admIsAdmin()) {
+    admUpdateBadge();
+    if (_admActiveTicketId) {
+      const tickets = spGetTickets();
+      const ticket  = tickets.find(t => t.id === _admActiveTicketId);
+      if (ticket) admRenderChatMessages(ticket);
+    }
+  }
 });
 
-// Hook into goToScreen to load chat when entering screen-support-chat
+// Hook into goToScreen to load chat on enter
 (function() {
   const _base = window.goToScreen;
   window.goToScreen = function(id) {
     _base(id);
-    if (id === 'screen-support-chat') {
-      setTimeout(spLoadChat, 80);
-    }
+    if (id === 'screen-support-chat') setTimeout(spLoadChat, 80);
   };
 })();
 
@@ -8381,7 +8537,6 @@ document.addEventListener('DOMContentLoaded', function() {
 let _admActiveTicketId = null;
 
 function admIsAdmin() {
-  // Admin mode: URL param ?btxadmin=1 OR localStorage btxadmin_mode=1
   try {
     if (new URLSearchParams(window.location.search).get('btxadmin') === '1') {
       localStorage.setItem(SP_ADMIN_KEY, '1');
@@ -8396,21 +8551,51 @@ function admInit() {
   const fab = document.getElementById('admFab');
   if (fab) fab.style.display = 'flex';
   admUpdateBadge();
-  // Poll for new messages every 4s when admin is active
-  setInterval(() => { if (admIsAdmin()) admUpdateBadge(); }, 4000);
+  // Poll every 2s for new customer messages
+  setInterval(() => {
+    if (!admIsAdmin()) return;
+    admUpdateBadge();
+    if (_admActiveTicketId && document.getElementById('admOverlay')?.style.display === 'flex') {
+      const tickets = spGetTickets();
+      const ticket  = tickets.find(t => t.id === _admActiveTicketId);
+      if (ticket) admRenderChatMessages(ticket);
+    }
+  }, 2000);
 }
 
 function admUpdateBadge() {
   const fab = document.getElementById('admFab');
-  if (!fab || !admIsAdmin()) return;
-  fab.style.display = 'flex';
+  if (!admIsAdmin()) return;
+  if (fab) fab.style.display = 'flex';
   const tickets = spGetTickets();
-  const total = tickets.reduce((s, t) => s + (t.unreadAdmin || 0), 0);
-  const badge = document.getElementById('admFabBadge');
+  const total   = tickets.reduce((s, t) => s + (t.unreadAdmin || 0), 0);
+  const badge   = document.getElementById('admFabBadge');
   if (badge) {
-    badge.textContent = total > 9 ? '9+' : String(total);
+    badge.textContent  = total > 9 ? '9+' : String(total);
     badge.style.display = total > 0 ? 'flex' : 'none';
   }
+}
+
+// Show live notification popup to admin
+function admShowNotif(ticket, msgText) {
+  if (!admIsAdmin()) return;
+  const notif = document.getElementById('admLiveNotif');
+  if (!notif) return;
+  const titleEl = document.getElementById('admNotifTitle');
+  const textEl  = document.getElementById('admNotifText');
+  if (titleEl) titleEl.textContent = '💬 ' + (ticket.userName || 'Guest User');
+  if (textEl)  textEl.textContent  = msgText.length > 50 ? msgText.slice(0,50)+'…' : msgText;
+  notif._ticketId = ticket.id;
+  notif.style.display = 'flex';
+  clearTimeout(_admNotifTimeout);
+  _admNotifTimeout = setTimeout(() => { notif.style.display = 'none'; }, 8000);
+}
+
+function admOpenFromNotif() {
+  const notif = document.getElementById('admLiveNotif');
+  if (notif) { notif.style.display = 'none'; }
+  admOpenPanel();
+  if (notif && notif._ticketId) setTimeout(() => admOpenTicket(notif._ticketId), 100);
 }
 
 function admOpenPanel() {
@@ -8429,10 +8614,11 @@ function admRenderTicketList() {
   const chatView = document.getElementById('admChatView');
   if (listView) listView.style.display = 'block';
   if (chatView) chatView.style.display = 'none';
+  _admActiveTicketId = null;
 
-  const tickets = spGetTickets();
-  const countEl = document.getElementById('admTicketCount');
-  if (countEl) countEl.textContent = tickets.length + ' ticket' + (tickets.length !== 1 ? 's' : '');
+  const tickets  = spGetTickets();
+  const countEl  = document.getElementById('admTicketCount');
+  if (countEl) countEl.textContent = tickets.length + ' ticket' + (tickets.length!==1?'s':'');
 
   const listEl = document.getElementById('admTicketList');
   if (!listEl) return;
@@ -8442,21 +8628,23 @@ function admRenderTicketList() {
     return;
   }
 
-  // Sort newest first
   const sorted = [...tickets].sort((a,b) => b.createdAt - a.createdAt);
   listEl.innerHTML = sorted.map(t => {
-    const last = t.messages[t.messages.length - 1];
-    const preview = last ? last.text.substring(0, 45) + (last.text.length > 45 ? '…' : '') : 'No messages yet';
-    const initial = (t.userName || 'U')[0].toUpperCase();
-    const unread = t.unreadAdmin || 0;
+    const last    = t.messages[t.messages.length-1];
+    const preview = last ? last.text.substring(0,46)+(last.text.length>46?'…':'') : 'No messages yet';
+    const initial = (t.userName||'U')[0].toUpperCase();
+    const unread  = t.unreadAdmin || 0;
+    const agentTag = t.agentConnected ? '<span style="font-size:9px;background:#aaff00;color:#000;border-radius:4px;padding:1px 5px;font-weight:800;">LIVE</span>'
+                    : t.agentRequested ? '<span style="font-size:9px;background:#f59e0b;color:#000;border-radius:4px;padding:1px 5px;font-weight:800;">AGENT REQ</span>'
+                    : '';
     return `
       <div class="adm-ticket" onclick="admOpenTicket('${t.id}')">
         <div class="adm-ticket-av">${initial}</div>
         <div class="adm-ticket-info">
-          <div class="adm-ticket-name">${t.userName || 'Guest User'}</div>
-          <div class="adm-ticket-preview">${preview}</div>
+          <div class="adm-ticket-name" style="display:flex;align-items:center;gap:6px;">${spEscape(t.userName||'Guest')} ${agentTag}</div>
+          <div class="adm-ticket-preview">${spEscape(preview)}</div>
         </div>
-        ${unread > 0 ? `<div class="adm-ticket-badge">${unread}</div>` : '<div style="font-size:10px;color:#444;">' + (t.status === 'open' ? 'open' : 'closed') + '</div>'}
+        ${unread>0 ? `<div class="adm-ticket-badge">${unread}</div>` : '<div style="font-size:10px;color:#444;">'+(t.status==='open'?'open':'closed')+'</div>'}
       </div>`;
   }).join('');
 }
@@ -8464,26 +8652,26 @@ function admRenderTicketList() {
 function admOpenTicket(ticketId) {
   _admActiveTicketId = ticketId;
   const tickets = spGetTickets();
-  const ticket = tickets.find(t => t.id === ticketId);
+  const ticket  = tickets.find(t => t.id === ticketId);
   if (!ticket) return;
 
-  // Mark as read
-  ticket.unreadAdmin = 0;
+  // Mark as read + connect agent
+  ticket.unreadAdmin    = 0;
+  ticket.agentConnected = true;
   const idx = tickets.findIndex(t => t.id === ticketId);
   if (idx >= 0) tickets[idx] = ticket;
   spSaveTickets(tickets);
   admUpdateBadge();
 
-  // Switch to chat view
   const listView = document.getElementById('admListView');
   const chatView = document.getElementById('admChatView');
   if (listView) listView.style.display = 'none';
   if (chatView) { chatView.style.display = 'flex'; chatView.style.flexDirection = 'column'; chatView.style.height = '100%'; }
 
   const titleEl = document.getElementById('admChatTitle');
-  const subEl = document.getElementById('admChatSub');
-  if (titleEl) titleEl.textContent = ticket.userName || 'Guest';
-  if (subEl) subEl.textContent = ticket.userEmail || ticket.id;
+  const subEl   = document.getElementById('admChatSub');
+  if (titleEl) titleEl.textContent = (ticket.userName || 'Guest') + (ticket.agentRequested ? ' 🎧' : '');
+  if (subEl)   subEl.textContent   = ticket.userEmail || ticket.id;
 
   admRenderChatMessages(ticket);
 }
@@ -8492,13 +8680,13 @@ function admRenderChatMessages(ticket) {
   const wrap = document.getElementById('admChatWrap');
   if (!wrap) return;
   if (!ticket.messages.length) {
-    wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#555;font-size:13px;">No messages yet</div>';
+    wrap.innerHTML = '<div style="padding:24px;text-align:center;color:#555;font-size:13px;">No messages yet</div>';
     return;
   }
   wrap.innerHTML = ticket.messages.map(m => `
-    <div class="sp-msg-bubble ${m.from === 'user' ? 'sp-msg-user' : 'sp-msg-admin'}">
-      <div class="sp-msg-text">${m.text.replace(/\n/g,'<br>')}</div>
-      <div class="sp-msg-meta">${m.from === 'user' ? (ticket.userName || 'User') : '🎧 Admin'} · ${spFmtTime(m.ts)}</div>
+    <div class="sp-msg-bubble ${m.from==='user'?'sp-msg-user':'sp-msg-admin'}">
+      <div class="sp-msg-text">${spEscape(m.text)}</div>
+      <div class="sp-msg-meta">${m.from==='user'?(ticket.userName||'User'):(m.from==='bot'?'🤖 Bot':'🎧 You (Admin)')} · ${spFmtTime(m.ts)}</div>
     </div>`).join('');
   wrap.scrollTop = wrap.scrollHeight;
 }
@@ -8511,25 +8699,16 @@ function admSendReply() {
   inp.value = '';
 
   const tickets = spGetTickets();
-  const ticket = tickets.find(t => t.id === _admActiveTicketId);
+  const ticket  = tickets.find(t => t.id === _admActiveTicketId);
   if (!ticket) return;
 
-  ticket.messages.push({ from: 'admin', text, ts: Date.now() });
+  ticket.agentConnected = true;
+  ticket.messages.push({ from:'admin', text, ts:Date.now() });
   const idx = tickets.findIndex(t => t.id === _admActiveTicketId);
   if (idx >= 0) tickets[idx] = ticket;
   spSaveTickets(tickets);
 
   admRenderChatMessages(ticket);
-
-  // If customer chat is open on this ticket, refresh it too
-  const wrap = document.getElementById('spChatMessages');
-  if (wrap && document.getElementById('screen-support-chat')?.classList.contains('active')) {
-    const activeTicket = spEnsureTicket();
-    if (activeTicket.id === _admActiveTicketId) {
-      spRenderMessages(ticket.messages, wrap);
-      wrap.scrollTop = wrap.scrollHeight;
-    }
-  }
 }
 
 function admBackToList() {
@@ -8537,7 +8716,7 @@ function admBackToList() {
   admRenderTicketList();
 }
 
-// Init admin panel on page load
+// ── init ─────────────────────────────────────────────────────
 (function() {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', admInit);
