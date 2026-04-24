@@ -158,10 +158,10 @@
     .ov-balance-section{padding:1.4rem 1rem .8rem;background:#000}
     .ov-bal-label{font-size:.82rem;color:#8a9bb5;margin-bottom:.5rem;display:flex;align-items:center;gap:.35rem}
     .ov-eye{background:none;border:none;color:#8a9bb5;font-size:.9rem;cursor:pointer;padding:0;display:flex;align-items:center}
-    .ov-bal-row{display:flex;align-items:baseline;gap:.45rem;margin-bottom:.22rem}
-    .ov-bal-amount{font-size:2.1rem;font-weight:800;color:#fff;letter-spacing:-.02em}
-    .ov-bal-unit{font-size:1rem;font-weight:600;color:#fff;display:flex;align-items:center;gap:.2rem;cursor:pointer}
-    .ov-bal-unit svg{opacity:.6}
+    .ov-bal-row{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.25rem}
+    .ov-bal-amount{font-size:1.85rem;font-weight:800;color:#fff;letter-spacing:-.02em}
+    .ov-bal-unit{font-size:.95rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:.2rem;cursor:pointer;background:#1a1a1a;border-radius:20px;padding:.18rem .55rem;margin-left:.1rem}
+    .ov-bal-unit svg{opacity:.7}
     .ov-bal-btc{font-size:.82rem;color:#8a9bb5;margin-bottom:.15rem}
     .ov-pnl-row{font-size:.8rem;color:#8a9bb5;display:flex;align-items:center;gap:.3rem;margin-top:.1rem;cursor:pointer}
     .ov-pnl-row span.pnl-val{color:#8a9bb5}
@@ -229,14 +229,14 @@
     </div>
     <div class="ov-bal-row">
       <span class="ov-bal-amount" id="balVal">0.00</span>
-      <span class="ov-bal-unit">
-        USD
+      <span class="ov-bal-unit" id="balUnit" onclick="ovCycleUnit()">
+        USDT
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </span>
     </div>
-    <div class="ov-bal-btc">≈0.00000000 BTC</div>
+    <div class="ov-bal-btc" id="balSub">≈0.00000000 BTC</div>
     <div class="ov-pnl-row">
-      Today's PnL: <span class="pnl-val">0.00 USD (+0.00%)</span>
+      Today's PnL: <span class="pnl-val">0.00 USDT (+0.00%)</span>
       <span class="ov-pnl-arrow">›</span>
     </div>
   </div>
@@ -293,18 +293,64 @@
     </div>
   </div>
 
-  <!-- Empty state -->
+  <!-- 5 Coin Rows -->
   <div id="ovAssetList">
-    <div class="ov-empty">
-      <!-- magnifying glass illustration -->
-      <div class="ov-empty-icon">
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-          <circle cx="27" cy="27" r="18" stroke="#444" stroke-width="3"/>
-          <line x1="40" y1="40" x2="54" y2="54" stroke="#444" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="27" cy="27" r="10" stroke="#333" stroke-width="2" stroke-dasharray="3 3"/>
-        </svg>
+    <div class="ov-asset-row" data-sym="USDT" onclick="ovSelectCoin('USDT',this)">
+      <div class="coin-icon" style="background:#26a17b;color:#fff">
+        <svg width="22" height="22" viewBox="0 0 36 36"><rect x="8" y="9" width="20" height="3.5" rx="1.75" fill="#fff"/><rect x="16" y="12" width="4" height="10" rx="2" fill="#fff"/><rect x="10" y="20" width="16" height="2.5" rx="1.25" fill="rgba(255,255,255,.7)"/></svg>
       </div>
-      <span class="ov-empty-txt">No assets</span>
+      <div class="ov-asset-info">
+        <div class="ov-asset-name">USDT</div>
+        <div class="ov-asset-full">Tether USDT</div>
+      </div>
+      <div class="ov-asset-right">
+        <div class="ov-asset-bal">0.00</div>
+        <div class="ov-asset-usdt">≈0.00 USDT</div>
+      </div>
+    </div>
+    <div class="ov-asset-row" data-sym="BTC" onclick="ovSelectCoin('BTC',this)">
+      <div class="coin-icon" style="background:#f7931a;color:#fff;font-size:.85rem;font-weight:900">₿</div>
+      <div class="ov-asset-info">
+        <div class="ov-asset-name">BTC</div>
+        <div class="ov-asset-full">Bitcoin</div>
+      </div>
+      <div class="ov-asset-right">
+        <div class="ov-asset-bal">0.00000000</div>
+        <div class="ov-asset-usdt">≈0.00 USDT</div>
+      </div>
+    </div>
+    <div class="ov-asset-row" data-sym="ETH" onclick="ovSelectCoin('ETH',this)">
+      <div class="coin-icon" style="background:#627eea;color:#fff;font-size:.85rem;font-weight:800">Ξ</div>
+      <div class="ov-asset-info">
+        <div class="ov-asset-name">ETH</div>
+        <div class="ov-asset-full">Ethereum</div>
+      </div>
+      <div class="ov-asset-right">
+        <div class="ov-asset-bal">0.00000000</div>
+        <div class="ov-asset-usdt">≈0.00 USDT</div>
+      </div>
+    </div>
+    <div class="ov-asset-row" data-sym="BNB" onclick="ovSelectCoin('BNB',this)">
+      <div class="coin-icon" style="background:#f3ba2f;color:#fff;font-size:.78rem;font-weight:900">BNB</div>
+      <div class="ov-asset-info">
+        <div class="ov-asset-name">BNB</div>
+        <div class="ov-asset-full">BNB</div>
+      </div>
+      <div class="ov-asset-right">
+        <div class="ov-asset-bal">0.00000000</div>
+        <div class="ov-asset-usdt">≈0.00 USDT</div>
+      </div>
+    </div>
+    <div class="ov-asset-row" data-sym="XRP" onclick="ovSelectCoin('XRP',this)">
+      <div class="coin-icon" style="background:#346aa9;color:#fff;font-size:.78rem;font-weight:900">XRP</div>
+      <div class="ov-asset-info">
+        <div class="ov-asset-name">XRP</div>
+        <div class="ov-asset-full">Ripple</div>
+      </div>
+      <div class="ov-asset-right">
+        <div class="ov-asset-bal">0.00000000</div>
+        <div class="ov-asset-usdt">≈0.00 USDT</div>
+      </div>
     </div>
   </div>
 
@@ -989,6 +1035,40 @@
       var btn = document.getElementById('ovTab'+t.charAt(0).toUpperCase()+t.slice(1));
       if(btn) btn.classList.toggle('active', t===tab);
     });
+  }
+
+  // Coin rates (approx)
+  var OV_RATES = { USDT:1, BTC:0.0000154, ETH:0.000268, BNB:0.00316, XRP:1.72 };
+  var OV_DECIMALS = { USDT:2, BTC:8, ETH:8, BNB:6, XRP:4 };
+  var ovCurrentCoin = 'USDT';
+  var ovTotalUsdt = 0;
+
+  function ovSelectCoin(sym, el) {
+    ovCurrentCoin = sym;
+    var rate = OV_RATES[sym] || 1;
+    var dec = OV_DECIMALS[sym] || 2;
+    var converted = (ovTotalUsdt * rate).toFixed(dec);
+    document.getElementById('balVal').textContent = balVisible ? converted : '****';
+    // update unit label (first text node inside balUnit)
+    var unitEl = document.getElementById('balUnit');
+    unitEl.childNodes[0].textContent = sym + ' ';
+    // update sub line
+    if(sym === 'BTC') {
+      document.getElementById('balSub').textContent = '≈' + ovTotalUsdt.toFixed(2) + ' USDT';
+    } else {
+      document.getElementById('balSub').textContent = '≈' + (ovTotalUsdt * OV_RATES['BTC']).toFixed(8) + ' BTC';
+    }
+    // highlight selected row
+    document.querySelectorAll('.ov-asset-row').forEach(function(r){ r.style.background='#000'; });
+    if(el) el.style.background='#111';
+  }
+
+  function ovCycleUnit() {
+    var coins = ['USDT','BTC','ETH','BNB','XRP'];
+    var idx = coins.indexOf(ovCurrentCoin);
+    var nextSym = coins[(idx+1) % coins.length];
+    var row = document.querySelector('.ov-asset-row[data-sym="'+nextSym+'"]');
+    ovSelectCoin(nextSym, row);
   }
 
   function goBack() {
