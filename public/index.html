@@ -16,7 +16,7 @@
       s.id = '_auth_flash_fix';
       s.textContent = _isAuthed
         ? '[data-auth-guest-only]{display:none!important}[data-auth-user-only]{display:flex!important}'
-        : '[data-auth-user-only]{display:none!important}[data-auth-guest-only]{display:flex!important}';
+        : '[data-auth-user-only]{display:none!important}[data-auth-guest-only]{display:block!important}';
       document.head.appendChild(s);
     } catch(e) {}
   </script>
