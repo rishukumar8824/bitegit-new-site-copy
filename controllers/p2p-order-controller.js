@@ -62,7 +62,7 @@ function buildOrderCreatedMessages({ now, buyerUsername, sellerUsername, payWind
       messageType: 'text',
       isSystem: false,
       role: 'both',
-      text: `📋 Terms: ${sellerTerms.trim()}`,
+      text: sellerTerms.trim(),
       createdAt: now + 2
     });
   }
@@ -235,6 +235,8 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
         })
       });
 
+      if (sellerQrCode) orderDoc.sellerQrCode = sellerQrCode;
+      if (offer.remark) orderDoc.sellerTerms = offer.remark;
       const savedOrder = await walletService.createEscrowOrder(orderDoc);
 
       return res.status(201).json({

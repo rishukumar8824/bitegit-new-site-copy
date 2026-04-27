@@ -2692,7 +2692,7 @@
     setText('buy-price', '₹' + price.toFixed(2));
     var sellerName = ad.createdByUsername || ad.advertiser || 'SELLER';
     setText('buy-seller-name', sellerName);
-    setText('buy-terms', ad.terms || ad.remarks || '3rd party payment not allowed');
+    setText('buy-terms', ad.remark || ad.terms || ad.remarks || '');
     setText('stat-pay-within', (ad.payWindow || 15) + ' minute(s)');
     setText('stat-historical', 'Buy ' + (ad.completedBuyOrders || 0) + '   Sell ' + (ad.completedSellOrders || 0));
     setText('stat-avg-release', (ad.avgReleaseTime || '< 5') + ' min');
@@ -2705,9 +2705,28 @@
     // Avatar
     var avatarEl = document.getElementById('buySellerAvatar');
     if (avatarEl) avatarEl.innerHTML = sellerName.charAt(0).toUpperCase() + '<div class="dot"></div>';
-    // Payment method
+    // Payment method — show all options as clickable chips if multiple
     if (ad.payments && ad.payments.length > 0) {
       setText('selectedPayment', ad.payments[0]);
+      var psEl = document.getElementById('paymentSelect');
+      if (psEl && ad.payments.length > 1) {
+        var chipsHtml = ad.payments.map(function(pm, i) {
+          return '<span data-pm="'+escHtml(pm)+'" style="cursor:pointer;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid '+(i===0?'#00c2b2':'rgba(255,255,255,0.15)')+';color:'+(i===0?'#00c2b2':'#aaa')+';background:'+(i===0?'rgba(0,194,178,0.08)':'transparent')+';transition:all 0.15s;">'+escHtml(pm)+'</span>';
+        }).join('');
+        psEl.innerHTML = '<div id="pmChips" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0;">'+chipsHtml+'</div>';
+        psEl.addEventListener('click', function(e) {
+          var chip = e.target.closest('[data-pm]');
+          if (!chip) return;
+          var selected = chip.getAttribute('data-pm');
+          setText('selectedPayment', selected);
+          psEl.querySelectorAll('[data-pm]').forEach(function(c) {
+            var active = c.getAttribute('data-pm') === selected;
+            c.style.borderColor = active ? '#00c2b2' : 'rgba(255,255,255,0.15)';
+            c.style.color = active ? '#00c2b2' : '#aaa';
+            c.style.background = active ? 'rgba(0,194,178,0.08)' : 'transparent';
+          });
+        });
+      }
     }
     calcEquiv();
   }
@@ -2894,14 +2913,12 @@
       setText('tf-vpa', o.sellerPaymentDetails.vpa || o.sellerPaymentDetails.accountNumber || 'ask in chat');
       setText('tf-vpa-label', payment + ' VPA / Account');
     }
-    // Show QR button if seller has a QR in order messages
+    // QR button — use sellerQrCode stored directly on order
     (function() {
-      var qrMsg = Array.isArray(o.messages) ? o.messages.find(function(m) {
-        return m.messageType === 'image' && (m.senderRole === 'seller' || m.role === 'both') && m.imageUrl;
-      }) : null;
+      var qrUrl = o.sellerQrCode || '';
       var qrBtn = document.getElementById('tf-qr-btn');
       if (qrBtn) qrBtn.remove();
-      if (qrMsg) {
+      if (qrUrl) {
         var pmSpan = document.getElementById('tf-payment-method');
         if (pmSpan && pmSpan.parentNode) {
           var btn = document.createElement('span');
@@ -2910,18 +2927,33 @@
           btn.style.cssText = 'cursor:pointer;margin-left:8px;display:inline-flex;align-items:center;vertical-align:middle;opacity:0.75;';
           btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>';
           btn.addEventListener('click', function() {
-            var overlay = document.createElement('div');
-            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;';
-            overlay.innerHTML = '<img src="'+qrMsg.imageUrl+'" style="max-width:280px;max-height:280px;border-radius:12px;border:2px solid #00c2b2;" />'
-              + '<p style="color:#fff;font-size:14px;margin:0;">Scan to pay</p>'
-              + '<button style="background:#00c2b2;color:#000;border:none;border-radius:8px;padding:10px 24px;font-weight:700;cursor:pointer;font-size:14px;">Close</button>';
-            overlay.querySelector('button').addEventListener('click', function(){ overlay.remove(); });
-            overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
-            document.body.appendChild(overlay);
+            var ov = document.createElement('div');
+            ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;';
+            ov.innerHTML = '<img src="'+qrUrl+'" style="max-width:280px;max-height:280px;border-radius:12px;border:2px solid #00c2b2;"/>'
+              +'<p style="color:#fff;font-size:14px;margin:0;font-weight:600;">Scan to pay</p>'
+              +'<button style="background:#00c2b2;color:#000;border:none;border-radius:8px;padding:10px 28px;font-weight:700;cursor:pointer;font-size:14px;">Close</button>';
+            ov.querySelector('button').addEventListener('click', function(){ ov.remove(); });
+            ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+            document.body.appendChild(ov);
           });
           pmSpan.parentNode.appendChild(btn);
         }
       }
+    })();
+    // Show seller terms in transfer screen
+    (function() {
+      var terms = o.sellerTerms || '';
+      var el = document.getElementById('tf-seller-terms');
+      if (!el && terms) {
+        var note = document.getElementById('tf-account-note');
+        if (note) {
+          el = document.createElement('p');
+          el.id = 'tf-seller-terms';
+          el.style.cssText = 'margin:10px 20px 0;font-size:13px;color:#f6a623;background:rgba(246,166,35,0.08);border-radius:8px;padding:8px 12px;';
+          note.parentNode.insertBefore(el, note.nextSibling);
+        }
+      }
+      if (el) el.textContent = terms ? '📋 ' + terms : '';
     })();
 
     if (currentUser && currentUser.username) {
