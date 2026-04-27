@@ -163,13 +163,9 @@ function updateHomeAuthUi(user) {
     localStorage.removeItem('bitegit_token');
   }
 
-  // Toggle classes FIRST, then remove flash-fix so there's no gap
-  guestOnlyNodes.forEach((node) => {
-    node.classList.toggle('hidden', loggedIn);
-  });
-  userOnlyNodes.forEach((node) => {
-    node.classList.toggle('hidden', !loggedIn);
-  });
+  // Update html auth class — CSS rules handle all visibility, no flash possible
+  document.documentElement.classList.remove('auth-user', 'auth-guest');
+  document.documentElement.classList.add(loggedIn ? 'auth-user' : 'auth-guest');
 
   if (heroGuestPanel) {
     heroGuestPanel.classList.toggle('hidden', loggedIn);
@@ -177,10 +173,6 @@ function updateHomeAuthUi(user) {
   if (heroUserPanel) {
     heroUserPanel.classList.toggle('hidden', !loggedIn);
   }
-
-  // Remove flash-fix AFTER class state is applied — prevents any flash gap
-  var flashFix = document.getElementById('_auth_flash_fix');
-  if (flashFix) requestAnimationFrame(function() { flashFix.remove(); });
 
   if (heroUserName) {
     heroUserName.textContent = currentSessionUser?.username || currentSessionUser?.email || 'Bitegit User';

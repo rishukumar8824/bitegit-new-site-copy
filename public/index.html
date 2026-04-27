@@ -9,18 +9,21 @@
     <link rel="stylesheet" href="/mobile-nav.css?v=20260416c" />
   <script src="/app-nav.js?v=20260416c" defer></script>
   <script>
-    // Zero-flash auth: hide everything until state is known
+    // Zero-flash auth: stamp html class synchronously before body renders
     try {
       var _isAuthed = !!(localStorage.getItem('_p2p_hint') || localStorage.getItem('bitegit_token'));
-      var s = document.createElement('style');
-      s.id = '_auth_flash_fix';
-      s.textContent = _isAuthed
-        ? '[data-auth-guest-only]{display:none!important}[data-auth-user-only]{display:flex!important}'
-        : '[data-auth-user-only]{display:none!important}[data-auth-guest-only]{display:block!important}';
-      document.head.appendChild(s);
-    } catch(e) {}
+      document.documentElement.classList.add(_isAuthed ? 'auth-user' : 'auth-guest');
+    } catch(e) {
+      document.documentElement.classList.add('auth-guest');
+    }
   </script>
   <style>
+    /* ── Auth visibility: controlled by html.auth-user / html.auth-guest ── */
+    html:not(.auth-user) [data-auth-user-only] { display: none !important; }
+    html:not(.auth-guest) [data-auth-guest-only] { display: none !important; }
+    html.auth-guest [data-auth-guest-only] { display: block; }
+    html.auth-user [data-auth-user-only] { display: flex; }
+
     /* ── Scroll Reveal: smooth slide up ── */
     .js-reveal .cf-reveal {
       opacity: 0;
