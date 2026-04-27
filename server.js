@@ -2775,8 +2775,8 @@ app.get('/api/p2p/public', async (req, res) => {
       createdByUserId: o.createdByUserId,
       merchantBadge: o.merchantBadge,
     });
-    const sell_ads = allOffers.filter(o => o.side === 'sell').map(mapAd);
-    const buy_ads  = allOffers.filter(o => o.side === 'buy').map(mapAd);
+    const sell_ads = allOffers.filter(o => o.side === 'sell').map(mapAd).sort((a, b) => a.price - b.price);
+    const buy_ads  = allOffers.filter(o => o.side === 'buy').map(mapAd).sort((a, b) => a.price - b.price);
     const payment_methods = ['UPI','PhonePe','Paytm','Google Pay','IMPS','Bank Transfer','Digital eRupee','NEFT','RTGS'];
     return res.json({ status: 'success', data: { sell_ads, buy_ads, payment_methods } });
   } catch (err) {
@@ -3143,12 +3143,12 @@ app.patch('/api/p2p/offers/:offerId', requiresP2PUser, async (req, res) => {
     if (!offer) return res.status(404).json({ message: 'Offer not found.' });
     if (offer.createdByUserId !== userId) return res.status(403).json({ message: 'Not your ad.' });
 
-    const { price, minLimit, maxLimit, payments, status, remark } = req.body;
+    const { price, minLimit, maxLimit, payments, status, remark, totalAmount } = req.body;
     // Validate status transitions
     if (status && !['ACTIVE', 'PAUSED'].includes(status)) {
       return res.status(400).json({ message: 'Status must be ACTIVE or PAUSED.' });
     }
-    const updated = await repos.updateOffer(offerId, userId, { price, minLimit, maxLimit, payments, status, remark });
+    const updated = await repos.updateOffer(offerId, userId, { price, minLimit, maxLimit, payments, status, remark, totalAmount });
     if (!updated) return res.status(404).json({ message: 'Update failed.' });
     return res.json({ offer: updated });
   } catch (err) {

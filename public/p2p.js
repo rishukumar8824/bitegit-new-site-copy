@@ -1292,15 +1292,14 @@ window.openMobEditAd = function(offerId) {
 };
 
 function openEditAdModal(offerId) {
-  var offer = null;
-  // find from DOM
-  var card = document.querySelector(`.my-ad-card[data-offer-id="${offerId}"]`);
-  // Show edit modal
+  var o = (window._myAdsCache || {})[offerId] || {};
   var existing = document.getElementById('editAdModal');
   if (existing) existing.remove();
   var modal = document.createElement('div');
   modal.id = 'editAdModal';
   modal.className = 'edit-ad-modal-overlay';
+  var paymentsVal = Array.isArray(o.payments) ? o.payments.join(', ') : (o.payments || '');
+  var totalVal = o.totalAmount || o.available || o.availableAmount || '';
   modal.innerHTML = `
     <div class="edit-ad-modal">
       <div class="edit-ad-head">
@@ -1308,16 +1307,19 @@ function openEditAdModal(offerId) {
         <button onclick="document.getElementById('editAdModal').remove()" class="edit-ad-close">✕</button>
       </div>
       <div class="edit-ad-body">
-        <label class="edit-ad-label">Price (INR)</label>
-        <input id="eadPrice" type="number" class="edit-ad-input" placeholder="Enter price"/>
+        <label class="edit-ad-label">Price (INR per USDT)</label>
+        <input id="eadPrice" type="number" class="edit-ad-input" value="${o.price || ''}" placeholder="Enter price"/>
+        <label class="edit-ad-label">Total Amount (USDT)</label>
+        <input id="eadTotal" type="number" class="edit-ad-input" value="${totalVal}" placeholder="e.g. 500"/>
         <label class="edit-ad-label">Min Limit (INR)</label>
-        <input id="eadMin" type="number" class="edit-ad-input" placeholder="Min limit"/>
+        <input id="eadMin" type="number" class="edit-ad-input" value="${o.minLimit || ''}" placeholder="Min limit"/>
         <label class="edit-ad-label">Max Limit (INR)</label>
-        <input id="eadMax" type="number" class="edit-ad-input" placeholder="Max limit"/>
+        <input id="eadMax" type="number" class="edit-ad-input" value="${o.maxLimit || ''}" placeholder="Max limit"/>
         <label class="edit-ad-label">Payment Methods (comma separated)</label>
-        <input id="eadPayments" type="text" class="edit-ad-input" placeholder="UPI, Bank Transfer"/>
+        <input id="eadPayments" type="text" class="edit-ad-input" value="${paymentsVal}" placeholder="UPI, Bank Transfer"/>
         <label class="edit-ad-label">Remark (optional)</label>
-        <input id="eadRemark" type="text" class="edit-ad-input" placeholder="Note for buyers"/>
+        <input id="eadRemark" type="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="Note for buyers"/>
+        <p id="eadMsg" style="font-size:12px;min-height:16px;margin:4px 0 0;color:#f6465d;"></p>
       </div>
       <button class="mob-kyc-fp-btn" style="background:linear-gradient(96deg,#00c2b2,#0099a8);margin:0 1rem 1rem;" onclick="submitEditAd('${offerId}')">Save Changes</button>
     </div>
@@ -1327,28 +1329,40 @@ function openEditAdModal(offerId) {
 
 async function submitEditAd(offerId) {
   const price = Number(document.getElementById('eadPrice')?.value);
+  const totalAmount = Number(document.getElementById('eadTotal')?.value);
   const minLimit = Number(document.getElementById('eadMin')?.value);
   const maxLimit = Number(document.getElementById('eadMax')?.value);
   const paymentsRaw = document.getElementById('eadPayments')?.value || '';
   const remark = document.getElementById('eadRemark')?.value || '';
   const payments = paymentsRaw.split(',').map(p => p.trim()).filter(Boolean);
-  const body = {};
-  if (price) body.price = price;
-  if (minLimit) body.minLimit = minLimit;
-  if (maxLimit) body.maxLimit = maxLimit;
-  if (payments.length) body.payments = payments;
-  if (remark) body.remark = remark;
+  const msgEl = document.getElementById('eadMsg');
+  if (!price || !minLimit || !maxLimit || !payments.length) {
+    if (msgEl) msgEl.textContent = 'Price, limits and payment method are required.';
+    return;
+  }
+  if (minLimit > maxLimit) {
+    if (msgEl) msgEl.textContent = 'Min limit cannot exceed max limit.';
+    return;
+  }
+  const body = { price, minLimit, maxLimit, payments, remark };
+  if (totalAmount) body.totalAmount = totalAmount;
   try {
     const res = await fetch(`/api/p2p/offers/${offerId}`, {
       method: 'PATCH',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     const data = await res.json();
-    if (!res.ok) { alert(data.message || 'Update failed.'); return; }
+    if (!res.ok) {
+      if (msgEl) msgEl.textContent = data.message || 'Update failed.';
+      return;
+    }
     document.getElementById('editAdModal')?.remove();
     await loadMyAds();
-  } catch (e) { alert('Network error.'); }
+  } catch (e) {
+    if (msgEl) msgEl.textContent = 'Network error. Try again.';
+  }
 }
 
 async function loadMyAds() {
@@ -1365,7 +1379,10 @@ async function loadMyAds() {
     clearTimeout(_adsTimer);
     console.log('[loadMyAds] response', res.status);
     const data = await res.json().catch(() => ({ offers: [] }));
-    const myOffers = Array.isArray(data.offers) ? data.offers.sort((a, b) => Number(b.price || 0) - Number(a.price || 0)) : [];
+    const myOffers = Array.isArray(data.offers) ? data.offers.sort((a, b) => Number(a.price || 0) - Number(b.price || 0)) : [];
+    // Build cache for edit modal prefill
+    window._myAdsCache = {};
+    myOffers.forEach(o => { window._myAdsCache[o.id] = o; });
     console.log('[loadMyAds] rendering', myOffers.length, 'ads');
     renderMyAds(myOffers);
   } catch (error) {
