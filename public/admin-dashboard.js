@@ -872,6 +872,26 @@ function buildDisputeMsgBubble(msg, buyerLabel, sellerLabel) {
     + '</div>';
 }
 
+const ADMIN_QUICK_REPLIES = [
+  'We have received your appeal and are investigating. Please allow 24–48 hours.',
+  'Please upload your payment proof (screenshot) to help us resolve this faster.',
+  'Your escrow has been reviewed. We will release funds once verification is complete.',
+  'This dispute has been resolved in your favor. Escrow will be released shortly.',
+  'We have found a violation. The order has been escalated to compliance.',
+  'Please do not make any further payments until this dispute is resolved.',
+  'Both parties: kindly avoid chargeback requests while this case is open.',
+  'Case closed. No policy violation found. Please proceed as agreed.',
+];
+
+function adminQuickReply(orderId, btnEl) {
+  const msg = btnEl ? btnEl.getAttribute('data-msg') : '';
+  if (!msg) return;
+  const input = document.getElementById('disputeReplyInput_' + orderId);
+  if (input) { input.value = msg; input.focus(); }
+  // Send immediately
+  adminSendDisputeReply(orderId);
+}
+
 function renderP2PDisputeCard(order = {}) {
   const appeal = order.appealDetails && typeof order.appealDetails === 'object' ? order.appealDetails : {};
   const attachments = Array.isArray(appeal.attachments) ? appeal.attachments : [];
@@ -938,8 +958,20 @@ function renderP2PDisputeCard(order = {}) {
       <div class="mt-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3">
         <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 8px;">Chat (last ${SHOW} of ${allMessages.length})</p>
         <div id="disputeChat_${orderId}">${messageMarkup}</div>
-        <div style="margin-top:10px;display:flex;gap:8px;align-items:flex-end;">
-          <textarea id="disputeReplyInput_${orderId}" placeholder="Reply as Admin (visible to both buyer &amp; seller)…" rows="2"
+
+        <p style="font-size:11px;color:#64748b;margin:10px 0 5px;font-weight:600;letter-spacing:.3px;">QUICK REPLY</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+          ${ADMIN_QUICK_REPLIES.map((q) =>
+            '<button onclick="adminQuickReply(\'' + orderId + '\',this)" data-msg="' + escapeHtml(q) + '" '
+            + 'style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;font-size:11px;'
+            + 'border-radius:20px;padding:4px 10px;cursor:pointer;text-align:left;line-height:1.3;">'
+            + escapeHtml(q.length > 48 ? q.slice(0, 48) + '…' : q)
+            + '</button>'
+          ).join('')}
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:flex-end;">
+          <textarea id="disputeReplyInput_${orderId}" placeholder="Or type a custom reply…" rows="2"
             style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 10px;color:#e2e8f0;font-size:12px;resize:none;outline:none;line-height:1.4;"></textarea>
           <button id="disputeSendBtn_${orderId}" onclick="adminSendDisputeReply('${orderId}')"
             style="background:#f59e0b;color:#000;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;white-space:nowrap;min-width:64px;">
