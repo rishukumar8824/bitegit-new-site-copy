@@ -865,6 +865,16 @@
             <span>Payment Methods (comma separated)</span>
             <input id="mobAdPaymentsInput" type="text" placeholder="UPI, IMPS, Bank Transfer" />
           </label>
+          <label>
+            <span>Payment Release Time</span>
+            <select id="mobAdReleaseTimeInput">
+              <option value="10">10 min</option>
+              <option value="15" selected>15 min</option>
+              <option value="30">30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">60 min</option>
+            </select>
+          </label>
           <button id="mobAdCreateBtn" type="submit" class="mob-ad-submit-btn">Post Ad</button>
           <p id="mobAdCreateMeta" class="mob-ad-meta">Fill details to publish your ad.</p>
         </form>

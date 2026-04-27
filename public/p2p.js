@@ -1294,6 +1294,10 @@ function openEditAdModal(offerId) {
         <input id="eadMax" type="number" inputmode="decimal" class="edit-ad-input" value="${o.maxLimit || ''}" placeholder="Max limit"/>
         <label class="edit-ad-label">Payment Methods (comma separated)</label>
         <input id="eadPayments" type="text" inputmode="text" class="edit-ad-input" value="${paymentsVal}" placeholder="UPI, Bank Transfer"/>
+        <label class="edit-ad-label">Payment Release Time</label>
+        <select id="eadReleaseTime" class="edit-ad-input" style="appearance:auto;">
+          ${['10','15','30','45','60'].map(function(v){ return '<option value="'+v+'"'+(String(o.releaseTime||'15')===v?' selected':'')+'>'+v+' min</option>'; }).join('')}
+        </select>
         <label class="edit-ad-label">Remark (optional)</label>
         <input id="eadRemark" type="text" inputmode="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="Note for buyers"/>
         <p id="eadMsg" style="font-size:12px;min-height:16px;margin:4px 0 0;color:#f6465d;"></p>
@@ -1324,6 +1328,7 @@ async function submitEditAd(offerId) {
   const maxLimit = Number(document.getElementById('eadMax')?.value);
   const paymentsRaw = document.getElementById('eadPayments')?.value || '';
   const remark = document.getElementById('eadRemark')?.value || '';
+  const releaseTime = document.getElementById('eadReleaseTime')?.value || '15';
   const payments = paymentsRaw.split(',').map(p => p.trim()).filter(Boolean);
   const msgEl = document.getElementById('eadMsg');
   if (!price || !minLimit || !maxLimit || !payments.length) {
@@ -1334,7 +1339,7 @@ async function submitEditAd(offerId) {
     if (msgEl) msgEl.textContent = 'Min limit cannot exceed max limit.';
     return;
   }
-  const body = { price, minLimit, maxLimit, payments, remark };
+  const body = { price, minLimit, maxLimit, payments, remark, releaseTime };
   if (totalAmount) body.totalAmount = totalAmount;
   try {
     const res = await fetch(`/api/p2p/offers/${offerId}`, {
@@ -2953,7 +2958,7 @@ function renderOffers(data, append) {
     const rep = offer.reputation || {};
     const repOrders = rep.completedOrders != null ? rep.completedOrders : (offer.orders || 0);
     const repRate = rep.completionRate != null ? rep.completionRate : (offer.completionRate || 100);
-    const repTime = rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes + ' min' : '~15 min';
+    const repTime = offer.releaseTime ? offer.releaseTime + ' min' : (rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes + ' min' : '15 min');
     const onlineStatus = offer.onlineStatus || 'offline';
     const onlineDotColor = onlineStatus === 'online' ? '#2ebd85' : onlineStatus === 'away' ? '#a8ff3e' : '#555';
     const onlineLabel = onlineStatus === 'online' ? 'Online' : onlineStatus === 'away' ? 'Away' : 'Offline';
@@ -2971,7 +2976,7 @@ function renderOffers(data, append) {
             <span class="gt-div">|</span>
             <span>${repRate}%</span>
             <span class="gt-div">|</span>
-            <span>⏱ ${repTime}</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;opacity:0.75;margin-right:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${repTime}</span>
           </div>
           <div class="gt-online"><span class="gt-dot" style="background:${onlineDotColor};box-shadow:0 0 4px ${onlineDotColor};"></span>${onlineLabel}</div>
           <p class="gt-price">₹${formatNumber(offer.price)} <span class="gt-cur">INR</span></p>
@@ -7358,7 +7363,8 @@ function initMobPostAdScreen() {
       available: parseFloat(document.getElementById('mobAdAvailableInput').value),
       minLimit: parseFloat(document.getElementById('mobAdMinLimitInput').value),
       maxLimit: parseFloat(document.getElementById('mobAdMaxLimitInput').value),
-      payments: document.getElementById('mobAdPaymentsInput').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean)
+      payments: document.getElementById('mobAdPaymentsInput').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+      releaseTime: document.getElementById('mobAdReleaseTimeInput')?.value || '15'
     };
     if (!payload.price || !payload.available || !payload.minLimit || !payload.maxLimit) {
       if (meta) meta.textContent = 'All fields are required.';

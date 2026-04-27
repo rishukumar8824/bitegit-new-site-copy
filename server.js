@@ -2753,6 +2753,15 @@ app.get('/api/leads', requiresAdminSession, async (req, res) => {
   }
 });
 
+// ── /api/p2p/ping — merchant heartbeat to track online status ──
+app.post('/api/p2p/ping', requiresP2PUser, async (req, res) => {
+  try {
+    const userId = req.p2pUser.userId || req.p2pUser.id;
+    await repos.updateLastActive(userId);
+    return res.json({ ok: true });
+  } catch (_) { return res.json({ ok: false }); }
+});
+
 // ── /api/p2p/public — used by p2p-live.js to load buy/sell ads ──
 app.get('/api/p2p/public', async (req, res) => {
   try {
@@ -2774,6 +2783,8 @@ app.get('/api/p2p/public', async (req, res) => {
       side: o.side,
       createdByUserId: o.createdByUserId,
       merchantBadge: o.merchantBadge,
+      releaseTime: o.releaseTime || '15',
+      onlineStatus: (o.lastActiveAt && (Date.now() - new Date(o.lastActiveAt).getTime()) < 3600000) ? 'online' : 'offline',
     });
     const sell_ads = allOffers.filter(o => o.side === 'sell').map(mapAd).sort((a, b) => a.price - b.price);
     const buy_ads  = allOffers.filter(o => o.side === 'buy').map(mapAd).sort((a, b) => a.price - b.price);
@@ -2854,9 +2865,10 @@ app.get('/api/p2p/offers', async (req, res) => {
           }
         }
 
-        if (!userId) return { ...offer, merchantBadge };
+        const onlineStatus = (offer.lastActiveAt && (Date.now() - new Date(offer.lastActiveAt).getTime()) < 3600000) ? 'online' : 'offline';
+        if (!userId) return { ...offer, merchantBadge, onlineStatus };
         const rep = await repos.getUserReputation(userId);
-        return { ...offer, reputation: rep || undefined, merchantBadge };
+        return { ...offer, reputation: rep || undefined, merchantBadge, onlineStatus };
       } catch (_) { return offer; }
     }));
 
