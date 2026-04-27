@@ -7266,12 +7266,23 @@ function initMobPostAdScreen() {
       window._myAdsCache = {};
       offers.forEach(function(o) { window._myAdsCache[o.id] = o; });
 
-      if (offers.length > 0) {
+      var hasBuy  = offers.some(function(o){ return o.side === 'buy'; });
+      var hasSell = offers.some(function(o){ return o.side === 'sell'; });
+      var bothFull = hasBuy && hasSell;
+
+      if (bothFull) {
+        // Both sides taken — hide create form and show My Ads tab
         if (createSection) createSection.style.display = 'none';
-        if (adLimitMsg) { adLimitMsg.style.display = 'block'; adLimitMsg.textContent = 'You already have 1 active ad. Edit or delete it below.'; }
-        // Switch to My Ads tab automatically
+        if (adLimitMsg) { adLimitMsg.style.display = 'block'; adLimitMsg.textContent = 'You already have a Buy and a Sell ad. Edit or delete one below.'; }
         var myadsTab = document.querySelector('.mob-ptab[data-ptab="myads"]');
         if (myadsTab) myadsTab.click();
+      } else if (offers.length > 0) {
+        // Has one ad but other side is free — show create form with note
+        if (adLimitMsg) {
+          adLimitMsg.style.display = 'block';
+          adLimitMsg.textContent = 'You have 1 active ' + (hasBuy ? 'Buy' : 'Sell') + ' ad. You can still post a ' + (hasBuy ? 'Sell' : 'Buy') + ' ad.';
+        }
+        if (createSection) createSection.style.display = 'block';
       } else {
         // Check payment methods before showing create form
         try {
@@ -7393,10 +7404,11 @@ window.toggleMobAd = async function(offerId, newStatus) {
 window.deleteMobAd = async function(offerId) {
   if (!confirm('Delete this ad?')) return;
   try {
-    var res = await fetch('/api/p2p/offers/' + offerId, {
-      method: 'DELETE',
-    });
+    var res = await fetch('/api/p2p/offers/' + offerId, { method: 'DELETE', credentials: 'include' });
     if (!res.ok) { var d = await res.json(); throw new Error(d.message); }
+    // Switch to Create tab so the refreshed screen shows create form
+    var createTab = document.querySelector('.mob-ptab[data-ptab="create"]');
+    if (createTab) createTab.click();
     _mobPostAdInited = false;
     initMobPostAdScreen();
     loadOffers();

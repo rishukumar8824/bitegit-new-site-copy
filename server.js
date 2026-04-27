@@ -3127,7 +3127,7 @@ app.get('/api/p2p/my-ads', requiresP2PUser, async (req, res) => {
   try {
     const userId = req.p2pUser.userId;
     const allOffers = await repos.listOffers({ excludeDemo: true });
-    const mine = allOffers.filter(o => o.createdByUserId === userId);
+    const mine = allOffers.filter(o => o.createdByUserId === userId && o.status !== 'DELETED');
     return res.json({ offers: mine });
   } catch (err) {
     return res.status(500).json({ message: 'Server error.' });
