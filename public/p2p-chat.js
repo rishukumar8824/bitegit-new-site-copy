@@ -294,9 +294,18 @@ function normalizeServerMessage(raw, optimistic = false) {
         ? safeText
         : payload.text;
 
+  // For optimistic (self-sent) messages use currentUser as sender.
+  // For server messages NEVER fall back to currentUser — a missing sender
+  // must not be treated as belonging to the viewer (causes wrong-side flash).
+  const sender = optimistic
+    ? String(currentUser?.username || 'You')
+    : String(raw?.sender || raw?.senderUsername || '');
+
   return {
     id: raw?.id || '',
-    sender: String(raw?.sender || currentUser?.username || 'You'),
+    sender,
+    senderRole: raw?.senderRole || raw?.role || '',
+    senderId: raw?.senderId || raw?.userId || '',
     createdAt,
     messageType,
     text,
@@ -342,30 +351,50 @@ function scrollChatToBottom(smooth = false) {
 }
 
 function getMessageClass(message) {
-  const sender = String(message.sender || '')
-    .trim()
-    .toLowerCase();
-  const buyer = String(activeOrder?.buyerUsername || '')
-    .trim()
-    .toLowerCase();
-  const seller = String(activeOrder?.sellerUsername || activeOrder?.advertiser || '')
-    .trim()
-    .toLowerCase();
-  const me = String(currentUser?.username || '')
-    .trim()
-    .toLowerCase();
+  const sender = String(message.sender || '').trim().toLowerCase();
+  const senderRole = String(message.senderRole || '').trim().toLowerCase();
+  const senderId = String(message.senderId || '').trim();
 
-  if (sender === 'system') {
+  // System messages always centre
+  if (sender === 'system' || senderRole === 'system') {
     return 'chat-system';
   }
 
-  const senderIsBuyer = Boolean(buyer && sender === buyer);
-  const senderIsSeller = Boolean(seller && sender === seller);
-  const directSelf = Boolean(me && sender === me);
-  const roleBasedSelf = (activeRole === 'buyer' && senderIsBuyer) || (activeRole === 'seller' && senderIsSeller);
-  const isSelf = directSelf || roleBasedSelf;
+  // Admin messages always show as "other" (left side) for both parties
+  if (senderRole === 'admin' || sender.startsWith('admin:') || sender === 'admin') {
+    return 'chat-system';
+  }
 
-  return isSelf ? 'chat-self' : 'chat-other';
+  const me = String(currentUser?.username || '').trim().toLowerCase();
+  const myId = String(currentUser?.id || '').trim();
+  const buyerId = String(activeOrder?.buyerUserId || '').trim();
+  const sellerId = String(activeOrder?.sellerUserId || '').trim();
+  const buyer = String(activeOrder?.buyerUsername || '').trim().toLowerCase();
+  const seller = String(activeOrder?.sellerUsername || '').trim().toLowerCase();
+
+  // 1. Most reliable: user-ID match
+  if (myId && senderId) {
+    return myId === senderId ? 'chat-self' : 'chat-other';
+  }
+
+  // 2. Reliable: direct username match (me === sender)
+  if (me && sender && me === sender) {
+    return 'chat-self';
+  }
+
+  // 3. Role-based: only if BOTH role AND counterpart username are known
+  //    This prevents wrong-side when order data is partially loaded
+  if (activeRole === 'buyer' && buyer && seller && sender) {
+    if (sender === buyer) return 'chat-self';
+    if (sender === seller) return 'chat-other';
+  }
+  if (activeRole === 'seller' && buyer && seller && sender) {
+    if (sender === seller) return 'chat-self';
+    if (sender === buyer) return 'chat-other';
+  }
+
+  // 4. Sender unknown/empty — don't guess, show as other
+  return 'chat-other';
 }
 
 function buildMessageMarkup(message) {
@@ -728,6 +757,8 @@ async function sendTextMessage(event) {
   const optimisticMessage = {
     id: '',
     sender: currentUser?.username || 'You',
+    senderId: currentUser?.id || '',
+    senderRole: activeRole || '',
     messageType: 'text',
     text,
     imageUrl: '',
@@ -812,6 +843,8 @@ async function sendImageMessageFromFile(file) {
   const optimisticMessage = {
     id: '',
     sender: currentUser?.username || 'You',
+    senderId: currentUser?.id || '',
+    senderRole: activeRole || '',
     messageType: 'image',
     text: 'Payment screenshot',
     imageUrl: compressedImage,
