@@ -102,10 +102,11 @@ function normalizeP2PKycStatus(rawStatus) {
   return 'NOT_SUBMITTED';
 }
 
-function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 * 1000 }) {
+function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 * 1000, broadcastUserEvent }) {
   if (!repos || !walletService) {
     throw new Error('P2P order controller requires repos and walletService.');
   }
+  const _broadcast = typeof broadcastUserEvent === 'function' ? broadcastUserEvent : () => {};
 
   async function createOrder(req, res) {
     try {
@@ -238,6 +239,10 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
       if (sellerQrCode) orderDoc.sellerQrCode = sellerQrCode;
       if (offer.remark) orderDoc.sellerTerms = offer.remark;
       const savedOrder = await walletService.createEscrowOrder(orderDoc);
+
+      const orderPayload = { orderId: savedOrder.id, status: savedOrder.status };
+      _broadcast(String(seller.id || ''), 'new_order', orderPayload);
+      _broadcast(String(buyer.id || ''), 'new_order', orderPayload);
 
       return res.status(201).json({
         ...toOrderResponse(savedOrder),

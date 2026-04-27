@@ -2823,6 +2823,7 @@
       if (res.ok) {
         currentOrder = data.order || data;
         applyOrderAndShow(currentOrder, false, '');
+        cacheCurrentOrder();
         return;
       }
       showToast(data.message || 'Order failed ('+res.status+')');
