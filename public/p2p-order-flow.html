@@ -2894,6 +2894,36 @@
       setText('tf-vpa', o.sellerPaymentDetails.vpa || o.sellerPaymentDetails.accountNumber || 'ask in chat');
       setText('tf-vpa-label', payment + ' VPA / Account');
     }
+    // Show QR button if seller has a QR in order messages
+    (function() {
+      var qrMsg = Array.isArray(o.messages) ? o.messages.find(function(m) {
+        return m.messageType === 'image' && (m.senderRole === 'seller' || m.role === 'both') && m.imageUrl;
+      }) : null;
+      var qrBtn = document.getElementById('tf-qr-btn');
+      if (qrBtn) qrBtn.remove();
+      if (qrMsg) {
+        var pmSpan = document.getElementById('tf-payment-method');
+        if (pmSpan && pmSpan.parentNode) {
+          var btn = document.createElement('span');
+          btn.id = 'tf-qr-btn';
+          btn.title = 'View Payment QR';
+          btn.style.cssText = 'cursor:pointer;margin-left:8px;display:inline-flex;align-items:center;vertical-align:middle;opacity:0.75;';
+          btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>';
+          btn.addEventListener('click', function() {
+            var overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;';
+            overlay.innerHTML = '<img src="'+qrMsg.imageUrl+'" style="max-width:280px;max-height:280px;border-radius:12px;border:2px solid #00c2b2;" />'
+              + '<p style="color:#fff;font-size:14px;margin:0;">Scan to pay</p>'
+              + '<button style="background:#00c2b2;color:#000;border:none;border-radius:8px;padding:10px 24px;font-weight:700;cursor:pointer;font-size:14px;">Close</button>';
+            overlay.querySelector('button').addEventListener('click', function(){ overlay.remove(); });
+            overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+            document.body.appendChild(overlay);
+          });
+          pmSpan.parentNode.appendChild(btn);
+        }
+      }
+    })();
+
     if (currentUser && currentUser.username) {
       setText('tf-account-note',
         'Please use an account under your name (' + currentUser.username + ') to make the transfer. If the paying account and your personal information do not match, the seller may request a refund or cancel the order.');
@@ -3206,7 +3236,7 @@
         var fiatAmt = Number(currentOrder.fiatAmount || currentOrder.amountInr || 0);
         amtEl.textContent = '₹ ' + fmtInr(fiatAmt) + ' · ' + Number(currentOrder.cryptoAmount || 0).toFixed(4) + ' USDT';
       }
-      if (inputBar) inputBar.style.display = 'none';
+      if (inputBar) inputBar.style.display = '';
       // Show rating modal 1.5s after completion (non-blocking UX)
       setTimeout(openRatingModal, 1500);
     } else if (isDisputed) {
@@ -3793,7 +3823,9 @@
 
   function closeRatingModal() {
     document.getElementById('rating-overlay').classList.remove('active');
-    _ratingShown = true; // don't re-open this session
+    _ratingShown = true;
+    // Save skip to localStorage so rating never re-appears for this order
+    try { if (currentOrder) localStorage.setItem('p2p_rated_' + currentOrder.id, 'skipped'); } catch(_) {}
   }
 
   function selectStar(n) {
