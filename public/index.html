@@ -9,16 +9,14 @@
     <link rel="stylesheet" href="/mobile-nav.css?v=20260416c" />
   <script src="/app-nav.js?v=20260416c" defer></script>
   <script>
-    // Instantly apply auth state before render — prevents any flash
+    // Zero-flash auth: hide everything until state is known
     try {
       var _isAuthed = !!(localStorage.getItem('_p2p_hint') || localStorage.getItem('bitegit_token'));
       var s = document.createElement('style');
       s.id = '_auth_flash_fix';
-      if (_isAuthed) {
-        s.textContent = '[data-auth-guest-only]{display:none!important}[data-auth-user-only]{display:flex!important}';
-      } else {
-        s.textContent = '[data-auth-user-only]{display:none!important}';
-      }
+      s.textContent = _isAuthed
+        ? '[data-auth-guest-only]{display:none!important}[data-auth-user-only]{display:flex!important}'
+        : '[data-auth-user-only]{display:none!important}[data-auth-guest-only]{display:flex!important}';
       document.head.appendChild(s);
     } catch(e) {}
   </script>
@@ -943,7 +941,7 @@
       </div>
     </section>
 
-    <script src="/script.js?v=20260425a"></script>
+    <script src="/script.js?v=20260427a"></script>
   <script>
   (function(){
     var track = document.getElementById('gpPromoTrack');
