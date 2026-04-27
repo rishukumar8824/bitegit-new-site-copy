@@ -1043,10 +1043,10 @@ async function adminSendDisputeReply(orderId) {
 }
 
 async function adminReleaseEscrow(orderId, btn) {
-  if (!confirm('Release escrow to buyer? This cannot be undone.')) return;
-  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Releasing…'; btn.style.background = '#16a34a'; }
   try {
-    var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/release', {
+    // Try direct route first (works without walletService)
+    var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/admin-release', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
@@ -1057,7 +1057,7 @@ async function adminReleaseEscrow(orderId, btn) {
     await loadP2P();
   } catch (err) {
     showMessage('Release failed: ' + (err.message || 'Unknown error'), 'error');
-    if (btn) { btn.disabled = false; btn.textContent = '✅ Release Escrow'; }
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Release Escrow'; btn.style.background = '#22c55e'; }
   }
 }
 

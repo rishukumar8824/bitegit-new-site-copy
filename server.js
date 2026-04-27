@@ -3250,6 +3250,40 @@ app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
   }
 });
 
+// ── Admin: P2P Release Escrow (direct) ────────────────────────────────────────
+app.post('/api/admin/p2p/orders/:orderId/admin-release', requiresAdminSession, async (req, res) => {
+  try {
+    const orderId = String(req.params.orderId || '').trim();
+    const { p2pOrders, wallets } = getCollections();
+    const order = await p2pOrders.findOne({ id: orderId });
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    const now = Date.now();
+    const adminLabel = process.env.ADMIN_EMAIL || 'admin';
+    // Credit buyer wallet
+    const buyerId = String(order.buyerUserId || '');
+    const asset = String(order.asset || 'USDT');
+    const amount = Number(order.assetAmount || order.escrowAmount || 0);
+    if (buyerId && amount > 0) {
+      await wallets.updateOne(
+        { userId: buyerId },
+        { $inc: { [`balances.${asset}`]: amount }, $set: { updatedAt: now } },
+        { upsert: true }
+      );
+    }
+    // Update order status + push system message
+    await p2pOrders.updateOne({ id: orderId }, {
+      $set: { status: 'RELEASED', releasedAt: now, releasedByAdmin: adminLabel, updatedAt: now },
+      $push: { messages: { id: 'msg_' + now + '_release', sender: 'system', senderRole: 'system',
+        text: 'Escrow released by admin. Funds credited to buyer.', createdAt: now } }
+    });
+    const updated = await p2pOrders.findOne({ id: orderId });
+    return res.json({ message: 'Escrow released.', order: updated });
+  } catch (err) {
+    console.error('[admin-release]', err);
+    return res.status(500).json({ message: err.message || 'Server error.' });
+  }
+});
+
 // ── Admin: P2P Dispute — Admin Reply ──────────────────────────────────────────
 app.post('/api/admin/p2p/orders/:orderId/admin-reply', requiresAdminSession, async (req, res) => {
   try {
