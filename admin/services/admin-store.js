@@ -1729,6 +1729,21 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return released;
   }
 
+  async function adminReplyP2PDispute(orderId, message, actor) {
+    const order = await p2pOrders.findOne({ id: String(orderId || '').trim() });
+    if (!order) throw new Error('Order not found');
+    const now = Date.now();
+    const msg = {
+      id: `msg_${now}_admin`,
+      sender: `admin:${actor.email}`,
+      senderRole: 'admin',
+      text: String(message || '').trim(),
+      createdAt: now
+    };
+    await p2pOrders.updateOne({ id: order.id }, { $push: { messages: msg }, $set: { updatedAt: now } });
+    return p2pOrders.findOne({ id: order.id });
+  }
+
   async function freezeEscrow(orderId, actor) {
     const order = await p2pOrders.findOne({ id: String(orderId || '').trim() });
     if (!order) {
@@ -2268,6 +2283,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     listP2PDisputes,
     manualReleaseEscrow,
     freezeEscrow,
+    adminReplyP2PDispute,
     getP2PSettings,
     updateP2PSettings,
     cleanupDemoP2PAds,

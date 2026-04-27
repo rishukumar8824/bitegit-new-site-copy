@@ -540,6 +540,17 @@ function createAdminControllers({
     return res.json({ message: 'Escrow released manually.', order: data });
   }
 
+  async function adminReplyP2PDispute(req, res) {
+    const message = String(req.body?.message || '').trim();
+    if (!message) return res.status(400).json({ message: 'Message is required.' });
+    const data = await adminStore.adminReplyP2PDispute(req.params.orderId, message, {
+      id: req.adminAuth.adminId,
+      email: req.adminAuth.adminEmail
+    });
+    await logAudit(req, { module: 'p2p', action: 'admin_reply_dispute', entityType: 'p2p_order', entityId: req.params.orderId });
+    return res.json({ message: 'Reply sent.', order: data });
+  }
+
   async function freezeEscrow(req, res) {
     const data = await adminStore.freezeEscrow(req.params.orderId, {
       id: req.adminAuth.adminId,
@@ -772,6 +783,7 @@ function createAdminControllers({
     listP2PDisputes,
     manualReleaseP2POrder,
     freezeEscrow,
+    adminReplyP2PDispute,
     getP2PSettings,
     updateP2PSettings,
     cleanupDemoP2PAds,

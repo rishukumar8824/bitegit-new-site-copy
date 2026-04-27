@@ -844,13 +844,13 @@ function renderP2PDisputeCard(order = {}) {
     : Array.isArray(order.messages)
       ? order.messages
       : [];
-  const lastMessages = messages.slice(-3);
   const appealType = appeal.type || order.disputeReason || 'Appeal';
   const appealReason = appeal.reason || order.disputeReason || 'No appeal details submitted.';
   const submittedBy = appeal.submittedBy?.username || appeal.submittedBy?.userId || order.disputedBy || '-';
   const submittedAt = appeal.submittedAt || order.disputedAt || order.updatedAt;
   const buyerLabel = order.buyerUsername || order.buyerUserId || '-';
   const sellerLabel = order.sellerUsername || order.sellerUserId || '-';
+  const orderId = escapeHtml(order.id || '');
 
   const attachmentMarkup = attachments.length
     ? `<div class="mt-2 grid grid-cols-3 gap-2">
@@ -862,13 +862,38 @@ function renderP2PDisputeCard(order = {}) {
       </div>`
     : '<p class="mt-2 text-xs text-slate-500">No screenshots attached.</p>';
 
-  const messageMarkup = lastMessages.length
-    ? lastMessages.map((message) => {
-        const sender = message.senderRole || message.role || message.sender || 'chat';
-        const text = message.text || message.message || '';
-        return `<p class="text-xs text-slate-400"><span class="text-slate-200">${escapeHtml(sender)}:</span> ${escapeHtml(text)}</p>`;
+  const messageMarkup = messages.length
+    ? messages.map((msg) => {
+        const rawSender = msg.senderRole || msg.role || msg.sender || 'chat';
+        const text = msg.text || msg.message || '';
+        const ts = msg.createdAt ? new Date(msg.createdAt).toLocaleString('en-IN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' }) : '';
+        let roleLabel, roleColor, bubble;
+        if (rawSender === 'buyer' || String(rawSender).toLowerCase().includes('buyer')) {
+          roleLabel = `🟦 Buyer (${escapeHtml(buyerLabel)})`;
+          roleColor = '#3b82f6';
+          bubble = 'rgba(59,130,246,0.10)';
+        } else if (rawSender === 'seller' || String(rawSender).toLowerCase().includes('seller')) {
+          roleLabel = `🟩 Seller (${escapeHtml(sellerLabel)})`;
+          roleColor = '#22c55e';
+          bubble = 'rgba(34,197,94,0.10)';
+        } else if (String(rawSender).startsWith('admin')) {
+          roleLabel = `🛡️ Admin`;
+          roleColor = '#f59e0b';
+          bubble = 'rgba(245,158,11,0.12)';
+        } else {
+          roleLabel = escapeHtml(rawSender);
+          roleColor = '#94a3b8';
+          bubble = 'rgba(148,163,184,0.08)';
+        }
+        return `<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:${bubble};border-left:3px solid ${roleColor};">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span style="font-size:11px;font-weight:600;color:${roleColor};">${roleLabel}</span>
+            <span style="font-size:10px;color:#64748b;">${ts}</span>
+          </div>
+          <p style="font-size:12px;color:#e2e8f0;margin:0;white-space:pre-wrap;">${escapeHtml(text)}</p>
+        </div>`;
       }).join('')
-    : '<p class="text-xs text-slate-500">No chat messages found.</p>';
+    : '<p style="font-size:12px;color:#64748b;padding:8px 0;">No chat messages yet.</p>';
 
   return `
     <article class="list-item" style="border-color:rgba(245,158,11,.35);background:rgba(15,23,42,.72);">
@@ -881,8 +906,8 @@ function renderP2PDisputeCard(order = {}) {
       </div>
 
       <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
-        <div><span class="text-slate-500">Buyer:</span> <span class="text-slate-200">${escapeHtml(buyerLabel)}</span></div>
-        <div><span class="text-slate-500">Seller:</span> <span class="text-slate-200">${escapeHtml(sellerLabel)}</span></div>
+        <div><span class="text-slate-500">Buyer:</span> <span style="color:#3b82f6;font-weight:600;">${escapeHtml(buyerLabel)}</span></div>
+        <div><span class="text-slate-500">Seller:</span> <span style="color:#22c55e;font-weight:600;">${escapeHtml(sellerLabel)}</span></div>
         <div><span class="text-slate-500">Asset Amt:</span> <span class="text-white">${formatNumber(order.assetAmount || order.escrowAmount || 0, 6)}</span></div>
         <div><span class="text-slate-500">Price:</span> <span class="text-white">₹${formatNumber(order.price || 0, 2)}</span></div>
         <div><span class="text-slate-500">Payment:</span> ${escapeHtml(order.paymentMethod || 'UPI')}</div>
@@ -897,16 +922,71 @@ function renderP2PDisputeCard(order = {}) {
       </div>
 
       <div class="mt-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3">
-        <p class="mb-1 text-xs font-semibold text-slate-300">Latest chat</p>
-        ${messageMarkup}
+        <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 8px;">Full Chat (${messages.length} messages)</p>
+        <div style="max-height:260px;overflow-y:auto;padding-right:4px;" id="disputeChat_${orderId}">
+          ${messageMarkup}
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:flex-end;">
+          <textarea id="disputeReplyInput_${orderId}" placeholder="Admin reply to both parties…" rows="2"
+            style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 10px;color:#e2e8f0;font-size:12px;resize:none;outline:none;"></textarea>
+          <button onclick="adminSendDisputeReply('${orderId}')"
+            style="background:#f59e0b;color:#000;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;white-space:nowrap;">
+            Send ↑
+          </button>
+        </div>
       </div>
 
       <div class="mt-3 flex flex-wrap gap-2">
-        <button class="btn-primary" data-p2p-action="release-order" data-order-id="${escapeHtml(order.id || '')}">Release Escrow</button>
-        <button class="btn-danger" data-p2p-action="freeze-order" data-order-id="${escapeHtml(order.id || '')}">Freeze Escrow</button>
+        <button class="btn-primary" data-p2p-action="release-order" data-order-id="${orderId}">✅ Release Escrow</button>
+        <button class="btn-danger" data-p2p-action="freeze-order" data-order-id="${orderId}">🔒 Freeze Escrow</button>
       </div>
     </article>
   `;
+}
+
+async function adminSendDisputeReply(orderId) {
+  const input = document.getElementById(`disputeReplyInput_${orderId}`);
+  const message = (input?.value || '').trim();
+  if (!message) { showMessage('Enter a message first.', 'error'); return; }
+  try {
+    const data = await apiRequest(`/p2p/orders/${orderId}/admin-reply`, { method: 'POST', body: JSON.stringify({ message }) });
+    showMessage('Reply sent to both parties.', 'success');
+    if (input) input.value = '';
+    // Refresh dispute chat inline
+    const chatWrap = document.getElementById(`disputeChat_${orderId}`);
+    if (chatWrap && data.order) {
+      const msgs = Array.isArray(data.order.messages) ? data.order.messages : [];
+      const buyerL = data.order.buyerUsername || data.order.buyerUserId || '-';
+      const sellerL = data.order.sellerUsername || data.order.sellerUserId || '-';
+      chatWrap.innerHTML = msgs.length
+        ? msgs.map((msg) => {
+            const rawSender = msg.senderRole || msg.role || msg.sender || 'chat';
+            const text = msg.text || msg.message || '';
+            const ts = msg.createdAt ? new Date(msg.createdAt).toLocaleString('en-IN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' }) : '';
+            let roleLabel, roleColor, bubble;
+            if (rawSender === 'buyer' || String(rawSender).toLowerCase().includes('buyer')) {
+              roleLabel = `🟦 Buyer (${buyerL})`; roleColor = '#3b82f6'; bubble = 'rgba(59,130,246,0.10)';
+            } else if (rawSender === 'seller' || String(rawSender).toLowerCase().includes('seller')) {
+              roleLabel = `🟩 Seller (${sellerL})`; roleColor = '#22c55e'; bubble = 'rgba(34,197,94,0.10)';
+            } else if (String(rawSender).startsWith('admin')) {
+              roleLabel = `🛡️ Admin`; roleColor = '#f59e0b'; bubble = 'rgba(245,158,11,0.12)';
+            } else {
+              roleLabel = rawSender; roleColor = '#94a3b8'; bubble = 'rgba(148,163,184,0.08)';
+            }
+            return `<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:${bubble};border-left:3px solid ${roleColor};">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                <span style="font-size:11px;font-weight:600;color:${roleColor};">${roleLabel}</span>
+                <span style="font-size:10px;color:#64748b;">${ts}</span>
+              </div>
+              <p style="font-size:12px;color:#e2e8f0;margin:0;white-space:pre-wrap;">${text}</p>
+            </div>`;
+          }).join('')
+        : '<p style="font-size:12px;color:#64748b;">No messages.</p>';
+      chatWrap.scrollTop = chatWrap.scrollHeight;
+    }
+  } catch (err) {
+    showMessage(err.message || 'Failed to send reply.', 'error');
+  }
 }
 
 async function loadP2P() {
