@@ -2297,7 +2297,7 @@
         calcEquiv();
       }
     });
-    var _doBuy = mkDebounce(withLock(doCreateOrder));
+    var _doBuy = mkDebounce(doCreateOrder);
     document.getElementById('buyBtn').addEventListener('click', _doBuy);
     document.getElementById('buyBtn').addEventListener('touchend', function(e) { e.preventDefault(); _doBuy(); });
 
