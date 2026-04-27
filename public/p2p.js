@@ -8871,6 +8871,12 @@ window.deleteMobAd = async function(offerId) {
       } catch(_) {}
       fetchOrdersSafe(); // re-render orders list with fresh server data
     });
+    _userStream.addEventListener('orders_refresh', function(e) {
+      fetchOrdersSafe();
+      // Bust offers cache so order count & online status update immediately
+      _offersResponseCache && _offersResponseCache.clear();
+      if (typeof loadOffers === 'function') loadOffers();
+    });
     _userStream.onerror = function() {
       // SSE dropped — start fallback poll so orders still refresh
       if (_userStream) { _userStream.close(); _userStream = null; }
