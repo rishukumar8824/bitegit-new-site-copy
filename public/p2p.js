@@ -1268,15 +1268,41 @@ function closeEditAdModal() {
   setTimeout(function() { modal.remove(); }, 260);
 }
 
-function openEditAdModal(offerId) {
+async function openEditAdModal(offerId) {
   var o = (window._myAdsCache || {})[offerId] || {};
   var existing = document.getElementById('editAdModal');
   if (existing) existing.remove();
+
+  // Fetch seller's saved payment methods
+  var savedMethods = [];
+  try {
+    var pmRes = await fetch('/api/p2p/payment-methods', { credentials: 'include' });
+    var pmData = await pmRes.json();
+    savedMethods = Array.isArray(pmData.methods) ? pmData.methods : [];
+  } catch(_) {}
+
+  var selectedPayments = Array.isArray(o.payments) ? o.payments.map(function(p){ return p.toLowerCase(); }) : [];
+  var paymentsHtml;
+  if (!savedMethods.length) {
+    paymentsHtml = `<div style="background:#111;border-radius:10px;padding:12px 14px;text-align:center;">
+      <p style="color:#f6a623;font-size:13px;margin:0 0 10px;">No payment methods saved yet.</p>
+      <button onclick="openPaymentMethodsScreen();closeEditAdModal();" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:13px;touch-action:manipulation;">Add Payment Method</button>
+    </div>`;
+  } else {
+    paymentsHtml = savedMethods.map(function(pm) {
+      var label = pm.nickname || pm.type || 'Unknown';
+      var checked = selectedPayments.includes(label.toLowerCase()) ? 'checked' : '';
+      return `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#111;border-radius:10px;cursor:pointer;user-select:none;-webkit-user-select:none;">
+        <input type="checkbox" name="eadPayment" value="${escapeHtml(label)}" ${checked} style="width:18px;height:18px;accent-color:#00c2b2;flex-shrink:0;">
+        <span style="font-size:14px;color:#fff;font-weight:600;">${escapeHtml(label)}</span>
+      </label>`;
+    }).join('');
+  }
+
+  var totalVal = o.totalAmount || o.available || o.availableAmount || '';
   var modal = document.createElement('div');
   modal.id = 'editAdModal';
   modal.className = 'edit-ad-modal-overlay';
-  var paymentsVal = Array.isArray(o.payments) ? o.payments.join(', ') : (o.payments || '');
-  var totalVal = o.totalAmount || o.available || o.availableAmount || '';
   modal.innerHTML = `
     <div class="edit-ad-modal" id="editAdModalInner">
       <div class="edit-ad-head">
@@ -1292,29 +1318,26 @@ function openEditAdModal(offerId) {
         <input id="eadMin" type="number" inputmode="decimal" class="edit-ad-input" value="${o.minLimit || ''}" placeholder="Min limit"/>
         <label class="edit-ad-label">Max Limit (INR)</label>
         <input id="eadMax" type="number" inputmode="decimal" class="edit-ad-input" value="${o.maxLimit || ''}" placeholder="Max limit"/>
-        <label class="edit-ad-label">Payment Methods (comma separated)</label>
-        <input id="eadPayments" type="text" inputmode="text" class="edit-ad-input" value="${paymentsVal}" placeholder="UPI, Bank Transfer"/>
+        <label class="edit-ad-label">Payment Methods</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">${paymentsHtml}</div>
         <label class="edit-ad-label">Payment Release Time</label>
         <select id="eadReleaseTime" class="edit-ad-input" style="appearance:auto;">
           ${['10','15','30','45','60'].map(function(v){ return '<option value="'+v+'"'+(String(o.releaseTime||'15')===v?' selected':'')+'>'+v+' min</option>'; }).join('')}
         </select>
-        <label class="edit-ad-label">Remark (optional)</label>
-        <input id="eadRemark" type="text" inputmode="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="Note for buyers"/>
+        <label class="edit-ad-label">Terms / Remark (shown to buyer)</label>
+        <input id="eadRemark" type="text" inputmode="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="e.g. Only IMPS transfer accepted"/>
         <p id="eadMsg" style="font-size:12px;min-height:16px;margin:4px 0 0;color:#f6465d;"></p>
       </div>
       <button class="mob-kyc-fp-btn" style="background:linear-gradient(96deg,#00c2b2,#0099a8);margin:0 1rem 1rem;touch-action:manipulation;" onclick="submitEditAd('${offerId}')">Save Changes</button>
     </div>
   `;
-  // Close on backdrop tap
   modal.addEventListener('click', function(e) {
     if (e.target === modal) closeEditAdModal();
   });
   document.body.appendChild(modal);
-  // Trigger animation
   requestAnimationFrame(function() {
     requestAnimationFrame(function() { modal.classList.add('ead-visible'); });
   });
-  // Close on ESC key
   function _onEsc(e) {
     if (e.key === 'Escape') { closeEditAdModal(); document.removeEventListener('keydown', _onEsc); }
   }
@@ -1326,10 +1349,9 @@ async function submitEditAd(offerId) {
   const totalAmount = Number(document.getElementById('eadTotal')?.value);
   const minLimit = Number(document.getElementById('eadMin')?.value);
   const maxLimit = Number(document.getElementById('eadMax')?.value);
-  const paymentsRaw = document.getElementById('eadPayments')?.value || '';
   const remark = document.getElementById('eadRemark')?.value || '';
   const releaseTime = document.getElementById('eadReleaseTime')?.value || '15';
-  const payments = paymentsRaw.split(',').map(p => p.trim()).filter(Boolean);
+  const payments = Array.from(document.querySelectorAll('input[name="eadPayment"]:checked')).map(function(cb){ return cb.value; });
   const msgEl = document.getElementById('eadMsg');
   if (!price || !minLimit || !maxLimit || !payments.length) {
     if (msgEl) msgEl.textContent = 'Price, limits and payment method are required.';

@@ -30,9 +30,9 @@ function buildOrderParticipants({ buyerId, buyerUsername, sellerId, sellerUserna
   ];
 }
 
-function buildOrderCreatedMessages({ now, buyerUsername, sellerUsername, payWindowMinutes }) {
+function buildOrderCreatedMessages({ now, buyerUsername, sellerUsername, payWindowMinutes, sellerTerms, sellerQrCode }) {
   const minutes = Number(payWindowMinutes || 15);
-  return [
+  const msgs = [
     {
       id: `msg_${now}_created_buyer`,
       sender: 'System',
@@ -54,6 +54,32 @@ function buildOrderCreatedMessages({ now, buyerUsername, sellerUsername, payWind
       createdAt: now + 1
     }
   ];
+  if (sellerTerms && sellerTerms.trim()) {
+    msgs.push({
+      id: `msg_${now}_terms`,
+      sender: sellerUsername || 'Seller',
+      senderRole: 'seller',
+      messageType: 'text',
+      isSystem: false,
+      role: 'both',
+      text: `📋 Terms: ${sellerTerms.trim()}`,
+      createdAt: now + 2
+    });
+  }
+  if (sellerQrCode && sellerQrCode.trim()) {
+    msgs.push({
+      id: `msg_${now}_qr`,
+      sender: sellerUsername || 'Seller',
+      senderRole: 'seller',
+      messageType: 'image',
+      isSystem: false,
+      role: 'both',
+      text: 'Payment QR Code',
+      imageUrl: sellerQrCode.trim(),
+      createdAt: now + 3
+    });
+  }
+  return msgs;
 }
 
 function createOrderId() {
@@ -165,6 +191,16 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
         return res.status(400).json({ success: false, message: 'Selected payment method is not available for this ad.' });
       }
 
+      // Fetch seller's QR code for the selected payment method
+      let sellerQrCode = '';
+      try {
+        const sellerPms = await repos.listPaymentMethods(seller.id);
+        const matchingPm = sellerPms.find(function(pm) {
+          return (pm.nickname || pm.type || '').toLowerCase() === paymentMethod.toLowerCase();
+        });
+        if (matchingPm && matchingPm.qrCode) sellerQrCode = matchingPm.qrCode;
+      } catch(_) {}
+
       const now = Date.now();
       const payWindowMinutes = Math.max(1, Math.round(orderTtlMs / 60000));
       const orderDoc = buildP2POrderDocument({
@@ -193,7 +229,9 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
           now,
           buyerUsername: buyer.username || buyer.id,
           sellerUsername: seller.username || seller.id,
-          payWindowMinutes
+          payWindowMinutes,
+          sellerTerms: offer.remark || '',
+          sellerQrCode
         })
       });
 
