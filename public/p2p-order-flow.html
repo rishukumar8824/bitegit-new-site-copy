@@ -2775,7 +2775,6 @@
     if (!currentUser && PREVIEW_MODE) {
       currentUser = normalizeCurrentUserPayload(PREVIEW_USER);
     }
-    if (!currentUser) { showLoginModal(true); return; }
     var btn = document.getElementById('buyBtn');
     if (btn && btn._creating) return;
 
