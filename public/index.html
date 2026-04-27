@@ -21,6 +21,8 @@
     } catch(e) {}
   </script>
   <style>
+    /* Auth flash prevention: hide both panels until auth state is confirmed */
+    [data-auth-guest-only], [data-auth-user-only] { display: none; }
     /* ── Scroll Reveal: smooth slide up ── */
     .js-reveal .cf-reveal {
       opacity: 0;
