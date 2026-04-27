@@ -462,7 +462,7 @@
         if (data.otp || data.devCode) {
           const code = data.otp || data.devCode;
           otpInp.value = code;
-          showStatus(`Demo mode — OTP auto-filled: ${code}`, 'success');
+          showStatus(`OTP has been auto-filled. Please verify to continue.`, 'success');
         }
       } else {
         showStatus(data.message || 'Registration failed. Try again.', 'fail');
