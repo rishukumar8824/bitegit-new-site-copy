@@ -3387,11 +3387,8 @@ async function createOrder(offerId, options = {}) {
     }
 
     if (openAfterCreate) {
-      if (typeof window.bfOpenExistingOrder === 'function') {
-        window.bfOpenExistingOrder(data.order);
-      } else {
-        openOrder(data.order);
-      }
+      // Navigate to standalone order flow page
+      window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(data.order.id) + '&source=buy&v=' + Date.now();
     }
 
     // ── Immediately inject new order into cache + orders screen ──
@@ -3465,12 +3462,8 @@ async function submitDealOrder() {
     console.log('[submitDealOrder] order created ref=' + data.order.reference + ' id=' + data.order.id);
     setDealHint('Order created! Ref: ' + data.order.reference, 'success');
     closeDealModal();
-    // Use bf screens when available, fall back to old modal only if bf not loaded
-    if (typeof window.bfOpenExistingOrder === 'function') {
-      window.bfOpenExistingOrder(data.order);
-    } else {
-      openOrder(data.order);
-    }
+    // Navigate to the standalone order flow page — works for buyer immediately
+    window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(data.order.id) + '&source=buy&v=' + Date.now();
   } catch (error) {
     console.warn('[submitDealOrder] FAILED:', error.message, 'code=' + (error.code || 'none'));
     if (error.code === 'EMAIL_NOT_VERIFIED') {
@@ -4259,17 +4252,12 @@ async function openOrderById(orderId, opts) {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'Unable to open order.');
-    if (!isOngoingOrderStatus(data?.order?.status)) throw new Error('Only ongoing orders can be opened.');
+    var orderStatus = String((data?.order?.status || '')).toUpperCase();
+    var canOpen = isOngoingOrderStatus(orderStatus) || orderStatus === 'RELEASED' || orderStatus === 'COMPLETED';
+    if (!canOpen) throw new Error('Order cannot be opened.');
 
-    // Always use bf screens; suppress old modal regardless
-    if (typeof window.bfOpenExistingOrder === 'function') {
-      window.bfOpenExistingOrder(data.order);
-    } else {
-      openOrder(data.order, { suppressModal: true });
-    }
-    // Chat screen removed — rebuild pending
-    if (data.counterparty) renderCounterpartyReputation(data.counterparty);
-    await loadLiveOrders();
+    // Navigate to standalone order flow page
+    window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(data.order.id) + '&source=orders&v=' + Date.now();
   } catch (error) {
     if (liveOrdersMeta) liveOrdersMeta.textContent = error.message;
   }
