@@ -2740,7 +2740,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   border-radius: 0;
   overflow: hidden;
   border: none;
-  background: transparent;
+  background: #000;
   box-shadow: none;
 }
 
@@ -2749,6 +2749,7 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   height: 100%;
   object-fit: contain;
   display: block;
+  transform: scale(1.08);
 }
 
 .cf-partners {
