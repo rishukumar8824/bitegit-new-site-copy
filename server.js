@@ -3602,6 +3602,33 @@ app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) =>
   }
 });
 
+app.post('/api/p2p/orders/:orderId/rate', requiresP2PUser, async (req, res) => {
+  try {
+    const order = await repos.getP2POrderById(req.params.orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    if (!isParticipant(order, req.p2pUser.id)) {
+      return res.status(403).json({ message: 'Only participants can rate this order.' });
+    }
+
+    const stars = Number(req.body.stars);
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
+      return res.status(400).json({ message: 'Stars must be between 1 and 5.' });
+    }
+    const comment = String(req.body.comment || '').trim().slice(0, 500);
+
+    const { p2pRatings } = getCollections();
+    await p2pRatings.updateOne(
+      { orderId: req.params.orderId, raterId: req.p2pUser.id },
+      { $set: { orderId: req.params.orderId, raterId: req.p2pUser.id, stars, comment, createdAt: new Date() } },
+      { upsert: true }
+    );
+
+    return res.json({ success: true, message: 'Rating submitted.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while submitting rating.' });
+  }
+});
+
 app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) => {
   const action = String(req.body.action || '').trim().toLowerCase();
 
