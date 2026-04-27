@@ -4946,19 +4946,14 @@ function _ordSyncSingleOrder(order, options) {
     localStorage.setItem('p2p_order_' + normalizedOrder.id, JSON.stringify(normalizedOrder));
   } catch (_) {}
 
-  // Increment offer orders count locally when order first becomes RELEASED
+  // When order first becomes RELEASED: refresh offers + profile from server
   if (normalizedOrder.status === 'RELEASED') {
-    var _prevOrd = (_ordAllOrders || []).find(function(o) { return o && o.id === normalizedOrder.id; });
-    var _wasReleased = _prevOrd && _prevOrd.status === 'RELEASED';
-    if (!_wasReleased) {
-      var _adId = normalizedOrder.offerId || normalizedOrder.adId;
-      if (_adId && offersMap.has(_adId)) {
-        var _off = Object.assign({}, offersMap.get(_adId));
-        _off.orders = (Number(_off.orders) || 0) + 1;
-        if (_off.reputation) _off.reputation.completedOrders = (Number(_off.reputation.completedOrders) || 0) + 1;
-        offersMap.set(_adId, _off);
-      }
-      loadProfilePanel && loadProfilePanel();
+    var _prevOrd2 = (_ordAllOrders || []).find(function(o) { return o && o.id === normalizedOrder.id; });
+    if (!_prevOrd2 || _prevOrd2.status !== 'RELEASED') {
+      setTimeout(function() {
+        if (typeof loadOffers === 'function') loadOffers();
+        if (typeof loadProfilePanel === 'function') loadProfilePanel({ refreshWallet: true });
+      }, 1500);
     }
   }
 
@@ -5992,13 +5987,8 @@ function _p2pPing() {
   if (currentUser && document.visibilityState !== 'hidden') {
     fetch('/api/p2p/ping', { method: 'POST', credentials: 'include' })
       .then(function() {
-        var uid = getCurrentUserId();
-        if (!uid) return;
-        offersMap.forEach(function(offer, id) {
-          if (offer.createdByUserId === uid || offer.userId === uid) {
-            offersMap.set(id, Object.assign({}, offer, { onlineStatus: 'online' }));
-          }
-        });
+        // Refresh offers so buyers see updated online status from server
+        if (typeof loadOffers === 'function') loadOffers();
       })
       .catch(function() {});
   }
