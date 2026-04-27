@@ -2784,7 +2784,7 @@ app.get('/api/p2p/public', async (req, res) => {
       createdByUserId: o.createdByUserId,
       merchantBadge: o.merchantBadge,
       releaseTime: o.releaseTime || '15',
-      onlineStatus: (o.lastActiveAt && (Date.now() - new Date(o.lastActiveAt).getTime()) < 3600000) ? 'online' : 'offline',
+      onlineStatus: (o.lastActiveAt && (Date.now() - new Date(o.lastActiveAt).getTime()) < 300000) ? 'online' : 'offline',
     });
     const sell_ads = allOffers.filter(o => o.side === 'sell').map(mapAd).sort((a, b) => a.price - b.price);
     const buy_ads  = allOffers.filter(o => o.side === 'buy').map(mapAd).sort((a, b) => a.price - b.price);
@@ -2865,7 +2865,7 @@ app.get('/api/p2p/offers', async (req, res) => {
           }
         }
 
-        const onlineStatus = (offer.lastActiveAt && (Date.now() - new Date(offer.lastActiveAt).getTime()) < 3600000) ? 'online' : 'offline';
+        const onlineStatus = (offer.lastActiveAt && (Date.now() - new Date(offer.lastActiveAt).getTime()) < 300000) ? 'online' : 'offline';
         if (!userId) return { ...offer, merchantBadge, onlineStatus };
         const rep = await repos.getUserReputation(userId);
         return { ...offer, reputation: rep || undefined, merchantBadge, onlineStatus };

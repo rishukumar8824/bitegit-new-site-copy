@@ -2705,6 +2705,7 @@ async function loadCurrentUser() {
       // Single call — fetchOrdersSafe shows cache instantly then fetches fresh
       fetchOrdersSafe();
       _startFallbackPoll(); // 15s fallback poll in case SSE is down
+      _p2pPing(); // ping immediately so seller shows online to buyers right away
     } else {
       currentUser = null;
       try { localStorage.removeItem('_p2p_hint'); } catch(_) {}
@@ -5988,16 +5989,15 @@ function _p2pPing() {
     fetch('/api/p2p/ping', { method: 'POST', credentials: 'include' }).catch(function() {});
   }
 }
-// Immediate ping on load, then every 60s
-setTimeout(_p2pPing, 2000);
-setInterval(_p2pPing, 60 * 1000);
+// Ping every 30s; also called immediately after login confirmation
+setInterval(_p2pPing, 30 * 1000);
 
-// ── Auto-refresh offers every 90s so online status stays current ─────
+// ── Auto-refresh offers every 30s so online status stays current ─────
 setInterval(function() {
   if (document.visibilityState !== 'hidden' && typeof loadOffers === 'function') {
     loadOffers();
   }
-}, 90 * 1000);
+}, 30 * 1000);
 
 // ── Keep Render free-tier server awake ──────────────────────────────
 setInterval(function() {
