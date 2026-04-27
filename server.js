@@ -3250,6 +3250,32 @@ app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
   }
 });
 
+// ── Admin: P2P Dispute — Admin Reply ──────────────────────────────────────────
+app.post('/api/admin/p2p/orders/:orderId/admin-reply', requiresAdminSession, async (req, res) => {
+  try {
+    const orderId = String(req.params.orderId || '').trim();
+    const message = String(req.body?.message || '').trim();
+    if (!message) return res.status(400).json({ message: 'Message is required.' });
+    const { p2pOrders } = getCollections();
+    const order = await p2pOrders.findOne({ id: orderId });
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    const now = Date.now();
+    const msg = {
+      id: 'msg_' + now + '_admin',
+      sender: 'admin:' + (req.adminAuth?.adminEmail || process.env.ADMIN_EMAIL || 'admin'),
+      senderRole: 'admin',
+      text: message,
+      createdAt: now
+    };
+    await p2pOrders.updateOne({ id: orderId }, { $push: { messages: msg }, $set: { updatedAt: now } });
+    const updated = await p2pOrders.findOne({ id: orderId });
+    return res.json({ message: 'Reply sent.', order: updated });
+  } catch (err) {
+    console.error('[admin-reply]', err);
+    return res.status(500).json({ message: err.message || 'Server error.' });
+  }
+});
+
 // ── Merchant Application: Admin list all ──
 app.get('/api/admin/merchant-applications', requiresAdminSession, (req, res) => {
   const list = Array.from(merchantApplications.values()).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
