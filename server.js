@@ -3155,12 +3155,12 @@ app.patch('/api/p2p/offers/:offerId', requiresP2PUser, async (req, res) => {
     if (!offer) return res.status(404).json({ message: 'Offer not found.' });
     if (offer.createdByUserId !== userId) return res.status(403).json({ message: 'Not your ad.' });
 
-    const { price, minLimit, maxLimit, payments, status, remark, totalAmount } = req.body;
+    const { price, minLimit, maxLimit, payments, status, remark, totalAmount, releaseTime } = req.body;
     // Validate status transitions
     if (status && !['ACTIVE', 'PAUSED'].includes(status)) {
       return res.status(400).json({ message: 'Status must be ACTIVE or PAUSED.' });
     }
-    const updated = await repos.updateOffer(offerId, userId, { price, minLimit, maxLimit, payments, status, remark, totalAmount });
+    const updated = await repos.updateOffer(offerId, userId, { price, minLimit, maxLimit, payments, status, remark, totalAmount, releaseTime });
     if (!updated) return res.status(404).json({ message: 'Update failed.' });
     return res.json({ offer: updated });
   } catch (err) {

@@ -1355,6 +1355,7 @@ async function submitEditAd(offerId) {
     }
     closeEditAdModal();
     await loadMyAds();
+    loadOffers();
   } catch (e) {
     if (msgEl) msgEl.textContent = 'Network error. Try again.';
   }
@@ -5945,12 +5946,15 @@ window.addEventListener('pagehide', () => {
   // For non-logged-in users, showLoginPrompt is shown when they open the orders screen.
 })();
 
-// ── Online presence ping — marks current user as online every 60s ───
-setInterval(function() {
+// ── Online presence ping — marks current user as online ──────────────
+function _p2pPing() {
   if (currentUser && document.visibilityState !== 'hidden') {
     fetch('/api/p2p/ping', { method: 'POST', credentials: 'include' }).catch(function() {});
   }
-}, 60 * 1000);
+}
+// Immediate ping on load, then every 60s
+setTimeout(_p2pPing, 2000);
+setInterval(_p2pPing, 60 * 1000);
 
 // ── Keep Render free-tier server awake ──────────────────────────────
 setInterval(function() {
@@ -7282,12 +7286,14 @@ function initMobPostAdScreen() {
         var myadsTab = document.querySelector('.mob-ptab[data-ptab="myads"]');
         if (myadsTab) myadsTab.click();
       } else if (offers.length > 0) {
-        // Has one ad but other side is free — show create form with note
+        // Has one ad but other side is free — update note, but don't override tab display
         if (adLimitMsg) {
           adLimitMsg.style.display = 'block';
           adLimitMsg.textContent = 'You have 1 active ' + (hasBuy ? 'Buy' : 'Sell') + ' ad. You can still post a ' + (hasBuy ? 'Sell' : 'Buy') + ' ad.';
         }
-        if (createSection) createSection.style.display = 'block';
+        var activeTabEl = document.querySelector('.mob-ptab.active[data-ptab]');
+        var isMyAdsTab = activeTabEl && activeTabEl.getAttribute('data-ptab') === 'myads';
+        if (createSection) createSection.style.display = isMyAdsTab ? 'none' : 'block';
       } else {
         // Check payment methods before showing create form
         try {
