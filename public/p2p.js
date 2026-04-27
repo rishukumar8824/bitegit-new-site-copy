@@ -5985,17 +5985,19 @@ window.addEventListener('pagehide', () => {
 // ── Online presence ping — marks current user as online ──────────────
 function _p2pPing() {
   if (currentUser && document.visibilityState !== 'hidden') {
-    fetch('/api/p2p/ping', { method: 'POST', credentials: 'include' })
-      .then(function() {
-        // Refresh offers so buyers see updated online status from server
-        if (typeof loadOffers === 'function') loadOffers();
-      })
-      .catch(function() {});
+    fetch('/api/p2p/ping', { method: 'POST', credentials: 'include' }).catch(function() {});
   }
 }
 // Immediate ping on load, then every 60s
 setTimeout(_p2pPing, 2000);
 setInterval(_p2pPing, 60 * 1000);
+
+// ── Auto-refresh offers every 90s so online status stays current ─────
+setInterval(function() {
+  if (document.visibilityState !== 'hidden' && typeof loadOffers === 'function') {
+    loadOffers();
+  }
+}, 90 * 1000);
 
 // ── Keep Render free-tier server awake ──────────────────────────────
 setInterval(function() {
