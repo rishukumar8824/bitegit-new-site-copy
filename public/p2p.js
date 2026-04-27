@@ -1258,38 +1258,8 @@ async function deleteMyAd(offerId) {
   } catch (e) { alert('Network error.'); }
 }
 
-// Edit ad from My Ads tab — prefills from cached offer data
-window.openMobEditAd = function(offerId) {
-  var o = (window._myAdsCache || {})[offerId] || {};
-  var existing = document.getElementById('editAdModal');
-  if (existing) existing.remove();
-  var modal = document.createElement('div');
-  modal.id = 'editAdModal';
-  modal.className = 'edit-ad-modal-overlay';
-  modal.innerHTML = `
-    <div class="edit-ad-modal">
-      <div class="edit-ad-head">
-        <h3>Edit Ad</h3>
-        <button onclick="document.getElementById('editAdModal').remove()" class="edit-ad-close">✕</button>
-      </div>
-      <div class="edit-ad-body">
-        <label class="edit-ad-label">Price (INR per USDT)</label>
-        <input id="eadPrice" type="number" class="edit-ad-input" value="${o.price || ''}" placeholder="Enter price"/>
-        <label class="edit-ad-label">Min Limit (INR)</label>
-        <input id="eadMin" type="number" class="edit-ad-input" value="${o.minLimit || ''}" placeholder="Min limit"/>
-        <label class="edit-ad-label">Max Limit (INR)</label>
-        <input id="eadMax" type="number" class="edit-ad-input" value="${o.maxLimit || ''}" placeholder="Max limit"/>
-        <label class="edit-ad-label">Payment Methods (comma separated)</label>
-        <input id="eadPayments" type="text" class="edit-ad-input" value="${Array.isArray(o.payments) ? o.payments.join(', ') : (o.payments || '')}" placeholder="UPI, Bank Transfer"/>
-        <label class="edit-ad-label">Remark (optional)</label>
-        <input id="eadRemark" type="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="Note for buyers"/>
-        <p id="eadMsg" style="font-size:12px;min-height:16px;margin:4px 0 0;color:#f6465d;"></p>
-      </div>
-      <button class="mob-kyc-fp-btn" style="background:linear-gradient(96deg,#00c2b2,#0099a8);margin:0 1rem 1rem;" onclick="submitEditAd('${offerId}')">Save Changes</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
-};
+// Alias so both mobile and desktop use the same working function
+window.openMobEditAd = function(offerId) { openEditAdModal(offerId); };
 
 function closeEditAdModal() {
   var modal = document.getElementById('editAdModal');
@@ -1340,12 +1310,11 @@ function openEditAdModal(offerId) {
   requestAnimationFrame(function() {
     requestAnimationFrame(function() { modal.classList.add('ead-visible'); });
   });
-  // Close on browser back
-  history.pushState({ editAdModal: true }, '');
-  window.addEventListener('popstate', function _onPop() {
-    closeEditAdModal();
-    window.removeEventListener('popstate', _onPop);
-  });
+  // Close on ESC key
+  function _onEsc(e) {
+    if (e.key === 'Escape') { closeEditAdModal(); document.removeEventListener('keydown', _onEsc); }
+  }
+  document.addEventListener('keydown', _onEsc);
 }
 
 async function submitEditAd(offerId) {
