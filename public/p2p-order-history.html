@@ -535,54 +535,14 @@
       }
     } catch (e) {}
 
-    // Demo fallback
+    // Empty state fallback
     if (!append) {
-      allOrders = generateDemoOrders();
+      allOrders = [];
       renderStats(null);
       applyFilter();
       hideSkeleton();
     }
     isLoading = false;
-  }
-
-  // ============================================================
-  // DEMO DATA GENERATOR
-  // ============================================================
-  function generateDemoOrders() {
-    const statuses = ['completed','completed','completed','pending','canceled','processing','appealing'];
-    const payments = ['UPI','IMPS','NEFT','PhonePe','Bank Transfer','Digital eRupee'];
-    const buyers   = ['ER.LAOR','TradePro99','CryptoKing','FastBuyer','Vijay_P2P','Raj_Trader','sumitkmina8824'];
-    const orders = [];
-    const now = Date.now();
-    for (let i = 0; i < 18; i++) {
-      const side   = i % 3 === 0 ? 'sell' : 'buy';
-      const status = statuses[i % statuses.length];
-      const price  = 91 + Math.random() * 12;
-      const fiat   = [1000,2000,3000,5000,750,1500,4000][i % 7];
-      const crypto = (fiat / price).toFixed(2);
-      const cp     = buyers[i % buyers.length];
-      const created = new Date(now - (i * 3 * 3600 * 1000));
-      const finished = status === 'completed' ? new Date(created.getTime() + 8 * 60000) : null;
-      orders.push({
-        id: 'P2P-' + (1000 + i),
-        reference: 'P2P-' + (1000 + i),
-        side,
-        status,
-        fiatAmount: fiat,
-        cryptoAmount: crypto,
-        price: price.toFixed(2),
-        paymentMethod: payments[i % payments.length],
-        counterpartyUsername: cp,
-        counterpartyOrders: 'Buy ' + (Math.floor(Math.random()*500)) + ' Sell ' + (Math.floor(Math.random()*1000)),
-        counterpartyRelease: (Math.random() < 0.5 ? '< 5' : Math.ceil(Math.random()*10)) + ' min',
-        counterpartyCompleted: Math.floor(Math.random() * 20),
-        notes: '3rd party payment not allowed',
-        cancelReason: status === 'canceled' ? 'Agreed with counterparty to cancel.' : null,
-        createdAt: created.toISOString(),
-        completedAt: finished ? finished.toISOString() : null,
-      });
-    }
-    return orders;
   }
 
   // ============================================================
@@ -623,10 +583,9 @@
 
     if (filteredOrders.length === 0) {
       list.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <div class="empty-title">No orders found</div>
-          <div class="empty-sub">Your P2P orders will appear here once you start trading.</div>
+        <div style="text-align:center;padding:3rem 1rem;color:rgba(255,255,255,0.4);">
+          <div style="font-size:2.5rem;margin-bottom:0.75rem;">📋</div>
+          <p style="font-size:0.95rem;">No order history found</p>
         </div>`;
       return;
     }

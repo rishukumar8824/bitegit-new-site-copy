@@ -653,7 +653,7 @@ const DEMO_APPEALS = [
   }
 ];
 
-let appeals = [...DEMO_APPEALS];
+let appeals = [];
 
 /* ============================================================
    SCREEN NAVIGATION
@@ -675,10 +675,9 @@ function renderList() {
 
   if (filtered.length === 0) {
     list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📋</div>
-        <div class="empty-title">No appeals found</div>
-        <div class="empty-sub">You haven't filed any appeals yet.<br>Tap + to file a new appeal.</div>
+      <div style="text-align:center;padding:3rem 1rem;color:rgba(255,255,255,0.4);">
+        <div style="font-size:2.5rem;margin-bottom:0.75rem;">⚖️</div>
+        <p style="font-size:0.95rem;">No appeals found</p>
       </div>`;
     return;
   }
@@ -975,16 +974,16 @@ function showToast(msg, type = '') {
 }
 
 /* ============================================================
-   INIT: Load appeals from API or use demo
+   INIT: Load appeals from API
    ============================================================ */
 async function loadAppeals() {
   try {
     const res = await fetch('/api/p2p/appeals', { credentials: 'include' });
     if (!res.ok) throw new Error();
     const data = await res.json();
-    if (Array.isArray(data) && data.length > 0) appeals = data;
+    if (Array.isArray(data)) appeals = data;
   } catch {
-    // Use demo data already set
+    appeals = [];
   }
   renderList();
 }

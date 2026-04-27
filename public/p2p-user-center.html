@@ -413,7 +413,7 @@
 
       <!-- Merchant Section -->
       <div class="section-label">Merchant</div>
-      <div class="merchant-card" id="merchantCard" onclick="handleMerchant()">
+      <div class="merchant-card" id="merchantCard" onclick="handleMerchant()" style="opacity:0.4;cursor:not-allowed">
         <div class="merchant-left">
           <div class="merchant-icon">🏪</div>
           <div>
@@ -443,7 +443,7 @@
           </div>
         </div>
 
-        <div class="settings-item" onclick="showToast('My Ads coming soon')">
+        <div class="settings-item" onclick="return false" style="opacity:0.4;cursor:not-allowed">
           <div class="settings-item-left">
             <div class="settings-icon">📋</div>
             <div>
@@ -482,7 +482,7 @@
           </div>
         </div>
 
-        <div class="settings-item" onclick="showToast('Block list coming soon')">
+        <div class="settings-item" onclick="return false" style="opacity:0.4;cursor:not-allowed">
           <div class="settings-item-left">
             <div class="settings-icon">🚫</div>
             <div>
@@ -495,7 +495,7 @@
           </div>
         </div>
 
-        <div class="settings-item" onclick="showToast('Security center coming soon')">
+        <div class="settings-item" onclick="return false" style="opacity:0.4;cursor:not-allowed">
           <div class="settings-item-left">
             <div class="settings-icon">🔒</div>
             <div>
@@ -528,7 +528,7 @@
     </div>
 
     <div class="scroll-area">
-      <button class="add-method-btn" onclick="showToast('Add payment method coming soon')">
+      <button class="add-method-btn" onclick="return false" style="opacity:0.4;cursor:not-allowed">
         + Add Payment Method
       </button>
 
@@ -587,108 +587,24 @@
   let allReviews = [];
   let currentFeedbackTab = 'all';
 
-  // ─── Demo Fallback Data ──────────────────────────────────────────────
-  const DEMO_PROFILE = {
-    username: 'Aryan_Trades',
-    isMerchant: true,
-    isOnline: true,
-    avatarColor: '#1a5c8a',
-    avatarLetter: 'A',
-    phoneVerified: true,
-    stats: {
-      totalOrders: 347,
-      orders30d: 38,
-      completion30d: 98.4,
-      avgReleaseMin: 8
-    },
-    paymentMethods: [
-      {
-        id: 1,
-        type: 'UPI',
-        color: '#5b3cc4',
-        icon: '📱',
-        fields: [
-          { label: 'UPI ID', value: 'aryan.trades@okaxis', copyable: true },
-          { label: 'Name', value: 'Aryan Kumar', copyable: false }
-        ]
-      },
-      {
-        id: 2,
-        type: 'Bank Transfer',
-        color: '#0a7a5c',
-        icon: '🏦',
-        fields: [
-          { label: 'Bank', value: 'HDFC Bank', copyable: false },
-          { label: 'Account No.', value: '****  ****  4821', copyable: false },
-          { label: 'IFSC', value: 'HDFC0001234', copyable: true }
-        ]
-      }
-    ],
-    rating: 4.8,
-    totalReviews: 312,
-    starBreakdown: { 5: 78, 4: 14, 3: 5, 2: 2, 1: 1 },
-    reviews: [
-      {
-        username: 'Riya_M',
-        avatarColor: '#8a1a5c',
-        letter: 'R',
-        stars: 5,
-        comment: 'Super fast release. Very trustworthy trader. Highly recommended!',
-        date: '2026-03-20',
-        type: 'Buy',
-        positive: true
-      },
-      {
-        username: 'KumarP99',
-        avatarColor: '#1a8a3c',
-        letter: 'K',
-        stars: 5,
-        comment: 'Smooth transaction, great communication throughout.',
-        date: '2026-03-18',
-        type: 'Sell',
-        positive: true
-      },
-      {
-        username: 'TradePro_X',
-        avatarColor: '#8a5c1a',
-        letter: 'T',
-        stars: 4,
-        comment: 'Good trader, slight delay but resolved quickly.',
-        date: '2026-03-15',
-        type: 'Buy',
-        positive: true
-      },
-      {
-        username: 'ShivaK',
-        avatarColor: '#1a3a8a',
-        letter: 'S',
-        stars: 2,
-        comment: 'Took longer than expected and communication was slow.',
-        date: '2026-03-10',
-        type: 'Sell',
-        positive: false
-      },
-      {
-        username: 'Priya_Finance',
-        avatarColor: '#5c1a8a',
-        letter: 'P',
-        stars: 5,
-        comment: 'Excellent! Released within minutes. Will trade again.',
-        date: '2026-03-08',
-        type: 'Buy',
-        positive: true
-      },
-      {
-        username: 'NitinV',
-        avatarColor: '#1a7a5a',
-        letter: 'N',
-        stars: 1,
-        comment: 'Not responsive. Had to escalate to support.',
-        date: '2026-03-05',
-        type: 'Buy',
-        positive: false
-      }
-    ]
+  // ─── Empty Fallback Profile ──────────────────────────────────────────
+  const EMPTY_PROFILE = {
+    username: 'User',
+    completionRate: 0,
+    totalOrders: 0,
+    avgReleaseTime: '--',
+    verifications: {},
+    isMerchant: false,
+    isOnline: false,
+    avatarColor: '#333',
+    avatarLetter: 'U',
+    phoneVerified: false,
+    stats: { totalOrders: 0, orders30d: 0, completion30d: 0, avgReleaseMin: 0 },
+    paymentMethods: [],
+    rating: 0,
+    totalReviews: 0,
+    starBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    reviews: []
   };
 
   // ─── API Fetch ───────────────────────────────────────────────────────
@@ -698,7 +614,7 @@
       if (!res.ok) throw new Error('API error');
       profileData = await res.json();
     } catch (e) {
-      profileData = DEMO_PROFILE;
+      profileData = EMPTY_PROFILE;
     }
     renderProfile();
   }
@@ -888,9 +804,8 @@
   function handleMerchant() {
     if (profileData && profileData.isMerchant) {
       showToast('You are already a verified merchant');
-    } else {
-      showToast('Merchant application coming soon');
     }
+    // Merchant application not yet available
   }
 
   // ─── Copy to Clipboard ───────────────────────────────────────────────
