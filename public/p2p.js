@@ -2982,7 +2982,7 @@ function renderOffers(data, append) {
     const repOrders = rep.completedOrders != null ? rep.completedOrders : (offer.orders || 0);
     const repRate = rep.completionRate != null ? rep.completionRate : (offer.completionRate || 100);
     const repTime = offer.releaseTime ? offer.releaseTime + ' min' : (rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes + ' min' : '15 min');
-    const onlineStatus = offer.onlineStatus || 'offline';
+    const onlineStatus = isOwnAd ? 'online' : (offer.onlineStatus || 'offline');
     const onlineDotColor = onlineStatus === 'online' ? '#2ebd85' : onlineStatus === 'away' ? '#a8ff3e' : '#555';
     const onlineLabel = onlineStatus === 'online' ? 'Online' : onlineStatus === 'away' ? 'Away' : 'Offline';
     const paymentGate = offerPayments.map(m => `<span class="gt-pay">${escapeHtml(m)}</span>`).join('');
@@ -4946,6 +4946,22 @@ function _ordSyncSingleOrder(order, options) {
     localStorage.setItem('p2p_order_' + normalizedOrder.id, JSON.stringify(normalizedOrder));
   } catch (_) {}
 
+  // Increment offer orders count locally when order first becomes RELEASED
+  if (normalizedOrder.status === 'RELEASED') {
+    var _prevOrd = (_ordAllOrders || []).find(function(o) { return o && o.id === normalizedOrder.id; });
+    var _wasReleased = _prevOrd && _prevOrd.status === 'RELEASED';
+    if (!_wasReleased) {
+      var _adId = normalizedOrder.offerId || normalizedOrder.adId;
+      if (_adId && offersMap.has(_adId)) {
+        var _off = Object.assign({}, offersMap.get(_adId));
+        _off.orders = (Number(_off.orders) || 0) + 1;
+        if (_off.reputation) _off.reputation.completedOrders = (Number(_off.reputation.completedOrders) || 0) + 1;
+        offersMap.set(_adId, _off);
+      }
+      loadProfilePanel && loadProfilePanel();
+    }
+  }
+
   var found = false;
   _ordAllOrders = (Array.isArray(_ordAllOrders) ? _ordAllOrders : []).map(function(existing) {
     if (existing && existing.id === normalizedOrder.id) {
@@ -5974,7 +5990,17 @@ window.addEventListener('pagehide', () => {
 // ── Online presence ping — marks current user as online ──────────────
 function _p2pPing() {
   if (currentUser && document.visibilityState !== 'hidden') {
-    fetch('/api/p2p/ping', { method: 'POST', credentials: 'include' }).catch(function() {});
+    fetch('/api/p2p/ping', { method: 'POST', credentials: 'include' })
+      .then(function() {
+        var uid = getCurrentUserId();
+        if (!uid) return;
+        offersMap.forEach(function(offer, id) {
+          if (offer.createdByUserId === uid || offer.userId === uid) {
+            offersMap.set(id, Object.assign({}, offer, { onlineStatus: 'online' }));
+          }
+        });
+      })
+      .catch(function() {});
   }
 }
 // Immediate ping on load, then every 60s
