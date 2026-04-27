@@ -3977,7 +3977,15 @@ app.get('/p2p-buy', (req, res) => {
 });
 
 app.get('/kyc', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'kyc.html'));
+  res.redirect('/p2p#kyc');
+});
+
+app.get('/earn', (req, res) => {
+  res.redirect('/');
+});
+
+app.get('/rewards', (req, res) => {
+  res.redirect('/p2p#rewards');
 });
 
 app.get('/trade', (req, res) => {
