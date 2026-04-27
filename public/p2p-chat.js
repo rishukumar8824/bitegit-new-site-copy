@@ -915,7 +915,7 @@ function startRealtimeUpdates() {
         chatState.textContent = error.message;
       }
     }
-  }, 3000);
+  }, 1500);
 
   orderPollInterval = setInterval(async () => {
     try {

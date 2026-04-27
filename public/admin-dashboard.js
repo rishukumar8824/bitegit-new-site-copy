@@ -839,8 +839,10 @@ async function loadSpot() {
 function buildDisputeMsgBubble(msg, buyerLabel, sellerLabel) {
   const rawSender = String(msg.senderRole || msg.role || msg.sender || '').toLowerCase();
   const text = escapeHtml(msg.text || msg.message || '');
+  const isImage = msg.messageType === 'image' || (!msg.text && msg.imageUrl);
+  const imageUrl = msg.imageUrl || '';
   const ts = msg.createdAt
-    ? new Date(Number.isFinite(msg.createdAt) ? msg.createdAt : msg.createdAt)
+    ? new Date(Number.isFinite(msg.createdAt) ? Number(msg.createdAt) : msg.createdAt)
         .toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
     : '';
   let roleLabel, roleColor, bubble;
@@ -851,7 +853,6 @@ function buildDisputeMsgBubble(msg, buyerLabel, sellerLabel) {
   } else if (rawSender === 'seller' || rawSender.includes('seller')) {
     roleLabel = '🟩 Seller (' + escapeHtml(sellerLabel) + ')'; roleColor = '#22c55e'; bubble = 'rgba(34,197,94,0.10)';
   } else {
-    // Fallback: guess from sender username
     const snd = String(msg.sender || '').toLowerCase();
     const byr = String(buyerLabel || '').toLowerCase();
     const slr = String(sellerLabel || '').toLowerCase();
@@ -863,12 +864,20 @@ function buildDisputeMsgBubble(msg, buyerLabel, sellerLabel) {
       roleLabel = escapeHtml(msg.sender || 'System'); roleColor = '#94a3b8'; bubble = 'rgba(148,163,184,0.08)';
     }
   }
+  // Image content
+  const imgMarkup = isImage && imageUrl
+    ? '<a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener" style="display:block;margin-top:6px;">'
+      + '<img src="' + escapeHtml(imageUrl) + '" alt="Payment screenshot" '
+      + 'style="max-width:180px;max-height:160px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);cursor:pointer;" />'
+      + '</a>'
+    : '';
+  const textMarkup = text ? '<p style="font-size:12px;color:#e2e8f0;margin:4px 0 0;white-space:pre-wrap;">' + text + '</p>' : '';
   return '<div style="margin-bottom:7px;padding:7px 10px;border-radius:8px;background:' + bubble + ';border-left:3px solid ' + roleColor + ';">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;">'
     + '<span style="font-size:11px;font-weight:600;color:' + roleColor + ';">' + roleLabel + '</span>'
     + '<span style="font-size:10px;color:#64748b;">' + ts + '</span>'
     + '</div>'
-    + '<p style="font-size:12px;color:#e2e8f0;margin:0;white-space:pre-wrap;">' + text + '</p>'
+    + imgMarkup + textMarkup
     + '</div>';
 }
 
@@ -887,8 +896,8 @@ function adminQuickReply(orderId, idx) {
   var item = ADMIN_QUICK_REPLIES[idx];
   if (!item) return;
   var input = document.getElementById('disputeReplyInput_' + orderId);
-  if (input) input.value = item.text;
-  adminSendDisputeReply(orderId);
+  if (input) { input.value = item.text; input.focus(); }
+  // Do NOT auto-send — admin clicks Send manually
 }
 
 function renderP2PDisputeCard(order = {}) {
@@ -1107,13 +1116,17 @@ async function loadP2P() {
 
   const disputesList = document.getElementById('p2pDisputesList');
   const disputes = Array.isArray(disputesPayload.disputes) ? disputesPayload.disputes : [];
-  disputesList.innerHTML = disputes
-    .map((order) => renderP2PDisputeCard(order))
-    .join('');
-
+  disputesList.innerHTML = disputes.map((order) => renderP2PDisputeCard(order)).join('');
   if (disputes.length === 0) {
     disputesList.innerHTML = '<p class="text-sm text-slate-500">No active disputes.</p>';
   }
+  // Scroll each chat box to bottom after render
+  setTimeout(function() {
+    disputes.forEach(function(order) {
+      var el = document.getElementById('disputeChat_' + (order.id || ''));
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+  }, 50);
 
   const settings = settingsPayload.settings || {};
   const form = document.getElementById('p2pSettingsForm');
