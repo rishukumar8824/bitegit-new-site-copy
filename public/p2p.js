@@ -8304,8 +8304,6 @@ window.deleteMobAd = async function(offerId) {
         return;
       }
       if (hint) hint.textContent = '';
-      var hasActive = (typeof _ordAllOrders !== 'undefined' ? _ordAllOrders : []).some(function(o) { return ['CREATED','PENDING','PAID','PAYMENT_SENT'].indexOf((o.status||'').toUpperCase()) !== -1; });
-      if (hasActive) { if (hint) hint.textContent = 'You already have an active order. Complete it first.'; return; }
       if (btn._creating) return;
       btn._creating = true; btn.disabled = true;
       btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:ord-spin 0.7s linear infinite;display:inline-block;"></span>Placing order...</span>';
