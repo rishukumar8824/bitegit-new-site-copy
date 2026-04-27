@@ -343,7 +343,7 @@ function registerAdminRoutes(app, deps) {
   router.get('/p2p/disputes', protect(ROLE_GROUPS.COMPLIANCE), withLogging({ module: 'p2p', action: 'list_disputes' }, adminControllers.listP2PDisputes));
   router.post('/p2p/orders/:orderId/release', protect(ROLE_GROUPS.OPS), withLogging({ module: 'p2p', action: 'manual_release_escrow' }, adminControllers.manualReleaseP2POrder));
   router.post('/p2p/orders/:orderId/freeze', protect(ROLE_GROUPS.COMPLIANCE), withLogging({ module: 'p2p', action: 'freeze_escrow' }, adminControllers.freezeEscrow));
-  router.post('/p2p/orders/:orderId/admin-reply', protect(ROLE_GROUPS.COMPLIANCE), withLogging({ module: 'p2p', action: 'admin_reply_dispute' }, adminControllers.adminReplyP2PDispute));
+  router.post('/p2p/orders/:orderId/admin-reply', protect(ROLE_GROUPS.ALL), withLogging({ module: 'p2p', action: 'admin_reply_dispute' }, adminControllers.adminReplyP2PDispute));
   router.get('/p2p/settings', protect(ROLE_GROUPS.OPS), withLogging({ module: 'p2p', action: 'get_p2p_settings' }, adminControllers.getP2PSettings));
   router.put('/p2p/settings', protect(ROLE_GROUPS.OPS), withLogging({ module: 'p2p', action: 'update_p2p_settings' }, adminControllers.updateP2PSettings));
   router.post('/p2p/cleanup-demo', protect(ROLE_GROUPS.OPS), withLogging({ module: 'p2p', action: 'cleanup_demo_ads' }, adminControllers.cleanupDemoP2PAds));

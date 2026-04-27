@@ -836,14 +836,54 @@ async function loadSpot() {
 // P2P
 // ─────────────────────────────────────────────────────────────────────────────
 
+function buildDisputeMsgBubble(msg, buyerLabel, sellerLabel) {
+  const rawSender = String(msg.senderRole || msg.role || msg.sender || '').toLowerCase();
+  const text = escapeHtml(msg.text || msg.message || '');
+  const ts = msg.createdAt
+    ? new Date(Number.isFinite(msg.createdAt) ? msg.createdAt : msg.createdAt)
+        .toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
+    : '';
+  let roleLabel, roleColor, bubble;
+  if (rawSender.startsWith('admin') || rawSender === 'admin') {
+    roleLabel = '🛡️ Admin'; roleColor = '#f59e0b'; bubble = 'rgba(245,158,11,0.13)';
+  } else if (rawSender === 'buyer' || rawSender.includes('buyer')) {
+    roleLabel = '🟦 Buyer (' + escapeHtml(buyerLabel) + ')'; roleColor = '#3b82f6'; bubble = 'rgba(59,130,246,0.10)';
+  } else if (rawSender === 'seller' || rawSender.includes('seller')) {
+    roleLabel = '🟩 Seller (' + escapeHtml(sellerLabel) + ')'; roleColor = '#22c55e'; bubble = 'rgba(34,197,94,0.10)';
+  } else {
+    // Fallback: guess from sender username
+    const snd = String(msg.sender || '').toLowerCase();
+    const byr = String(buyerLabel || '').toLowerCase();
+    const slr = String(sellerLabel || '').toLowerCase();
+    if (byr && snd === byr) {
+      roleLabel = '🟦 Buyer (' + escapeHtml(buyerLabel) + ')'; roleColor = '#3b82f6'; bubble = 'rgba(59,130,246,0.10)';
+    } else if (slr && snd === slr) {
+      roleLabel = '🟩 Seller (' + escapeHtml(sellerLabel) + ')'; roleColor = '#22c55e'; bubble = 'rgba(34,197,94,0.10)';
+    } else {
+      roleLabel = escapeHtml(msg.sender || 'System'); roleColor = '#94a3b8'; bubble = 'rgba(148,163,184,0.08)';
+    }
+  }
+  return '<div style="margin-bottom:7px;padding:7px 10px;border-radius:8px;background:' + bubble + ';border-left:3px solid ' + roleColor + ';">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">'
+    + '<span style="font-size:11px;font-weight:600;color:' + roleColor + ';">' + roleLabel + '</span>'
+    + '<span style="font-size:10px;color:#64748b;">' + ts + '</span>'
+    + '</div>'
+    + '<p style="font-size:12px;color:#e2e8f0;margin:0;white-space:pre-wrap;">' + text + '</p>'
+    + '</div>';
+}
+
 function renderP2PDisputeCard(order = {}) {
   const appeal = order.appealDetails && typeof order.appealDetails === 'object' ? order.appealDetails : {};
   const attachments = Array.isArray(appeal.attachments) ? appeal.attachments : [];
-  const messages = Array.isArray(order.chatMessages)
+  const allMessages = Array.isArray(order.chatMessages)
     ? order.chatMessages
     : Array.isArray(order.messages)
       ? order.messages
       : [];
+  const SHOW = 5;
+  const messages = allMessages.slice(-SHOW);
+  const hiddenCount = allMessages.length - messages.length;
+
   const appealType = appeal.type || order.disputeReason || 'Appeal';
   const appealReason = appeal.reason || order.disputeReason || 'No appeal details submitted.';
   const submittedBy = appeal.submittedBy?.username || appeal.submittedBy?.userId || order.disputedBy || '-';
@@ -853,47 +893,21 @@ function renderP2PDisputeCard(order = {}) {
   const orderId = escapeHtml(order.id || '');
 
   const attachmentMarkup = attachments.length
-    ? `<div class="mt-2 grid grid-cols-3 gap-2">
-        ${attachments.map((item) => `
-          <a href="${escapeHtml(item.dataUrl)}" target="_blank" rel="noopener" class="block overflow-hidden rounded-lg border border-slate-700 bg-slate-950" title="${escapeHtml(item.name || 'Appeal attachment')}">
-            <img src="${escapeHtml(item.dataUrl)}" alt="${escapeHtml(item.name || 'Appeal attachment')}" style="height:72px;width:100%;object-fit:cover;" />
-          </a>
-        `).join('')}
-      </div>`
+    ? '<div class="mt-2 grid grid-cols-3 gap-2">'
+        + attachments.map((item) =>
+            '<a href="' + escapeHtml(item.dataUrl) + '" target="_blank" rel="noopener" class="block overflow-hidden rounded-lg border border-slate-700 bg-slate-950">'
+            + '<img src="' + escapeHtml(item.dataUrl) + '" alt="Appeal attachment" style="height:72px;width:100%;object-fit:cover;" /></a>'
+          ).join('')
+        + '</div>'
     : '<p class="mt-2 text-xs text-slate-500">No screenshots attached.</p>';
 
+  const hiddenNote = hiddenCount > 0
+    ? '<p style="font-size:11px;color:#64748b;margin:0 0 6px;text-align:center;">+ ' + hiddenCount + ' earlier message(s)</p>'
+    : '';
+
   const messageMarkup = messages.length
-    ? messages.map((msg) => {
-        const rawSender = msg.senderRole || msg.role || msg.sender || 'chat';
-        const text = msg.text || msg.message || '';
-        const ts = msg.createdAt ? new Date(msg.createdAt).toLocaleString('en-IN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' }) : '';
-        let roleLabel, roleColor, bubble;
-        if (rawSender === 'buyer' || String(rawSender).toLowerCase().includes('buyer')) {
-          roleLabel = `🟦 Buyer (${escapeHtml(buyerLabel)})`;
-          roleColor = '#3b82f6';
-          bubble = 'rgba(59,130,246,0.10)';
-        } else if (rawSender === 'seller' || String(rawSender).toLowerCase().includes('seller')) {
-          roleLabel = `🟩 Seller (${escapeHtml(sellerLabel)})`;
-          roleColor = '#22c55e';
-          bubble = 'rgba(34,197,94,0.10)';
-        } else if (String(rawSender).startsWith('admin')) {
-          roleLabel = `🛡️ Admin`;
-          roleColor = '#f59e0b';
-          bubble = 'rgba(245,158,11,0.12)';
-        } else {
-          roleLabel = escapeHtml(rawSender);
-          roleColor = '#94a3b8';
-          bubble = 'rgba(148,163,184,0.08)';
-        }
-        return `<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:${bubble};border-left:3px solid ${roleColor};">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-            <span style="font-size:11px;font-weight:600;color:${roleColor};">${roleLabel}</span>
-            <span style="font-size:10px;color:#64748b;">${ts}</span>
-          </div>
-          <p style="font-size:12px;color:#e2e8f0;margin:0;white-space:pre-wrap;">${escapeHtml(text)}</p>
-        </div>`;
-      }).join('')
-    : '<p style="font-size:12px;color:#64748b;padding:8px 0;">No chat messages yet.</p>';
+    ? hiddenNote + messages.map((msg) => buildDisputeMsgBubble(msg, buyerLabel, sellerLabel)).join('')
+    : '<p style="font-size:12px;color:#64748b;padding:6px 0;">No chat messages yet.</p>';
 
   return `
     <article class="list-item" style="border-color:rgba(245,158,11,.35);background:rgba(15,23,42,.72);">
@@ -922,15 +936,13 @@ function renderP2PDisputeCard(order = {}) {
       </div>
 
       <div class="mt-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3">
-        <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 8px;">Full Chat (${messages.length} messages)</p>
-        <div style="max-height:260px;overflow-y:auto;padding-right:4px;" id="disputeChat_${orderId}">
-          ${messageMarkup}
-        </div>
+        <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 8px;">Chat (last ${SHOW} of ${allMessages.length})</p>
+        <div id="disputeChat_${orderId}">${messageMarkup}</div>
         <div style="margin-top:10px;display:flex;gap:8px;align-items:flex-end;">
-          <textarea id="disputeReplyInput_${orderId}" placeholder="Admin reply to both parties…" rows="2"
-            style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 10px;color:#e2e8f0;font-size:12px;resize:none;outline:none;"></textarea>
-          <button onclick="adminSendDisputeReply('${orderId}')"
-            style="background:#f59e0b;color:#000;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;white-space:nowrap;">
+          <textarea id="disputeReplyInput_${orderId}" placeholder="Reply as Admin (visible to both buyer &amp; seller)…" rows="2"
+            style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 10px;color:#e2e8f0;font-size:12px;resize:none;outline:none;line-height:1.4;"></textarea>
+          <button id="disputeSendBtn_${orderId}" onclick="adminSendDisputeReply('${orderId}')"
+            style="background:#f59e0b;color:#000;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;white-space:nowrap;min-width:64px;">
             Send ↑
           </button>
         </div>
@@ -945,47 +957,43 @@ function renderP2PDisputeCard(order = {}) {
 }
 
 async function adminSendDisputeReply(orderId) {
-  const input = document.getElementById(`disputeReplyInput_${orderId}`);
-  const message = (input?.value || '').trim();
+  const input = document.getElementById('disputeReplyInput_' + orderId);
+  const btn = document.getElementById('disputeSendBtn_' + orderId);
+  const message = (input ? input.value : '').trim();
   if (!message) { showMessage('Enter a message first.', 'error'); return; }
+
+  // Disable button while sending
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
   try {
-    const data = await apiRequest(`/p2p/orders/${orderId}/admin-reply`, { method: 'POST', body: JSON.stringify({ message }) });
+    const data = await apiRequest('/p2p/orders/' + orderId + '/admin-reply', {
+      method: 'POST',
+      body: JSON.stringify({ message })
+    });
     showMessage('Reply sent to both parties.', 'success');
     if (input) input.value = '';
-    // Refresh dispute chat inline
-    const chatWrap = document.getElementById(`disputeChat_${orderId}`);
-    if (chatWrap && data.order) {
-      const msgs = Array.isArray(data.order.messages) ? data.order.messages : [];
-      const buyerL = data.order.buyerUsername || data.order.buyerUserId || '-';
-      const sellerL = data.order.sellerUsername || data.order.sellerUserId || '-';
-      chatWrap.innerHTML = msgs.length
-        ? msgs.map((msg) => {
-            const rawSender = msg.senderRole || msg.role || msg.sender || 'chat';
-            const text = msg.text || msg.message || '';
-            const ts = msg.createdAt ? new Date(msg.createdAt).toLocaleString('en-IN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' }) : '';
-            let roleLabel, roleColor, bubble;
-            if (rawSender === 'buyer' || String(rawSender).toLowerCase().includes('buyer')) {
-              roleLabel = `🟦 Buyer (${buyerL})`; roleColor = '#3b82f6'; bubble = 'rgba(59,130,246,0.10)';
-            } else if (rawSender === 'seller' || String(rawSender).toLowerCase().includes('seller')) {
-              roleLabel = `🟩 Seller (${sellerL})`; roleColor = '#22c55e'; bubble = 'rgba(34,197,94,0.10)';
-            } else if (String(rawSender).startsWith('admin')) {
-              roleLabel = `🛡️ Admin`; roleColor = '#f59e0b'; bubble = 'rgba(245,158,11,0.12)';
-            } else {
-              roleLabel = rawSender; roleColor = '#94a3b8'; bubble = 'rgba(148,163,184,0.08)';
-            }
-            return `<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:${bubble};border-left:3px solid ${roleColor};">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-                <span style="font-size:11px;font-weight:600;color:${roleColor};">${roleLabel}</span>
-                <span style="font-size:10px;color:#64748b;">${ts}</span>
-              </div>
-              <p style="font-size:12px;color:#e2e8f0;margin:0;white-space:pre-wrap;">${text}</p>
-            </div>`;
-          }).join('')
+
+    // Refresh last 5 messages inline
+    const chatWrap = document.getElementById('disputeChat_' + orderId);
+    if (chatWrap) {
+      const rawOrder = data.order || {};
+      const allMsgs = Array.isArray(rawOrder.messages) ? rawOrder.messages : [];
+      const buyerL = rawOrder.buyerUsername || rawOrder.buyerUserId || '-';
+      const sellerL = rawOrder.sellerUsername || rawOrder.sellerUserId || '-';
+      const SHOW = 5;
+      const shown = allMsgs.slice(-SHOW);
+      const hidden = allMsgs.length - shown.length;
+      const hiddenNote = hidden > 0
+        ? '<p style="font-size:11px;color:#64748b;margin:0 0 6px;text-align:center;">+ ' + hidden + ' earlier message(s)</p>'
+        : '';
+      chatWrap.innerHTML = shown.length
+        ? hiddenNote + shown.map((m) => buildDisputeMsgBubble(m, buyerL, sellerL)).join('')
         : '<p style="font-size:12px;color:#64748b;">No messages.</p>';
-      chatWrap.scrollTop = chatWrap.scrollHeight;
     }
   } catch (err) {
-    showMessage(err.message || 'Failed to send reply.', 'error');
+    showMessage(err.message || 'Failed to send reply. Try again.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send ↑'; }
   }
 }
 
