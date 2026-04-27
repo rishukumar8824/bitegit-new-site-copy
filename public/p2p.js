@@ -3510,7 +3510,10 @@ function renderLiveOrders(orders) {
     .filter((order) => Boolean(order?.isParticipant));
   participantOrders.forEach((order) => storeOrderForMobile(order));
   pruneMobileOrdersCache();
-  const visibleOrders = participantOrders.filter((order) => isOngoingOrderStatus(order.status));
+  const visibleOrders = participantOrders.filter((order) => {
+    const s = normalizeStatusForUi(order.status);
+    return isOngoingOrderStatus(order.status) || s === 'RELEASED' || s === 'COMPLETED';
+  });
 
   if (!visibleOrders.length) {
     if (liveOrdersRows) {

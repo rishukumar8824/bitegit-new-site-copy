@@ -3022,6 +3022,7 @@
       return String(existing && existing.id || '') === String(msg.id || '');
     });
     if (!exists) {
+      msg._local = true;
       msgs.push(msg);
       _saveCachedChatMessages(currentOrder.id, msgs);
     }
@@ -3822,10 +3823,20 @@
       .then(function(data) {
         _polling = false;
         if (!data) return;
-        var msgs = data.messages || data;
-        if (Array.isArray(msgs)) {
-          _saveCachedChatMessages(currentOrder.id, msgs);
-          _renderChatMessagesList(msgs);
+        var serverMsgs = data.messages || data;
+        if (Array.isArray(serverMsgs)) {
+          // Preserve locally-injected messages (5-min warning, expiry, etc.)
+          var cachedMsgs = _loadCachedChatMessages(currentOrder.id);
+          var localOnly = cachedMsgs.filter(function(m) {
+            return m._local && !serverMsgs.some(function(s) { return s.id === m.id; });
+          });
+          var merged = serverMsgs.concat(localOnly).sort(function(a, b) {
+            var ta = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt || 0).getTime();
+            var tb = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt || 0).getTime();
+            return ta - tb;
+          });
+          _saveCachedChatMessages(currentOrder.id, merged);
+          _renderChatMessagesList(merged);
         }
       }).catch(function() { _polling = false; });
   }

@@ -3427,8 +3427,10 @@ app.get('/api/p2p/orders/my-active', requiresP2PUser, async (req, res) => {
     const result = await repos.listP2POrderHistory(userId, { limit: 50, offset: 0 });
     console.log(`[my-active] user=${username} id=${userId} total_orders=${result.total}`);
     const activeStatuses = ['CREATED', 'PENDING', 'PAID', 'PAYMENT_SENT', 'DISPUTED'];
+    const recentCutoff = Date.now() - 24 * 60 * 60 * 1000; // 24h
     const activeOrders = result.orders
-      .filter((o) => activeStatuses.includes(o.status))
+      .filter((o) => activeStatuses.includes(o.status) ||
+        (['RELEASED', 'COMPLETED'].includes(o.status) && Number(o.updatedAt || 0) > recentCutoff))
       .map((order) => {
         const normalized = normalizeOrderState(order);
         return { ...normalized, isParticipant: true, paymentMethod: order.paymentMethod };
@@ -3771,9 +3773,11 @@ app.post('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) 
       }
 
       const now = Date.now();
+      const senderRole = next.buyerId === req.p2pUser.id ? 'buyer' : 'seller';
       const msgObj = {
         id: `msg_${now}_${Math.floor(Math.random() * 1000)}`,
         sender: req.p2pUser.username,
+        senderRole,
         text: text || '',
         createdAt: now
       };
