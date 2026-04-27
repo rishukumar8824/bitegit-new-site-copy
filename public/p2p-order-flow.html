@@ -594,8 +594,8 @@
       <div class="stat-row"><span class="slabel">Account signup time</span><span class="sval" id="stat-signup">—</span></div>
     </div>
 
-    <div class="bottom-fixed">
-      <button class="btn-primary teal" id="buyBtn">Buy USDT with 0 fees</button>
+    <div class="bottom-fixed" style="position:sticky;bottom:0;z-index:50;left:unset;transform:none;width:100%;max-width:100%;">
+      <button class="btn-primary teal" id="buyBtn" style="touch-action:manipulation;-webkit-tap-highlight-color:transparent;">Buy USDT with 0 fees</button>
     </div>
   </div>
 
@@ -1149,7 +1149,7 @@
   </div>
 
   <!-- Loading overlay -->
-  <div id="loadingOverlay" style="position:fixed;inset:0;background:#000;z-index:999;display:flex;align-items:center;justify-content:center;transition:opacity 0.15s;">
+  <div id="loadingOverlay" style="position:fixed;inset:0;background:#000;z-index:999;display:flex;align-items:center;justify-content:center;transition:opacity 0.15s;pointer-events:none;">
     <div style="width:32px;height:32px;border:2px solid #222;border-top-color:#00d4d4;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
   </div>
   <style>@keyframes spin{to{transform:rotate(360deg)}} @keyframes _spin{to{transform:rotate(360deg)}}</style>
