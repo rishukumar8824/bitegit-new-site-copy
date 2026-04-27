@@ -3040,13 +3040,18 @@ async function createP2PAdController(req, res) {
       }
     } catch (_) {}
 
-    // Enforce 1-ad limit
-    const existingAds = await cols.p2pOffers.countDocuments({
+    // Enforce 1 buy + 1 sell limit per merchant
+    const requestedSide = String(req.body.side || req.body.type || '').toLowerCase();
+    if (!requestedSide || !['buy', 'sell'].includes(requestedSide)) {
+      return res.status(400).json({ message: 'Ad side must be buy or sell.' });
+    }
+    const existingOfSide = await cols.p2pOffers.countDocuments({
       $or: [{ createdByUserId: userId }, { advertiser: username }],
+      side: requestedSide,
       status: { $ne: 'DELETED' }
     });
-    if (existingAds >= 1) {
-      return res.status(400).json({ message: 'You can only have one active ad. Delete your existing ad first.' });
+    if (existingOfSide >= 1) {
+      return res.status(400).json({ message: `You already have an active ${requestedSide} ad. Delete it first before posting a new one.` });
     }
 
     const savedOffer = await walletService.createEscrowAd({
