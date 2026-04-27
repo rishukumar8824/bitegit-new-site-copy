@@ -2297,9 +2297,7 @@
         calcEquiv();
       }
     });
-    var _doBuy = mkDebounce(doCreateOrder);
-    document.getElementById('buyBtn').addEventListener('click', _doBuy);
-    document.getElementById('buyBtn').addEventListener('touchend', function(e) { e.preventDefault(); _doBuy(); });
+    document.getElementById('buyBtn').onclick = function() { doCreateOrder(); };
 
     // Screen 2: Order Generated
     document.getElementById('ogBackBtn').addEventListener('click', function() {
@@ -2776,7 +2774,6 @@
       currentUser = normalizeCurrentUserPayload(PREVIEW_USER);
     }
     var btn = document.getElementById('buyBtn');
-    if (btn && btn._creating) return;
 
     var val = parseFloat(document.getElementById('buyAmount').value) || 0;
     if (val <= 0) { showToast('Enter a valid amount'); return; }
@@ -2786,34 +2783,23 @@
     var fiatAmt = isFiat ? val : Math.round(val * price);
     var cryptoAmt = isFiat ? (val / price) : val;
 
-    // Validate min/max
     if (currentAd) {
       var minF = Number(currentAd.minLimit || 0);
       var maxF = Number(currentAd.maxLimit || Infinity);
-      var checkFiat = isFiat ? fiatAmt : fiatAmt;
-      if (checkFiat < minF || checkFiat > maxF) {
+      if (fiatAmt < minF || fiatAmt > maxF) {
         showToast('Amount must be between ₹' + minF + ' - ₹' + maxF);
         return;
       }
     }
 
-    var payment = document.getElementById('selectedPayment').textContent || 'UPI';
+    var payment = (document.getElementById('selectedPayment') || {}).textContent || 'UPI';
 
-    // Button feedback
     if (btn) {
-      btn._creating = true;
-      if (navigator.vibrate) {
-        try { navigator.vibrate(12); } catch (_) {}
-      }
-      btn.style.transform = 'scale(0.95)';
-      btn.style.transition = 'transform 0.12s ease';
-      btn.style.opacity = '0.85';
-      btn.style.boxShadow = '0 24px 44px rgba(16,213,207,0.22)';
       btn.textContent = 'Creating order...';
-      setTimeout(function() { btn.style.transform = ''; }, 150);
+      btn.style.opacity = '0.7';
     }
 
-    if (currentAd && currentAd.id) {
+    try {
       if (PREVIEW_MODE) {
         currentOrder = buildPreviewOrder(fiatAmt, cryptoAmt, payment);
         try { localStorage.setItem('p2p_order_' + currentOrder.id, JSON.stringify(currentOrder)); } catch(_) {}
@@ -2821,58 +2807,30 @@
         applyOrderAndShow(currentOrder, false, '');
         hideLoading();
         showToast('Preview order opened');
-        if (btn) {
-          btn._creating = false;
-          btn.style.opacity = '';
-          btn.style.boxShadow = '';
-          btn.textContent = 'Buy USDT with 0 fees';
-        }
         return;
       }
-      try {
-        var body = { adId: currentAd.id, paymentMethod: payment };
-        if (isFiat) body.fiatAmount = fiatAmt; else body.cryptoAmount = cryptoAmt;
-        var createResult = await fetchJsonWithTimeout('/api/p2p/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(body)
-        }, 12000);
-        var res = createResult.response;
-        var data = createResult.payload || {};
-        if (res.ok) {
-          currentOrder = data.order || data;
-          if (data && data.existingOrder) {
-            showToast(data.message || 'You already have an active order. Opening it now.');
-          }
-          applyOrderAndShow(currentOrder, false, '');
-          return;
-        }
-        showToast(data.message || 'Order failed');
-      } catch (e) {
-        if (e && e.name === 'AbortError') {
-          showToast('Request took too long. Please check Orders once.');
-        } else {
-          showToast('Network error');
-        }
+      if (!currentAd || !currentAd.id) { showToast('Ad not loaded. Please go back and try again.'); return; }
+      var body = { adId: currentAd.id, paymentMethod: payment };
+      if (isFiat) body.fiatAmount = fiatAmt; else body.cryptoAmount = cryptoAmt;
+      var createResult = await fetchJsonWithTimeout('/api/p2p/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body)
+      }, 12000);
+      var res = createResult.response;
+      var data = createResult.payload || {};
+      if (res.ok) {
+        currentOrder = data.order || data;
+        applyOrderAndShow(currentOrder, false, '');
+        return;
       }
-      finally {
-        if (btn) {
-          btn._creating = false;
-          btn.style.opacity = '';
-          btn.style.boxShadow = '';
-          btn.textContent = 'Buy USDT with 0 fees';
-        }
-      }
-      return;
+      showToast(data.message || 'Order failed ('+res.status+')');
+    } catch (e) {
+      showToast(e && e.name === 'AbortError' ? 'Request timed out. Try again.' : 'Error: ' + (e && e.message || 'unknown'));
+    } finally {
+      if (btn) { btn.textContent = 'Buy USDT with 0 fees'; btn.style.opacity = ''; }
     }
-    if (btn) {
-      btn._creating = false;
-      btn.style.opacity = '';
-      btn.style.boxShadow = '';
-      btn.textContent = 'Buy USDT with 0 fees';
-    }
-    showToast('No ad loaded');
   }
 
   // ============================================================
