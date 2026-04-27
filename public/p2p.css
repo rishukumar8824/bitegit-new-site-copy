@@ -1375,14 +1375,37 @@ body.p2p-kyc-open { overflow: hidden; }
 .my-ad-delete { background: rgba(246,70,93,0.12); color: #f6465d; }
 
 /* Edit Ad Modal */
-.edit-ad-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
-.edit-ad-modal { background: #111; border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding-bottom: env(safe-area-inset-bottom,0); }
+.edit-ad-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 9000;
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; transition: opacity 0.22s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.edit-ad-modal-overlay.ead-visible { opacity: 1; }
+.edit-ad-modal {
+  background: #111; border-radius: 20px 20px 0 0; width: 100%; max-width: 480px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  max-height: 90vh; overflow-y: auto;
+  transform: translateY(100%); transition: transform 0.26s cubic-bezier(0.32,0.72,0,1);
+}
+.edit-ad-modal-overlay.ead-visible .edit-ad-modal { transform: translateY(0); }
 .edit-ad-head { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.07); }
 .edit-ad-head h3 { font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0; }
-.edit-ad-close { background: none; border: none; color: #8a97ae; font-size: 1.1rem; cursor: pointer; padding: 0; }
-.edit-ad-body { padding: 0.8rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.edit-ad-close {
+  background: none; border: none; color: #8a97ae; font-size: 1.2rem;
+  cursor: pointer; padding: 6px 8px; border-radius: 6px;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+}
+.edit-ad-close:active { color: #fff; }
+.edit-ad-body { padding: 0.8rem 1rem; display: flex; flex-direction: column; gap: 0.65rem; }
 .edit-ad-label { font-size: 0.72rem; color: #00e5ff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.edit-ad-input { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 16px; padding: 0.55rem 0.8rem; font-family: 'Manrope', sans-serif; outline: none; width: 100%; box-sizing: border-box; }
+.edit-ad-input {
+  background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+  color: #fff; font-size: 16px; padding: 0.6rem 0.8rem;
+  font-family: 'Manrope', sans-serif; outline: none; width: 100%; box-sizing: border-box;
+  transition: border-color 0.15s; -webkit-appearance: none;
+}
 .edit-ad-input:focus { border-color: #00c2b2; }
 
 .my-ad-card p { margin: 0; color: var(--p2p-muted); font-size: 0.78rem; }

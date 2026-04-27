@@ -1291,6 +1291,13 @@ window.openMobEditAd = function(offerId) {
   document.body.appendChild(modal);
 };
 
+function closeEditAdModal() {
+  var modal = document.getElementById('editAdModal');
+  if (!modal) return;
+  modal.classList.remove('ead-visible');
+  setTimeout(function() { modal.remove(); }, 260);
+}
+
 function openEditAdModal(offerId) {
   var o = (window._myAdsCache || {})[offerId] || {};
   var existing = document.getElementById('editAdModal');
@@ -1301,30 +1308,44 @@ function openEditAdModal(offerId) {
   var paymentsVal = Array.isArray(o.payments) ? o.payments.join(', ') : (o.payments || '');
   var totalVal = o.totalAmount || o.available || o.availableAmount || '';
   modal.innerHTML = `
-    <div class="edit-ad-modal">
+    <div class="edit-ad-modal" id="editAdModalInner">
       <div class="edit-ad-head">
         <h3>Edit Ad</h3>
-        <button onclick="document.getElementById('editAdModal').remove()" class="edit-ad-close">✕</button>
+        <button onclick="closeEditAdModal()" class="edit-ad-close">✕</button>
       </div>
       <div class="edit-ad-body">
         <label class="edit-ad-label">Price (INR per USDT)</label>
-        <input id="eadPrice" type="number" class="edit-ad-input" value="${o.price || ''}" placeholder="Enter price"/>
+        <input id="eadPrice" type="number" inputmode="decimal" class="edit-ad-input" value="${o.price || ''}" placeholder="Enter price"/>
         <label class="edit-ad-label">Total Amount (USDT)</label>
-        <input id="eadTotal" type="number" class="edit-ad-input" value="${totalVal}" placeholder="e.g. 500"/>
+        <input id="eadTotal" type="number" inputmode="decimal" class="edit-ad-input" value="${totalVal}" placeholder="e.g. 500"/>
         <label class="edit-ad-label">Min Limit (INR)</label>
-        <input id="eadMin" type="number" class="edit-ad-input" value="${o.minLimit || ''}" placeholder="Min limit"/>
+        <input id="eadMin" type="number" inputmode="decimal" class="edit-ad-input" value="${o.minLimit || ''}" placeholder="Min limit"/>
         <label class="edit-ad-label">Max Limit (INR)</label>
-        <input id="eadMax" type="number" class="edit-ad-input" value="${o.maxLimit || ''}" placeholder="Max limit"/>
+        <input id="eadMax" type="number" inputmode="decimal" class="edit-ad-input" value="${o.maxLimit || ''}" placeholder="Max limit"/>
         <label class="edit-ad-label">Payment Methods (comma separated)</label>
-        <input id="eadPayments" type="text" class="edit-ad-input" value="${paymentsVal}" placeholder="UPI, Bank Transfer"/>
+        <input id="eadPayments" type="text" inputmode="text" class="edit-ad-input" value="${paymentsVal}" placeholder="UPI, Bank Transfer"/>
         <label class="edit-ad-label">Remark (optional)</label>
-        <input id="eadRemark" type="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="Note for buyers"/>
+        <input id="eadRemark" type="text" inputmode="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="Note for buyers"/>
         <p id="eadMsg" style="font-size:12px;min-height:16px;margin:4px 0 0;color:#f6465d;"></p>
       </div>
-      <button class="mob-kyc-fp-btn" style="background:linear-gradient(96deg,#00c2b2,#0099a8);margin:0 1rem 1rem;" onclick="submitEditAd('${offerId}')">Save Changes</button>
+      <button class="mob-kyc-fp-btn" style="background:linear-gradient(96deg,#00c2b2,#0099a8);margin:0 1rem 1rem;touch-action:manipulation;" onclick="submitEditAd('${offerId}')">Save Changes</button>
     </div>
   `;
+  // Close on backdrop tap
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeEditAdModal();
+  });
   document.body.appendChild(modal);
+  // Trigger animation
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { modal.classList.add('ead-visible'); });
+  });
+  // Close on browser back
+  history.pushState({ editAdModal: true }, '');
+  window.addEventListener('popstate', function _onPop() {
+    closeEditAdModal();
+    window.removeEventListener('popstate', _onPop);
+  });
 }
 
 async function submitEditAd(offerId) {
@@ -1358,7 +1379,7 @@ async function submitEditAd(offerId) {
       if (msgEl) msgEl.textContent = data.message || 'Update failed.';
       return;
     }
-    document.getElementById('editAdModal')?.remove();
+    closeEditAdModal();
     await loadMyAds();
   } catch (e) {
     if (msgEl) msgEl.textContent = 'Network error. Try again.';
