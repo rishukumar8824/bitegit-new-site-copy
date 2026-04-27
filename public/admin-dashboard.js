@@ -899,9 +899,6 @@ function renderP2PDisputeCard(order = {}) {
     : Array.isArray(order.messages)
       ? order.messages
       : [];
-  const SHOW = 5;
-  const messages = allMessages.slice(-SHOW);
-  const hiddenCount = allMessages.length - messages.length;
 
   const appealType = appeal.type || order.disputeReason || 'Appeal';
   const appealReason = appeal.reason || order.disputeReason || 'No appeal details submitted.';
@@ -920,12 +917,9 @@ function renderP2PDisputeCard(order = {}) {
         + '</div>'
     : '<p class="mt-2 text-xs text-slate-500">No screenshots attached.</p>';
 
-  const hiddenNote = hiddenCount > 0
-    ? '<p style="font-size:11px;color:#64748b;margin:0 0 6px;text-align:center;">+ ' + hiddenCount + ' earlier message(s)</p>'
-    : '';
-
-  const messageMarkup = messages.length
-    ? hiddenNote + messages.map((msg) => buildDisputeMsgBubble(msg, buyerLabel, sellerLabel)).join('')
+  // ALL messages, scrollable
+  const messageMarkup = allMessages.length
+    ? allMessages.map((msg) => buildDisputeMsgBubble(msg, buyerLabel, sellerLabel)).join('')
     : '<p style="font-size:12px;color:#64748b;padding:6px 0;">No chat messages yet.</p>';
 
   return `
@@ -955,83 +949,124 @@ function renderP2PDisputeCard(order = {}) {
       </div>
 
       <div class="mt-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3">
-        <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 8px;">Chat (last ${SHOW} of ${allMessages.length})</p>
-        <div id="disputeChat_${orderId}">${messageMarkup}</div>
+        <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 8px;">Full Chat (${allMessages.length} messages)</p>
+        <div id="disputeChat_${orderId}" style="max-height:220px;overflow-y:auto;padding-right:2px;">${messageMarkup}</div>
 
-        <p style="font-size:10px;color:#64748b;margin:10px 0 4px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;">Quick Reply</p>
-        <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin-bottom:10px;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:#334155 transparent;">
+        <p style="font-size:10px;color:#64748b;margin:10px 0 4px;font-weight:700;letter-spacing:.5px;">QUICK REPLY</p>
+        <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin-bottom:10px;padding-bottom:2px;">
           ${ADMIN_QUICK_REPLIES.map((q, i) =>
             '<button onclick="adminQuickReply(\'' + orderId + '\',' + i + ')" '
-            + 'style="flex-shrink:0;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);color:#fbbf24;font-size:11px;'
-            + 'border-radius:16px;padding:4px 11px;cursor:pointer;white-space:nowrap;font-weight:500;">'
-            + escapeHtml(q.label)
-            + '</button>'
+            + 'style="flex-shrink:0;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);'
+            + 'color:#fbbf24;font-size:11px;border-radius:16px;padding:4px 12px;cursor:pointer;white-space:nowrap;font-weight:500;">'
+            + escapeHtml(q.label) + '</button>'
           ).join('')}
         </div>
 
+        <div id="disputeStatus_${orderId}" style="font-size:12px;min-height:18px;margin-bottom:6px;"></div>
         <div style="display:flex;gap:8px;align-items:flex-end;">
           <textarea id="disputeReplyInput_${orderId}" placeholder="Or type a custom reply…" rows="2"
-            style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 10px;color:#e2e8f0;font-size:12px;resize:none;outline:none;line-height:1.4;"></textarea>
+            style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 10px;
+            color:#e2e8f0;font-size:12px;resize:none;outline:none;"></textarea>
           <button id="disputeSendBtn_${orderId}" onclick="adminSendDisputeReply('${orderId}')"
-            style="background:#f59e0b;color:#000;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;white-space:nowrap;min-width:64px;">
+            style="background:#f59e0b;color:#000;font-size:12px;font-weight:700;border:none;
+            border-radius:8px;padding:9px 16px;cursor:pointer;white-space:nowrap;min-width:64px;">
             Send ↑
           </button>
         </div>
       </div>
 
       <div class="mt-3 flex flex-wrap gap-2">
-        <button class="btn-primary" data-p2p-action="release-order" data-order-id="${orderId}">✅ Release Escrow</button>
-        <button class="btn-danger" data-p2p-action="freeze-order" data-order-id="${orderId}">🔒 Freeze Escrow</button>
+        <button onclick="adminReleaseEscrow('${orderId}',this)"
+          style="background:#22c55e;color:#000;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;">
+          ✅ Release Escrow
+        </button>
+        <button onclick="adminFreezeEscrow('${orderId}',this)"
+          style="background:#ef4444;color:#fff;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;">
+          🔒 Freeze Escrow
+        </button>
       </div>
     </article>
   `;
 }
 
 async function adminSendDisputeReply(orderId) {
-  const input = document.getElementById('disputeReplyInput_' + orderId);
-  const btn = document.getElementById('disputeSendBtn_' + orderId);
-  const message = (input ? input.value : '').trim();
-  if (!message) { showMessage('Enter a message first.', 'error'); return; }
-
-  // Disable button while sending
-  if (btn) { btn.disabled = true; btn.textContent = '…'; }
-
+  var input = document.getElementById('disputeReplyInput_' + orderId);
+  var btn   = document.getElementById('disputeSendBtn_' + orderId);
+  var statusEl = document.getElementById('disputeStatus_' + orderId);
+  var message = input ? input.value.trim() : '';
+  if (!message) {
+    if (statusEl) { statusEl.style.color='#f87171'; statusEl.textContent='⚠ Enter a message first.'; }
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  if (statusEl) { statusEl.style.color='#94a3b8'; statusEl.textContent='Sending…'; }
   try {
-    const res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/admin-reply', {
+    var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/admin-reply', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message: message })
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || 'Server error ' + res.status);
+    var data = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(data.message || 'HTTP ' + res.status);
 
-    showMessage('Reply sent.', 'success');
     if (input) input.value = '';
+    if (statusEl) { statusEl.style.color='#4ade80'; statusEl.textContent='✓ Sent successfully'; setTimeout(function(){ if(statusEl) statusEl.textContent=''; }, 3000); }
 
-    // Refresh last 5 messages inline
-    const chatWrap = document.getElementById('disputeChat_' + orderId);
+    // Refresh all messages inline
+    var chatWrap = document.getElementById('disputeChat_' + orderId);
     if (chatWrap) {
-      const rawOrder = data.order || {};
-      const allMsgs = Array.isArray(rawOrder.messages) ? rawOrder.messages : [];
-      const buyerL = rawOrder.buyerUsername || rawOrder.buyerUserId || '-';
-      const sellerL = rawOrder.sellerUsername || rawOrder.sellerUserId || '-';
-      const SHOW = 5;
-      const shown = allMsgs.slice(-SHOW);
-      const hidden = allMsgs.length - shown.length;
-      const hiddenNote = hidden > 0
-        ? '<p style="font-size:11px;color:#64748b;margin:0 0 6px;text-align:center;">+ ' + hidden + ' earlier message(s)</p>'
-        : '';
-      chatWrap.innerHTML = shown.length
-        ? hiddenNote + shown.map((m) => buildDisputeMsgBubble(m, buyerL, sellerL)).join('')
+      var rawOrder = data.order || {};
+      var allMsgs = Array.isArray(rawOrder.messages) ? rawOrder.messages : [];
+      var buyerL = rawOrder.buyerUsername || rawOrder.buyerUserId || '-';
+      var sellerL = rawOrder.sellerUsername || rawOrder.sellerUserId || '-';
+      chatWrap.innerHTML = allMsgs.length
+        ? allMsgs.map(function(m){ return buildDisputeMsgBubble(m, buyerL, sellerL); }).join('')
         : '<p style="font-size:12px;color:#64748b;">No messages.</p>';
+      chatWrap.scrollTop = chatWrap.scrollHeight;
     }
   } catch (err) {
-    var errMsg = err.message || 'Failed to send. Check console.';
-    showMessage(errMsg, 'error');
-    console.error('[AdminReply] Error:', errMsg);
+    if (statusEl) { statusEl.style.color='#f87171'; statusEl.textContent='✗ ' + (err.message || 'Failed to send'); }
+    console.error('[AdminReply]', err);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Send ↑'; }
+  }
+}
+
+async function adminReleaseEscrow(orderId, btn) {
+  if (!confirm('Release escrow to buyer? This cannot be undone.')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/release', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    var data = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(data.message || 'HTTP ' + res.status);
+    showMessage('✅ Escrow released to buyer.', 'success');
+    await loadP2P();
+  } catch (err) {
+    showMessage('Release failed: ' + (err.message || 'Unknown error'), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Release Escrow'; }
+  }
+}
+
+async function adminFreezeEscrow(orderId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/freeze', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    var data = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(data.message || 'HTTP ' + res.status);
+    showMessage('🔒 Escrow frozen.', 'success');
+    await loadP2P();
+  } catch (err) {
+    showMessage('Freeze failed: ' + (err.message || 'Unknown error'), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '🔒 Freeze Escrow'; }
   }
 }
 
