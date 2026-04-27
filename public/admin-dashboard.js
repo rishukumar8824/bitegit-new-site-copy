@@ -1045,7 +1045,6 @@ async function adminSendDisputeReply(orderId) {
 async function adminReleaseEscrow(orderId, btn) {
   if (btn) { btn.disabled = true; btn.textContent = 'Releasing…'; btn.style.background = '#16a34a'; }
   try {
-    // Try direct route first (works without walletService)
     var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/admin-release', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -1053,8 +1052,16 @@ async function adminReleaseEscrow(orderId, btn) {
     });
     var data = await res.json().catch(function(){ return {}; });
     if (!res.ok) throw new Error(data.message || 'HTTP ' + res.status);
-    showMessage('✅ Escrow released to buyer.', 'success');
-    await loadP2P();
+    showMessage('✅ Escrow released. Dispute resolved.', 'success');
+    // Remove card from DOM immediately
+    var card = btn ? btn.closest('article') : null;
+    if (card) {
+      card.style.transition = 'opacity 0.3s';
+      card.style.opacity = '0';
+      setTimeout(function(){ card.remove(); }, 300);
+    }
+    // Also reload full list in background
+    setTimeout(function(){ loadP2P().catch(function(){}); }, 500);
   } catch (err) {
     showMessage('Release failed: ' + (err.message || 'Unknown error'), 'error');
     if (btn) { btn.disabled = false; btn.textContent = '✅ Release Escrow'; btn.style.background = '#22c55e'; }
