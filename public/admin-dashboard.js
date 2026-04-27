@@ -873,22 +873,21 @@ function buildDisputeMsgBubble(msg, buyerLabel, sellerLabel) {
 }
 
 const ADMIN_QUICK_REPLIES = [
-  'We have received your appeal and are investigating. Please allow 24–48 hours.',
-  'Please upload your payment proof (screenshot) to help us resolve this faster.',
-  'Your escrow has been reviewed. We will release funds once verification is complete.',
-  'This dispute has been resolved in your favor. Escrow will be released shortly.',
-  'We have found a violation. The order has been escalated to compliance.',
-  'Please do not make any further payments until this dispute is resolved.',
-  'Both parties: kindly avoid chargeback requests while this case is open.',
-  'Case closed. No policy violation found. Please proceed as agreed.',
+  { label: '📋 Investigating', text: 'We have received your appeal and are investigating. Please allow 24-48 hours.' },
+  { label: '📸 Upload Proof', text: 'Please upload your payment proof (screenshot) to help us resolve this faster.' },
+  { label: '✅ Resolved — Buyer', text: 'This dispute has been resolved in your favor. Escrow will be released to the buyer shortly.' },
+  { label: '✅ Resolved — Seller', text: 'This dispute has been resolved in your favor. Escrow has been released to the seller.' },
+  { label: '🔒 Escalated', text: 'A policy violation has been found. This order has been escalated to compliance.' },
+  { label: '⛔ No Payments', text: 'Please do not make any further payments until this dispute is fully resolved.' },
+  { label: '🚫 No Chargeback', text: 'Both parties: please avoid chargeback requests while this case is under review.' },
+  { label: '🔓 Case Closed', text: 'Case closed. No policy violation found. Please proceed as mutually agreed.' },
 ];
 
-function adminQuickReply(orderId, btnEl) {
-  const msg = btnEl ? btnEl.getAttribute('data-msg') : '';
-  if (!msg) return;
-  const input = document.getElementById('disputeReplyInput_' + orderId);
-  if (input) { input.value = msg; input.focus(); }
-  // Send immediately
+function adminQuickReply(orderId, idx) {
+  var item = ADMIN_QUICK_REPLIES[idx];
+  if (!item) return;
+  var input = document.getElementById('disputeReplyInput_' + orderId);
+  if (input) input.value = item.text;
   adminSendDisputeReply(orderId);
 }
 
@@ -959,13 +958,13 @@ function renderP2PDisputeCard(order = {}) {
         <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 8px;">Chat (last ${SHOW} of ${allMessages.length})</p>
         <div id="disputeChat_${orderId}">${messageMarkup}</div>
 
-        <p style="font-size:11px;color:#64748b;margin:10px 0 5px;font-weight:600;letter-spacing:.3px;">QUICK REPLY</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-          ${ADMIN_QUICK_REPLIES.map((q) =>
-            '<button onclick="adminQuickReply(\'' + orderId + '\',this)" data-msg="' + escapeHtml(q) + '" '
-            + 'style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;font-size:11px;'
-            + 'border-radius:20px;padding:4px 10px;cursor:pointer;text-align:left;line-height:1.3;">'
-            + escapeHtml(q.length > 48 ? q.slice(0, 48) + '…' : q)
+        <p style="font-size:10px;color:#64748b;margin:10px 0 4px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;">Quick Reply</p>
+        <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin-bottom:10px;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:#334155 transparent;">
+          ${ADMIN_QUICK_REPLIES.map((q, i) =>
+            '<button onclick="adminQuickReply(\'' + orderId + '\',' + i + ')" '
+            + 'style="flex-shrink:0;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);color:#fbbf24;font-size:11px;'
+            + 'border-radius:16px;padding:4px 11px;cursor:pointer;white-space:nowrap;font-weight:500;">'
+            + escapeHtml(q.label)
             + '</button>'
           ).join('')}
         </div>
@@ -998,11 +997,16 @@ async function adminSendDisputeReply(orderId) {
   if (btn) { btn.disabled = true; btn.textContent = '…'; }
 
   try {
-    const data = await apiRequest('/p2p/orders/' + orderId + '/admin-reply', {
+    const res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/admin-reply', {
       method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
     });
-    showMessage('Reply sent to both parties.', 'success');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || 'Server error ' + res.status);
+
+    showMessage('Reply sent.', 'success');
     if (input) input.value = '';
 
     // Refresh last 5 messages inline
@@ -1023,7 +1027,9 @@ async function adminSendDisputeReply(orderId) {
         : '<p style="font-size:12px;color:#64748b;">No messages.</p>';
     }
   } catch (err) {
-    showMessage(err.message || 'Failed to send reply. Try again.', 'error');
+    var errMsg = err.message || 'Failed to send. Check console.';
+    showMessage(errMsg, 'error');
+    console.error('[AdminReply] Error:', errMsg);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Send ↑'; }
   }
