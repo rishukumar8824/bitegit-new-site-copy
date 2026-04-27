@@ -2,6 +2,14 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "Bitcovex P2P",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 4000,
+      "autoPort": true,
+      "cwd": "/Users/sumitkmina/Documents/New project"
+    },
+    {
       "name": "Bitegit Landing",
       "runtimeExecutable": "node",
       "runtimeArgs": ["server.js"],
@@ -36,6 +44,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3001
+    },
+    {
+      "name": "GovForm AI",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/sumitkmina/ BItegit yellow/govform-ai", "run", "dev"],
+      "port": 3000
     }
   ]
 }
