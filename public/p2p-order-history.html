@@ -745,21 +745,21 @@
 
   function cancelFromDetail() {
     showToast('Redirecting to cancel flow…');
-    setTimeout(() => { window.location.href = '/p2p-order-flow.html'; }, 1000);
+    setTimeout(() => { window.location.href = '/p2p-order-flow'; }, 1000);
   }
 
   function continueOrder(o) {
     const order = o || selectedOrder;
     if (!order) return;
     if (order.side === 'buy') {
-      window.location.href = '/p2p-order-flow.html';
+      window.location.href = '/p2p-order-flow';
     } else {
-      window.location.href = '/p2p-sell-flow.html';
+      window.location.href = '/p2p-sell-flow';
     }
   }
 
   function openChat() {
-    window.location.href = '/p2p-chat.html';
+    window.location.href = '/p2p-chat';
   }
 
   function copyOrderNo() {

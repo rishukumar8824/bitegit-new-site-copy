@@ -5779,7 +5779,7 @@ if (orderChatBtn) {
       }
       return;
     }
-    window.location.href = `/p2p-chat.html?orderId=${encodeURIComponent(activeOrderId)}`;
+    window.location.href = `/p2p-chat?orderId=${encodeURIComponent(activeOrderId)}`;
   });
 }
 if (cancelModalBackdrop) {

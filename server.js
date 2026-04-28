@@ -4243,6 +4243,21 @@ app.get('/p2p-order-flow', (req, res) => {
 app.get('/p2p-buy', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p-buy.html'));
 });
+app.get('/wallet', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'wallet.html'));
+});
+app.get('/p2p-chat', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'p2p-chat.html'));
+});
+app.get('/p2p-order-history', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'p2p-order-history.html'));
+});
+app.get('/p2p-sell-flow', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'p2p-sell-flow.html'));
+});
+app.get('/p2p-user-center', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'p2p-user-center.html'));
+});
 
 app.get('/kyc', (req, res) => {
   res.redirect('/p2p#kyc');

@@ -1157,7 +1157,7 @@ function buildSignupUrl({ provider = '', email = '', name = '' } = {}) {
   if (name) {
     params.set('name', name);
   }
-  return `/auth.html?${params.toString()}`;
+  return `/auth?${params.toString()}`;
 }
 
 async function sendOtp(contact, name) {
@@ -1208,7 +1208,7 @@ if (form) {
       return;
     }
 
-    const nextUrl = `/auth.html?mode=signup&email=${encodeURIComponent(contact)}&name=${encodeURIComponent(name)}`;
+    const nextUrl = `/auth?mode=signup&email=${encodeURIComponent(contact)}&name=${encodeURIComponent(name)}`;
     window.location.href = nextUrl;
   });
 }
@@ -1245,7 +1245,7 @@ if (verifyOtpBtn) {
 if (topSignupBtn) {
   topSignupBtn.addEventListener('click', (event) => {
     event.preventDefault();
-    window.location.href = '/auth.html?mode=signup';
+    window.location.href = '/auth?mode=signup';
   });
 }
 
@@ -1405,7 +1405,7 @@ document.addEventListener('visibilitychange', () => {
 
 if (openSignupFromQuery) {
   window.setTimeout(() => {
-    window.location.href = '/auth.html?mode=signup';
+    window.location.href = '/auth?mode=signup';
   }, 120);
 }
 

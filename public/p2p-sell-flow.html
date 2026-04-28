@@ -1065,7 +1065,7 @@
         if (data.loggedIn && data.user) { currentUser = data.user; return; }
       }
     } catch (e) {}
-    window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.href);
+    window.location.href = '/auth?redirect=' + encodeURIComponent(window.location.href);
   }
 
   // ============================================================
@@ -1188,7 +1188,7 @@
     }
 
     showToast('Please login to place an order.');
-    setTimeout(() => { window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.href); }, 1200);
+    setTimeout(() => { window.location.href = '/auth?redirect=' + encodeURIComponent(window.location.href); }, 1200);
   }
 
   // ============================================================

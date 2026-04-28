@@ -49,15 +49,15 @@
 
         <nav class="cf-nav" aria-label="Primary navigation">
           <a href="/" class="active-link">Buy Crypto</a>
-          <a href="/markets.html">Markets</a>
+          <a href="/markets">Markets</a>
           <a href="/chart.html?symbol=BTCUSDT">Derivatives</a>
           <a href="/">Learn</a>
         </nav>
 
         <div class="cf-actions">
-          <a id="topLoginBtn" class="cf-login" href="/auth.html" data-auth-guest-only>Log In</a>
-          <a id="topSignupBtn" href="/auth.html?mode=signup" class="cf-signup" data-auth-guest-only>Sign Up</a>
-          <a id="topAssetsBtn" href="/wallet.html" class="cf-login" data-auth-user-only>Assets</a>
+          <a id="topLoginBtn" class="cf-login" href="/auth" data-auth-guest-only>Log In</a>
+          <a id="topSignupBtn" href="/auth?mode=signup" class="cf-signup" data-auth-guest-only>Sign Up</a>
+          <a id="topAssetsBtn" href="/wallet" class="cf-login" data-auth-user-only>Assets</a>
           <button id="topLogoutBtn" type="button" class="cf-login" data-auth-user-only>Logout</button>
           <button id="homeNavToggle" class="cf-nav-toggle" type="button" aria-label="Open navigation" aria-controls="homeNavDrawer" aria-expanded="false">
             <span></span>
@@ -78,17 +78,17 @@
         <button id="homeNavClose" type="button" aria-label="Close navigation">✕</button>
       </div>
       <div style="display:flex;gap:0.6rem;align-items:center;" data-auth-guest-only>
-        <a id="drawerLoginLink" href="/auth.html" style="flex:1;text-align:center;padding:0.5rem 0;border:1.5px solid rgba(0,229,255,0.35);border-radius:8px;color:#00e5ff;font-weight:700;font-size:0.9rem;text-decoration:none;line-height:1.4;">Log In</a>
-        <a id="drawerSignupLink" href="/auth.html?mode=signup" style="flex:1;text-align:center;padding:0.5rem 0;background:#00e5ff;border-radius:8px;color:#000;font-weight:700;font-size:0.9rem;text-decoration:none;line-height:1.4;">Sign Up</a>
+        <a id="drawerLoginLink" href="/auth" style="flex:1;text-align:center;padding:0.5rem 0;border:1.5px solid rgba(0,229,255,0.35);border-radius:8px;color:#00e5ff;font-weight:700;font-size:0.9rem;text-decoration:none;line-height:1.4;">Log In</a>
+        <a id="drawerSignupLink" href="/auth?mode=signup" style="flex:1;text-align:center;padding:0.5rem 0;background:#00e5ff;border-radius:8px;color:#000;font-weight:700;font-size:0.9rem;text-decoration:none;line-height:1.4;">Sign Up</a>
       </div>
       <nav class="cf-nav-drawer-links" aria-label="Mobile navigation">
         <a href="/">Buy Crypto</a>
-        <a href="/markets.html">Markets</a>
+        <a href="/markets">Markets</a>
         <a href="/chart.html?symbol=BTCUSDT">Spot</a>
         <a href="/chart.html?symbol=BTCUSDT">Futures</a>
-        <a href="/p2p.html">P2P</a>
+        <a href="/p2p">P2P</a>
         <a href="/">Support</a>
-        <a href="/wallet.html">Assets</a>
+        <a href="/wallet">Assets</a>
         <button id="drawerLogoutBtn" type="button" data-auth-user-only style="background:none;border:none;border-top:1px solid rgba(255,255,255,0.07);text-align:left;padding:0.75rem 0;font-size:1.05rem;font-weight:600;color:#ff4d4d;cursor:pointer;font-family:inherit;width:100%;">Logout</button>
       </nav>
       <div class="cf-nav-drawer-actions"></div>
@@ -116,49 +116,49 @@
       <div data-auth-guest-only style="position:relative;z-index:5;text-align:center;width:90%;max-width:520px;margin:0 auto;padding:44px 0 36px;">
         <h1 style="font-size:clamp(28px,8vw,42px);font-weight:300;line-height:1.25;letter-spacing:-0.5px;margin-bottom:14px;color:#fff;text-shadow:none;text-align:center;max-width:100%;width:100%;">Your crypto journey,<br>simplified.</h1>
         <p style="font-size:15px;color:#aaa;line-height:1.6;margin-bottom:28px;">Sign up to unlock up to <span style="color:#00e5ff;font-weight:500;">5,100 USDT</span> in Welcome Bonuses</p>
-        <a href="/auth.html?mode=signup" style="display:block;width:100%;background:#00e5ff;color:#000;padding:17px 0;border-radius:50px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:none;text-decoration:none;">Sign Up Now</a>
+        <a href="/auth?mode=signup" style="display:block;width:100%;background:#00e5ff;color:#000;padding:17px 0;border-radius:50px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:none;text-decoration:none;">Sign Up Now</a>
       </div>
 
       <!-- Logged-in user action grid -->
       <div data-auth-user-only class="cf-user-action-section" style="position:relative;z-index:5;">
         <div class="cf-action-grid">
           <!-- Rewards: gift box white icon -->
-          <a href="/p2p.html#rewards" class="cf-action-card">
+          <a href="/p2p#rewards" class="cf-action-card">
             <span class="cf-action-icon"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#161616"/><rect x="18" y="30" width="28" height="20" rx="2" fill="#fff"/><rect x="18" y="24" width="28" height="8" rx="2" fill="#fff"/><rect x="30" y="18" width="4" height="32" fill="#161616"/><rect x="18" y="28" width="28" height="4" fill="#161616"/><path d="M32 24 C32 24 28 18 22 20 C18 22 20 28 28 26" fill="#fff"/><path d="M32 24 C32 24 36 18 42 20 C46 22 44 28 36 26" fill="#fff"/></svg></span>
             <span class="cf-action-label">Rewards</span>
           </a>
           <!-- P2P: two people icon -->
-          <a href="/p2p.html" class="cf-action-card">
+          <a href="/p2p" class="cf-action-card">
             <span class="cf-action-icon"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#161616"/><circle cx="24" cy="24" r="8" fill="#fff"/><path d="M10 50c0-8 6-14 14-14s14 6 14 14" fill="#fff"/><circle cx="42" cy="26" r="6" fill="#fff" opacity="0.7"/><path d="M32 50c0-6 4-10 10-10s10 4 10 10" fill="#fff" opacity="0.7"/></svg></span>
             <span class="cf-action-label">P2P</span>
           </a>
           <!-- Deposit: white circle + dark down-left arrow + corner squares -->
-          <a href="/p2p.html#deposit" class="cf-action-card">
+          <a href="/p2p#deposit" class="cf-action-card">
             <span class="cf-action-icon"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#161616"/><circle cx="30" cy="34" r="14" fill="#fff"/><path d="M35 28l-10 10M25 28v10h10" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             <span class="cf-action-label">Deposit</span>
           </a>
           <!-- Buy: white circle + dark plus + corner squares -->
-          <a href="/p2p.html#buy" class="cf-action-card">
+          <a href="/p2p#buy" class="cf-action-card">
             <span class="cf-action-icon"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#161616"/><circle cx="30" cy="34" r="14" fill="#fff"/><path d="M30 26v16M22 34h16" stroke="#222" stroke-width="3.5" stroke-linecap="round"/></svg></span>
             <span class="cf-action-label">Buy</span>
           </a>
           <!-- Withdraw: white circle + dark up-right arrow + corner squares -->
-          <a href="/p2p.html#withdraw" class="cf-action-card">
+          <a href="/p2p#withdraw" class="cf-action-card">
             <span class="cf-action-icon"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#161616"/><circle cx="30" cy="34" r="14" fill="#fff"/><path d="M25 40l10-10M35 40V30H25" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             <span class="cf-action-label">Withdraw</span>
           </a>
           <!-- Transfer: white circle + two opposite arrows -->
-          <a href="/p2p.html#transfer" class="cf-action-card">
+          <a href="/p2p#transfer" class="cf-action-card">
             <span class="cf-action-icon"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#161616"/><circle cx="30" cy="34" r="14" fill="#fff"/><path d="M23 30h14M33 26l4 4-4 4" fill="none" stroke="#222" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M37 38H23M27 34l-4 4 4 4" fill="none" stroke="#222" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             <span class="cf-action-label">Transfer</span>
           </a>
           <!-- Support: headphone icon white -->
-          <a href="/p2p.html#support" class="cf-action-card">
+          <a href="/p2p#support" class="cf-action-card">
             <span class="cf-action-icon"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#161616"/><path d="M20 34a12 12 0 0 1 24 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="14" y="32" width="8" height="12" rx="4" fill="#fff"/><rect x="42" y="32" width="8" height="12" rx="4" fill="#fff"/><path d="M44 44v2a6 6 0 0 1-6 6h-4" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg></span>
             <span class="cf-action-label">Support</span>
           </a>
           <!-- More: 2x2 grid + diamond -->
-          <a href="/markets.html" class="cf-action-card">
+          <a href="/markets" class="cf-action-card">
             <span class="cf-action-icon"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#161616"/><rect x="14" y="28" width="14" height="14" rx="3" fill="#fff"/><rect x="32" y="28" width="14" height="14" rx="3" fill="#fff"/><rect x="14" y="46" width="14" height="8" rx="3" fill="#fff"/><rect x="32" y="46" width="14" height="8" rx="3" fill="#fff"/><path d="M36 10 L44 18 L36 26 L28 18 Z" fill="#fff"/></svg></span>
             <span class="cf-action-label">More</span>
           </a>
@@ -176,7 +176,7 @@
             <p id="heroUserMeta">Your account is ready for markets and assets.</p>
             <div class="cf-user-actions">
               <a href="/chart.html?symbol=BTCUSDT" class="cf-signup">Start Trading</a>
-              <a href="/wallet.html" class="cf-login">View Assets</a>
+              <a href="/wallet" class="cf-login">View Assets</a>
             </div>
             <button id="heroLogoutBtn" type="button" class="cf-user-logout">Logout</button>
           </div>
@@ -278,7 +278,7 @@
                 <tr class="cf-fullmkt-loading"><td colspan="3"><span class="cf-fullmkt-spinner"></span>Loading markets…</td></tr>
               </tbody>
             </table>
-            <a class="cf-fullmkt-viewall" href="/markets.html">View More &rsaquo;</a>
+            <a class="cf-fullmkt-viewall" href="/markets">View More &rsaquo;</a>
           </div>
 
         </div>
@@ -479,7 +479,7 @@
       <section class="cf-trading-exp cf-reveal" aria-label="New user guide cards">
         <div class="cf-guide-grid">
           <article class="cf-guide-card cf-guide-card--register cf-reveal">
-            <a href="/auth.html?mode=signup" class="cf-guide-card-link" aria-label="Register now">
+            <a href="/auth?mode=signup" class="cf-guide-card-link" aria-label="Register now">
               <div class="cf-guide-card-visual">
                 <img src="/assets/home-guide/guide-card-art-1.png?v=20260416c" alt="Create account card" loading="lazy" />
               </div>
@@ -488,7 +488,7 @@
           </article>
 
           <article class="cf-guide-card cf-guide-card--funds cf-reveal">
-            <a href="/wallet.html" class="cf-guide-card-link" aria-label="Go to buy coins">
+            <a href="/wallet" class="cf-guide-card-link" aria-label="Go to buy coins">
               <div class="cf-guide-card-visual">
                 <img src="/assets/home-guide/guide-card-art-2.png?v=20260416c" alt="Deposit funds card" loading="lazy" />
               </div>
@@ -702,7 +702,7 @@
             <div class="cf-footer-accordion-links">
               <a href="/chart.html?symbol=BTCUSDT">Spot Trading</a>
               <a href="/chart.html?symbol=BTCUSDT">Futures</a>
-              <a href="/wallet.html">Assets</a>
+              <a href="/wallet">Assets</a>
             </div>
           </details>
         </div>
@@ -799,7 +799,7 @@
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
         <span class="nav-label">Home</span>
       </a>
-      <a href="/markets.html">
+      <a href="/markets">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 15h2v5H4v-5zm4-5h2v10H8V10zm4-4h2v14h-2V6zm4 7h2v7h-2v-7z"/></svg></span>
         <span class="nav-label">Market</span>
       </a>
@@ -811,7 +811,7 @@
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="14" rx="2" opacity=".3"/><rect x="3" y="5" width="18" height="4" rx="2"/><rect x="6" y="13" width="5" height="2" rx="1"/></svg></span>
         <span class="nav-label">Futures</span>
       </a>
-      <a href="/wallet.html">
+      <a href="/wallet">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" opacity=".3"/><rect x="2" y="7" width="20" height="5" rx="2"/><circle cx="17" cy="16" r="2.5"/></svg></span>
         <span class="nav-label">Assets</span>
       </a>
