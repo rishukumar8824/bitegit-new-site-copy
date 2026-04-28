@@ -2756,7 +2756,8 @@ app.get('/api/leads', requiresAdminSession, async (req, res) => {
 // ── /api/p2p/ping — merchant heartbeat to track online status ──
 app.post('/api/p2p/ping', requiresP2PUser, async (req, res) => {
   try {
-    const userId = req.p2pUser.userId || req.p2pUser.id;
+    const userId = String(req.p2pUser.id || req.p2pUser.userId || req.p2pUser._id || '').trim();
+    if (!userId) return res.json({ ok: false });
     await repos.updateLastActive(userId);
     return res.json({ ok: true });
   } catch (_) { return res.json({ ok: false }); }
