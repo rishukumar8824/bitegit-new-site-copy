@@ -1109,11 +1109,18 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
 
     // Also sync p2p_credentials so /api/p2p/me returns the correct KYC status
     let profileEmail = String(existingProfile?.email || '').trim().toLowerCase();
-    // Fallback: look up email from p2pKycRequests if adminUserProfiles has no email
+    // Fallback 1: look up email from p2pKycRequests if adminUserProfiles has no email
     if (!profileEmail) {
       try {
         const kycReq = await p2pKycRequests.findOne({ userId: normalizedUserId });
         if (kycReq?.email) profileEmail = String(kycReq.email).trim().toLowerCase();
+      } catch (_) {}
+    }
+    // Fallback 2: look up email from p2pCredentials by userId field (set on every login)
+    if (!profileEmail && repos && typeof repos.getP2PCredentialByUserId === 'function') {
+      try {
+        const cred = await repos.getP2PCredentialByUserId(normalizedUserId);
+        if (cred?.email) profileEmail = String(cred.email).trim().toLowerCase();
       } catch (_) {}
     }
     if (profileEmail && repos && typeof repos.updateP2PCredentialKyc === 'function') {
