@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Fillkaro — Student App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+:root{
+  --bl:#1A6FFF;--bl2:#0044CC;--cy:#00CFFF;
+  --gd:#FFB800;--gd2:#FFD84D;
+  --gn:#00C853;--rd:#FF3B55;--am:#FF9500;--pu:#7B5EA7;
+  --bg:#04040C;--card:#0C1028;--card2:#0E1232;
+  --mu:rgba(255,255,255,0.38);
+  --bd:rgba(255,255,255,0.065);--bd2:rgba(255,255,255,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{
+  background:radial-gradient(ellipse 55% 40% at 18% 8%,rgba(26,111,255,0.2) 0%,transparent 55%),
+    radial-gradient(ellipse 45% 45% at 88% 92%,rgba(255,184,0,0.07) 0%,transparent 55%),#050510;
+  display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'Inter',sans-serif;overflow:hidden;
+}
+.phone{
+  width:390px;height:820px;border-radius:52px;position:relative;overflow:hidden;flex-shrink:0;background:#000;
+  transform-origin:center center;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.11),0 0 0 10px #111,0 0 0 12px rgba(255,255,255,0.04),
+    0 50px 130px rgba(26,111,255,0.28),0 100px 220px rgba(0,0,0,0.85);
+}
+.phone::before{content:'';position:absolute;left:-13px;top:115px;width:4px;height:34px;background:#191919;border-radius:3px 0 0 3px;box-shadow:0 48px 0 #191919,0 94px 0 #191919;}
+.phone::after{content:'';position:absolute;right:-13px;top:162px;width:4px;height:68px;background:#191919;border-radius:0 3px 3px 0;}
+.screen{position:absolute;top:0;left:0;right:0;bottom:74px;border-radius:52px 52px 0 0;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);}
+.sb{height:50px;flex-shrink:0;position:relative;background:transparent;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 8px;z-index:50;}
+.di{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:118px;height:32px;background:#000;border-radius:18px;pointer-events:none;}
+.sb-t{font-size:15px;font-weight:700;color:#fff;letter-spacing:-0.3px;}
+.sb-ic{display:flex;gap:6px;align-items:center;}
+.hdr{flex-shrink:0;padding:10px 18px;display:flex;align-items:center;gap:10px;background:rgba(4,4,12,0.82);backdrop-filter:blur(32px);border-bottom:1px solid rgba(255,255,255,0.055);}
+.hdr-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(145deg,var(--bl),var(--pu));display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;box-shadow:0 0 0 2px rgba(26,111,255,0.35),0 0 20px rgba(26,111,255,0.28);transition:transform 0.18s;position:relative;}
+.hdr-av:active{transform:scale(0.88);}
+.av-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;background:var(--gn);border-radius:50%;border:2px solid var(--bg);}
+.hdr-mid{flex:1;}
+.logo-t{font-size:21px;font-weight:900;color:#fff;letter-spacing:-0.7px;line-height:1;}
+.hdr-sub{font-size:10px;color:var(--mu);font-weight:500;margin-top:1px;}
+.hdr-acts{display:flex;gap:7px;}
+.hdr-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.055);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:all 0.15s;flex-shrink:0;}
+.hdr-btn:active{transform:scale(0.86);}
+.notif-pip{position:absolute;top:8px;right:8px;width:7px;height:7px;background:var(--rd);border-radius:50%;border:1.5px solid var(--bg);animation:pulse-r 1.4s infinite;}
+.body{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;min-height:0;}
+.body::-webkit-scrollbar{display:none;}
+.bnav{position:absolute;bottom:0;left:0;right:0;height:74px;background:rgba(4,4,12,0.97);border-top:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-around;align-items:flex-start;padding:10px 6px 0;z-index:420;border-radius:0 0 52px 52px;}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 0;position:relative;}
+.ni-ico{font-size:23px;opacity:0.3;transition:opacity 0.2s,transform 0.22s;}
+.ni.a .ni-ico{opacity:1;transform:scale(1.1);}
+.ni-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,0.28);transition:color 0.2s;}
+.ni.a .ni-lbl{color:var(--bl);}
+.ni-badge{position:absolute;top:0px;right:calc(50% - 24px);width:16px;height:16px;background:var(--rd);border-radius:50%;font-size:9px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
+.ni-dot{position:absolute;top:-12px;left:50%;transform:translateX(-50%);width:22px;height:3px;background:linear-gradient(90deg,var(--bl),var(--cy));border-radius:0 0 3px 3px;opacity:0;transition:opacity 0.2s;}
+.ni.a .ni-dot{opacity:1;}
+.panel{position:absolute;inset:0;border-radius:52px;z-index:200;transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);overflow:hidden;background:var(--bg);}
+.panel.open{transform:translateX(0);}
+.p-back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.065);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:17px;transition:transform 0.15s;flex-shrink:0;}
+.p-back:active{transform:scale(0.88);}
+.p-scroll{overflow-y:auto;scrollbar-width:none;padding:16px 20px 32px;height:calc(100% - 120px);}
+.p-scroll::-webkit-scrollbar{display:none;}
+.hero{padding:14px 20px 0;position:relative;}
+.h-glow-a{position:absolute;top:-80px;left:-80px;width:260px;height:260px;background:radial-gradient(circle,rgba(26,111,255,0.18) 0%,transparent 65%);pointer-events:none;}
+.h-glow-b{position:absolute;top:-20px;right:-50px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,184,0,0.08) 0%,transparent 65%);pointer-events:none;}
+.h-greet{font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:5px;letter-spacing:0.2px;}
+.h1{font-size:26px;font-weight:900;color:#fff;line-height:1.08;letter-spacing:-0.8px;position:relative;z-index:1;}
+.h1 .g-bl{background:linear-gradient(130deg,#5599FF,var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.h1 .g-gd{background:linear-gradient(130deg,var(--gd),var(--gd2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.h-sub{font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;line-height:1.5;position:relative;z-index:1;}
+.ticker-strap{overflow:hidden;background:rgba(255,255,255,0.025);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:7px 0;margin-top:10px;}
+.ticker-inner{display:flex;animation:ticker-run 24s linear infinite;width:max-content;}
+.ticker-inner:hover{animation-play-state:paused;}
+.ticker-item{display:flex;align-items:center;gap:6px;padding:0 16px;border-right:1px solid var(--bd);white-space:nowrap;}
+.ti-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.ti-cat{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;}
+.ti-nm{font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);}
+.cta-wrap{padding:12px 20px 0;}
+.btn-main{width:100%;padding:15px;border:none;border-radius:15px;background:linear-gradient(135deg,#1A6FFF 0%,#0044BB 50%,#5500AA 100%);color:#fff;font-size:14px;font-weight:800;letter-spacing:-0.3px;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:9px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(26,111,255,0.45),0 2px 0 rgba(255,255,255,0.08) inset;animation:btn-glow 3s ease-in-out infinite;}
+.btn-main::before{content:'';position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.09),transparent);animation:shine 3.5s 1s ease-in-out infinite;}
+.live-dot{width:7px;height:7px;background:var(--rd);border-radius:50%;animation:pulse-r 1.1s infinite;flex-shrink:0;}
+.stats{margin:10px 20px 0;display:flex;background:var(--card);border:1px solid var(--bd2);border-radius:16px;overflow:hidden;}
+.st{flex:1;padding:11px 6px;text-align:center;border-right:1px solid var(--bd);}
+.st:last-child{border-right:none;}
+.st-n{font-size:17px;font-weight:900;letter-spacing:-0.5px;}
+.st-l{font-size:9px;color:var(--mu);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.lf-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 0;}
+.lf-left{display:flex;align-items:center;gap:8px;}
+.lf-live{display:flex;align-items:center;gap:5px;background:rgba(255,59,85,0.12);border:1px solid rgba(255,59,85,0.22);border-radius:20px;padding:4px 10px;}
+.lf-live-t{font-size:10px;font-weight:800;color:var(--rd);}
+.lf-title{font-size:14px;font-weight:900;color:#fff;letter-spacing:-0.3px;}
+.lf-see{font-size:11px;font-weight:700;color:var(--bl);cursor:pointer;}
+.lf-scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 20px 4px;scrollbar-width:none;}
+.lf-scroll::-webkit-scrollbar{display:none;}
+.lf-card{flex-shrink:0;width:148px;background:var(--card);border:1px solid var(--bd2);border-radius:14px;padding:10px;cursor:pointer;}
+.lfc-top{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.lfc-ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.lfc-cat{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:1px;}
+.lfc-nm{font-size:11px;font-weight:800;color:#fff;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lfc-meta{display:flex;background:rgba(255,255,255,0.04);border-radius:8px;overflow:hidden;margin-bottom:8px;}
+.lfc-m{flex:1;padding:5px 3px;text-align:center;border-right:1px solid rgba(255,255,255,0.05);}
+.lfc-m:last-child{border-right:none;}
+.lfc-mv{font-size:9px;font-weight:800;color:#fff;}
+.lfc-ml{font-size:7px;color:var(--mu);margin-top:1px;font-weight:600;text-transform:uppercase;}
+.lfc-btn{width:100%;padding:6px;background:linear-gradient(135deg,var(--bl),var(--bl2));border:none;border-radius:9px;color:#fff;font-size:10px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;}
+.ai-tip{margin:13px 20px 0;padding:14px;background:linear-gradient(135deg,rgba(123,94,167,0.18),rgba(26,111,255,0.1));border:1px solid rgba(123,94,167,0.2);border-radius:18px;display:flex;gap:11px;}
+.at-ico{font-size:22px;flex-shrink:0;}
+.at-t{font-size:12px;font-weight:800;color:#fff;margin-bottom:4px;}
+.at-s{font-size:11px;color:rgba(255,255,255,0.4);line-height:1.65;}
+.search-wrap{display:flex;gap:8px;margin:13px 20px 0;background:var(--card);border:1px solid var(--bd2);border-radius:14px;padding:5px 5px 5px 15px;align-items:center;}
+.s-inp{flex:1;background:none;border:none;outline:none;color:#fff;font-size:13px;font-family:'Inter',sans-serif;}
+.s-inp::placeholder{color:rgba(255,255,255,0.22);}
+.s-go{width:38px;height:38px;border-radius:11px;background:var(--bl);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cat-row{display:flex;gap:7px;padding:11px 20px 0;overflow-x:auto;scrollbar-width:none;}
+.cat-row::-webkit-scrollbar{display:none;}
+.cat-p{flex-shrink:0;padding:7px 15px;border-radius:22px;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.18s;}
+.cat-p.on{background:var(--bl);color:#fff;box-shadow:0 4px 18px rgba(26,111,255,0.38);}
+.cat-p.off{background:rgba(255,255,255,0.05);color:var(--mu);border:1px solid var(--bd);}
+.exam-list{padding:10px 20px 0;display:flex;flex-direction:column;gap:6px;}
+.ec{background:var(--card);border:1px solid var(--bd2);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;}
+.ec:active{transform:scale(0.97);}
+.ec-row{display:flex;align-items:center;gap:11px;padding:12px 14px;}
+.ec-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.ec-name{font-size:13px;font-weight:800;color:#fff;letter-spacing:-0.2px;}
+.ec-org{font-size:10px;color:var(--mu);margin-top:1px;}
+.ec-apply{padding:8px 16px;border-radius:20px;border:none;font-size:11px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;background:linear-gradient(135deg,var(--bl),var(--bl2));color:#fff;box-shadow:0 3px 10px rgba(26,111,255,0.3);flex-shrink:0;white-space:nowrap;}
+.ec-bk{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;cursor:pointer;transition:all 0.18s;}
+.ec-bk.saved{background:rgba(255,184,0,0.15);border-color:rgba(255,184,0,0.3);}
+.storage-card{margin:13px 20px 0;padding:16px;background:var(--card);border:1px solid var(--bd2);border-radius:20px;}
+.sc-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.sc-lbl{font-size:13px;font-weight:700;color:#fff;}
+.sc-pct{font-size:12px;color:var(--mu);}
+.sc-bar{height:6px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;margin-bottom:11px;}
+.sc-fill{height:100%;background:linear-gradient(90deg,var(--bl),var(--pu));border-radius:4px;width:43%;}
+.sc-chips{display:flex;gap:10px;flex-wrap:wrap;}
+.sc-chip{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--mu);font-weight:500;}
+.sc-dot{width:6px;height:6px;border-radius:50%;}
+.upload-cta{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 20px 0;padding:15px;border:1.5px dashed rgba(26,111,255,0.32);border-radius:16px;background:rgba(26,111,255,0.05);color:var(--bl);font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+.doc-sec-lbl{font-size:11px;font-weight:700;color:rgba(255,255,255,0.28);text-transform:uppercase;letter-spacing:0.9px;padding:14px 20px 8px;}
+.doc-item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--bd2);border-radius:16px;padding:14px;margin:0 20px 9px;cursor:pointer;}
+.di-ico{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.di-inf{flex:1;min-width:0;}
+.di-nm{font-size:13px;font-weight:700;color:#fff;}
+.di-mt{font-size:11px;color:var(--mu);margin-top:2px;}
+.di-r{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.di-sz{font-size:10px;color:var(--mu);}
+.di-st{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.s-ok{background:rgba(0,200,83,0.12);color:var(--gn);}
+.s-req{background:rgba(255,59,85,0.12);color:var(--rd);}
+.doc-pend{border-color:rgba(255,59,85,0.22)!important;border-style:dashed!important;}
+.prof-top{background:linear-gradient(180deg,rgba(26,111,255,0.13) 0%,transparent 100%);padding-bottom:4px;}
+.prof-av-wrap{display:flex;flex-direction:column;align-items:center;padding:26px 0 20px;}
+.prof-av{width:88px;height:88px;border-radius:50%;background:linear-gradient(145deg,var(--bl),var(--pu));display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 0 0 3px rgba(26,111,255,0.3),0 0 50px rgba(26,111,255,0.28);margin-bottom:13px;}
+.prof-nm{font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;}
+.prof-id{font-size:12px;color:var(--mu);margin-top:3px;}
+.prof-badge{margin-top:10px;background:linear-gradient(135deg,rgba(255,184,0,0.16),rgba(255,184,0,0.05));border:1px solid rgba(255,184,0,0.22);border-radius:22px;padding:6px 16px;font-size:11px;font-weight:800;color:var(--gd);}
+.p-mini-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin:0 20px 16px;}
+.pms{background:var(--card);border:1px solid var(--bd2);border-radius:16px;padding:15px 10px;text-align:center;}
+.pms-n{font-size:22px;font-weight:900;letter-spacing:-0.8px;}
+.pms-l{font-size:9px;color:var(--mu);margin-top:3px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;}
+.sec-lbl{font-size:11px;font-weight:700;color:rgba(255,255,255,0.27);text-transform:uppercase;letter-spacing:0.9px;padding:0 20px 9px;}
+.info-blk{background:var(--card);border:1px solid var(--bd2);border-radius:18px;overflow:hidden;margin:0 20px 14px;}
+.ir{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.ir:last-child{border-bottom:none;}
+.ir-ico{width:36px;height:36px;border-radius:11px;background:rgba(26,111,255,0.1);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.ir-inf{flex:1;}
+.ir-lbl{font-size:11px;color:var(--mu);font-weight:500;}
+.ir-val{font-size:13px;font-weight:700;color:#fff;margin-top:1px;}
+.ir-tag{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;flex-shrink:0;}
+.t-bl{background:rgba(26,111,255,0.14);color:var(--bl);}
+.t-gn{background:rgba(0,200,83,0.12);color:var(--gn);}
+.t-gd{background:rgba(255,184,0,0.12);color:var(--gd);}
+.t-rd{background:rgba(255,59,85,0.12);color:var(--rd);}
+.t-am{background:rgba(255,149,0,0.12);color:var(--am);}
+.ed-panel{position:absolute;inset:0;border-radius:52px;z-index:260;background:var(--bg);transform:translateY(100%);transition:transform 0.42s cubic-bezier(0.32,0.72,0,1);overflow:hidden;display:flex;flex-direction:column;}
+.ed-panel.open{transform:translateY(0);}
+.ed-hero{position:relative;padding:54px 20px 20px;overflow:hidden;flex-shrink:0;}
+.ed-hero-glow{position:absolute;inset:-40px;filter:blur(80px);opacity:0.25;z-index:0;}
+.ed-back{position:absolute;top:58px;left:20px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:16px;z-index:2;}
+.ed-badge{position:absolute;top:58px;right:20px;font-size:10px;font-weight:800;padding:5px 12px;border-radius:20px;z-index:2;}
+.ed-icon-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;position:relative;z-index:2;}
+.ed-icon{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.ed-title{font-size:20px;font-weight:900;color:#fff;letter-spacing:-0.5px;}
+.ed-org{font-size:11px;color:var(--mu);margin-top:2px;}
+.ed-meta-row{display:flex;gap:7px;flex-wrap:wrap;position:relative;z-index:2;}
+.ed-meta-pill{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.06);border:1px solid var(--bd);border-radius:20px;padding:5px 11px;font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;}
+.ed-body{flex:1;overflow-y:auto;scrollbar-width:none;padding:16px 20px 20px;}
+.ed-body::-webkit-scrollbar{display:none;}
+.ed-section{margin-bottom:16px;}
+.ed-sec-t{font-size:12px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:9px;}
+.ed-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.ed-info-cell{background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:11px 12px;}
+.ed-info-lbl{font-size:10px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;}
+.ed-info-val{font-size:13px;font-weight:700;color:#fff;}
+.ed-syl-item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:11px 13px;margin-bottom:7px;}
+.ed-syl-n{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.ed-syl-t{font-size:13px;font-weight:700;color:#fff;}
+.ed-syl-s{font-size:10px;color:var(--mu);margin-top:1px;}
+.ed-cutoff{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.ed-cut-cell{background:var(--card);border:1px solid var(--bd2);border-radius:11px;padding:10px 6px;text-align:center;}
+.ed-cut-cat{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;margin-bottom:4px;}
+.ed-cut-val{font-size:14px;font-weight:900;color:#fff;}
+.ed-apply-bar{flex-shrink:0;padding:12px 20px 20px;border-top:1px solid var(--bd);background:rgba(4,4,12,0.95);}
+.ed-apply-btn{width:100%;padding:15px;border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(26,111,255,0.4);}
+/* ONBOARDING */
+.ob-wrap{position:absolute;inset:0;border-radius:52px;z-index:500;overflow:hidden;background:var(--bg);}
+.ob-slides{display:flex;width:300%;height:100%;transition:transform 0.45s cubic-bezier(0.32,0.72,0,1);}
+.ob-slide{width:33.333%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 40px;position:relative;overflow:hidden;}
+.ob-visual{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:240px;}
+.ob-glow{position:absolute;border-radius:50%;filter:blur(60px);}
+.ob-icon-wrap{position:relative;z-index:2;}
+.ob-icon-ring{position:absolute;inset:-24px;border-radius:50%;border:2px solid;animation:spin 8s linear infinite;}
+.ob-icon-ring2{position:absolute;inset:-44px;border-radius:50%;border:1.5px dashed;animation:spin 12s linear reverse infinite;}
+.ob-icon{width:100px;height:100px;border-radius:32px;display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;z-index:2;}
+.ob-content{width:100%;padding:0 28px;text-align:center;position:relative;z-index:2;}
+.ob-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);margin-bottom:16px;}
+.ob-h{font-size:28px;font-weight:900;color:#fff;letter-spacing:-0.8px;line-height:1.1;margin-bottom:10px;}
+.ob-s{font-size:14px;color:rgba(255,255,255,0.48);line-height:1.65;margin-bottom:28px;}
+.ob-dots{display:flex;gap:7px;justify-content:center;margin-bottom:24px;}
+.ob-dot{height:6px;border-radius:3px;transition:all 0.35s;}
+.ob-dot.act{width:24px;}
+.ob-dot.idle{width:6px;background:rgba(255,255,255,0.18);}
+.ob-btn{width:100%;padding:17px;border:none;border-radius:16px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:-0.3px;}
+.ob-skip{position:absolute;top:62px;right:24px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.4);cursor:pointer;z-index:10;padding:8px;}
+/* AUTH */
+.auth-wrap{position:absolute;inset:0;border-radius:52px;z-index:600;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;}
+.auth-glow-a{position:absolute;width:300px;height:300px;top:-80px;left:-60px;background:radial-gradient(circle,rgba(26,111,255,0.25) 0%,transparent 65%);border-radius:50%;pointer-events:none;}
+.auth-glow-b{position:absolute;width:200px;height:200px;bottom:100px;right:-50px;background:radial-gradient(circle,rgba(123,94,167,0.2) 0%,transparent 65%);border-radius:50%;pointer-events:none;}
+.auth-top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 32px;position:relative;z-index:2;}
+.auth-logo{width:72px;height:72px;border-radius:24px;background:linear-gradient(145deg,var(--bl),var(--pu));display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:20px;box-shadow:0 0 0 1px rgba(26,111,255,0.3),0 20px 60px rgba(26,111,255,0.4);}
+.auth-app-name{font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px;margin-bottom:6px;}
+.auth-app-sub{font-size:14px;color:rgba(255,255,255,0.4);text-align:center;line-height:1.5;}
+.auth-bottom{background:rgba(255,255,255,0.03);border-top:1px solid var(--bd);padding:24px 24px 36px;position:relative;z-index:2;}
+.auth-tabs{display:flex;background:rgba(255,255,255,0.05);border-radius:14px;padding:4px;margin-bottom:20px;}
+.auth-tab{flex:1;padding:10px;text-align:center;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;color:rgba(255,255,255,0.4);}
+.auth-tab.on{background:var(--bl);color:#fff;box-shadow:0 4px 16px rgba(26,111,255,0.4);}
+.auth-inp-wrap{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.06);border:1px solid var(--bd2);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.auth-inp-ico{font-size:18px;flex-shrink:0;}
+.auth-inp{flex:1;background:none;border:none;outline:none;color:#fff;font-size:14px;font-family:'Inter',sans-serif;font-weight:600;}
+.auth-inp::placeholder{color:rgba(255,255,255,0.25);font-weight:400;}
+.auth-btn{width:100%;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--bl),var(--bl2));color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(26,111,255,0.42);margin-top:4px;animation:btn-glow 3s ease-in-out infinite;}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:14px 0;}
+.auth-div-line{flex:1;height:1px;background:var(--bd);}
+.auth-div-t{font-size:11px;color:rgba(255,255,255,0.25);font-weight:600;}
+.auth-social{display:flex;gap:10px;}
+.auth-soc-btn{flex:1;padding:13px;border-radius:13px;background:rgba(255,255,255,0.05);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);}
+/* FORM FILL */
+.ff-panel{position:absolute;inset:0;border-radius:52px;z-index:250;background:var(--bg);transform:translateY(100%);transition:transform 0.42s cubic-bezier(0.32,0.72,0,1);overflow:hidden;display:flex;flex-direction:column;}
+.ff-panel.open{transform:translateY(0);}
+.ff-header{padding:50px 20px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.ff-back{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:16px;}
+.ff-exam-info{flex:1;}
+.ff-exam-nm{font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.3px;}
+.ff-exam-sub{font-size:11px;color:var(--mu);margin-top:1px;}
+.ff-progress-wrap{padding:14px 20px 0;flex-shrink:0;}
+.ff-steps-row{display:flex;gap:4px;margin-bottom:10px;}
+.ff-step-bar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.08);transition:background 0.4s;}
+.ff-step-bar.done{background:var(--gn);}
+.ff-step-bar.active{background:var(--bl);}
+.ff-step-lbl{font-size:11px;font-weight:700;color:var(--mu);}
+.ff-step-lbl span{color:#fff;font-weight:800;}
+.ff-body{flex:1;overflow-y:auto;padding:16px 20px;scrollbar-width:none;}
+.ff-body::-webkit-scrollbar{display:none;}
+.ff-section-t{font-size:12px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;}
+.ff-field{background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:11px 13px;margin-bottom:8px;position:relative;overflow:hidden;}
+.ff-field.filling{border-color:rgba(26,111,255,0.4);box-shadow:0 0 0 2px rgba(26,111,255,0.12);}
+.ff-field.done{border-color:rgba(0,200,83,0.3);}
+.ff-field-lbl{font-size:10px;color:var(--mu);font-weight:600;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px;}
+.ff-field-val{font-size:13px;font-weight:700;color:#fff;min-height:19px;}
+.ff-field-cursor{display:inline-block;width:2px;height:14px;background:var(--bl);animation:blink 0.8s infinite;vertical-align:middle;margin-left:2px;}
+.ff-field-ai{position:absolute;top:10px;right:11px;font-size:10px;font-weight:700;color:var(--gn);display:flex;align-items:center;gap:3px;}
+.ff-doc-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:11px 13px;margin-bottom:8px;}
+.ff-doc-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.ff-doc-nm{flex:1;font-size:12px;font-weight:700;color:#fff;}
+.ff-doc-st{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.ff-pay-card{background:linear-gradient(135deg,rgba(26,111,255,0.18),rgba(0,80,204,0.1));border:1px solid rgba(26,111,255,0.25);border-radius:16px;padding:18px;margin-bottom:12px;text-align:center;}
+.ff-amount{font-size:40px;font-weight:900;color:#fff;letter-spacing:-1px;}
+.ff-amount-lbl{font-size:11px;color:var(--mu);margin-top:2px;}
+.ff-pay-methods{display:flex;gap:8px;margin-bottom:12px;}
+.ff-pay-m{flex:1;background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:11px;text-align:center;cursor:pointer;transition:border-color 0.2s;}
+.ff-pay-m.sel{border-color:var(--bl);background:rgba(26,111,255,0.1);}
+.ff-pay-m-ico{font-size:20px;margin-bottom:4px;}
+.ff-pay-m-t{font-size:11px;font-weight:700;color:#fff;}
+.ff-submit{width:100%;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--bl),var(--bl2));color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(26,111,255,0.42);animation:btn-glow 3s ease-in-out infinite;}
+.ff-success{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:20px;}
+.ff-success-ico{font-size:64px;margin-bottom:20px;animation:pop-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
+.ff-success-t{font-size:24px;font-weight:900;color:#fff;letter-spacing:-0.5px;margin-bottom:8px;text-align:center;}
+.ff-success-s{font-size:13px;color:var(--mu);text-align:center;line-height:1.6;}
+.ff-success-ref{margin-top:16px;background:rgba(0,200,83,0.1);border:1px solid rgba(0,200,83,0.25);border-radius:12px;padding:10px 18px;font-size:12px;font-weight:700;color:var(--gn);}
+/* APPLICATION TRACKER */
+.tracker-card{margin:13px 20px 0;background:var(--card);border:1px solid var(--bd2);border-radius:20px;overflow:hidden;}
+.tracker-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;}
+.tracker-t{font-size:13px;font-weight:800;color:#fff;}
+.tracker-ct{font-size:10px;font-weight:700;color:var(--bl);background:rgba(26,111,255,0.12);padding:3px 10px;border-radius:20px;}
+.track-item{padding:12px 16px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:12px;}
+.track-ico{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.track-inf{flex:1;}
+.track-nm{font-size:12px;font-weight:700;color:#fff;}
+.track-dt{font-size:10px;color:var(--mu);margin-top:1px;}
+.track-pipeline{display:flex;align-items:center;gap:0;margin-top:8px;}
+.track-step{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
+.track-step-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.track-step-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;text-align:center;}
+.track-line{flex:1;height:2px;margin-bottom:14px;}
+/* ADMIT CARD */
+.admit-card{margin:0 20px 9px;background:linear-gradient(135deg,rgba(26,111,255,0.15),rgba(123,94,167,0.1));border:1px solid rgba(26,111,255,0.25);border-radius:18px;padding:14px;cursor:pointer;position:relative;overflow:hidden;}
+.admit-card::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(circle,rgba(26,111,255,0.2) 0%,transparent 65%);border-radius:50%;}
+.admit-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.admit-ico{width:38px;height:38px;border-radius:12px;background:rgba(26,111,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.admit-nm{font-size:13px;font-weight:800;color:#fff;}
+.admit-org{font-size:10px;color:var(--mu);margin-top:1px;}
+.admit-badge{margin-left:auto;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;}
+.admit-meta{display:flex;gap:8px;}
+.admit-m{background:rgba(255,255,255,0.06);border-radius:9px;padding:7px 10px;}
+.admit-m-l{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:0.4px;font-weight:600;}
+.admit-m-v{font-size:11px;font-weight:800;color:#fff;margin-top:2px;}
+.admit-dl{width:100%;margin-top:10px;padding:9px;border-radius:11px;border:none;background:rgba(26,111,255,0.2);color:var(--bl);font-size:12px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;}
+/* DEADLINE WIDGET */
+.deadline-widget{margin:13px 20px 0;background:linear-gradient(135deg,rgba(255,59,85,0.14),rgba(255,149,0,0.08));border:1px solid rgba(255,59,85,0.22);border-radius:18px;padding:14px;}
+.dw-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.dw-t{font-size:13px;font-weight:800;color:#fff;flex:1;}
+.dw-soon{font-size:10px;font-weight:800;color:var(--rd);background:rgba(255,59,85,0.12);padding:3px 10px;border-radius:20px;}
+.dw-items{display:flex;flex-direction:column;gap:7px;}
+.dw-item{display:flex;align-items:center;gap:10px;}
+.dw-ico{font-size:16px;flex-shrink:0;}
+.dw-nm{flex:1;font-size:12px;font-weight:700;color:#fff;}
+.dw-cnt{font-size:11px;font-weight:900;letter-spacing:-0.3px;}
+/* RESULT NOTIF */
+.result-card{margin:0 20px 9px;background:linear-gradient(135deg,rgba(0,200,83,0.1),rgba(0,207,255,0.06));border:1px solid rgba(0,200,83,0.2);border-radius:16px;padding:13px;cursor:pointer;}
+.rc-top{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
+.rc-ico{width:36px;height:36px;border-radius:11px;background:rgba(0,200,83,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.rc-nm{font-size:13px;font-weight:800;color:#fff;flex:1;}
+.rc-new{font-size:9px;font-weight:800;color:var(--gn);background:rgba(0,200,83,0.12);padding:3px 8px;border-radius:20px;}
+.rc-sub{font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;}
+/* NOTIF */
+.nc{display:flex;align-items:flex-start;gap:11px;border-radius:16px;padding:14px;margin-bottom:9px;cursor:pointer;}
+.nc.unread{background:rgba(26,111,255,0.07);border:1px solid rgba(26,111,255,0.17);}
+.nc.read{background:var(--card);border:1px solid var(--bd);}
+.nc-ico{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.nc-t{font-size:12px;font-weight:700;color:#fff;line-height:1.45;}
+.nc-s{font-size:11px;color:var(--mu);margin-top:3px;}
+.nc-time{font-size:10px;color:rgba(255,255,255,0.2);margin-top:4px;}
+.nc-pip{width:8px;height:8px;background:var(--bl);border-radius:50%;flex-shrink:0;margin-top:6px;}
+/* PROC */
+.proc{position:absolute;inset:0;border-radius:52px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.proc.show{opacity:1;pointer-events:all;}
+.proc-ring{position:relative;width:128px;height:128px;margin-bottom:34px;}
+.proc-glow{position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(26,111,255,0.22) 0%,transparent 65%);animation:breathe 2.2s ease-in-out infinite;}
+.proc-t{font-size:24px;font-weight:900;background:linear-gradient(135deg,var(--bl),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.7px;margin-bottom:9px;}
+.proc-s{font-size:13px;color:var(--mu);margin-bottom:30px;}
+.proc-dots{display:flex;gap:10px;}
+.pd{width:10px;height:10px;border-radius:50%;animation:bounce 1.3s ease-in-out infinite;}
+/* SPLASH SCREEN */
+.splash{position:absolute;inset:0;border-radius:52px;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(26,111,255,0.25) 0%,transparent 65%),#04040C;overflow:hidden;}
+.splash-logo{width:88px;height:88px;border-radius:28px;background:linear-gradient(145deg,#1A6FFF,#7B5EA7);display:flex;align-items:center;justify-content:center;margin-bottom:20px;animation:splash-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;box-shadow:0 0 0 1px rgba(255,255,255,0.12),0 24px 60px rgba(26,111,255,0.5);}
+.splash-name{font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px;animation:fu 0.5s 0.3s ease both;}
+.splash-tag{font-size:13px;color:rgba(255,255,255,0.4);margin-top:6px;animation:fu 0.5s 0.5s ease both;}
+.splash-bar{width:140px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:40px;overflow:hidden;animation:fu 0.5s 0.6s ease both;}
+.splash-fill{height:100%;background:linear-gradient(90deg,var(--bl),var(--cy));border-radius:2px;animation:splash-load 1.8s 0.7s ease both;}
+.splash-ring{position:absolute;width:280px;height:280px;border-radius:50%;border:1px solid rgba(26,111,255,0.12);animation:spin 12s linear infinite;}
+.splash-ring2{position:absolute;width:380px;height:380px;border-radius:50%;border:1px dashed rgba(26,111,255,0.07);animation:spin 20s linear reverse infinite;}
+@keyframes splash-pop{from{opacity:0;transform:scale(0.3);}to{opacity:1;transform:scale(1);}}
+@keyframes splash-load{from{width:0;}to{width:100%;}}
+/* TAB TRANSITIONS */
+.tab-content{animation:tab-in 0.28s cubic-bezier(0.32,0.72,0,1) both;}
+@keyframes tab-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+/* PULL TO REFRESH */
+.ptr-indicator{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;font-size:12px;font-weight:700;color:var(--bl);height:0;overflow:hidden;transition:height 0.3s;}
+.ptr-indicator.show{height:44px;}
+.ptr-spin{animation:spin 1s linear infinite;font-size:18px;}
+.notif-panel{position:absolute;inset:0;border-radius:52px;z-index:400;background:var(--bg);transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);overflow:hidden;display:flex;flex-direction:column;}
+.notif-panel.open{transform:translateX(0);}
+.notif-panel-hdr{padding:54px 20px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.notif-panel-t{flex:1;font-size:17px;font-weight:900;color:#fff;letter-spacing:-0.4px;}
+.notif-mark{font-size:11px;font-weight:700;color:var(--bl);cursor:pointer;}
+.notif-body{flex:1;overflow-y:auto;scrollbar-width:none;padding:12px 16px;}
+.notif-body::-webkit-scrollbar{display:none;}
+.notif-group-lbl{font-size:10px;font-weight:800;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.9px;margin:8px 0 6px;}
+.ncard{display:flex;align-items:flex-start;gap:11px;border-radius:16px;padding:13px;margin-bottom:7px;cursor:pointer;transition:transform 0.15s;}
+.ncard:active{transform:scale(0.97);}
+.ncard.unread{background:rgba(26,111,255,0.08);border:1px solid rgba(26,111,255,0.18);}
+.ncard.read{background:var(--card);border:1px solid var(--bd);}
+.ncard-ico{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.ncard-body{flex:1;}
+.ncard-t{font-size:12px;font-weight:700;color:#fff;line-height:1.45;}
+.ncard-s{font-size:11px;color:var(--mu);margin-top:3px;line-height:1.5;}
+.ncard-time{font-size:10px;color:rgba(255,255,255,0.2);margin-top:5px;}
+.ncard-pip{width:8px;height:8px;background:var(--bl);border-radius:50%;flex-shrink:0;margin-top:5px;}
+/* SKELETON */
+.skel{border-radius:8px;background:linear-gradient(90deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.09) 50%,rgba(255,255,255,0.04) 100%);background-size:200% 100%;animation:shimmer 1.4s infinite;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 30px;text-align:center;}
+/* APPLY SHEET */
+.apply-sheet{position:absolute;bottom:74px;left:0;right:0;z-index:350;background:rgba(8,8,24,0.98);border-radius:32px 32px 0 0;border-top:1px solid rgba(255,255,255,0.1);padding:20px 20px 28px;transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);}
+.apply-sheet.open{transform:translateY(0);}
+.apply-sheet-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 18px;}
+/* UPLOAD MODAL */
+.upload-modal{position:absolute;bottom:74px;left:0;right:0;z-index:350;background:rgba(8,8,24,0.98);border-radius:32px 32px 0 0;border-top:1px solid rgba(255,255,255,0.1);padding:20px 20px 28px;transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);}
+.upload-modal.open{transform:translateY(0);}
+.upload-zone{border:2px dashed rgba(26,111,255,0.35);border-radius:18px;padding:28px;display:flex;flex-direction:column;align-items:center;gap:10px;background:rgba(26,111,255,0.04);cursor:pointer;margin-bottom:14px;}
+.doc-type-btn{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd2);border-radius:14px;padding:13px 15px;cursor:pointer;margin-bottom:8px;transition:border-color 0.18s;}
+.sheet-overlay{position:absolute;top:0;left:0;right:0;bottom:74px;background:rgba(0,0,0,0.5);z-index:340;opacity:0;pointer-events:none;transition:opacity 0.3s;border-radius:52px 52px 0 0;}
+.sheet-overlay.show{opacity:1;pointer-events:all;}
+.empty-ico{font-size:52px;margin-bottom:16px;opacity:0.6;}
+.empty-t{font-size:15px;font-weight:800;color:rgba(255,255,255,0.6);margin-bottom:6px;}
+.empty-s{font-size:12px;color:rgba(255,255,255,0.28);line-height:1.6;}
+@keyframes btn-glow{0%,100%{box-shadow:0 10px 40px rgba(26,111,255,0.45),0 2px 0 rgba(255,255,255,0.08) inset;}50%{box-shadow:0 12px 60px rgba(26,111,255,0.72),0 0 80px rgba(26,111,255,0.18),0 2px 0 rgba(255,255,255,0.08) inset;}}
+@keyframes shine{0%{left:-120%;}100%{left:200%;}}
+@keyframes pulse-r{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.3;transform:scale(0.65);}}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes breathe{0%,100%{opacity:0.4;transform:scale(1);}50%{opacity:1;transform:scale(1.14);}}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:0.28;}50%{transform:translateY(-11px);opacity:1;}}
+@keyframes ticker-run{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+@keyframes cards-run{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+@keyframes fu{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+@keyframes pop-in{from{opacity:0;transform:scale(0.3);}to{opacity:1;transform:scale(1);}}
+.a0{animation:fu 0.4s 0s ease both;}
+.a1{animation:fu 0.4s 0.06s ease both;}
+.a2{animation:fu 0.4s 0.12s ease both;}
+.a3{animation:fu 0.4s 0.18s ease both;}
+.a4{animation:fu 0.4s 0.24s ease both;}
+</style>
+</head>
+<body>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+
+/* ─── DATA ─── */
+const TICKER_DATA=[
+  {dot:'#FF9500',cat:'SSC',catC:'#FF9500',nm:'SSC CGL 2025',days:'3d',urg:true},
+  {dot:'#FF3B55',cat:'UPSC',catC:'#FF3B55',nm:'UPSC CSE 2025',days:'2d',urg:true},
+  {dot:'#4D94FF',cat:'Railway',catC:'#4D94FF',nm:'RRB NTPC 2025',days:'12d',urg:false},
+  {dot:'#00CFFF',cat:'Bank',catC:'#00CFFF',nm:'IBPS PO 2025',days:'18d',urg:false},
+  {dot:'#00C853',cat:'Army',catC:'#00C853',nm:'Army GD',days:'7d',urg:false},
+  {dot:'#7B5EA7',cat:'State',catC:'#7B5EA7',nm:'UP PCS 2025',days:'22d',urg:false},
+];
+const LATEST=[
+  {cls:'ssc',bg:'rgba(255,149,0,0.16)',ico:'📝',cat:'SSC',catC:'#FF9500',nm:'SSC CGL 2025',posts:'17,727',fee:'₹100',days:3,urg:true},
+  {cls:'upsc',bg:'rgba(255,59,85,0.15)',ico:'🏛️',cat:'UPSC',catC:'#FF3B55',nm:'UPSC CSE 2025',posts:'1,080',fee:'₹100',days:2,urg:true},
+  {cls:'rail',bg:'rgba(26,111,255,0.15)',ico:'🚂',cat:'Railway',catC:'#4D94FF',nm:'RRB NTPC 2025',posts:'11,558',fee:'₹500',days:12,urg:false},
+  {cls:'bank',bg:'rgba(0,207,255,0.14)',ico:'🏦',cat:'Bank',catC:'#00CFFF',nm:'IBPS PO 2025',posts:'4,455',fee:'₹850',days:18,urg:false},
+  {cls:'army',bg:'rgba(0,200,83,0.14)',ico:'🎖️',cat:'Army',catC:'#00C853',nm:'Army GD',posts:'25,000',fee:'₹250',days:7,urg:false},
+];
+const EXAMS=[
+  {id:1,cls:'ssc',bg:'rgba(255,149,0,0.16)',ico:'📝',cat:'SSC',nm:'SSC CGL 2025',org:'Staff Selection Commission',posts:'17,727',fee:'₹100',age:'18–32 yrs',days:3,urg:true},
+  {id:2,cls:'rail',bg:'rgba(26,111,255,0.16)',ico:'🚂',cat:'Railway',nm:'RRB NTPC 2025',org:'Railway Recruitment Board',posts:'11,558',fee:'₹500',age:'18–30 yrs',days:12,urg:false},
+  {id:3,cls:'upsc',bg:'rgba(255,59,85,0.15)',ico:'🏛️',cat:'UPSC',nm:'UPSC CSE 2025',org:'Union Public Service Commission',posts:'1,080',fee:'₹100',age:'21–32 yrs',days:2,urg:true},
+  {id:4,cls:'bank',bg:'rgba(0,207,255,0.14)',ico:'🏦',cat:'Bank',nm:'IBPS PO 2025',org:'Institute of Banking Personnel',posts:'4,455',fee:'₹850',age:'20–30 yrs',days:18,urg:false},
+  {id:5,cls:'army',bg:'rgba(0,200,83,0.14)',ico:'🎖️',cat:'Army',nm:'Army GD Agniveer',org:'Indian Army',posts:'25,000',fee:'₹250',age:'17–23 yrs',days:7,urg:false},
+  {id:6,cls:'state',bg:'rgba(123,94,167,0.16)',ico:'🏢',cat:'State',nm:'UP PCS 2025',org:'Uttar Pradesh PSC',posts:'2,390',fee:'₹80',age:'21–40 yrs',days:22,urg:false},
+];
+const CATS=['All','SSC','Railway','UPSC','Bank','Army','State'];
+const DOCS_OK=[
+  {ico:'🪪',bg:'rgba(26,111,255,0.15)',nm:'Aadhar Card',mt:'PDF · 2 pages',sz:'1.2 MB'},
+  {ico:'📸',bg:'rgba(0,200,83,0.14)',nm:'10th Marksheet',mt:'PDF · 4 pages',sz:'2.8 MB'},
+  {ico:'🖼️',bg:'rgba(255,184,0,0.14)',nm:'Passport Photo',mt:'JPG · 35×45mm',sz:'180 KB'},
+  {ico:'✍️',bg:'rgba(123,94,167,0.15)',nm:'Signature',mt:'JPG · White bg',sz:'95 KB'},
+  {ico:'📄',bg:'rgba(0,207,255,0.12)',nm:'Caste Certificate',mt:'PDF · 1 page',sz:'540 KB'},
+];
+const DOCS_PEND=[
+  {ico:'📋',bg:'rgba(255,59,85,0.1)',nm:'12th Marksheet',mt:'Required for SSC CGL'},
+  {ico:'🎓',bg:'rgba(255,149,0,0.1)',nm:'Graduation Certificate',mt:'Required for UPSC'},
+];
+const ADMIT_CARDS=[
+  {ico:'📝',nm:'SSC CGL 2025',org:'Staff Selection Commission',date:'15 Aug 2025',center:'Delhi-01',rollNo:'2204512367',bg:'rgba(255,149,0,0.14)',badge:'Available',badgeC:'#00C853',badgeBg:'rgba(0,200,83,0.12)'},
+  {ico:'🚂',nm:'RRB NTPC 2025',org:'Railway Recruitment Board',date:'22 Sep 2025',center:'Lucknow-03',rollNo:'RRB110234',bg:'rgba(26,111,255,0.14)',badge:'Soon',badgeC:'#FFB800',badgeBg:'rgba(255,184,0,0.12)'},
+];
+const TRACKED=[
+  {ico:'📝',bg:'rgba(255,149,0,0.16)',nm:'SSC CGL 2025',dt:'Applied 24 Apr',steps:[{l:'Applied',done:true},{l:'Verified',done:true},{l:'Admit Card',done:true},{l:'Exam',done:false},{l:'Result',done:false}]},
+  {ico:'🚂',bg:'rgba(26,111,255,0.16)',nm:'RRB NTPC',dt:'Applied 18 Apr',steps:[{l:'Applied',done:true},{l:'Verified',done:true},{l:'Admit Card',done:false},{l:'Exam',done:false},{l:'Result',done:false}]},
+  {ico:'🏦',bg:'rgba(0,207,255,0.14)',nm:'IBPS PO 2024',dt:'Applied 2 Jan',steps:[{l:'Applied',done:true},{l:'Verified',done:true},{l:'Admit Card',done:true},{l:'Exam',done:true},{l:'Result',done:false}]},
+];
+const EXAM_DETAILS={
+  1:{posts:'17,727',fee:'₹100',age:'18–32 yrs',mode:'Online CBT',lang:'Hindi & English',lastDate:'30 Apr 2025',examDate:'Aug–Sep 2025',eligibility:'Graduation in any stream',syllabus:[{t:'General Intelligence',s:'Reasoning, Analogy, Series',n:1,c:'rgba(26,111,255,0.15)',nc:'#1A6FFF'},{t:'General Awareness',s:'History, Geography, Current Affairs',n:2,c:'rgba(255,184,0,0.14)',nc:'#FFB800'},{t:'Quantitative Aptitude',s:'Maths, DI, Algebra',n:3,c:'rgba(0,200,83,0.13)',nc:'#00C853'},{t:'English Comprehension',s:'Grammar, Vocabulary, RC',n:4,c:'rgba(123,94,167,0.14)',nc:'#A78BF7'}],cutoff:{gen:'140.5',obc:'135.2',sc:'125.8',st:'118.4'}},
+  2:{posts:'11,558',fee:'₹500',age:'18–30 yrs',mode:'Online CBT',lang:'Hindi & English',lastDate:'12 May 2025',examDate:'Oct–Nov 2025',eligibility:'12th Pass / Graduation',syllabus:[{t:'Mathematics',s:'Arithmetic, Algebra, Geometry',n:1,c:'rgba(26,111,255,0.15)',nc:'#1A6FFF'},{t:'General Intelligence',s:'Reasoning & Aptitude',n:2,c:'rgba(255,184,0,0.14)',nc:'#FFB800'},{t:'General Awareness',s:'Current Affairs, GK',n:3,c:'rgba(0,200,83,0.13)',nc:'#00C853'},{t:'General Science',s:'Physics, Chemistry, Biology',n:4,c:'rgba(255,59,85,0.13)',nc:'#FF3B55'}],cutoff:{gen:'68.2',obc:'62.8',sc:'55.4',st:'50.1'}},
+  3:{posts:'1,080',fee:'₹100',age:'21–32 yrs',mode:'Offline',lang:'English',lastDate:'20 May 2025',examDate:'Jun 2025',eligibility:'Any Degree from recognized University',syllabus:[{t:'General Studies I',s:'History, Geography, Society',n:1,c:'rgba(255,59,85,0.13)',nc:'#FF3B55'},{t:'General Studies II',s:'Governance, Constitution, IR',n:2,c:'rgba(26,111,255,0.15)',nc:'#1A6FFF'},{t:'General Studies III',s:'Economy, Technology, Environment',n:3,c:'rgba(0,200,83,0.13)',nc:'#00C853'},{t:'Essay Paper',s:'800-1000 words essays',n:4,c:'rgba(255,184,0,0.14)',nc:'#FFB800'}],cutoff:{gen:'98.5',obc:'90.2',sc:'82.6',st:'77.3'}},
+  4:{posts:'4,455',fee:'₹850',age:'20–30 yrs',mode:'Online',lang:'English & Hindi',lastDate:'18 May 2025',examDate:'Oct 2025',eligibility:'Graduation with 60% marks',syllabus:[{t:'Reasoning',s:'Logical & Verbal Reasoning',n:1,c:'rgba(0,207,255,0.13)',nc:'#00CFFF'},{t:'English Language',s:'Grammar, Comprehension',n:2,c:'rgba(26,111,255,0.15)',nc:'#1A6FFF'},{t:'Quantitative Aptitude',s:'Maths, DI',n:3,c:'rgba(0,200,83,0.13)',nc:'#00C853'},{t:'General Awareness',s:'Banking, Finance, Current Affairs',n:4,c:'rgba(255,184,0,0.14)',nc:'#FFB800'}],cutoff:{gen:'58.5',obc:'53.1',sc:'46.8',st:'41.2'}},
+  5:{posts:'25,000',fee:'₹250',age:'17–23 yrs',mode:'Written + Physical',lang:'Hindi & English',lastDate:'7 May 2025',examDate:'Jul–Aug 2025',eligibility:'10th Pass, Physically Fit',syllabus:[{t:'General Knowledge',s:'History, Current Affairs',n:1,c:'rgba(0,200,83,0.13)',nc:'#00C853'},{t:'Elementary Maths',s:'Basic Arithmetic',n:2,c:'rgba(26,111,255,0.15)',nc:'#1A6FFF'},{t:'General Science',s:'Physics, Chemistry',n:3,c:'rgba(255,184,0,0.14)',nc:'#FFB800'},{t:'Physical Fitness',s:'Running, Pull-ups, Balance',n:4,c:'rgba(255,59,85,0.13)',nc:'#FF3B55'}],cutoff:{gen:'45',obc:'40',sc:'35',st:'32'}},
+  6:{posts:'2,390',fee:'₹80',age:'21–40 yrs',mode:'Written + Interview',lang:'Hindi',lastDate:'22 May 2025',examDate:'Sep 2025',eligibility:'Graduation from recognized University',syllabus:[{t:'General Studies',s:'History, Polity, Economy',n:1,c:'rgba(123,94,167,0.14)',nc:'#A78BF7'},{t:'General Hindi',s:'Grammar, Comprehension',n:2,c:'rgba(26,111,255,0.15)',nc:'#1A6FFF'},{t:'General Science & Tech',s:'Science, Technology',n:3,c:'rgba(0,200,83,0.13)',nc:'#00C853'},{t:'Current Affairs',s:'Rajasthan & National Events',n:4,c:'rgba(255,184,0,0.14)',nc:'#FFB800'}],cutoff:{gen:'112',obc:'106',sc:'98',st:'92'}},
+};
+
+const FORM_STEPS=['Personal','Education','Documents','Payment'];
+const PERSONAL_FIELDS=[
+  {lbl:'Full Name',val:'Rahul Kumar'},{lbl:'Date of Birth',val:'15 Aug 2001'},
+  {lbl:"Father's Name",val:'Rajesh Kumar'},{lbl:'Category',val:'OBC'},
+  {lbl:'Mobile Number',val:'+91 98765 43210'},{lbl:'Email Address',val:'rahul.kumar@gmail.com'},
+  {lbl:'Aadhar Number',val:'XXXX XXXX 4821'},
+];
+const EDU_FIELDS=[
+  {lbl:'10th Board',val:'CBSE'},{lbl:'10th Percentage',val:'82.4%'},
+  {lbl:'12th Board',val:'CBSE'},{lbl:'12th Percentage',val:'78.6%'},
+  {lbl:'Graduation',val:'B.Sc Computer Science'},{lbl:'University',val:'CCSU, Meerut'},
+];
+
+/* ─── HELPERS ─── */
+function SBIcons(){
+  return(
+    <div className="sb-ic">
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="white"><rect x="0" y="3" width="3" height="9" rx="1" opacity="0.25"/><rect x="4.5" y="2" width="3" height="10" rx="1" opacity="0.5"/><rect x="9" y="0.5" width="3" height="11.5" rx="1" opacity="0.78"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg>
+      <svg width="15" height="11" viewBox="0 0 16 12" fill="white"><path d="M8 2.4C5.4 2.4 3.1 3.5 1.5 5.3L0 3.8C2 1.5 4.8 0 8 0s6 1.5 8 3.8l-1.5 1.5C12.9 3.5 10.6 2.4 8 2.4z" opacity="0.28"/><path d="M8 5.6c-1.8 0-3.4.7-4.5 1.9L2 6C3.5 4.2 5.6 3.2 8 3.2s4.5 1 6 2.8l-1.5 1.5C11.4 6.3 9.8 5.6 8 5.6z" opacity="0.6"/><circle cx="8" cy="11.5" r="1.5"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="1" width="21" height="10" rx="3" stroke="white" strokeWidth="1.2" opacity="0.4"/><rect x="22" y="4" width="2" height="4" rx="1" fill="white" opacity="0.35"/><rect x="2" y="2.5" width="14" height="7" rx="1.5" fill="white"/></svg>
+    </div>
+  );
+}
+
+/* ─── FILLKARO LOGO ─── */
+function FillkaroLogo({size=40}){
+  return(
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="12" fill="url(#lg)"/>
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#1A6FFF"/>
+          <stop offset="100%" stopColor="#7B5EA7"/>
+        </linearGradient>
+      </defs>
+      {/* Document */}
+      <rect x="10" y="8" width="16" height="20" rx="3" fill="white" opacity="0.15"/>
+      <rect x="10" y="8" width="16" height="20" rx="3" stroke="white" strokeWidth="1.5" opacity="0.6"/>
+      <line x1="14" y1="14" x2="22" y2="14" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.8"/>
+      <line x1="14" y1="17.5" x2="22" y2="17.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.8"/>
+      <line x1="14" y1="21" x2="19" y2="21" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.8"/>
+      {/* Lightning bolt */}
+      <circle cx="27" cy="27" r="7" fill="#FFB800"/>
+      <path d="M28.5 22.5L25 27.5H27.5L26 31.5L30 26H27.5L28.5 22.5Z" fill="white"/>
+    </svg>
+  );
+}
+
+/* ─── SPLASH SCREEN ─── */
+function SplashScreen({onDone}){
+  useEffect(()=>{
+    const t=setTimeout(onDone, 2800);
+    return()=>clearTimeout(t);
+  },[]);
+  return(
+    <div className="splash">
+      <div className="splash-ring"></div>
+      <div className="splash-ring2"></div>
+      <div className="splash-logo">
+        <FillkaroLogo size={52}/>
+      </div>
+      <div className="splash-name">Fillkaro</div>
+      <div className="splash-tag">Sarkari Form Bharo ⚡ Sirf 5 Min Mein</div>
+      <div className="splash-bar"><div className="splash-fill"></div></div>
+    </div>
+  );
+}
+
+/* ─── AUTH SCREEN ─── */
+const OB_SLIDES=[
+  {tag:'👋 Swagat Hai',h:'Sarkari Form\nAb Aasaan Hai',s:'SSC, Railway, UPSC, Bank — koi bhi form bharo sirf 5 minute mein.',ico:'📋',iconBg:'rgba(26,111,255,0.2)',glow1:{c:'rgba(26,111,255,0.3)',size:280,x:'10%',y:'15%'},glow2:{c:'rgba(0,207,255,0.15)',size:200,x:'70%',y:'60%'},ring1:'rgba(26,111,255,0.5)',ring2:'rgba(0,207,255,0.25)',btn:'linear-gradient(135deg,#1A6FFF,#0044CC)',dot:'#1A6FFF',btnT:'Aage Badho →'},
+  {tag:'📂 Documents',h:'Ek Baar Upload,\nBaar Baar Use',s:'Aadhar, Photo, Marksheet — sirf ek baar upload karo. Har form mein auto-attach.',ico:'⚡',iconBg:'rgba(255,184,0,0.18)',glow1:{c:'rgba(255,184,0,0.22)',size:260,x:'60%',y:'10%'},glow2:{c:'rgba(255,149,0,0.12)',size:180,x:'5%',y:'65%'},ring1:'rgba(255,184,0,0.5)',ring2:'rgba(255,149,0,0.25)',btn:'linear-gradient(135deg,#FFB800,#FF9500)',dot:'#FFB800',btnT:'Aage Badho →'},
+  {tag:'🚀 AI Magic',h:'Form Fill Karo\nSimply Apply Karo',s:'Exam choose karo, Apply dabao — baaki sab automatic. Confirmation turant milega.',ico:'🎯',iconBg:'rgba(0,200,83,0.18)',glow1:{c:'rgba(0,200,83,0.22)',size:260,x:'15%',y:'20%'},glow2:{c:'rgba(0,207,255,0.12)',size:160,x:'65%',y:'55%'},ring1:'rgba(0,200,83,0.5)',ring2:'rgba(0,207,255,0.25)',btn:'linear-gradient(135deg,#00C853,#00A844)',dot:'#00C853',btnT:'Shuru Karo 🚀'},
+];
+
+function AuthScreen({onDone}){
+  const [tab,setTab]=useState('login');
+  const [phone,setPhone]=useState('');
+  const [name,setName]=useState('');
+  const [otp,setOtp]=useState('');
+  const [step,setStep]=useState(0); // 0=form, 1=otp
+
+  const handleSubmit=()=>{
+    if(step===0){ setStep(1); return; }
+    onDone();
+  };
+
+  return(
+    <div className="auth-wrap">
+      <div className="auth-glow-a"></div>
+      <div className="auth-glow-b"></div>
+
+      {/* Top branding */}
+      <div className="auth-top">
+        <div className="auth-logo">📋</div>
+        <div className="auth-app-name">Fillkaro</div>
+        <div className="auth-app-sub">India ka #1 Sarkari Form App{'\n'}10 Lakh+ Students Ka Bharosa</div>
+      </div>
+
+      {/* Bottom form */}
+      <div className="auth-bottom">
+        {step===0 ? (<>
+          <div className="auth-tabs">
+            <div className={`auth-tab ${tab==='login'?'on':''}`} onClick={()=>setTab('login')}>Login</div>
+            <div className={`auth-tab ${tab==='signup'?'on':''}`} onClick={()=>setTab('signup')}>Sign Up</div>
+          </div>
+          {tab==='signup'&&(
+            <div className="auth-inp-wrap">
+              <span className="auth-inp-ico">👤</span>
+              <input className="auth-inp" placeholder="Apna poora naam" value={name} onChange={e=>setName(e.target.value)}/>
+            </div>
+          )}
+          <div className="auth-inp-wrap">
+            <span className="auth-inp-ico">📱</span>
+            <input className="auth-inp" placeholder="+91 Mobile Number" value={phone} onChange={e=>setPhone(e.target.value)} type="tel"/>
+          </div>
+          <button className="auth-btn" onClick={handleSubmit}>
+            {tab==='login'?'OTP Bhejo 🔐':'Account Banao 🚀'}
+          </button>
+          <div className="auth-divider">
+            <div className="auth-div-line"></div>
+            <div className="auth-div-t">ya phir</div>
+            <div className="auth-div-line"></div>
+          </div>
+          <div className="auth-social">
+            <div className="auth-soc-btn">🟢 Google</div>
+            <div className="auth-soc-btn" onClick={onDone}>👻 Demo Mode</div>
+          </div>
+        </>) : (<>
+          <div style={{textAlign:'center',marginBottom:18}}>
+            <div style={{fontSize:14,fontWeight:700,color:'#fff',marginBottom:4}}>OTP bheja gaya</div>
+            <div style={{fontSize:12,color:'rgba(255,255,255,0.4)'}}>+91 {phone||'98765 43210'} par</div>
+          </div>
+          <div style={{display:'flex',gap:8,justifyContent:'center',marginBottom:16}}>
+            {[0,1,2,3,4,5].map(i=>(
+              <div key={i} style={{width:44,height:52,background:'rgba(255,255,255,0.06)',border:`1px solid ${otp.length>i?'var(--bl)':'var(--bd2)'}`,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,fontWeight:900,color:'#fff'}}>
+                {otp[i]||''}
+              </div>
+            ))}
+          </div>
+          <input style={{position:'absolute',opacity:0,pointerEvents:'none'}} value={otp} onChange={e=>setOtp(e.target.value.slice(0,6))} type="number" autoFocus/>
+          <button className="auth-btn" onClick={handleSubmit}>Verify & Login ✓</button>
+          <div style={{textAlign:'center',marginTop:12,fontSize:12,color:'rgba(255,255,255,0.35)',cursor:'pointer'}} onClick={()=>setStep(0)}>← Wapas Jao</div>
+        </>)}
+      </div>
+    </div>
+  );
+}
+
+/* ─── ONBOARDING ─── */
+function Onboarding({onDone}){
+  const [idx,setIdx]=useState(0);
+  const s=OB_SLIDES[idx];
+  const next=()=>{ if(idx<2) setIdx(idx+1); else onDone(); };
+  return(
+    <div className="ob-wrap">
+      <div className="ob-skip" onClick={onDone}>Skip</div>
+      <div className="ob-slides" style={{transform:`translateX(-${idx*33.333}%)`}}>
+        {OB_SLIDES.map((sl,i)=>(
+          <div key={i} className="ob-slide">
+            <div className="ob-glow" style={{background:sl.glow1.c,width:sl.glow1.size,height:sl.glow1.size,left:sl.glow1.x,top:sl.glow1.y}}></div>
+            <div className="ob-glow" style={{background:sl.glow2.c,width:sl.glow2.size,height:sl.glow2.size,left:sl.glow2.x,top:sl.glow2.y}}></div>
+            <div className="ob-visual">
+              <div className="ob-icon-wrap">
+                <div className="ob-icon-ring" style={{borderColor:sl.ring1}}></div>
+                <div className="ob-icon-ring2" style={{borderColor:sl.ring2}}></div>
+                <div className="ob-icon" style={{background:sl.iconBg,boxShadow:`0 0 60px ${sl.glow1.c}`}}>{sl.ico}</div>
+              </div>
+            </div>
+            <div className="ob-content">
+              <div className="ob-tag">{sl.tag}</div>
+              <div className="ob-h">{sl.h.split('\n').map((l,j)=><span key={j}>{l}<br/></span>)}</div>
+              <div className="ob-s">{sl.s}</div>
+              <div className="ob-dots">
+                {OB_SLIDES.map((_,j)=>(
+                  <div key={j} className={`ob-dot ${j===idx?'act':'idle'}`} style={j===idx?{background:sl.dot}:{}}></div>
+                ))}
+              </div>
+              <button className="ob-btn" style={{background:sl.btn,boxShadow:`0 8px 28px ${sl.glow1.c}`}} onClick={()=>idx===i&&next()}>
+                {sl.btnT}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const RESULTS_DATA=[
+  {ico:'📊',bg:'rgba(0,200,83,0.15)',nm:'SSC CHSL 2024',org:'Staff Selection Commission',date:'25 Apr 2025',status:'Final Result',statusC:'#00C853',statusBg:'rgba(0,200,83,0.12)',desc:'Merit list aur cut-off available hai.'},
+  {ico:'📝',bg:'rgba(255,184,0,0.14)',nm:'RRB Group D 2024',org:'Railway Recruitment Board',date:'22 Apr 2025',status:'Answer Key',statusC:'#FFB800',statusBg:'rgba(255,184,0,0.12)',desc:'Official Answer Key release. Objection 30 Apr tak.'},
+  {ico:'🏛️',bg:'rgba(255,59,85,0.14)',nm:'UPSC CDS 2024',org:'Union Public Service Commission',date:'18 Apr 2025',status:'Written Result',statusC:'#FF3B55',statusBg:'rgba(255,59,85,0.12)',desc:'Written exam result declare. Interview shortlist check karo.'},
+  {ico:'🏦',bg:'rgba(0,207,255,0.14)',nm:'IBPS Clerk 2024',org:'Institute of Banking Personnel',date:'10 Apr 2025',status:'Final Result',statusC:'#00CFFF',statusBg:'rgba(0,207,255,0.12)',desc:'Final allotment list released.'},
+  {ico:'🎖️',bg:'rgba(0,200,83,0.14)',nm:'Army GD 2024',org:'Indian Army',date:'5 Apr 2025',status:'Merit List',statusC:'#00C853',statusBg:'rgba(0,200,83,0.12)',desc:'State-wise merit list download karo.'},
+];
+
+function ExamsSection({savedExams,toggleSave,setExamDetail,initSearch='',clearSearch}){
+  const [subTab,setSubTab]=useState('exams');
+  const [catFilter,setCatFilter]=useState('All');
+  const [searchQ,setSearchQ]=useState(initSearch);
+
+  useEffect(()=>{
+    if(initSearch){ setSearchQ(initSearch); setSubTab('exams'); }
+    return()=>{ if(clearSearch) clearSearch(); };
+  },[initSearch]);
+
+  const filteredExams=EXAMS.filter(e=>{
+    const catOk=catFilter==='All'||e.cat===catFilter;
+    const srOk=!searchQ||e.nm.toLowerCase().includes(searchQ.toLowerCase());
+    return catOk&&srOk;
+  });
+
+  return(
+    <div>
+      {/* Page Header */}
+      <div style={{padding:'12px 20px 0'}} className="a0">
+        <div style={{fontSize:16,fontWeight:900,color:'#fff',letterSpacing:-0.5}}>
+          {subTab==='exams'?'All Exams':subTab==='admit'?'Admit Cards':subTab==='result'?'Results & Keys':'Latest Jobs'}
+        </div>
+      </div>
+
+      {/* Sub Tabs */}
+      <div style={{display:'flex',gap:8,padding:'10px 20px 0'}} className="a1">
+        {[{id:'exams',lbl:'📋 Exams'},{id:'admit',lbl:'🎫 Admit'},{id:'result',lbl:'📊 Result'},{id:'jobs',lbl:'💼 Jobs'}].map(t=>(
+          <div key={t.id} onClick={()=>setSubTab(t.id)} style={{
+            flex:1,padding:'9px 4px',borderRadius:12,fontSize:11,fontWeight:700,
+            textAlign:'center',cursor:'pointer',transition:'all 0.18s',
+            background:subTab===t.id?'var(--bl)':'rgba(255,255,255,0.05)',
+            color:subTab===t.id?'#fff':'rgba(255,255,255,0.4)',
+            border:`1px solid ${subTab===t.id?'transparent':'rgba(255,255,255,0.07)'}`,
+            boxShadow:subTab===t.id?'0 4px 16px rgba(26,111,255,0.35)':'none',
+          }}>{t.lbl}</div>
+        ))}
+      </div>
+
+      {/* EXAMS TAB */}
+      {subTab==='exams'&&(<>
+        <div className="search-wrap a2">
+          <input className="s-inp" placeholder="🔍  Search SSC, UPSC, Railway..." value={searchQ} onChange={e=>setSearchQ(e.target.value)}/>
+          <div className="s-go"><span style={{color:'#fff',fontSize:16}}>→</span></div>
+        </div>
+        <div className="cat-row a2">
+          {CATS.map(c=>(
+            <div key={c} className={`cat-p ${catFilter===c?'on':'off'}`} onClick={()=>setCatFilter(c)}>{c}</div>
+          ))}
+        </div>
+        <div style={{padding:'4px 20px 0',fontSize:11,color:'var(--mu)'}} className="a2">{filteredExams.length} exams available</div>
+        <div className="exam-list a3">
+          {filteredExams.length===0?(
+            <div className="empty-state">
+              <div className="empty-ico">🔍</div>
+              <div className="empty-t">Koi Exam Nahi Mila</div>
+              <div className="empty-s">"{searchQ}" ke liye koi result nahi hai.{'\n'}Filter change karo ya dusra naam try karo.</div>
+            </div>
+          ):filteredExams.map(e=>(
+            <div key={e.id} className="ec" onClick={()=>setExamDetail(e)}>
+              <div className="ec-row">
+                <div className="ec-ico" style={{background:e.bg}}>{e.ico}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="ec-name">{e.nm}</div>
+                  <div className="ec-org">{e.org}</div>
+                  <div style={{display:'flex',gap:5,marginTop:6,flexWrap:'wrap'}}>
+                    <span style={{fontSize:9,fontWeight:700,color:'var(--mu)',background:'rgba(255,255,255,0.05)',padding:'2px 8px',borderRadius:20}}>{e.posts} posts</span>
+                    <span style={{fontSize:9,fontWeight:700,color:'var(--mu)',background:'rgba(255,255,255,0.05)',padding:'2px 8px',borderRadius:20}}>{e.fee}</span>
+                    <span style={{fontSize:9,fontWeight:700,color:e.urg?'var(--rd)':'var(--gd)',background:e.urg?'rgba(255,59,85,0.1)':'rgba(255,184,0,0.08)',padding:'2px 8px',borderRadius:20}}>{e.days}d left</span>
+                  </div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'center',flexShrink:0}}>
+                  <div className={`ec-bk ${savedExams.includes(e.id)?'saved':''}`} onClick={ev=>{ev.stopPropagation();toggleSave(e.id);}}>
+                    {savedExams.includes(e.id)?'🔖':'🏷️'}
+                  </div>
+                  <button className="ec-apply" onClick={ev=>{ev.stopPropagation();setExamDetail(e);}}>Details</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>)}
+
+      {/* ADMIT CARD TAB */}
+      {subTab==='admit'&&(
+        <div style={{padding:'10px 20px 0'}} className="a2">
+          {ADMIT_CARDS.map((ac,i)=>(
+            <div key={i} className="admit-card" style={{marginBottom:12}}>
+              <div className="admit-top">
+                <div className="admit-ico">{ac.ico}</div>
+                <div><div className="admit-nm">{ac.nm}</div><div className="admit-org">{ac.org}</div></div>
+                <div className="admit-badge" style={{background:ac.badgeBg,color:ac.badgeC}}>{ac.badge}</div>
+              </div>
+              <div className="admit-meta">
+                <div className="admit-m"><div className="admit-m-l">Exam Date</div><div className="admit-m-v">{ac.date}</div></div>
+                <div className="admit-m"><div className="admit-m-l">Center</div><div className="admit-m-v">{ac.center}</div></div>
+                <div className="admit-m"><div className="admit-m-l">Roll No.</div><div className="admit-m-v">{ac.rollNo}</div></div>
+              </div>
+              {ac.badge==='Available'
+                ?<button className="admit-dl">⬇️ Download Admit Card</button>
+                :<div style={{marginTop:10,padding:'8px 12px',background:'rgba(255,184,0,0.08)',border:'1px solid rgba(255,184,0,0.18)',borderRadius:10,fontSize:11,color:'var(--gd)',fontWeight:700,textAlign:'center'}}>⏳ Jaldi Aayega — Notification On Rakho</div>
+              }
+            </div>
+          ))}
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--mu)',fontSize:12}}>More admit cards admit hote rahe nge 🔔</div>
+        </div>
+      )}
+
+      {/* JOBS TAB */}
+      {subTab==='jobs'&&(
+        <div style={{padding:'10px 20px 0'}} className="a2">
+          {[
+            {ico:'🏛️',bg:'rgba(255,59,85,0.15)',nm:'UPSC Civil Services 2025',org:'Union Public Service Commission',posts:'1,080',salary:'₹56,100–₹2,50,000/mo',lastDate:'20 May 2025',urg:true},
+            {ico:'📝',bg:'rgba(255,149,0,0.15)',nm:'SSC CGL 2025',org:'Staff Selection Commission',posts:'17,727',salary:'₹25,500–₹81,100/mo',lastDate:'30 Apr 2025',urg:true},
+            {ico:'🚂',bg:'rgba(26,111,255,0.15)',nm:'RRB NTPC 2025',org:'Railway Recruitment Board',posts:'11,558',salary:'₹19,900–₹35,400/mo',lastDate:'12 May 2025',urg:false},
+            {ico:'🏦',bg:'rgba(0,207,255,0.14)',nm:'IBPS PO 2025',org:'Institute of Banking Personnel',posts:'4,455',salary:'₹36,000–₹63,840/mo',lastDate:'18 May 2025',urg:false},
+            {ico:'🎖️',bg:'rgba(0,200,83,0.14)',nm:'Army GD Agniveer',org:'Indian Army',posts:'25,000',salary:'₹30,000–₹40,000/mo',lastDate:'7 May 2025',urg:false},
+            {ico:'🏢',bg:'rgba(123,94,167,0.16)',nm:'UP PCS 2025',org:'Uttar Pradesh PSC',posts:'2,390',salary:'₹15,600–₹39,100/mo',lastDate:'22 May 2025',urg:false},
+          ].map((j,i)=>(
+            <div key={i} style={{background:'var(--card)',border:`1px solid ${j.urg?'rgba(255,59,85,0.22)':'var(--bd2)'}`,borderRadius:16,padding:14,marginBottom:10,cursor:'pointer'}}>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                <div style={{width:42,height:42,borderRadius:13,background:j.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{j.ico}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:800,color:'#fff'}}>{j.nm}</div>
+                  <div style={{fontSize:10,color:'var(--mu)',marginTop:1}}>{j.org}</div>
+                </div>
+                {j.urg&&<div style={{fontSize:9,fontWeight:800,padding:'3px 9px',borderRadius:20,background:'rgba(255,59,85,0.12)',color:'var(--rd)',flexShrink:0}}>Urgent</div>}
+              </div>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
+                <span style={{fontSize:10,fontWeight:700,color:'var(--bl)',background:'rgba(26,111,255,0.1)',padding:'3px 9px',borderRadius:20}}>📋 {j.posts} Posts</span>
+                <span style={{fontSize:10,fontWeight:700,color:'var(--gn)',background:'rgba(0,200,83,0.1)',padding:'3px 9px',borderRadius:20}}>💰 {j.salary}</span>
+                <span style={{fontSize:10,fontWeight:700,color:'var(--gd)',background:'rgba(255,184,0,0.1)',padding:'3px 9px',borderRadius:20}}>📅 {j.lastDate}</span>
+              </div>
+              <button style={{width:'100%',padding:'9px',borderRadius:11,border:'none',background:'linear-gradient(135deg,var(--bl),var(--bl2))',color:'#fff',fontSize:12,fontWeight:800,cursor:'pointer',fontFamily:'Inter,sans-serif'}}>Apply Now ⚡</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* RESULT TAB */}
+      {subTab==='result'&&(
+        <div style={{padding:'10px 20px 0'}} className="a2">
+          {RESULTS_DATA.map((r,i)=>(
+            <div key={i} style={{background:'var(--card)',border:'1px solid var(--bd2)',borderRadius:16,padding:14,marginBottom:10,cursor:'pointer'}}>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                <div style={{width:40,height:40,borderRadius:12,background:r.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{r.ico}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:800,color:'#fff'}}>{r.nm}</div>
+                  <div style={{fontSize:10,color:'var(--mu)',marginTop:1}}>{r.org}</div>
+                </div>
+                <div style={{fontSize:10,fontWeight:700,padding:'4px 10px',borderRadius:20,background:r.statusBg,color:r.statusC,flexShrink:0}}>{r.status}</div>
+              </div>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',lineHeight:1.55,marginBottom:8}}>{r.desc}</div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div style={{fontSize:10,color:'rgba(255,255,255,0.25)'}}>📅 {r.date}</div>
+                <button style={{fontSize:11,fontWeight:700,padding:'6px 14px',borderRadius:20,border:'none',background:'rgba(26,111,255,0.15)',color:'var(--bl)',cursor:'pointer',fontFamily:'Inter,sans-serif'}}>Check Now →</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="gap20"></div>
+    </div>
+  );
+}
+
+function EditProfilePanel({open,onClose}){
+  const [name,setName]=useState('Rahul Kumar');
+  const [phone,setPhone]=useState('+91 98765 43210');
+  const [dob,setDob]=useState('15 Aug 2001');
+  const [cat,setCat]=useState('OBC');
+  const [state,setState]=useState('Uttar Pradesh');
+  const [qual,setQual]=useState('B.Sc Computer Science');
+  const [saved,setSaved]=useState(false);
+
+  const handleSave=()=>{
+    setSaved(true);
+    setTimeout(()=>{setSaved(false);onClose();},1200);
+  };
+
+  const fields=[
+    {lbl:'Full Name',val:name,set:setName,ico:'👤',type:'text'},
+    {lbl:'Mobile Number',val:phone,set:setPhone,ico:'📱',type:'tel'},
+    {lbl:'Date of Birth',val:dob,set:setDob,ico:'🎂',type:'text'},
+    {lbl:'Category',val:cat,set:setCat,ico:'🏷️',type:'text'},
+    {lbl:'State',val:state,set:setState,ico:'📍',type:'text'},
+    {lbl:'Qualification',val:qual,set:setQual,ico:'🎓',type:'text'},
+  ];
+
+  return(
+    <div className={`notif-panel ${open?'open':''}`}>
+      <div className="notif-panel-hdr">
+        <div className="p-back" onClick={onClose}>←</div>
+        <div className="notif-panel-t">Profile Edit Karo</div>
+      </div>
+
+      {/* Avatar */}
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'20px 0 16px',borderBottom:'1px solid var(--bd)'}}>
+        <div style={{width:80,height:80,borderRadius:'50%',background:'linear-gradient(145deg,var(--bl),var(--pu))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:36,position:'relative',cursor:'pointer',boxShadow:'0 0 0 3px rgba(26,111,255,0.3)'}}>
+          👨‍🎓
+          <div style={{position:'absolute',bottom:0,right:0,width:26,height:26,background:'var(--bl)',borderRadius:'50%',border:'2px solid var(--bg)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}}>✏️</div>
+        </div>
+        <div style={{fontSize:12,color:'var(--mu)',marginTop:8,fontWeight:600}}>Photo Change Karo</div>
+      </div>
+
+      {/* Fields */}
+      <div style={{flex:1,overflowY:'auto',scrollbarWidth:'none',padding:'16px 20px'}}>
+        {fields.map((f,i)=>(
+          <div key={i} style={{marginBottom:10}}>
+            <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.35)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:5}}>{f.ico} {f.lbl}</div>
+            <input
+              value={f.val}
+              onChange={e=>f.set(e.target.value)}
+              type={f.type}
+              style={{width:'100%',background:'var(--card)',border:'1px solid var(--bd2)',borderRadius:12,padding:'12px 14px',color:'#fff',fontSize:13,fontWeight:600,fontFamily:'Inter,sans-serif',outline:'none'}}
+              onFocus={e=>e.target.style.borderColor='rgba(26,111,255,0.5)'}
+              onBlur={e=>e.target.style.borderColor='var(--bd2)'}
+            />
+          </div>
+        ))}
+
+        <button onClick={handleSave} style={{width:'100%',padding:'15px',border:'none',borderRadius:14,background:saved?'var(--gn)':'linear-gradient(135deg,var(--bl),var(--bl2))',color:'#fff',fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:'Inter,sans-serif',marginTop:8,transition:'background 0.3s',boxShadow:'0 8px 28px rgba(26,111,255,0.4)'}}>
+          {saved?'✅ Saved!':'Save Karo'}
+        </button>
+        <div style={{height:30}}></div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── APPLY SHEET ─── */
+function ApplySheet({exam,open,onClose,onConfirm}){
+  if(!exam) return null;
+  const d=EXAM_DETAILS[exam.id]||EXAM_DETAILS[1];
+  return(
+    <div className={`apply-sheet ${open?'open':''}`}>
+      <div className="apply-sheet-handle"></div>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+        <div style={{width:46,height:46,borderRadius:14,background:exam.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>{exam.ico}</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:15,fontWeight:900,color:'#fff',letterSpacing:-0.4}}>{exam.nm}</div>
+          <div style={{fontSize:11,color:'var(--mu)',marginTop:1}}>{exam.org}</div>
+        </div>
+        {exam.urg&&<div style={{fontSize:10,fontWeight:800,padding:'4px 10px',borderRadius:20,background:'rgba(255,59,85,0.12)',color:'var(--rd)'}}>Urgent</div>}
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
+        {[['📋 Posts',d.posts],['💰 Fee',d.fee],['🎂 Age',d.age],['📅 Last Date',d.lastDate]].map(([l,v])=>(
+          <div key={l} style={{background:'rgba(255,255,255,0.05)',borderRadius:12,padding:'10px 12px'}}>
+            <div style={{fontSize:10,color:'var(--mu)',fontWeight:600,marginBottom:3}}>{l}</div>
+            <div style={{fontSize:12,fontWeight:800,color:'#fff'}}>{v}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:'rgba(0,200,83,0.08)',border:'1px solid rgba(0,200,83,0.2)',borderRadius:12,padding:'10px 14px',marginBottom:14,display:'flex',alignItems:'center',gap:8}}>
+        <div style={{fontSize:16}}>✅</div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',lineHeight:1.5}}>Tere saare documents ready hain. Ek click mein apply ho jaayega!</div>
+      </div>
+      <button onClick={onConfirm} style={{width:'100%',padding:'15px',border:'none',borderRadius:14,background:'linear-gradient(135deg,var(--bl),var(--bl2))',color:'#fff',fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:'Inter,sans-serif',boxShadow:'0 8px 28px rgba(26,111,255,0.4)',marginBottom:10,animation:'btn-glow 3s ease-in-out infinite'}}>
+        ⚡ Apply Karo — {d.fee}
+      </button>
+      <button onClick={onClose} style={{width:'100%',padding:'12px',border:'1px solid var(--bd2)',borderRadius:14,background:'transparent',color:'rgba(255,255,255,0.5)',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
+        Baad Mein
+      </button>
+    </div>
+  );
+}
+
+/* ─── UPLOAD MODAL ─── */
+function UploadModal({open,onClose,onUploaded}){
+  const [uploaded,setUploaded]=useState(false);
+  const [uploading,setUploading]=useState(false);
+  const [selType,setSelType]=useState(null);
+
+  const handleUpload=(type)=>{
+    setSelType(type);
+    setUploading(true);
+    setTimeout(()=>{setUploading(false);setUploaded(true);},1500);
+    setTimeout(()=>{setUploaded(false);setSelType(null);onUploaded&&onUploaded(type);onClose();},3000);
+  };
+
+  const docTypes=[
+    {ico:'🪪',nm:'Aadhar Card',sub:'PDF ya Image'},
+    {ico:'📸',nm:'Passport Photo',sub:'JPG · 35×45mm'},
+    {ico:'✍️',nm:'Signature',sub:'JPG · White bg'},
+    {ico:'📋',nm:'Marksheet',sub:'10th / 12th PDF'},
+    {ico:'🎓',nm:'Degree Certificate',sub:'Graduation PDF'},
+    {ico:'📄',nm:'Caste Certificate',sub:'OBC/SC/ST PDF'},
+  ];
+
+  return(
+    <div className={`upload-modal ${open?'open':''}`}>
+      <div className="apply-sheet-handle"></div>
+      {!uploaded&&!uploading&&(<>
+        <div style={{fontSize:15,fontWeight:900,color:'#fff',marginBottom:4}}>Document Upload Karo</div>
+        <div style={{fontSize:11,color:'var(--mu)',marginBottom:16}}>Konsa document upload karna hai?</div>
+        <div className="upload-zone" onClick={()=>handleUpload('Custom File')}>
+          <div style={{fontSize:32}}>📁</div>
+          <div style={{fontSize:13,fontWeight:700,color:'var(--bl)'}}>Files Browse Karo</div>
+          <div style={{fontSize:11,color:'var(--mu)'}}>PDF, JPG, PNG — max 5MB</div>
+        </div>
+        {docTypes.map((d,i)=>(
+          <div key={i} className="doc-type-btn" onClick={()=>handleUpload(d.nm)}>
+            <div style={{fontSize:22,flexShrink:0}}>{d.ico}</div>
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{d.nm}</div><div style={{fontSize:10,color:'var(--mu)'}}>{d.sub}</div></div>
+            <div style={{fontSize:13,color:'var(--bl)'}}>⬆️</div>
+          </div>
+        ))}
+      </>)}
+      {uploading&&(
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'30px 0'}}>
+          <div style={{fontSize:40,marginBottom:16,animation:'spin 1s linear infinite'}}>⏳</div>
+          <div style={{fontSize:14,fontWeight:700,color:'#fff',marginBottom:6}}>{selType} Upload Ho Raha Hai...</div>
+          <div style={{fontSize:11,color:'var(--mu)'}}>Please wait</div>
+        </div>
+      )}
+      {uploaded&&(
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'30px 0'}}>
+          <div style={{fontSize:52,marginBottom:14,animation:'pop-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both'}}>✅</div>
+          <div style={{fontSize:16,fontWeight:900,color:'#fff',marginBottom:6}}>{selType} Uploaded!</div>
+          <div style={{fontSize:12,color:'var(--mu)'}}>Document successfully save ho gaya</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── NOTIF PANEL ─── */
+const NOTIFS=[
+  {id:1,unread:true,ico:'🔴',bg:'rgba(255,59,85,0.15)',t:'UPSC CSE 2025 — Last 2 Days!',s:'Last date 20 May hai. Abhi apply karo warna form band ho jaayega.',time:'2 min ago',group:'today'},
+  {id:2,unread:true,ico:'📝',bg:'rgba(255,149,0,0.15)',t:'SSC CGL 2025 Form Open Hua',s:'17,727 posts ke liye form bharna shuru ho gaya. Fee sirf ₹100.',time:'1 hr ago',group:'today'},
+  {id:3,unread:true,ico:'🎫',bg:'rgba(26,111,255,0.15)',t:'Admit Card Ready — SSC CGL',s:'Tera admit card download ke liye ready hai. Center: Delhi-01.',time:'3 hr ago',group:'today'},
+  {id:4,unread:false,ico:'📊',bg:'rgba(0,200,83,0.15)',t:'SSC CHSL 2024 Result Aaya!',s:'Final result declare ho gaya. Merit list check karo.',time:'Yesterday',group:'yesterday'},
+  {id:5,unread:false,ico:'🚂',bg:'rgba(26,111,255,0.15)',t:'RRB NTPC — Answer Key Out',s:'Official answer key release ho gayi. Objection 30 Apr tak.',time:'Yesterday',group:'yesterday'},
+  {id:6,unread:false,ico:'🏆',bg:'rgba(255,184,0,0.15)',t:'Teri Profile 90% Complete Hai',s:'Graduation Certificate upload karo — UPSC ke liye zaroori hai.',time:'2 days ago',group:'earlier'},
+  {id:7,unread:false,ico:'💡',bg:'rgba(123,94,167,0.15)',t:'AI Tip: Best Exam for You',s:'Teri profile ke hisaab se SSC CGL 2025 best match hai.',time:'3 days ago',group:'earlier'},
+];
+
+function NotifPanel({open,onClose}){
+  const [notifs,setNotifs]=useState(NOTIFS);
+  const unreadCount=notifs.filter(n=>n.unread).length;
+  const markAll=()=>setNotifs(p=>p.map(n=>({...n,unread:false})));
+  const groups=['today','yesterday','earlier'];
+  const groupLabels={today:'Aaj',yesterday:'Kal',earlier:'Pehle'};
+  return(
+    <div className={`notif-panel ${open?'open':''}`}>
+      <div className="notif-panel-hdr">
+        <div className="p-back" onClick={onClose}>←</div>
+        <div className="notif-panel-t">Notifications {unreadCount>0&&<span style={{fontSize:12,background:'var(--rd)',color:'#fff',padding:'2px 8px',borderRadius:20,marginLeft:6}}>{unreadCount}</span>}</div>
+        <div className="notif-mark" onClick={markAll}>Sab Padha</div>
+      </div>
+      <div className="notif-body">
+        {groups.map(g=>{
+          const items=notifs.filter(n=>n.group===g);
+          if(!items.length) return null;
+          return(
+            <div key={g}>
+              <div className="notif-group-lbl">{groupLabels[g]}</div>
+              {items.map(n=>(
+                <div key={n.id} className={`ncard ${n.unread?'unread':'read'}`} onClick={()=>setNotifs(p=>p.map(x=>x.id===n.id?{...x,unread:false}:x))}>
+                  <div className="ncard-ico" style={{background:n.bg}}>{n.ico}</div>
+                  <div className="ncard-body">
+                    <div className="ncard-t">{n.t}</div>
+                    <div className="ncard-s">{n.s}</div>
+                    <div className="ncard-time">{n.time}</div>
+                  </div>
+                  {n.unread&&<div className="ncard-pip"></div>}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LoadingSkeleton(){
+  return(
+    <div style={{padding:'16px 20px',display:'flex',flexDirection:'column',gap:12}}>
+      <div style={{display:'flex',gap:10,alignItems:'center'}}>
+        <div className="skel" style={{width:44,height:44,borderRadius:13,flexShrink:0}}></div>
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
+          <div className="skel" style={{height:13,borderRadius:6,width:'60%'}}></div>
+          <div className="skel" style={{height:10,borderRadius:5,width:'40%'}}></div>
+        </div>
+      </div>
+      {[1,2,3,4].map(i=>(
+        <div key={i} style={{background:'rgba(255,255,255,0.03)',borderRadius:16,padding:14,display:'flex',gap:10}}>
+          <div className="skel" style={{width:40,height:40,borderRadius:12,flexShrink:0}}></div>
+          <div style={{flex:1,display:'flex',flexDirection:'column',gap:7}}>
+            <div className="skel" style={{height:12,borderRadius:5,width:'75%'}}></div>
+            <div className="skel" style={{height:10,borderRadius:5,width:'50%'}}></div>
+            <div style={{display:'flex',gap:5,marginTop:2}}>
+              <div className="skel" style={{height:18,borderRadius:20,width:55}}></div>
+              <div className="skel" style={{height:18,borderRadius:20,width:40}}></div>
+              <div className="skel" style={{height:18,borderRadius:20,width:45}}></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── EXAM DETAIL ─── */
+function ExamDetailPanel({exam,onClose,onApply}){
+  if(!exam) return null;
+  const d=EXAM_DETAILS[exam.id]||EXAM_DETAILS[1];
+  return(
+    <div className={`ed-panel ${exam?'open':''}`}>
+      <div className="ed-hero">
+        <div className="ed-hero-glow" style={{background:exam.bg.replace(/0\.\d+\)/,'1)')}}></div>
+        <div className="ed-back" onClick={onClose}>←</div>
+        {exam.urg&&<div className="ed-badge" style={{background:'rgba(255,59,85,0.15)',color:'var(--rd)',border:'1px solid rgba(255,59,85,0.25)'}}>🔴 Urgent</div>}
+        <div className="ed-icon-row">
+          <div className="ed-icon" style={{background:exam.bg}}>{exam.ico}</div>
+          <div><div className="ed-title">{exam.nm}</div><div className="ed-org">{exam.org}</div></div>
+        </div>
+        <div className="ed-meta-row">
+          <div className="ed-meta-pill">📋 {d.posts} Posts</div>
+          <div className="ed-meta-pill">💰 {d.fee}</div>
+          <div className="ed-meta-pill">🎂 {d.age}</div>
+          <div className="ed-meta-pill">🖥️ {d.mode}</div>
+        </div>
+      </div>
+      <div className="ed-body">
+        <div className="ed-section">
+          <div className="ed-sec-t">Important Dates</div>
+          <div className="ed-info-grid">
+            {[['📅 Last Date',d.lastDate],['📝 Exam Date',d.examDate],['🌐 Language',d.lang],['🎓 Eligibility',d.eligibility]].map(([l,v],i)=>(
+              <div key={i} className="ed-info-cell" style={i===3?{gridColumn:'1/-1'}:{}}>
+                <div className="ed-info-lbl">{l}</div>
+                <div className="ed-info-val">{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="ed-section">
+          <div className="ed-sec-t">Syllabus</div>
+          {d.syllabus.map((s,i)=>(
+            <div key={i} className="ed-syl-item">
+              <div className="ed-syl-n" style={{background:s.c,color:s.nc}}>{s.n}</div>
+              <div><div className="ed-syl-t">{s.t}</div><div className="ed-syl-s">{s.s}</div></div>
+            </div>
+          ))}
+        </div>
+        <div className="ed-section">
+          <div className="ed-sec-t">Previous Year Cut-off</div>
+          <div className="ed-cutoff">
+            {[['GEN',d.cutoff.gen,'#fff'],['OBC',d.cutoff.obc,'#FFB800'],['SC',d.cutoff.sc,'#5599FF'],['ST',d.cutoff.st,'#00C853']].map(([cat,val,c])=>(
+              <div key={cat} className="ed-cut-cell">
+                <div className="ed-cut-cat">{cat}</div>
+                <div className="ed-cut-val" style={{color:c}}>{val}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="ed-apply-bar">
+        <button className="ed-apply-btn" style={{background:'linear-gradient(135deg,var(--bl),var(--bl2))',boxShadow:'0 8px 28px rgba(26,111,255,0.4)'}} onClick={()=>onApply(exam)}>
+          Apply Karo ⚡ — {d.fee}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── TRACKER WIDGET ─── */
+function TrackerWidget(){
+  return(
+    <div className="tracker-card">
+      <div className="tracker-hdr">
+        <div className="tracker-t">📊 Application Tracker</div>
+        <div className="tracker-ct">3 Active</div>
+      </div>
+      {TRACKED.map((item,i)=>{
+        const doneCount=item.steps.filter(s=>s.done).length;
+        const pct=Math.round(doneCount/item.steps.length*100);
+        return(
+          <div key={i} className="track-item">
+            <div className="track-ico" style={{background:item.bg}}>{item.ico}</div>
+            <div className="track-inf" style={{flex:1}}>
+              <div className="track-nm">{item.nm}</div>
+              <div className="track-dt">{item.dt}</div>
+              <div className="track-pipeline">
+                {item.steps.map((s,j)=>(
+                  <React.Fragment key={j}>
+                    <div className="track-step">
+                      <div className="track-step-dot" style={{background:s.done?'var(--gn)':'rgba(255,255,255,0.12)',boxShadow:s.done?'0 0 6px rgba(0,200,83,0.5)':''}}></div>
+                      <div className="track-step-lbl" style={{color:s.done?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.25)',fontSize:7}}>{s.l}</div>
+                    </div>
+                    {j<item.steps.length-1&&(
+                      <div className="track-line" style={{background:s.done&&item.steps[j+1].done?'var(--gn)':s.done?'linear-gradient(90deg,var(--gn),rgba(255,255,255,0.1))':'rgba(255,255,255,0.08)'}}></div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+            <div style={{fontSize:11,fontWeight:800,color:pct===100?'var(--gn)':pct>=60?'var(--bl)':'var(--am)',marginLeft:6,flexShrink:0}}>{pct}%</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── DEADLINE WIDGET ─── */
+function DeadlineWidget(){
+  const urgents=[
+    {ico:'🏛️',nm:'UPSC CSE 2025',days:2,c:'#FF3B55'},
+    {ico:'📝',nm:'SSC CGL 2025',days:3,c:'#FF9500'},
+    {ico:'🎖️',nm:'Army GD',days:7,c:'#FFB800'},
+  ];
+  return(
+    <div className="deadline-widget">
+      <div className="dw-top">
+        <div style={{fontSize:16}}>⏰</div>
+        <div className="dw-t">Deadline Alert</div>
+        <div className="dw-soon">Urgent!</div>
+      </div>
+      <div className="dw-items">
+        {urgents.map((u,i)=>(
+          <div key={i} className="dw-item">
+            <div className="dw-ico">{u.ico}</div>
+            <div className="dw-nm">{u.nm}</div>
+            <div className="dw-cnt" style={{color:u.c}}>{u.days}d left</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── RESULT CARDS ─── */
+function ResultCards(){
+  return(<>
+    <div className="result-card">
+      <div className="rc-top">
+        <div className="rc-ico">📊</div>
+        <div className="rc-nm">SSC CHSL 2024 — Result</div>
+        <div className="rc-new">New</div>
+      </div>
+      <div className="rc-sub">Final Result declare ho gaya hai. Merit list aur cut-off check karo.</div>
+    </div>
+    <div className="result-card" style={{background:'linear-gradient(135deg,rgba(255,184,0,0.1),rgba(255,149,0,0.05))',borderColor:'rgba(255,184,0,0.18)'}}>
+      <div className="rc-top">
+        <div className="rc-ico" style={{background:'rgba(255,184,0,0.15)'}}>📝</div>
+        <div className="rc-nm">RRB Group D — Answer Key</div>
+        <div className="rc-new" style={{background:'rgba(255,184,0,0.12)',color:'var(--gd)'}}>New</div>
+      </div>
+      <div className="rc-sub">Official Answer Key release. Objection 25 Apr tak daal sakte ho.</div>
+    </div>
+  </>);
+}
+
+const EXAM_CYCLE=[
+  {n:'SSC CGL',c:'#FF9500'},{n:'UPSC CSE',c:'#FF3B55'},{n:'RRB NTPC',c:'#4D94FF'},
+  {n:'IBPS PO',c:'#00CFFF'},{n:'Army GD',c:'#00C853'},{n:'UP PCS',c:'#A78BF7'},
+];
+
+function StatsRow(){
+  const [ei,setEi]=useState(0);
+  const [ef,setEf]=useState(true);
+  useEffect(()=>{
+    const t=setInterval(()=>{
+      setEf(false);
+      setTimeout(()=>{setEi(i=>(i+1)%EXAM_CYCLE.length);setEf(true);},280);
+    },1800);
+    return()=>clearInterval(t);
+  },[]);
+  const ex=EXAM_CYCLE[ei];
+  return(
+    <div className="stats">
+      <div className="st" style={{cursor:'pointer'}}>
+        <div className="st-n" style={{fontSize:11,fontWeight:900,transition:'opacity 0.28s,transform 0.28s',opacity:ef?1:0,transform:ef?'translateY(0)':'translateY(-6px)',color:ex.c,letterSpacing:-0.3}}>{ex.n}</div>
+        <div className="st-l">Live Exam</div>
+      </div>
+      <div className="st">
+        <div className="st-n" style={{color:'#FF3B55'}}>47</div>
+        <div className="st-l">Live Forms</div>
+      </div>
+      <div className="st">
+        <div className="st-n" style={{color:'#00C853'}}>12</div>
+        <div className="st-l">Applied</div>
+      </div>
+      <div className="st">
+        <div className="st-n" style={{color:'#FFB800'}}>₹2.4K</div>
+        <div className="st-l">Saved</div>
+      </div>
+    </div>
+  );
+}
+
+const CTA_LABELS=[
+  {ico:'🏛️',t:'UPSC CSE 2025 — Last 2 Days!'},
+  {ico:'📝',t:'SSC CGL 2025 — Apply Now'},
+  {ico:'🚂',t:'RRB NTPC 2025 — 11,558 Posts'},
+  {ico:'🏦',t:'IBPS PO 2025 — Open Now'},
+  {ico:'🎖️',t:'Army GD — 25,000 Vacancies'},
+];
+
+function CtaButton({onPress}){
+  const [idx,setIdx]=useState(0);
+  const [fade,setFade]=useState(true);
+  useEffect(()=>{
+    const t=setInterval(()=>{
+      setFade(false);
+      setTimeout(()=>{setIdx(i=>(i+1)%CTA_LABELS.length);setFade(true);},320);
+    },2600);
+    return()=>clearInterval(t);
+  },[]);
+  const cur=CTA_LABELS[idx];
+  return(
+    <div className="cta-wrap a1">
+      <button className="btn-main" onClick={onPress}>
+        <div className="live-dot"></div>
+        <span style={{transition:'opacity 0.3s,transform 0.3s',opacity:fade?1:0,transform:fade?'translateY(0)':'translateY(-8px)',display:'inline-block'}}>
+          {cur.ico} {cur.t}
+        </span>
+      </button>
+    </div>
+  );
+}
+
+/* ─── MAIN APP ─── */
+function App(){
+  const [screen,setScreen]=useState('splash'); // splash → auth → onboard → app
+  const [nav,setNav]=useState('home');
+  const [tabKey,setTabKey]=useState(0);
+  const [refreshing,setRefreshing]=useState(false);
+
+  const switchNav=(id)=>{ setNav(id); setTabKey(k=>k+1); };
+
+  const handleRefresh=()=>{
+    setRefreshing(true);
+    setTimeout(()=>setRefreshing(false),1400);
+  };
+  const [savedExams,setSavedExams]=useState([1,3]);
+  const [examDetail,setExamDetail]=useState(null);
+  const [notifOpen,setNotifOpen]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const [editProfile,setEditProfile]=useState(false);
+  const [homeSearch,setHomeSearch]=useState('');
+  const [applySheet,setApplySheet]=useState(null);
+  const [applySuccess,setApplySuccess]=useState(false);
+  const [uploadOpen,setUploadOpen]=useState(false);
+  const [notifEnabled,setNotifEnabled]=useState(true);
+
+  useEffect(()=>{
+    if(screen==='app'){
+      setLoading(true);
+      const t=setTimeout(()=>setLoading(false),1800);
+      return()=>clearTimeout(t);
+    }
+  },[screen]);
+
+  const toggleSave=(id)=>setSavedExams(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
+
+  const handleApply=(exam)=>{
+    setExamDetail(null);
+    setApplySheet(exam);
+  };
+
+  return(
+    <div className="phone">
+      {screen==='splash'&&<SplashScreen onDone={()=>setScreen('auth')}/>}
+      {screen==='auth'&&<AuthScreen onDone={()=>setScreen('onboard')}/>}
+      {screen==='onboard'&&<Onboarding onDone={()=>setScreen('app')}/>}
+
+      {screen==='app'&&(<>
+        {/* MAIN SCREEN */}
+        <div className="screen">
+          {/* STATUS BAR */}
+          <div className="sb">
+            <div className="di"></div>
+            <span className="sb-t">9:41</span>
+            <SBIcons/>
+          </div>
+
+          {/* HEADER */}
+          <div className="hdr">
+            <div className="hdr-av" onClick={()=>switchNav('profile')}><FillkaroLogo size={28}/><div className="av-dot"></div></div>
+            <div className="hdr-mid">
+              <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Namaste, Rahul 👋</div>
+            </div>
+            <div className="hdr-acts">
+              <div className="hdr-btn" onClick={()=>setNotifOpen(true)}><span style={{fontSize:16}}>🔔</span><div className="notif-pip"></div></div>
+              <div className="hdr-btn"><span style={{fontSize:16}}>⚙️</span></div>
+            </div>
+          </div>
+
+          {/* BODY */}
+          <div className="body" onTouchStart={e=>{ if(e.touches[0].clientY<100) handleRefresh(); }}>
+            <div className="ptr-indicator" style={refreshing?{height:44}:{height:0}}><span className="ptr-spin">🔄</span><span>Refreshing...</span></div>
+            {loading&&<LoadingSkeleton/>}
+            {!loading&&(<div key={tabKey} className="tab-content">
+
+            {/* ══ HOME ══ */}
+            {nav==='home'&&(
+              <div>
+                {/* Hero */}
+                  <div className="hero a0">
+                  <div className="h-glow-a"></div>
+                  <div className="h-glow-b"></div>
+                  <div className="h-sub" style={{fontSize:18,fontWeight:800,color:'rgba(255,255,255,0.9)',marginTop:5}}>Sarkari Form Bharo ⚡ Sirf 5 Min Mein</div>
+
+                {/* Home Search */}
+                <div style={{display:'flex',gap:8,marginTop:12,background:'rgba(255,255,255,0.06)',border:'1px solid var(--bd2)',borderRadius:14,padding:'10px 14px',alignItems:'center'}} onClick={()=>{setNav('exams');}}>
+                  <span style={{fontSize:16}}>🔍</span>
+                  <input
+                    style={{flex:1,background:'none',border:'none',outline:'none',color:'#fff',fontSize:13,fontFamily:'Inter,sans-serif'}}
+                    placeholder="Search SSC, UPSC, Railway..."
+                    onChange={e=>{ if(e.target.value){ setNav('exams'); setHomeSearch(e.target.value); } }}
+                  />
+                </div>
+                  <div className="h-sub">3 urgent forms close ho rahe hain — abhi apply karo!</div>
+                </div>
+
+                {/* Ticker */}
+                <div className="ticker-strap">
+                  <div className="ticker-inner">
+                    {[...TICKER_DATA,...TICKER_DATA].map((t,i)=>(
+                      <div key={i} className="ticker-item">
+                        <div className="ti-dot" style={{background:t.dot}}></div>
+                        <span className="ti-cat" style={{color:t.catC}}>{t.cat}</span>
+                        <span className="ti-nm">{t.nm}</span>
+                        <span style={{fontSize:9,fontWeight:800,color:t.urg?'#FF3B55':'rgba(255,255,255,0.35)',background:t.urg?'rgba(255,59,85,0.12)':'rgba(255,255,255,0.05)',padding:'2px 7px',borderRadius:20}}>{t.days}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <CtaButton onPress={()=>setNav('exams')}/>
+
+                {/* Latest Forms */}
+                <div className="lf-hdr a3">
+                  <div className="lf-left">
+                    <div className="lf-live"><div style={{width:6,height:6,background:'var(--rd)',borderRadius:'50%',animation:'pulse-r 1.1s infinite'}}></div><span className="lf-live-t">LIVE</span></div>
+                    <span className="lf-title">Latest Forms</span>
+                  </div>
+                  <span className="lf-see" onClick={()=>setNav('exams')}>See All →</span>
+                </div>
+                <div style={{overflow:'hidden',padding:'10px 0 4px'}}>
+                  <div style={{display:'flex',gap:8,animation:'cards-run 18s linear infinite',width:'max-content'}}
+                    onMouseEnter={e=>e.currentTarget.style.animationPlayState='paused'}
+                    onMouseLeave={e=>e.currentTarget.style.animationPlayState='running'}>
+                    {[...LATEST,...LATEST].map((f,i)=>(
+                      <div key={i} className="lf-card" style={{flexShrink:0}} onClick={()=>{const ex=EXAMS.find(e=>e.nm===f.nm);if(ex)setExamDetail(ex);}}>
+                        <div className="lfc-top">
+                          <div className="lfc-ico" style={{background:f.bg}}>{f.ico}</div>
+                          <div><div className="lfc-cat" style={{color:f.catC}}>{f.cat}</div><div className="lfc-nm">{f.nm}</div></div>
+                        </div>
+                        <div className="lfc-meta">
+                          <div className="lfc-m"><div className="lfc-mv">{f.posts}</div><div className="lfc-ml">Posts</div></div>
+                          <div className="lfc-m"><div className="lfc-mv">{f.fee}</div><div className="lfc-ml">Fee</div></div>
+                          <div className="lfc-m"><div className="lfc-mv" style={{color:f.urg?'var(--rd)':'var(--gd)'}}>{f.days}d</div><div className="lfc-ml">Left</div></div>
+                        </div>
+                        <button className="lfc-btn">Apply Now ⚡</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Results & Answer Keys */}
+                <div className="lf-hdr" style={{paddingTop:14}}>
+                  <span className="lf-title">📢 Results & Answer Keys</span>
+                </div>
+                <div style={{padding:'10px 20px 0'}}><ResultCards/></div>
+
+                {/* Premium AI Assistant */}
+                <div style={{margin:'13px 20px 0',background:'linear-gradient(135deg,rgba(123,94,167,0.22),rgba(26,111,255,0.14))',border:'1px solid rgba(123,94,167,0.28)',borderRadius:20,padding:16,position:'relative',overflow:'hidden'}}>
+                  <div style={{position:'absolute',top:-30,right:-30,width:120,height:120,background:'radial-gradient(circle,rgba(123,94,167,0.3) 0%,transparent 65%)',borderRadius:'50%',pointerEvents:'none'}}></div>
+                  <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
+                    <div style={{width:46,height:46,borderRadius:16,background:'linear-gradient(145deg,rgba(123,94,167,0.5),rgba(26,111,255,0.4))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,boxShadow:'0 0 20px rgba(123,94,167,0.4)',flexShrink:0}}>🦾</div>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <div style={{fontSize:13,fontWeight:900,color:'#fff'}}>Fillkaro AI</div>
+                        <div style={{fontSize:9,fontWeight:800,padding:'2px 8px',borderRadius:20,background:'linear-gradient(135deg,rgba(255,184,0,0.25),rgba(255,149,0,0.15))',color:'#FFB800',border:'1px solid rgba(255,184,0,0.25)'}}>PREMIUM</div>
+                      </div>
+                      <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:1}}>Tera personal exam advisor</div>
+                    </div>
+                    <div style={{width:8,height:8,background:'var(--gn)',borderRadius:'50%',boxShadow:'0 0 8px rgba(0,200,83,0.8)',animation:'pulse-r 1.4s infinite'}}></div>
+                  </div>
+                  <div style={{background:'rgba(0,0,0,0.25)',borderRadius:12,padding:'10px 12px',fontSize:12,color:'rgba(255,255,255,0.75)',lineHeight:1.6,fontWeight:500}}>
+                    💡 Teri profile ke hisaab se <span style={{color:'#5599FF',fontWeight:800}}>SSC CGL 2025</span> best match hai. OBC cut-off <span style={{color:'#FFB800',fontWeight:800}}>135.2</span> hai — abhi apply karo, sirf <span style={{color:'#FF3B55',fontWeight:800}}>3 din</span> baaki hain!
+                  </div>
+                </div>
+                <div style={{margin:'13px 20px 0',background:'linear-gradient(135deg,rgba(0,200,83,0.12),rgba(0,207,255,0.06))',border:'1px solid rgba(0,200,83,0.2)',borderRadius:18,padding:14}}>
+                  <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+                    <div style={{fontSize:22}}>📖</div>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:800,color:'#fff'}}>Form Kaise Bharen?</div>
+                      <div style={{fontSize:11,color:'var(--mu)'}}>Step-by-step guide — 2 min mein seekho</div>
+                    </div>
+                  </div>
+                  {[{n:1,t:'Documents Upload Karo',s:'Aadhar, Photo, Marksheet — ek baar',c:'#1A6FFF'},{n:2,t:'Exam Choose Karo',s:'SSC/UPSC/Railway — filter karo',c:'#FFB800'},{n:3,t:'Apply Dabao',s:'AI auto-fill kar dega — 5 min!',c:'#00C853'}].map((step,i)=>(
+                    <div key={i} style={{display:'flex',alignItems:'center',gap:10,marginBottom:i<2?8:0}}>
+                      <div style={{width:28,height:28,borderRadius:9,background:`rgba(${step.c==='#1A6FFF'?'26,111,255':step.c==='#FFB800'?'255,184,0':'0,200,83'},0.18)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:step.c,flexShrink:0}}>{step.n}</div>
+                      <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{step.t}</div><div style={{fontSize:10,color:'var(--mu)'}}>{step.s}</div></div>
+                      <div style={{fontSize:14,color:step.c}}>✓</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="gap20"></div>
+              </div>
+            )}
+
+            {/* ══ EXAMS ══ */}
+            {nav==='exams'&&(
+              <ExamsSection savedExams={savedExams} toggleSave={toggleSave} setExamDetail={setExamDetail} initSearch={homeSearch} clearSearch={()=>setHomeSearch('')}/>
+            )}
+
+            {/* ══ DOCS ══ */}
+            {nav==='docs'&&(
+              <div>
+                <div style={{padding:'10px 20px 0'}} className="a0">
+                  <div style={{fontSize:16,fontWeight:900,color:'#fff',letterSpacing:-0.5}}>My Documents</div>
+                  <div style={{fontSize:11,color:'var(--mu)',marginTop:2}}>Saare documents ek jagah</div>
+                </div>
+                <div className="storage-card a1">
+                  <div className="sc-row"><span className="sc-lbl">📦 Storage Used</span><span className="sc-pct">43% of 100 MB</span></div>
+                  <div className="sc-bar"><div className="sc-fill"></div></div>
+                  <div className="sc-chips">
+                    {[['#1A6FFF','PDF'],['#00C853','Images'],['#FFB800','Others']].map(([c,l])=>(
+                      <div key={l} className="sc-chip"><div className="sc-dot" style={{background:c}}></div>{l}</div>
+                    ))}
+                  </div>
+                </div>
+                <button className="upload-cta a2" style={{border:'1.5px dashed rgba(26,111,255,0.32)'}} onClick={()=>setUploadOpen(true)}>
+                  ⬆️ Upload New Document
+                </button>
+
+                <div className="doc-sec-lbl">✅ Uploaded ({DOCS_OK.length})</div>
+                {DOCS_OK.map((d,i)=>(
+                  <div key={i} className="doc-item">
+                    <div className="di-ico" style={{background:d.bg}}>{d.ico}</div>
+                    <div className="di-inf"><div className="di-nm">{d.nm}</div><div className="di-mt">{d.mt}</div></div>
+                    <div className="di-r"><span className="di-sz">{d.sz}</span><span className="di-st s-ok">✓ Ready</span></div>
+                  </div>
+                ))}
+                <div className="doc-sec-lbl">⏳ Pending ({DOCS_PEND.length})</div>
+                {DOCS_PEND.map((d,i)=>(
+                  <div key={i} className="doc-item doc-pend">
+                    <div className="di-ico" style={{background:d.bg}}>{d.ico}</div>
+                    <div className="di-inf"><div className="di-nm">{d.nm}</div><div className="di-mt">{d.mt}</div></div>
+                    <div className="di-r"><span className="di-st s-req">ज़रूरी</span></div>
+                  </div>
+                ))}
+                <div className="gap20"></div>
+              </div>
+            )}
+
+            {/* ══ PROFILE ══ */}
+            {nav==='profile'&&(
+              <div>
+                <div className="prof-top a0">
+                  <div className="prof-av-wrap">
+                    <div className="prof-av" style={{cursor:'pointer'}} onClick={()=>setEditProfile(true)}>👨‍🎓</div>
+                    <div className="prof-nm">Rahul Kumar</div>
+                    <div className="prof-id">GFA-2025-04821 · Uttar Pradesh</div>
+                    <div className="prof-badge">⭐ Premium Member · ₹50/Form</div>
+                    <button style={{marginTop:10,padding:'8px 20px',borderRadius:22,border:'1px solid rgba(26,111,255,0.3)',background:'rgba(26,111,255,0.1)',color:'var(--bl)',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'Inter,sans-serif'}} onClick={()=>setEditProfile(true)}>✏️ Edit Profile</button>
+                  </div>
+                </div>
+                <div className="a1">
+                  <div className="p-mini-stats">
+                    {[{n:'12',l:'Forms',c:'#1A6FFF'},{n:'98%',l:'Accuracy',c:'#00C853'},{n:'₹2.4K',l:'Saved',c:'#FFB800'}].map((s,i)=>(
+                      <div key={i} className="pms"><div className="pms-n" style={{color:s.c}}>{s.n}</div><div className="pms-l">{s.l}</div></div>
+                    ))}
+                  </div>
+                  <div className="sec-lbl">Personal Details</div>
+                  <div className="info-blk">
+                    {[{ico:'📱',l:'Phone',v:'+91 98765 43210'},{ico:'🎂',l:'Date of Birth',v:'15 Aug 2001'},{ico:'🏷️',l:'Category',v:'OBC',tag:'t-bl'},{ico:'📍',l:'State',v:'Uttar Pradesh'},{ico:'🎓',l:'Qualification',v:'B.Sc Computer Science'}].map((r,i)=>(
+                      <div key={i} className="ir">
+                        <div className="ir-ico">{r.ico}</div>
+                        <div className="ir-inf"><div className="ir-lbl">{r.l}</div><div className="ir-val">{r.v}</div></div>
+                        {r.tag&&<div className={`ir-tag ${r.tag}`}>{r.v}</div>}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="sec-lbl">🎫 Admit Cards</div>
+                  <div style={{padding:'0 20px 14px'}}>
+                    {ADMIT_CARDS.map((ac,i)=>(
+                      <div key={i} className="admit-card" style={{marginBottom:9}}>
+                        <div className="admit-top">
+                          <div className="admit-ico">{ac.ico}</div>
+                          <div><div className="admit-nm">{ac.nm}</div><div className="admit-org">{ac.org}</div></div>
+                          <div className="admit-badge" style={{background:ac.badgeBg,color:ac.badgeC}}>{ac.badge}</div>
+                        </div>
+                        <div className="admit-meta">
+                          <div className="admit-m"><div className="admit-m-l">Exam Date</div><div className="admit-m-v">{ac.date}</div></div>
+                          <div className="admit-m"><div className="admit-m-l">Center</div><div className="admit-m-v">{ac.center}</div></div>
+                          <div className="admit-m"><div className="admit-m-l">Roll No.</div><div className="admit-m-v">{ac.rollNo}</div></div>
+                        </div>
+                        {ac.badge==='Available'&&(
+                          <button className="admit-dl">⬇️ Download Admit Card</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="sec-lbl">Form History</div>
+                  <div className="info-blk">
+                    {[{ico:'📝',bg:'rgba(255,149,0,0.16)',n:'SSC CGL 2025',d:'24 Apr 2025',st:'Submitted',sc:'t-gn'},{ico:'🚂',bg:'rgba(26,111,255,0.16)',n:'RRB NTPC 2025',d:'18 Apr 2025',st:'Verified',sc:'t-bl'},{ico:'🏦',bg:'rgba(0,207,255,0.14)',n:'IBPS PO 2024',d:'02 Jan 2025',st:'Exam Done',sc:'t-gd'},{ico:'🏛️',bg:'rgba(255,59,85,0.14)',n:'UPSC CDS 2024',d:'10 Nov 2024',st:'Result Awaited',sc:'t-rd'}].map((f,i)=>(
+                      <div key={i} className="ir">
+                        <div className="ir-ico" style={{background:f.bg,fontSize:17}}>{f.ico}</div>
+                        <div className="ir-inf"><div className="ir-val">{f.n}</div><div className="ir-lbl">{f.d}</div></div>
+                        <div className={`ir-tag ${f.sc}`}>{f.st}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="sec-lbl">Account</div>
+                  <div className="info-blk">
+                    {[{ico:'🔔',l:'Notifications',v:notifEnabled?'Enabled':'Disabled',tag:notifEnabled?'t-gn':'t-rd',toggle:true},{ico:'🌐',l:'Language',v:'Hindi + English'},{ico:'🔒',l:'2FA Security',v:'Active',tag:'t-bl'},{ico:'💳',l:'Plan',v:'Premium · ₹299/mo',tag:'t-gd'}].map((r,i)=>(
+                      <div key={i} className="ir" style={{cursor:r.toggle?'pointer':'default'}} onClick={()=>r.toggle&&setNotifEnabled(p=>!p)}>
+                        <div className="ir-ico">{r.ico}</div>
+                        <div className="ir-inf"><div className="ir-lbl">{r.l}</div><div className="ir-val">{r.v}</div></div>
+                        {r.tag&&<div className={`ir-tag ${r.tag}`}>{r.toggle?(notifEnabled?'ON':'OFF'):'ON'}</div>}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{margin:'0 20px 14px'}}>
+                    <button style={{width:'100%',padding:'14px',border:'1px solid rgba(255,59,85,0.25)',borderRadius:14,background:'rgba(255,59,85,0.08)',color:'var(--rd)',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'Inter,sans-serif'}} onClick={()=>setScreen('auth')}>
+                      Logout 🚪
+                    </button>
+                  </div>
+                </div>
+                <div className="gap20"></div>
+              </div>
+            )}
+          </div>
+          </div>
+        </div>
+
+        {/* BOTTOM NAV */}
+        <div className="bnav">
+          {[
+            {id:'home',ico:'🏠',lbl:'Home'},
+            {id:'exams',ico:'📋',lbl:'Exams',badge:3},
+            {id:'docs',ico:'📂',lbl:'My Docs'},
+            {id:'profile',ico:'👤',lbl:'Profile'},
+          ].map(n=>(
+            <div key={n.id} className={`ni ${nav===n.id?'a':''}`} onClick={()=>switchNav(n.id)}>
+              {n.badge&&nav!==n.id&&<div className="ni-badge">{n.badge}</div>}
+              <div className="ni-ico">{n.ico}</div>
+              <div className="ni-lbl">{n.lbl}</div>
+              <div className="ni-dot"></div>
+            </div>
+          ))}
+        </div>
+
+        {/* SHEET OVERLAY */}
+        <div className={`sheet-overlay ${(applySheet||uploadOpen)?'show':''}`} onClick={()=>{setApplySheet(null);setUploadOpen(false);}}></div>
+
+        {/* APPLY SHEET */}
+        <ApplySheet exam={applySheet} open={!!applySheet} onClose={()=>setApplySheet(null)} onConfirm={()=>{setApplySheet(null);setApplySuccess(true);setTimeout(()=>setApplySuccess(false),3000);}}/>
+
+        {/* UPLOAD MODAL */}
+        <UploadModal open={uploadOpen} onClose={()=>setUploadOpen(false)}/>
+
+        {/* APPLY SUCCESS TOAST */}
+        {applySuccess&&<div style={{position:'absolute',bottom:90,left:20,right:20,background:'rgba(0,200,83,0.15)',border:'1px solid rgba(0,200,83,0.3)',borderRadius:16,padding:'14px 16px',display:'flex',alignItems:'center',gap:10,zIndex:400,animation:'fu 0.4s ease both'}}><div style={{fontSize:22}}>🎉</div><div><div style={{fontSize:13,fontWeight:800,color:'#fff'}}>Form Apply Ho Gaya!</div><div style={{fontSize:11,color:'var(--mu)'}}>Confirmation SMS milega jald hi.</div></div></div>}
+
+        {/* NOTIF PANEL */}
+        <NotifPanel open={notifOpen} onClose={()=>setNotifOpen(false)}/>
+
+        {/* EDIT PROFILE PANEL */}
+        <EditProfilePanel open={editProfile} onClose={()=>setEditProfile(false)}/>
+
+        {/* EXAM DETAIL PANEL */}
+        <ExamDetailPanel exam={examDetail} onClose={()=>setExamDetail(null)} onApply={handleApply}/>
+
+      </>)}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+<div id="root"></div>
+<script>
+function scalePhone(){
+  const phone=document.querySelector('.phone');
+  if(!phone) return;
+  const vw=window.innerWidth,vh=window.innerHeight;
+  const scale=Math.min(vw/414,vh/844,1);
+  phone.style.transform=`scale(${scale})`;
+}
+scalePhone();
+window.addEventListener('resize',scalePhone);
+document.addEventListener('DOMContentLoaded',scalePhone);
+</script>
+</body>
+</html>
