@@ -268,7 +268,10 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
           code: String(error.code || 'P2P_ORDER_CREATE_FAILED')
         });
       }
-      // Log actual error so it's visible in Render logs
+      // E11000 = duplicate key — seller already has an active order (double-submit / race)
+      if (error?.code === 11000 || String(error?.message || '').includes('E11000')) {
+        return res.status(409).json({ success: false, message: 'You already have an active order in progress. Please complete or cancel it first.', code: 'DUPLICATE_ACTIVE_ORDER' });
+      }
       console.error('[createOrder] Unexpected error:', error?.message || error, error?.stack ? error.stack.split('\n').slice(0,4).join(' | ') : '');
       return res.status(500).json({ success: false, message: 'Server error while creating order.' });
     }
