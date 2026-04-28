@@ -1901,7 +1901,7 @@ app.get('/api/p2p/me', async (req, res) => {
       role: tokenService.normalizeRole(user.role || 'USER'),
       createdAt: user.createdAt || null,
       avatar: user.avatar || '',
-      emailVerified: Boolean(user.emailVerified),
+      emailVerified: true, // logged-in = email verified (registration requires OTP on email)
       kyc: kycProfile
     }
   });
