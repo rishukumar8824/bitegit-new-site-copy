@@ -1,14 +1,20 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 
 // ── Sentry error monitoring (safe: only runs if SENTRY_DSN is set) ──────────
-const Sentry = require('@sentry/node');
+let Sentry = null;
 if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV || 'development',
-    tracesSampleRate: 0.2,
-  });
-  console.log('[Sentry] Error monitoring active');
+  try {
+    Sentry = require('@sentry/node');
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.NODE_ENV || 'development',
+      tracesSampleRate: 0.2,
+    });
+    console.log('[Sentry] Error monitoring active');
+  } catch (error) {
+    console.warn('[Sentry] SDK unavailable, continuing without Sentry:', error?.message || error);
+    Sentry = null;
+  }
 }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -5307,7 +5313,7 @@ async function boot() {
       });
 
       // Sentry must be before other error handlers
-      if (process.env.SENTRY_DSN) {
+      if (process.env.SENTRY_DSN && Sentry && typeof Sentry.expressErrorHandler === 'function') {
         app.use(Sentry.expressErrorHandler());
       }
       app.use(errorHandler);
