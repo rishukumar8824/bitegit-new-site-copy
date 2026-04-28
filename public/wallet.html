@@ -1519,6 +1519,34 @@
   }
   loadDepositHistory();
 
+  // Load wallet balances from P2P wallet API
+  (function loadWalletBalances() {
+    fetch('/api/p2p/wallet', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.wallet) return;
+        var w = data.wallet;
+        var secDep = Number(w.securityDeposit || 0);
+        var avail  = Number(w.availableBalance || w.balance || 0);
+        var locked = Math.max(0, Number(w.lockedBalance || w.p2pLocked || 0) - secDep);
+        var total  = avail + locked + secDep;
+
+        // Update USDT balance row and total
+        ovTotalUsdt = total;
+        var usdtBal = document.getElementById('ovBal_USDT');
+        var usdtSub = document.getElementById('ovSub_USDT');
+        if (usdtBal) usdtBal.textContent = avail.toFixed(2);
+        if (usdtSub) usdtSub.textContent = '≈' + avail.toFixed(2) + ' USDT';
+
+        // Top balance display
+        var balValEl = document.getElementById('balVal');
+        var balSubEl = document.getElementById('balSub');
+        if (balValEl && balVisible) balValEl.textContent = total.toFixed(2);
+        if (balSubEl) balSubEl.textContent = '≈' + (total * (OV_RATES['BTC'] || 0.0000154)).toFixed(8) + ' BTC';
+      })
+      .catch(function() {});
+  })();
+
   // Route from URL params
   var params = new URLSearchParams(location.search);
   var page = params.get('page');

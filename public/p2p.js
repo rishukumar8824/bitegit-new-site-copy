@@ -1815,7 +1815,6 @@ async function loadProfilePanel(options = {}) {
       ? paymentDurations.reduce((sum, value) => sum + value, 0) / paymentDurations.length
       : 0;
 
-  const walletLabel = `₹${formatNumber(profileWalletBalance + profileWalletLocked)}`;
   const avgReleaseLabel = formatDurationLabel(avgReleaseMs);
   const avgPaymentLabel = formatDurationLabel(avgPaymentMs);
 
@@ -1824,8 +1823,7 @@ async function loadProfilePanel(options = {}) {
   setNodeText(profileCompletionRate, `${completionRateValueAll.toFixed(1)}%`);
   setNodeText(profileCompletionRate30d, `${completionRateValue30d.toFixed(1)}%`);
   setNodeText(profileCompletionRateMobile, `${completionRateValueAll.toFixed(1)}%`);
-  setNodeText(profileDeposit, walletLabel);
-  setNodeText(profileDepositMobile, walletLabel);
+  // profileDepositMobile and profileAssetsMobile are set by the async wallet fetch below — don't overwrite here
   setNodeText(profileCompletedOrders, String(completedOrdersAll.length));
   setNodeText(profileCompletedOrders30d, String(completedOrders30d.length));
   setNodeText(profileThirtyDayTradesMobile, String(totalOrders30d));
