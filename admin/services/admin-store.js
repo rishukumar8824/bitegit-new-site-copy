@@ -1107,6 +1107,17 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       { upsert: true }
     );
 
+    // Also sync p2p_credentials so /api/p2p/me returns the correct KYC status
+    const profileEmail = existingProfile?.email || '';
+    if (profileEmail && repos && typeof repos.updateP2PCredentialKyc === 'function') {
+      try {
+        await repos.updateP2PCredentialKyc(profileEmail, {
+          status: normalizedDecision, // 'APPROVED' → 'VERIFIED', 'REJECTED' → 'REJECTED', 'PENDING' → 'PENDING_REVIEW'
+          rejectionReason: normalizedDecision === 'REJECTED' ? String(remarks || 'Rejected by admin') : ''
+        });
+      } catch (_) {}
+    }
+
     return getUserKyc(normalizedUserId);
   }
 

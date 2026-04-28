@@ -1695,35 +1695,39 @@ async function loadProfilePanel(options = {}) {
   }
   setNodeText(profileSecurity, currentKycStatus === 'VERIFIED' ? 'KYC + Email Protected' : 'KYC Required');
 
+  // ── Fire wallet + history fetches in background — don't block stats render ──
   const shouldRefreshWallet =
     Boolean(options.refreshWallet) || Date.now() - profileWalletSyncedAt > 30 * 1000;
 
   if (shouldRefreshWallet) {
-    try {
-      const response = await fetch('/api/p2p/wallet');
-      const data = await response.json();
-      if (response.ok && data.wallet) {
-        profileWalletBalance = Number(data.wallet.availableBalance || data.wallet.balance || 0);
-        profileWalletLocked = Number(data.wallet.lockedBalance || data.wallet.p2pLocked || 0);
-        profileWalletSyncedAt = Date.now();
-      }
-    } catch (error) {
-      // Wallet panel remains with previous values.
-    }
+    fetch('/api/p2p/wallet')
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (data && data.wallet) {
+          profileWalletBalance = Number(data.wallet.availableBalance || data.wallet.balance || 0);
+          profileWalletLocked = Number(data.wallet.lockedBalance || data.wallet.p2pLocked || 0);
+          profileWalletSyncedAt = Date.now();
+          // Re-render wallet line after balance loads
+          const walletLbl = '₹' + formatNumber(profileWalletBalance + profileWalletLocked);
+          setNodeText(profileDeposit, walletLbl);
+          setNodeText(profileDepositMobile, walletLbl);
+          syncMobProfile();
+        }
+      }).catch(function() {});
   }
 
-  // If local cache is empty, fetch from server first then re-run
+  // If local cache is empty, kick off history fetch in background then re-run stats
   if (currentUser && getProfileOrdersSnapshot().length === 0) {
-    try {
-      const histResp = await fetch('/api/p2p/orders/history?limit=50&offset=0', { credentials: 'include', headers: { 'Cache-Control': 'no-store' } });
-      if (histResp.ok) {
-        const histData = await histResp.json();
+    fetch('/api/p2p/orders/history?limit=50&offset=0', { credentials: 'include', headers: { 'Cache-Control': 'no-store' } })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(histData) {
+        if (!histData) return;
         const histOrders = Array.isArray(histData) ? histData : (histData.orders || []);
         histOrders.forEach(function(o) {
           if (o && o.id) { try { localStorage.setItem('p2p_order_' + o.id, JSON.stringify(o)); } catch(_) {} }
         });
-      }
-    } catch(_) {}
+        if (histOrders.length) loadProfilePanel({ refreshWallet: false }); // re-run stats with fresh data
+      }).catch(function() {});
   }
 
   const nowMs = Date.now();
@@ -5133,7 +5137,9 @@ function _fetchOrderHistoryInBackground(parentReqId) {
     .then(function(data) {
       if (!data || parentReqId !== _ordReqId) return;
       var historyOrders = Array.isArray(data) ? data : (data.orders || []);
-      _ordRenderAll(_ordMergeById(_ordAllOrders, historyOrders), false);
+      // Active orders in _ordAllOrders must WIN over stale history — pass history as primary
+      // so active records (secondary) overwrite any stale history entries for same ID
+      _ordRenderAll(_ordMergeById(historyOrders, _ordAllOrders), false);
     })
     .catch(function(error) {
       if (error && error.name === 'AbortError') return;
