@@ -595,32 +595,51 @@ async function loadUsers(options = {}) {
   const payload = await apiRequest(`/users${query}`);
 
   state.users = Array.isArray(payload.users) ? payload.users : [];
+
+  // Fetch merchant badge status for all users in parallel
+  const merchantMap = {};
+  await Promise.all(state.users.map(async (user) => {
+    try {
+      const r = await fetch(`/api/admin/users/${encodeURIComponent(user.userId)}/merchant-badge`, { credentials: 'include' });
+      const d = await r.json();
+      merchantMap[user.userId] = (d.status === 'approved' && d.badge) ? d.badge : null;
+    } catch (_) { merchantMap[user.userId] = null; }
+  }));
+
+  const BADGE_COLORS = { 1: '#1a6ff4', 2: '#f7931a', 3: '#f5a623' };
+  const BADGE_ICONS  = { 1: '◆ Blue V', 2: '♛ Crown', 3: '❖ Shield' };
+
   const body = document.getElementById('usersTableBody');
   body.innerHTML = state.users
     .map(
-      (user) => `
-      <tr class="user-row" data-profile-id="${user.userId}" style="cursor:pointer;transition:background 0.15s;" title="Click to view full profile">
-        <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${user.userId}</td>
-        <td class="admin-td" style="font-weight:500;">${user.email}</td>
-        <td class="admin-td">${statusBadge(user.role)}</td>
-        <td class="admin-td">${statusBadge(user.status)}</td>
-        <td class="admin-td">${statusBadge(user.kycStatus)}</td>
-        <td class="admin-td" style="text-align:right;color:var(--green);font-weight:600;">${formatNumber(user.balance, 4)}</td>
-        <td class="admin-td" style="text-align:right;color:var(--red);">${formatNumber(user.lockedBalance, 4)}</td>
-        <td class="admin-td">
-          <div style="display:flex;flex-wrap:wrap;gap:4px;">
-            <button class="btn-primary btn-sm" data-user-action="profile" data-user-id="${user.userId}">👤 Profile</button>
-            <button class="btn-secondary btn-sm" data-user-action="freeze" data-user-id="${user.userId}">Freeze</button>
-            <button class="btn-danger btn-sm" data-user-action="ban" data-user-id="${user.userId}">Ban</button>
-          </div>
-        </td>
-      </tr>
-    `
+      (user) => {
+        const mb = merchantMap[user.userId];
+        const merchantCell = mb
+          ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${BADGE_COLORS[mb]}22;color:${BADGE_COLORS[mb]};border:1px solid ${BADGE_COLORS[mb]}55;white-space:nowrap;">${BADGE_ICONS[mb]}</span>`
+          : `<span style="font-size:11px;color:var(--text-2);">—</span>`;
+        return `
+        <tr class="user-row" data-profile-id="${user.userId}" style="cursor:pointer;transition:background 0.15s;" title="Click to view full profile">
+          <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${user.userId}</td>
+          <td class="admin-td" style="font-weight:500;">${user.email}</td>
+          <td class="admin-td">${statusBadge(user.role)}</td>
+          <td class="admin-td">${statusBadge(user.status)}</td>
+          <td class="admin-td">${statusBadge(user.kycStatus)}</td>
+          <td class="admin-td">${merchantCell}</td>
+          <td class="admin-td" style="text-align:right;color:var(--green);font-weight:600;">${formatNumber(user.balance, 4)}</td>
+          <td class="admin-td">
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">
+              <button class="btn-primary btn-sm" data-user-action="profile" data-user-id="${user.userId}">👤 Profile</button>
+              <button class="btn-secondary btn-sm" data-user-action="freeze" data-user-id="${user.userId}">Freeze</button>
+              <button class="btn-danger btn-sm" data-user-action="ban" data-user-id="${user.userId}">Ban</button>
+            </div>
+          </td>
+        </tr>`;
+      }
     )
     .join('');
 
   if (state.users.length === 0) {
-    body.innerHTML = '<tr><td class="admin-td text-slate-500" colspan="8">No users found.</td></tr>';
+    body.innerHTML = '<tr><td class="admin-td text-slate-500" colspan="9">No users found.</td></tr>';
   }
 }
 
@@ -2394,6 +2413,81 @@ async function loadUpOverview() {
       <button class="btn-secondary" style="flex:1;" data-up-tab="logins">🔐 Login History</button>
       <button class="btn-danger" style="flex:1;" data-up-tab="actions">⚙️ Actions</button>
     </div>`;
+
+  // Load and render merchant badge section separately (async)
+  loadUpMerchantBadge();
+}
+
+async function loadUpMerchantBadge() {
+  const userId = _upUserId;
+  if (!userId) return;
+  // Inject placeholder card below existing content
+  const el = document.getElementById('upOverviewContent');
+  if (!el) return;
+  let card = document.getElementById('upMerchantBadgeCard');
+  if (!card) {
+    card = document.createElement('div');
+    card.id = 'upMerchantBadgeCard';
+    card.style.cssText = 'margin-top:10px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:14px 16px;';
+    el.appendChild(card);
+  }
+  card.innerHTML = '<div style="color:var(--text-2);font-size:12px;text-align:center;">Loading merchant status…</div>';
+
+  try {
+    const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/merchant-badge`, { credentials: 'include' });
+    const data = await res.json();
+    const BADGE_INFO = { 1: { label: 'Blue V (Verified)', color: '#1a6ff4', icon: '◆' }, 2: { label: 'Crown (Pro)', color: '#f7931a', icon: '♛' }, 3: { label: 'Shield (Elite)', color: '#f5a623', icon: '❖' } };
+    const currentBadge = (data.status === 'approved' && data.badge) ? data.badge : null;
+    const bi = currentBadge ? BADGE_INFO[currentBadge] : null;
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;">🏪 Merchant Badge</span>
+        ${bi
+          ? `<span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:${bi.color}22;color:${bi.color};border:1px solid ${bi.color}55;">${bi.icon} ${bi.label}</span>`
+          : `<span style="font-size:12px;color:var(--text-2);">No badge assigned</span>`
+        }
+      </div>
+      <div style="font-size:11px;color:var(--text-2);margin-bottom:10px;">Assign a badge to grant merchant privileges. Merchants can post P2P ads.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button onclick="adminAssignMerchantBadge('${userId}',1)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(26,111,244,0.12);color:#1a6ff4;border:1px solid rgba(26,111,244,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===1?'outline:2px solid #1a6ff4;':''}" title="High-quality verified merchant">◆ Blue V</button>
+        <button onclick="adminAssignMerchantBadge('${userId}',2)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(247,147,26,0.12);color:#f7931a;border:1px solid rgba(247,147,26,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===2?'outline:2px solid #f7931a;':''}" title="Top-level certified merchant">♛ Crown</button>
+        <button onclick="adminAssignMerchantBadge('${userId}',3)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(245,166,35,0.12);color:#f5a623;border:1px solid rgba(245,166,35,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===3?'outline:2px solid #f5a623;':''}" title="Compensation-protected merchant">❖ Shield</button>
+        ${currentBadge ? `<button onclick="adminRevokeMerchantBadge('${userId}')" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(246,70,93,0.12);color:#f6465d;border:1px solid rgba(246,70,93,0.35);font-size:12px;font-weight:700;cursor:pointer;">✕ Revoke</button>` : ''}
+      </div>`;
+  } catch (e) {
+    card.innerHTML = '<div style="color:var(--red);font-size:12px;">Failed to load merchant status.</div>';
+  }
+}
+
+async function adminAssignMerchantBadge(userId, badge) {
+  const BADGE_LABELS = { 1: 'Blue V (Verified)', 2: 'Crown (Pro)', 3: 'Shield (Elite)' };
+  if (!confirm(`Assign Badge ${badge} — ${BADGE_LABELS[badge]} to this user?\nThis grants them merchant privileges and the ability to post P2P ads.`)) return;
+  try {
+    const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/merchant-badge`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ badge, action: 'assign' })
+    });
+    const data = await res.json();
+    if (!data.success) { alert('Error: ' + data.message); return; }
+    alert(`Badge ${badge} assigned successfully!`);
+    loadUpMerchantBadge();
+  } catch (e) { alert('Network error.'); }
+}
+
+async function adminRevokeMerchantBadge(userId) {
+  if (!confirm('Revoke merchant badge from this user?\nThey will no longer be able to post P2P ads.')) return;
+  try {
+    const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/merchant-badge`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'revoke' })
+    });
+    const data = await res.json();
+    if (!data.success) { alert('Error: ' + data.message); return; }
+    alert('Merchant badge revoked.');
+    loadUpMerchantBadge();
+  } catch (e) { alert('Network error.'); }
 }
 
 async function loadUpBalance() {

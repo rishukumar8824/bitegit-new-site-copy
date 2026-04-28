@@ -3475,6 +3475,112 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
   }
 });
 
+// ── Admin: Direct merchant badge assign/revoke for any user ──
+app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async (req, res) => {
+  try {
+    const targetUserId = String(req.params.userId || '').trim();
+    const { badge, action } = req.body; // badge: 1|2|3, action: 'assign'|'revoke'
+
+    if (!targetUserId) return res.status(400).json({ success: false, message: 'userId required.' });
+
+    // Look up user to get username/email
+    let username = targetUserId;
+    let email = '';
+    try {
+      const cols = getCollections();
+      const userDoc = await cols.users.findOne({ userId: targetUserId });
+      if (userDoc) { username = userDoc.username || userDoc.email || targetUserId; email = userDoc.email || ''; }
+    } catch (_) {}
+
+    if (action === 'revoke') {
+      // Mark any approved applications for this user as rejected
+      for (const [appId, app] of merchantApplications) {
+        if (String(app.userId) === targetUserId && app.status === 'approved') {
+          app.status = 'rejected';
+          app.assignedBadge = null;
+          app.reviewedAt = new Date().toISOString();
+          merchantApplications.set(appId, app);
+          await saveMerchantApp(app);
+        }
+      }
+      // Remove badge from all their offers
+      try {
+        const cols = getCollections();
+        await cols.p2pOffers.updateMany(
+          { $or: [{ createdByUserId: targetUserId }, { advertiser: username }] },
+          { $unset: { merchantBadge: '' } }
+        );
+      } catch (_) {}
+      return res.json({ success: true, message: `Merchant badge revoked for ${username}.` });
+    }
+
+    // Assign badge
+    const badgeNum = Number(badge);
+    if (![1, 2, 3].includes(badgeNum)) return res.status(400).json({ success: false, message: 'Badge must be 1, 2, or 3.' });
+
+    // Find existing application or create a direct-assign record
+    let existingApp = null;
+    for (const [, app] of merchantApplications) {
+      if (String(app.userId) === targetUserId && app.status === 'approved') { existingApp = app; break; }
+    }
+    if (!existingApp) {
+      for (const [, app] of merchantApplications) {
+        if (String(app.userId) === targetUserId) { existingApp = app; break; }
+      }
+    }
+
+    if (existingApp) {
+      existingApp.status = 'approved';
+      existingApp.assignedBadge = badgeNum;
+      existingApp.reviewedAt = new Date().toISOString();
+      merchantApplications.set(existingApp.id, existingApp);
+      await saveMerchantApp(existingApp);
+    } else {
+      // Create a direct-assign record (no user-submitted application needed)
+      const id = `MRC-DIRECT-${String(merchantAppCounter++).padStart(5, '0')}`;
+      const newApp = {
+        id, userId: targetUserId, username, email,
+        photoBase64: '', currency: 'USDT', socialAccounts: {},
+        status: 'approved', assignedBadge: badgeNum,
+        submittedAt: new Date().toISOString(), reviewedAt: new Date().toISOString(),
+        directAssign: true
+      };
+      merchantApplications.set(id, newApp);
+      await saveMerchantApp(newApp);
+    }
+
+    // Stamp badge on all their offers
+    try {
+      const cols = getCollections();
+      await cols.p2pOffers.updateMany(
+        { $or: [{ createdByUserId: targetUserId }, { advertiser: username }] },
+        { $set: { merchantBadge: badgeNum } }
+      );
+    } catch (_) {}
+
+    return res.json({ success: true, message: `Badge ${badgeNum} assigned to ${username}.`, badge: badgeNum });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// ── Admin: Get merchant badge status for a specific user ──
+app.get('/api/admin/users/:userId/merchant-badge', requiresAdminSession, (req, res) => {
+  const targetUserId = String(req.params.userId || '').trim();
+  let best = null;
+  for (const [, app] of merchantApplications) {
+    if (String(app.userId) !== targetUserId) continue;
+    if (!best) { best = app; continue; }
+    if (app.status === 'approved' && best.status !== 'approved') { best = app; continue; }
+    if (app.status !== 'approved' && best.status === 'approved') continue;
+    const t1 = app.reviewedAt ? new Date(app.reviewedAt).getTime() : new Date(app.submittedAt || 0).getTime();
+    const t2 = best.reviewedAt ? new Date(best.reviewedAt).getTime() : new Date(best.submittedAt || 0).getTime();
+    if (t1 > t2) best = app;
+  }
+  if (best) return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || null, applicationId: best.id });
+  return res.json({ success: true, found: false, status: null, badge: null });
+});
+
 // ── Merchant Application: User checks their status ──
 app.get('/api/merchant/application-status', requiresP2PUser, (req, res) => {
   const userId = req.p2pUser.id;
