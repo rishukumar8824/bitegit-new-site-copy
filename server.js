@@ -2819,7 +2819,23 @@ app.get('/api/p2p/offers', async (req, res) => {
       escrowBackedOnly: true,
       merchantOwnedOnly: true
     });
+
+    // Get blocked user IDs for the logged-in user (if authenticated)
+    let blockedSet = new Set();
+    try {
+      const sessionToken = req.cookies && req.cookies[P2P_USER_COOKIE_NAME];
+      if (sessionToken) {
+        const session = await repos.getP2PUserSession(sessionToken);
+        if (session && (session.userId || session.id)) {
+          const viewerId = session.userId || session.id;
+          const blocked = await repos.getBlockedUsers(viewerId);
+          blockedSet = new Set(blocked.map((b) => b.blockedId));
+        }
+      }
+    } catch (_) { /* non-fatal — skip filter if session check fails */ }
+
     const filtered = allOffers
+      .filter((offer) => !blockedSet.has(String(offer.createdByUserId || '')))
       .filter((offer) => {
         if (!payment) {
           return true;
@@ -3649,6 +3665,44 @@ app.post('/api/p2p/orders/:orderId/rate', requiresP2PUser, async (req, res) => {
     return res.json({ success: true, message: 'Rating submitted.' });
   } catch (error) {
     return res.status(500).json({ message: 'Server error while submitting rating.' });
+  }
+});
+
+// POST /api/p2p/block/:userId — block a counterparty
+app.post('/api/p2p/block/:userId', requiresP2PUser, async (req, res) => {
+  try {
+    const blockerId = req.p2pUser.userId || req.p2pUser.id;
+    const blockedId = String(req.params.userId || '').trim();
+    if (!blockedId) return res.status(400).json({ message: 'userId is required.' });
+    if (blockerId === blockedId) return res.status(400).json({ message: 'Cannot block yourself.' });
+    await repos.blockUser(blockerId, blockedId);
+    return res.json({ success: true, message: 'User blocked.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while blocking user.' });
+  }
+});
+
+// DELETE /api/p2p/block/:userId — unblock a user
+app.delete('/api/p2p/block/:userId', requiresP2PUser, async (req, res) => {
+  try {
+    const blockerId = req.p2pUser.userId || req.p2pUser.id;
+    const blockedId = String(req.params.userId || '').trim();
+    if (!blockedId) return res.status(400).json({ message: 'userId is required.' });
+    await repos.unblockUser(blockerId, blockedId);
+    return res.json({ success: true, message: 'User unblocked.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while unblocking user.' });
+  }
+});
+
+// GET /api/p2p/blocked-users — list users blocked by current user
+app.get('/api/p2p/blocked-users', requiresP2PUser, async (req, res) => {
+  try {
+    const blockerId = req.p2pUser.userId || req.p2pUser.id;
+    const blocked = await repos.getBlockedUsers(blockerId);
+    return res.json({ success: true, blockedUsers: blocked.map((b) => b.blockedId) });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while fetching blocked users.' });
   }
 });
 
