@@ -2807,6 +2807,20 @@ app.post('/api/p2p/ping', requiresP2PUser, async (req, res) => {
   } catch (_) { return res.json({ ok: false }); }
 });
 
+app.get('/api/p2p/ping', async (req, res) => {
+  try {
+    const user = await getP2PUserFromRequest(req, res);
+    const userId = String(user?.id || user?.userId || '').trim();
+    const username = String(user?.username || '').trim();
+    if (userId && repos) {
+      await repos.updateLastActive(userId, username);
+    }
+  } catch (_) {
+    // Wake-up ping should never surface an error to the client.
+  }
+  return res.json({ ok: true });
+});
+
 // ── /api/p2p/public — used by p2p-live.js to load buy/sell ads ──
 app.get('/api/p2p/public', async (req, res) => {
   try {
@@ -3504,6 +3518,31 @@ app.get('/api/p2p/orders/my-active', requiresP2PUser, async (req, res) => {
   } catch (error) {
     console.error('[my-active] error:', error);
     return res.status(500).json({ message: 'Server error fetching active orders.' });
+  }
+});
+
+app.get('/api/p2p/orders/bootstrap', requiresP2PUser, async (req, res) => {
+  const activeLimit = Math.min(Math.max(Number(req.query.activeLimit || 50), 1), 100);
+  const historyLimit = Math.min(Math.max(Number(req.query.historyLimit || 50), 1), 100);
+  try {
+    const userId = req.p2pUser.id;
+    const username = req.p2pUser.username;
+    const result = await repos.listP2POrderHistory(userId, { limit: historyLimit, offset: 0, username });
+    const normalizedHistory = result.orders.map((order) => ({
+      ...normalizeOrderState(order),
+      myRole: resolveMyRole(order, req.p2pUser)
+    }));
+    const activeOrders = normalizedHistory
+      .filter((order) => ['CREATED', 'PENDING', 'PAID', 'PAYMENT_SENT', 'DISPUTED'].includes(String(order.status || '').toUpperCase()))
+      .slice(0, activeLimit);
+
+    return res.json({
+      activeOrders,
+      historyOrders: normalizedHistory,
+      orders: normalizedHistory
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error fetching bootstrap orders.' });
   }
 });
 
