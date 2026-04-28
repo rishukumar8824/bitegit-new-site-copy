@@ -4241,26 +4241,14 @@ function openOrder(order, opts) {
 }
 
 async function openOrderById(orderId, opts) {
-  if (!liveOrdersMeta) return;
   if (!currentUser) { requireLoginNotice(); return; }
+  if (!orderId) return;
+
+  // Navigate directly — order data will be loaded from localStorage cache or server on the standalone page
   var openChat = opts && opts.openChat;
-
-  try {
-    const response = await fetch(`/api/p2p/orders/${orderId}`, {
-      credentials: 'include',
-      headers: { 'Cache-Control': 'no-store' }
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Unable to open order.');
-    var orderStatus = String((data?.order?.status || '')).toUpperCase();
-    var canOpen = isOngoingOrderStatus(orderStatus) || orderStatus === 'RELEASED' || orderStatus === 'COMPLETED';
-    if (!canOpen) throw new Error('Order cannot be opened.');
-
-    // Navigate to standalone order flow page
-    window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(data.order.id) + '&source=orders&v=' + Date.now();
-  } catch (error) {
-    if (liveOrdersMeta) liveOrdersMeta.textContent = error.message;
-  }
+  var url = '/p2p-order-flow.html?orderId=' + encodeURIComponent(orderId) + '&source=orders&v=' + Date.now();
+  if (openChat) url += '&openChat=1';
+  window.location.href = url;
 }
 
 async function sendOrderMessage(text) {
@@ -8667,10 +8655,15 @@ window.deleteMobAd = async function(offerId) {
     if (!target) return;
     var orderId = String(target.getAttribute('data-order-id') || '').trim();
     if (!orderId) return;
-    var openChat = target.getAttribute('data-open-chat') === '1';
-    _ordPrimeOrderOpen(orderId);
-
-    openOrderById(orderId, { openChat: openChat });
+    _ordPrimeOrderOpen(orderId); // store order snapshot in localStorage for instant load
+    // Navigate directly via data-url (already built by _ordCard / _buildOrderFlowUrl)
+    var url = orderOpenUrl(target);
+    if (url) {
+      window.location.href = url;
+    } else {
+      // Fallback: build URL manually
+      window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(orderId) + '&source=orders&v=' + Date.now();
+    }
   }
 
   document.addEventListener('click', function(event) {
