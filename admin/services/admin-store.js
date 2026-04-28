@@ -1108,14 +1108,26 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     );
 
     // Also sync p2p_credentials so /api/p2p/me returns the correct KYC status
-    const profileEmail = existingProfile?.email || '';
+    let profileEmail = String(existingProfile?.email || '').trim().toLowerCase();
+    // Fallback: look up email from p2pKycRequests if adminUserProfiles has no email
+    if (!profileEmail) {
+      try {
+        const kycReq = await p2pKycRequests.findOne({ userId: normalizedUserId });
+        if (kycReq?.email) profileEmail = String(kycReq.email).trim().toLowerCase();
+      } catch (_) {}
+    }
     if (profileEmail && repos && typeof repos.updateP2PCredentialKyc === 'function') {
       try {
         await repos.updateP2PCredentialKyc(profileEmail, {
           status: normalizedDecision, // 'APPROVED' → 'VERIFIED', 'REJECTED' → 'REJECTED', 'PENDING' → 'PENDING_REVIEW'
           rejectionReason: normalizedDecision === 'REJECTED' ? String(remarks || 'Rejected by admin') : ''
         });
-      } catch (_) {}
+        console.log('[reviewKyc] synced p2p_credentials for', profileEmail, '→', normalizedDecision);
+      } catch (syncErr) {
+        console.error('[reviewKyc] failed to sync p2p_credentials:', syncErr?.message);
+      }
+    } else {
+      console.warn('[reviewKyc] could not find email for userId', normalizedUserId, '— p2p_credentials NOT updated');
     }
 
     return getUserKyc(normalizedUserId);
