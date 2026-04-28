@@ -23,10 +23,10 @@ function resolveOfferOwner(offer = {}) {
   };
 }
 
-function buildOrderParticipants({ buyerId, buyerUsername, sellerId, sellerUsername }) {
+function buildOrderParticipants({ buyerId, buyerUsername, buyerEmail, sellerId, sellerUsername, sellerEmail }) {
   return [
-    { id: buyerId, username: buyerUsername, role: 'buyer' },
-    { id: sellerId, username: sellerUsername, role: 'seller' }
+    { id: buyerId, username: buyerUsername, email: String(buyerEmail || '').trim().toLowerCase(), role: 'buyer' },
+    { id: sellerId, username: sellerUsername, email: String(sellerEmail || '').trim().toLowerCase(), role: 'seller' }
   ];
 }
 
@@ -215,6 +215,8 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
         sellerId: seller.id,
         buyerUsername: buyer.username || buyer.id,
         sellerUsername: seller.username || seller.id,
+        buyerEmail: buyer.email || '',
+        sellerEmail: seller.email || '',
         side: adType === 'SELL' ? 'buy' : 'sell',
         asset: offer.asset || 'USDT',
         paymentMethod,
@@ -225,8 +227,10 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
         participants: buildOrderParticipants({
           buyerId: buyer.id,
           buyerUsername: buyer.username || buyer.id,
+          buyerEmail: buyer.email || '',
           sellerId: seller.id,
-          sellerUsername: seller.username || seller.id
+          sellerUsername: seller.username || seller.id,
+          sellerEmail: seller.email || ''
         }),
         messages: buildOrderCreatedMessages({
           now,

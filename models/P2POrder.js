@@ -85,6 +85,8 @@ function buildP2POrderDocument(input = {}) {
     sellerUserId: sellerId,
     buyerUsername: ensureString(input.buyerUsername || buyerId, 'buyerUsername'),
     sellerUsername: ensureString(input.sellerUsername || sellerId, 'sellerUsername'),
+    buyerEmail: String(input.buyerEmail || '').trim().toLowerCase(),
+    sellerEmail: String(input.sellerEmail || '').trim().toLowerCase(),
     type,
     side: String(input.side || '').trim().toLowerCase() || (type === 'SELL' ? 'buy' : 'sell'),
     asset,

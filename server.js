@@ -3502,7 +3502,12 @@ app.get('/api/p2p/orders/my-active', requiresP2PUser, async (req, res) => {
   try {
     const userId = req.p2pUser.id;
     const username = req.p2pUser.username;
-    const result = await repos.listP2POrderHistory(userId, { limit: 50, offset: 0, username });
+    const result = await repos.listP2POrderHistory(userId, {
+      limit: 50,
+      offset: 0,
+      username,
+      email: req.p2pUser.email
+    });
     console.log(`[my-active] user=${username} id=${userId} total_orders=${result.total}`);
     const activeStatuses = ['CREATED', 'PENDING', 'PAID', 'PAYMENT_SENT', 'DISPUTED'];
     const recentCutoff = Date.now() - 24 * 60 * 60 * 1000; // 24h
@@ -3527,7 +3532,12 @@ app.get('/api/p2p/orders/bootstrap', requiresP2PUser, async (req, res) => {
   try {
     const userId = req.p2pUser.id;
     const username = req.p2pUser.username;
-    const result = await repos.listP2POrderHistory(userId, { limit: historyLimit, offset: 0, username });
+    const result = await repos.listP2POrderHistory(userId, {
+      limit: historyLimit,
+      offset: 0,
+      username,
+      email: req.p2pUser.email
+    });
     const normalizedHistory = result.orders.map((order) => ({
       ...normalizeOrderState(order),
       myRole: resolveMyRole(order, req.p2pUser)
@@ -3581,7 +3591,12 @@ app.get('/api/p2p/orders/history', requiresP2PUser, async (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit || 10), 1), 50);
   const offset = Math.max(Number(req.query.offset || 0), 0);
   try {
-    const result = await repos.listP2POrderHistory(req.p2pUser.id, { limit, offset, username: req.p2pUser.username });
+    const result = await repos.listP2POrderHistory(req.p2pUser.id, {
+      limit,
+      offset,
+      username: req.p2pUser.username,
+      email: req.p2pUser.email
+    });
     const orders = result.orders.map((o) => ({ ...normalizeOrderState(o), myRole: resolveMyRole(o, req.p2pUser) }));
     return res.json({ total: result.total, hasMore: result.hasMore, offset, limit, orders });
   } catch (error) {
