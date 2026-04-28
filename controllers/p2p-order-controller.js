@@ -247,9 +247,11 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
       _broadcast(String(buyer.id || ''), 'new_order', orderPayload);
 
       const myRole = String(req.p2pUser.id || '') === String(buyer.id || '') ? 'buyer' : 'seller';
+      // Strip MongoDB _id to avoid ObjectId serialization issues in res.json()
+      const { _id: _omit, ...cleanOrder } = savedOrder;
       return res.status(201).json({
         ...toOrderResponse(savedOrder),
-        order: { ...savedOrder, myRole }
+        order: { ...cleanOrder, myRole }
       });
     } catch (error) {
       const knownStatus = Number(error?.status || 0);
@@ -260,6 +262,8 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
           code: String(error.code || 'P2P_ORDER_CREATE_FAILED')
         });
       }
+      // Log actual error so it's visible in Render logs
+      console.error('[createOrder] Unexpected error:', error?.message || error, error?.stack ? error.stack.split('\n').slice(0,4).join(' | ') : '');
       return res.status(500).json({ success: false, message: 'Server error while creating order.' });
     }
   }

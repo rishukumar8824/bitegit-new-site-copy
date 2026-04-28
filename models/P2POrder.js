@@ -25,10 +25,17 @@ function toAmount(value, precision = 8) {
   return Number(parsed.toFixed(precision));
 }
 
+function makeValidationError(message) {
+  const err = new Error(message);
+  err.status = 400;
+  err.code = 'VALIDATION_ERROR';
+  return err;
+}
+
 function ensurePositiveNumber(value, fieldName) {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error(`${fieldName} must be greater than 0.`);
+    throw makeValidationError(`${fieldName} must be greater than 0.`);
   }
   return amount;
 }
@@ -36,7 +43,7 @@ function ensurePositiveNumber(value, fieldName) {
 function ensureString(value, fieldName) {
   const normalized = String(value || '').trim();
   if (!normalized) {
-    throw new Error(`${fieldName} is required.`);
+    throw makeValidationError(`${fieldName} is required.`);
   }
   return normalized;
 }
@@ -59,12 +66,12 @@ function buildP2POrderDocument(input = {}) {
 
   const type = String(input.type || '').trim().toUpperCase();
   if (!['BUY', 'SELL'].includes(type)) {
-    throw new Error('type must be BUY or SELL.');
+    throw makeValidationError('type must be BUY or SELL.');
   }
 
   const asset = String(input.asset || 'USDT').trim().toUpperCase();
   if (asset !== 'USDT') {
-    throw new Error('asset must be USDT.');
+    throw makeValidationError('asset must be USDT.');
   }
 
   return {
