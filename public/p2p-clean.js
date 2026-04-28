@@ -352,7 +352,7 @@ function getPostLoginRedirectPath() {
     if (!redirect.startsWith('/') || redirect.startsWith('//')) {
       return '';
     }
-    if (!redirect.startsWith('/p2p')) {
+    if (!redirect.startsWith('/p2p-clean')) {
       return '';
     }
     return redirect;
@@ -2986,7 +2986,7 @@ function _applyOrdersFocusState() {
 function _buildOrderFlowUrl(params) {
   var qs = new URLSearchParams(params || {});
   qs.set('v', _ORDER_FLOW_VERSION);
-  return '/p2p-order-flow.html?' + qs.toString();
+  return '/p2p-clean-order-flow.html?' + qs.toString();
 }
 
 function _getKnownCurrentUserOrders() {
@@ -4231,7 +4231,7 @@ function bindOfferActionDelegation(container) {
     const actionBtn = event.target.closest('.offer-action-btn, .gt-btn[data-offer-id]');
     if (!actionBtn || actionBtn.disabled) return;
 
-    // Visual click feedback — scale down briefly like Bitget/Bybit
+    // Visual click feedback — scale down briefly like large exchange apps
     actionBtn.style.transform = 'scale(0.93)';
     actionBtn.style.transition = 'transform 0.1s ease';
     setTimeout(function() { actionBtn.style.transform = ''; }, 160);
@@ -5604,7 +5604,7 @@ if (orderChatBtn) {
       }
       return;
     }
-    window.location.href = `/p2p-chat.html?orderId=${encodeURIComponent(activeOrderId)}`;
+    window.location.href = `/p2p-clean-chat.html?orderId=${encodeURIComponent(activeOrderId)}`;
   });
 }
 if (cancelModalBackdrop) {
@@ -5706,7 +5706,7 @@ if (profileDepositBtn) {
       setAuthModalOpen(true);
       return;
     }
-    window.location.href = '/p2p#profile';
+    window.location.href = '/p2p-clean.html#profile';
   });
 }
 
@@ -5927,7 +5927,7 @@ function showProfileFlowScreen(screenId, hashValue) {
     setMobileNavActive('profile');
   }
   if (hashValue) {
-    history.replaceState(null, '', '/p2p#' + hashValue);
+    history.replaceState(null, '', '/p2p-clean.html#' + hashValue);
   }
 }
 
@@ -6661,7 +6661,7 @@ function loadRecentlyViewed() {
       }
       container.innerHTML = list.map(function(item) {
         var side = item.side === 'sell' ? '🔴 Sell' : '🟢 Buy';
-        return '<div class="rv-card" onclick="window.location.href=\'/p2p?ad=' + item.adId + '\'">' +
+        return '<div class="rv-card" onclick="window.location.href=\'/p2p-clean.html?ad=' + item.adId + '\'">' +
           '<div class="rv-card-icon">' + (item.asset || 'U') + '</div>' +
           '<div class="rv-card-info"><div class="rv-card-sym">' + side + ' ' + (item.asset || 'USDT') + '</div>' +
           '<div class="rv-card-meta">by ' + (item.sellerName || 'Merchant') + ' · ' + (item.timeAgo || '') + '</div></div>' +
@@ -7047,12 +7047,12 @@ window.deleteMobAd = async function(offerId) {
         setMobileNavActive('profile');
         document.body.classList.add('mob-profile-open');
         if (screenId === 'mobProfileScreen') {
-          history.replaceState(null,'','/p2p#profile');
+          history.replaceState(null,'','/p2p-clean.html#profile');
         }
       } else if (screenId === 'mobOrdersScreen') {
         document.body.dataset.mobileTab = 'orders';
         setMobileNavActive('orders');
-        history.replaceState(null,'','/p2p#orders');
+        history.replaceState(null,'','/p2p-clean.html#orders');
         // Keep any already-rendered data visible; background refresh still runs.
         if (!_applyOrdersFocusState()) {
           switchOrdMain(_ordMainTab || 'pending');
@@ -7061,7 +7061,7 @@ window.deleteMobAd = async function(offerId) {
       } else if (screenId === 'mobPostAdScreen') {
         document.body.dataset.mobileTab = 'post';
         setMobileNavActive('post');
-        history.replaceState(null,'','/p2p#ads');
+        history.replaceState(null,'','/p2p-clean.html#ads');
       }
     }
   }
@@ -7079,7 +7079,7 @@ window.deleteMobAd = async function(offerId) {
       var el = document.getElementById(id);
       if(el) el.style.display = 'none';
     });
-    history.replaceState(null,'','/p2p');
+    history.replaceState(null,'','/p2p-clean.html');
   }
 
   // Restore screen on refresh from hash
@@ -7160,9 +7160,6 @@ window.deleteMobAd = async function(offerId) {
 // BYBIT/BITGET-STYLE MULTI-STEP BUY FLOW  (pixel-perfect clone)
 // ===================================================================
 (function initBuyFlow() {
-  // Old inline order flow disabled; /p2p now opens the standalone order page.
-  return;
-
   var _bfOffer = null;
   var _bfOrder = null;
   var _bfTimerTick = null;
@@ -7396,7 +7393,7 @@ window.deleteMobAd = async function(offerId) {
           '<span style="color:#f0a500;font-size:1rem;flex-shrink:0;margin-top:3px;">◆</span>',
           '<div>',
             '<p style="margin:0 0 0.4rem;font-size:0.85rem;color:#fff;font-weight:600;line-height:1.5;">Exit the App and transfer funds to the following recipient\'s account.</p>',
-            '<p style="margin:0;font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;">During the transfer, please avoid using terms like BTC, USDT, Bitget, or similar, in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>',
+            '<p style="margin:0;font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;">During the transfer, please avoid using terms like BTC, USDT, or crypto asset names in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>',
           '</div>',
         '</div>',
         // Transfer details table
@@ -7696,9 +7693,6 @@ window.deleteMobAd = async function(offerId) {
 // BINANCE-STYLE CHAT SCREEN  (opens when 💬 is tapped)
 // ===================================================================
 (function initBfChatScreen() {
-  // Old inline chat screen disabled with the inline order flow.
-  return;
-
   var _chatPrevScreen = 'bfOrderScreen';
   var _chatPollTimer = null;
   var _chatRenderedIds = {};

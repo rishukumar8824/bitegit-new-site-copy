@@ -4,16 +4,17 @@
     <meta charset="UTF-8" /><meta name="theme-color" content="#000000"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Markets | Bitegit Crypto Exchange</title>
-    <link rel="stylesheet" href="/mobile-nav.css?v=20260416c" />
-    <link rel="stylesheet" href="/markets.css?v=20260416c" />
-  <script src="/app-nav.js?v=20260416c" defer></script></head>
+    <link rel="stylesheet" href="/mobile-nav.css?v=20260303b" />
+    <link rel="stylesheet" href="/markets.css?v=20260322a" />
+  <script src="/app-nav.js" defer></script></head>
   <body class="markets-page has-mobile-nav">
 
     <!-- Header -->
     <header class="mk-header" id="marketsHeader">
       <div class="mk-header-inner">
         <a class="mk-brand" href="/">
-          <span class="mk-brand-word" style="color:#00f5ff;letter-spacing:0.03em;font-size:0.95rem;font-weight:900;">BITEGIT</span>
+          <img class="mk-brand-logo" src="/assets/bitegit-brand-mark.png" alt="" aria-hidden="true" />
+          <span class="mk-brand-word">Bitegit</span>
         </a>
         <nav class="mk-nav" aria-label="Primary navigation">
           <a href="/">Buy Crypto</a>
@@ -38,13 +39,10 @@
     <aside id="marketsNavDrawer" class="mk-nav-drawer" aria-hidden="true">
       <div class="mk-nav-head">
         <strong>
-          <span style="color:#00e5ff;font-weight:800;font-size:1.1rem;letter-spacing:0.04em;">BITEGIT</span>
+          <img class="mk-brand-logo" src="/assets/bitegit-brand-mark.png" alt="" aria-hidden="true" />
+          <span>Bitegit</span>
         </strong>
         <button id="marketsNavClose" type="button" aria-label="Close menu">✕</button>
-      </div>
-      <div style="display:flex;gap:0.6rem;padding:1rem 1.2rem 0.4rem;">
-        <a href="/auth.html" style="flex:1;text-align:center;padding:0.5rem;border:1.5px solid rgba(0,229,255,0.35);border-radius:8px;color:#00e5ff;font-weight:700;font-size:0.9rem;text-decoration:none;">Log In</a>
-        <a href="/auth.html?mode=signup" style="flex:1;text-align:center;padding:0.5rem;background:#00e5ff;border-radius:8px;color:#000;font-weight:700;font-size:0.9rem;text-decoration:none;">Sign Up</a>
       </div>
       <nav class="mk-nav-links" aria-label="Mobile navigation">
         <a href="/">Buy Crypto</a>
@@ -53,7 +51,9 @@
         <a href="/chart.html?symbol=BTCUSDT">Futures</a>
         <a href="/p2p">P2P</a>
         <a href="/">Earn</a>
-        <a href="/wallet.html">Assets</a>
+        <a href="/assets">Assets</a>
+        <a data-drawer-login href="/auth.html">Log In</a>
+        <a data-drawer-signup href="/auth.html?mode=signup">Sign Up</a>
       </nav>
     </aside>
 
@@ -133,13 +133,13 @@
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="14" rx="2" opacity=".3"/><rect x="3" y="5" width="18" height="4" rx="2"/><rect x="6" y="13" width="5" height="2" rx="1"/></svg></span>
         <span class="nav-label">Futures</span>
       </a>
-      <a href="/wallet.html">
+      <a href="/assets">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" opacity=".3"/><rect x="2" y="7" width="20" height="5" rx="2"/><circle cx="17" cy="16" r="2.5"/></svg></span>
         <span class="nav-label">Assets</span>
       </a>
     </nav>
 
     <script src="/theme.js?v=20260303b"></script>
-    <script src="/markets.js?v=20260416c"></script>
+    <script src="/markets.js?v=20260322a"></script>
   </body>
 </html>

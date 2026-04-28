@@ -712,7 +712,7 @@
           <div class="step-num">1</div>
           <div class="step-content">
             <h3>Exit the App and transfer funds to the following recipient's account.</h3>
-            <p>During the transfer, please avoid using terms like BTC, USDT, Bitget, or similar, in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>
+            <p>During the transfer, please avoid using terms like BTC, USDT, or crypto asset names in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>
 
             <div class="transfer-details">
               <div class="trow">
@@ -1029,7 +1029,7 @@
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">
         <div>
           <h3 style="margin:0;font-size:18px;font-weight:800;color:#fff;">Order inquiry</h3>
-          <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">Share your issue and Bitegit support will review the order quickly.</p>
+          <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">Share your issue and support will review the order quickly.</p>
         </div>
         <button id="appealCloseBtn" type="button" aria-label="Close order inquiry" style="width:32px;height:32px;border:none;border-radius:999px;background:rgba(255,255,255,0.06);color:#aaa;font-size:15px;cursor:pointer;">✕</button>
       </div>
@@ -1190,18 +1190,7 @@
   var ORDERS_FOCUS_STATE_KEY = 'p2p_orders_focus_state';
   var ORDERS_CACHE_KEY = 'p2p_orders_cache';
   var NOTICE_DISMISS_KEY_PREFIX = 'p2p_notice_dismissed_';
-  var PAID_PENDING_KEY_PREFIX = 'p2p_paid_pending_';
   var _bootFailSafeTimer = null;
-  var _paidRetryInFlight = {};
-  var PREVIEW_MODE = new URLSearchParams(window.location.search).get('preview') === '1';
-  var PREVIEW_USER = {
-    id: 'preview_buyer',
-    userId: 'preview_buyer',
-    username: 'Preview Buyer',
-    email: 'preview@bitegit.local',
-    role: 'user',
-    createdAt: new Date().toISOString()
-  };
 
   // ── Global click/navigation guards ─────────────────────────────
   var isProcessing = false;
@@ -1322,112 +1311,6 @@
   function _cacheOrderMessagesFromOrder(order) {
     if (!order || !order.id || !Array.isArray(order.messages) || !order.messages.length) return;
     _saveCachedChatMessages(order.id, order.messages);
-  }
-
-  function _statusUpper(status) {
-    return String(status || '').trim().toUpperCase();
-  }
-
-  function _isPaidLikeStatus(status) {
-    return ['PAID', 'PAYMENT_SENT', 'DISPUTED', 'RELEASED', 'COMPLETED'].indexOf(_statusUpper(status)) !== -1;
-  }
-
-  function _isPendingPaymentStatus(status) {
-    var s = _statusUpper(status);
-    return !s || ['CREATED', 'PENDING', 'OPEN'].indexOf(s) !== -1;
-  }
-
-  function _paidPendingKey(orderId) {
-    return PAID_PENDING_KEY_PREFIX + String(orderId || '').trim();
-  }
-
-  function _setPaidPending(orderId) {
-    if (!orderId) return;
-    try { localStorage.setItem(_paidPendingKey(orderId), String(Date.now())); } catch (_) {}
-  }
-
-  function _clearPaidPending(orderId) {
-    if (!orderId) return;
-    try { localStorage.removeItem(_paidPendingKey(orderId)); } catch (_) {}
-  }
-
-  function _hasPaidPending(orderId) {
-    if (!orderId) return false;
-    try { return Boolean(localStorage.getItem(_paidPendingKey(orderId))); } catch (_) { return false; }
-  }
-
-  function _mergeMessages(existing, incoming) {
-    var map = {};
-    var merged = [];
-    function add(msg) {
-      if (!msg) return;
-      var id = String(msg.id || msg.clientId || '').trim();
-      if (id && map[id]) return;
-      if (id) map[id] = true;
-      merged.push(msg);
-    }
-    (Array.isArray(existing) ? existing : []).forEach(add);
-    (Array.isArray(incoming) ? incoming : []).forEach(add);
-    return merged.sort(function(a, b) {
-      return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
-    });
-  }
-
-  function _mergeOrderMessages(messages) {
-    if (!currentOrder || !currentOrder.id || !Array.isArray(messages) || !messages.length) return;
-    currentOrder.messages = _mergeMessages(currentOrder.messages, messages);
-    _saveCachedChatMessages(currentOrder.id, currentOrder.messages);
-  }
-
-  function _addLocalSystemMessage(role, text, suffix) {
-    if (!currentOrder || !currentOrder.id) return;
-    var now = Date.now();
-    _mergeOrderMessages([{
-      id: 'msg_' + currentOrder.id + '_' + suffix,
-      sender: 'System',
-      senderRole: 'system',
-      messageType: 'system',
-      isSystem: true,
-      role: role,
-      text: text,
-      createdAt: new Date(now).toISOString()
-    }]);
-  }
-
-  function _shouldKeepLocalPaidState(localOrder, freshOrder) {
-    if (!localOrder || !freshOrder || !localOrder.id) return false;
-    return _isPaidLikeStatus(localOrder.status) && _isPendingPaymentStatus(freshOrder.status) && _hasPaidPending(localOrder.id);
-  }
-
-  function _retryPendingPaidSync(orderId, forceOpenChat, requestedScreen) {
-    var normalizedOrderId = String(orderId || '').trim();
-    if (!normalizedOrderId || _paidRetryInFlight[normalizedOrderId]) return;
-    if (!_hasPaidPending(normalizedOrderId)) return;
-    _paidRetryInFlight[normalizedOrderId] = true;
-    fetch('/api/p2p/orders/' + encodeURIComponent(normalizedOrderId) + '/mark-paid', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      keepalive: true,
-      body: '{}'
-    }).then(function(res) { return res.ok ? res.json() : null; })
-      .then(function(data) {
-        if (!data) return;
-        var nextOrder = data.order || data;
-        var messages = data.messages || nextOrder.messages || [];
-        currentOrder = Object.assign({}, currentOrder || {}, nextOrder || {});
-        if (Array.isArray(messages) && messages.length) {
-          currentOrder.messages = _mergeMessages(currentOrder.messages, messages);
-        }
-        cacheCurrentOrder();
-        if (_isPaidLikeStatus(currentOrder.status)) {
-          _clearPaidPending(normalizedOrderId);
-        }
-        applyOrderAndShow(currentOrder, forceOpenChat, requestedScreen);
-      }).catch(function() {})
-      .finally(function() {
-        delete _paidRetryInFlight[normalizedOrderId];
-      });
   }
 
   function _syncOrderIntoOrdersCache(order) {
@@ -1575,96 +1458,6 @@
       email: email,
       username: username
     });
-  }
-
-  function buildPreviewAd() {
-    return {
-      id: 'preview_usdt_sell_ad',
-      type: 'SELL',
-      asset: 'USDT',
-      price: 101.3,
-      minLimit: 1000,
-      maxLimit: 6000,
-      availableAmount: 5000,
-      payWindow: 15,
-      payments: ['Digital eRupee', 'UPI', 'PhonePe'],
-      createdByUserId: 'preview_seller',
-      createdByUsername: 'RAJ_TRADER',
-      advertiser: 'RAJ_TRADER',
-      completedBuyOrders: 284,
-      completedSellOrders: 319,
-      completedOrdersBothParties: 603,
-      avgReleaseTime: '< 5',
-      terms: 'Use your own bank account only. Do not mention crypto or USDT in payment remarks.',
-      createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-    };
-  }
-
-  function ensurePreviewAd() {
-    if (!PREVIEW_MODE || currentAd) return;
-    currentAd = buildPreviewAd();
-    cacheSelectedAd(currentAd);
-    renderBuyForm();
-  }
-
-  function buildPreviewOrder(fiatAmt, cryptoAmt, payment) {
-    var now = Date.now();
-    var ad = currentAd || buildPreviewAd();
-    var sellerName = ad.createdByUsername || ad.advertiser || 'SELLER';
-    var payWindow = Number(ad.payWindow || 15);
-    return {
-      id: 'preview_order_' + now,
-      reference: 'P2P' + String(now).slice(-9),
-      adId: ad.id,
-      type: 'SELL',
-      side: 'buy',
-      asset: ad.asset || 'USDT',
-      status: 'CREATED',
-      buyerUserId: PREVIEW_USER.id,
-      buyerId: PREVIEW_USER.id,
-      buyerUsername: PREVIEW_USER.username,
-      sellerUserId: ad.createdByUserId || 'preview_seller',
-      sellerId: ad.createdByUserId || 'preview_seller',
-      sellerUsername: sellerName,
-      price: Number(ad.price || 101.3),
-      fiatAmount: Number(fiatAmt || 0),
-      amountInr: Number(fiatAmt || 0),
-      cryptoAmount: Number(cryptoAmt || 0),
-      assetAmount: Number(cryptoAmt || 0),
-      escrowAmount: Number(cryptoAmt || 0),
-      paymentMethod: payment || 'Digital eRupee',
-      sellerPaymentDetails: {
-        type: payment || 'Digital eRupee',
-        accountName: sellerName,
-        vpa: 'preview@upi'
-      },
-      participants: [
-        { id: PREVIEW_USER.id, username: PREVIEW_USER.username, role: 'buyer' },
-        { id: ad.createdByUserId || 'preview_seller', username: sellerName, role: 'seller' }
-      ],
-      messages: [
-        {
-          id: 'msg_' + now + '_sys_b',
-          sender: 'System',
-          role: 'buyer',
-          senderRole: 'system',
-          messageType: 'system',
-          isSystem: true,
-          text: 'You have an order pending payment. Please complete the payment within ' + payWindow + ' minutes or your order will be automatically cancelled.',
-          createdAt: now
-        },
-        {
-          id: 'msg_' + now + '_seller',
-          sender: sellerName,
-          senderRole: 'seller',
-          text: 'Please complete payment using the shown details. Do not add crypto remarks.',
-          createdAt: now + 1000
-        }
-      ],
-      expiresAt: now + payWindow * 60 * 1000,
-      createdAt: now,
-      updatedAt: now
-    };
   }
 
   function normalizeAliasValue(value) {
@@ -1865,7 +1658,7 @@
 
   function returnToOrdersScreen(mainTab, subTab) {
     rememberOrdersFocus(mainTab, subTab);
-    navTo('/p2p#orders');
+    navTo('/p2p-clean.html#orders');
   }
 
   function returnToCurrentOrderBucket(status) {
@@ -1894,7 +1687,7 @@
       params.set('openChat', '1');
     }
     if (window.history && typeof window.history.replaceState === 'function') {
-      window.history.replaceState(null, '', '/p2p-order-flow.html?' + params.toString());
+      window.history.replaceState(null, '', '/p2p-clean-order-flow.html?' + params.toString());
     }
   }
 
@@ -2215,15 +2008,6 @@
         .then(function(data){
           if (!data) return;
           var fresh = data.order || data;
-          if (_isPaidLikeStatus(fresh.status)) {
-            _clearPaidPending(orderId);
-          }
-          if (_shouldKeepLocalPaidState(cachedOrder, fresh)) {
-            currentOrder = cachedOrder;
-            cacheCurrentOrder();
-            _retryPendingPaidSync(orderId, forceOpenChat, requestedScreen);
-            return;
-          }
           if (fresh.status !== cachedOrder.status) {
             try { localStorage.setItem('p2p_order_' + orderId, JSON.stringify(fresh)); } catch(e){}
             applyOrderAndShow(fresh, forceOpenChat, requestedScreen);
@@ -2256,12 +2040,6 @@
       }
       var data = orderResult.payload || {};
       var order = data.order || data;
-      if (_isPaidLikeStatus(order.status)) {
-        _clearPaidPending(orderId);
-      }
-      if (Array.isArray(data.messages) && data.messages.length) {
-        order.messages = _mergeMessages(order.messages, data.messages);
-      }
       try { localStorage.setItem('p2p_order_' + orderId, JSON.stringify(order)); } catch(e) {}
       _cacheOrderMessagesFromOrder(order);
       applyOrderAndShow(order, forceOpenChat, requestedScreen);
@@ -2510,7 +2288,7 @@
         returnToCurrentOrderBucket();
         return;
       }
-      navTo('/p2p');
+      navTo('/p2p-clean.html');
     });
     document.getElementById('cnChatBtn').addEventListener('click', function() { openChat('screen-canceled'); });
     document.getElementById('placeNewOrderBtn').addEventListener('click', function() {
@@ -2589,9 +2367,6 @@
         }
       }
     } catch (e) {}
-    if (PREVIEW_MODE) {
-      currentUser = normalizeCurrentUserPayload(PREVIEW_USER);
-    }
     hideLoginModal();
   }
 
@@ -2685,7 +2460,6 @@
       currentAd = cachedAd;
       renderBuyForm();
     }
-    ensurePreviewAd();
     try {
       var url = adId ? ('/api/p2p/ads/' + encodeURIComponent(adId)) : '/api/p2p/ads?side=sell&asset=USDT';
       var adResult = await fetchJsonWithTimeout(url, { credentials: 'include' }, 8000);
@@ -2701,9 +2475,7 @@
         cacheSelectedAd(currentAd);
         renderBuyForm();
       }
-    } catch (e) {
-      ensurePreviewAd();
-    }
+    } catch (e) {}
   }
 
   function renderBuyForm() {
@@ -2774,9 +2546,6 @@
   // CREATE ORDER
   // ============================================================
   async function doCreateOrder() {
-    if (!currentUser && PREVIEW_MODE) {
-      currentUser = normalizeCurrentUserPayload(PREVIEW_USER);
-    }
     if (!currentUser) { showLoginModal(true); return; }
     var btn = document.getElementById('buyBtn');
     if (btn && btn._creating) return;
@@ -2817,21 +2586,6 @@
     }
 
     if (currentAd && currentAd.id) {
-      if (PREVIEW_MODE) {
-        currentOrder = buildPreviewOrder(fiatAmt, cryptoAmt, payment);
-        try { localStorage.setItem('p2p_order_' + currentOrder.id, JSON.stringify(currentOrder)); } catch(_) {}
-        _cacheOrderMessagesFromOrder(currentOrder);
-        applyOrderAndShow(currentOrder, false, '');
-        hideLoading();
-        showToast('Preview order opened');
-        if (btn) {
-          btn._creating = false;
-          btn.style.opacity = '';
-          btn.style.boxShadow = '';
-          btn.textContent = 'Buy USDT with 0 fees';
-        }
-        return;
-      }
       try {
         var body = { adId: currentAd.id, paymentMethod: payment };
         if (isFiat) body.fiatAmount = fiatAmt; else body.cryptoAmount = cryptoAmt;
@@ -3117,7 +2871,7 @@
       returnToCurrentOrderBucket();
       return;
     }
-    navTo('/p2p');
+    navTo('/p2p-clean.html');
   }
 
   function goBackFromChat() {
@@ -3139,7 +2893,7 @@
     if (shouldReturnToOrdersOnBack()) {
       returnToCurrentOrderBucket();
     } else {
-      navTo('/p2p');
+      navTo('/p2p-clean.html');
     }
   }
 
@@ -4001,12 +3755,6 @@
       status: 'PAYMENT_SENT',
       paymentSentAt: currentOrder.paymentSentAt || new Date().toISOString()
     });
-    _setPaidPending(currentOrder.id);
-    _addLocalSystemMessage(
-      'buyer',
-      "You've marked the order as paid. Please wait for the seller to release your assets.",
-      'paid_buyer_local'
-    );
     cacheCurrentOrder();
     renderOrderDetails();
     syncBuyerPaidUi('PAYMENT_SENT');
@@ -4020,28 +3768,15 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        keepalive: !_proofBase64,
         body: JSON.stringify(paidPayload)
       }).then(function(res) { return res.ok ? res.json() : null; })
         .then(function(data) {
           if (data && (data.order || data.id)) {
-            var nextOrder = data.order || data;
-            var messages = data.messages || nextOrder.messages || [];
-            currentOrder = Object.assign({}, currentOrder || {}, nextOrder || {});
-            if (Array.isArray(messages) && messages.length) {
-              currentOrder.messages = _mergeMessages(currentOrder.messages, messages);
-              _saveCachedChatMessages(currentOrder.id, currentOrder.messages);
-            }
-            cacheCurrentOrder();
-            if (_isPaidLikeStatus(currentOrder.status)) {
-              _clearPaidPending(currentOrder.id);
-            }
-            syncBuyerPaidUi(currentOrder.status);
-            setupChatForRole(currentOrder.status);
+            currentOrder = data.order || data;
+            try { localStorage.setItem('p2p_order_' + currentOrder.id, JSON.stringify(currentOrder)); } catch(_) {}
           }
           pollNewMessages();
-        }).catch(function(e) { console.warn('[confirmPaid] API error:', e); })
-        .finally(function() { _paidActionPending = false; });
+        }).catch(function(e) { console.warn('[confirmPaid] API error:', e); });
     }
   }
 
@@ -4103,52 +3838,16 @@
     }
 
     try {
-	      if (confirmBtn) {
-	        confirmBtn.disabled = true;
-	        confirmBtn.style.opacity = '0.92';
-	        confirmBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border:2px solid rgba(17,17,17,0.22);border-top-color:#111;border-radius:50%;animation:_spin 0.7s linear infinite;display:inline-block;"></span>Cancelling...</span>';
-	      }
-      if (PREVIEW_MODE) {
-        var now = Date.now();
-        var messages = Array.isArray(currentOrder.messages) ? currentOrder.messages.slice() : [];
-        messages.push({
-          id: 'msg_' + currentOrder.id + '_cancel_b',
-          sender: 'System',
-          role: 'buyer',
-          senderRole: 'system',
-          messageType: 'system',
-          isSystem: true,
-          text: "You've cancelled the order.",
-          createdAt: now
-        });
-        messages.push({
-          id: 'msg_' + currentOrder.id + '_cancel_s',
-          sender: 'System',
-          role: 'seller',
-          senderRole: 'system',
-          messageType: 'system',
-          isSystem: true,
-          text: 'The buyer has cancelled the order.',
-          createdAt: now
-        });
-        currentOrder = Object.assign({}, currentOrder, {
-          status: 'CANCELLED',
-          updatedAt: now,
-          cancelledAt: now,
-          cancelledByRole: isSeller ? 'seller' : 'buyer',
-          cancelReason: reason,
-          messages: messages
-        });
-        cacheCurrentOrder();
-        _saveCachedChatMessages(currentOrder.id, messages);
-        syncOrderUrl('screen-canceled');
-        renderOrderDetails();
-      } else {
-	      var res = await fetch('/api/p2p/orders/' + currentOrder.id + '/cancel', {
-	        method: 'POST',
-	        headers: { 'Content-Type': 'application/json' },
-	        credentials: 'include',
-	        body: JSON.stringify({ reason: reason })
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = '0.92';
+        confirmBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border:2px solid rgba(17,17,17,0.22);border-top-color:#111;border-radius:50%;animation:_spin 0.7s linear infinite;display:inline-block;"></span>Cancelling...</span>';
+      }
+      var res = await fetch('/api/p2p/orders/' + currentOrder.id + '/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ reason: reason })
       });
       var data = await res.json().catch(function() { return {}; });
       if (!res.ok) {
@@ -4161,11 +3860,10 @@
       if (!currentOrder.cancelledByRole) {
         currentOrder.cancelledByRole = isSeller ? 'seller' : 'buyer';
       }
-	      cacheCurrentOrder();
-	      syncOrderUrl('screen-canceled');
-	      renderOrderDetails();
-      }
-	    } catch (e) {
+      cacheCurrentOrder();
+      syncOrderUrl('screen-canceled');
+      renderOrderDetails();
+    } catch (e) {
       showToast((e && e.message) || 'Unable to cancel order.');
       return;
     } finally {

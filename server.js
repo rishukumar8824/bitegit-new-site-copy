@@ -1,8 +1,19 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 
+// ── Sentry error monitoring (safe: only runs if SENTRY_DSN is set) ──────────
+const Sentry = require('@sentry/node');
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: 0.2,
+  });
+  console.log('[Sentry] Error monitoring active');
+}
+// ────────────────────────────────────────────────────────────────────────────
+
+const { WebSocketServer } = require('ws');
 const crypto = require('crypto');
-let geoip = null;
-try { geoip = require('geoip-lite'); } catch(e) { /* optional */ }
 const { localFaceMatch } = require('./services/local-face-match');
 const express = require('express');
 const path = require('path');
@@ -37,6 +48,16 @@ const { createSocialFeedFallbackStore } = require('./modules/social-feed/fallbac
 const { createSocialFeedService } = require('./modules/social-feed/service');
 const { registerSocialFeedRoutes } = require('./routes/social-feed');
 const { createP2POrderController } = require('./controllers/p2p-order-controller');
+const {
+  ORDER_STATUS,
+  ACTIVE_ORDER_STATUSES,
+  normalizeOrderStatus,
+  isActiveOrderStatus,
+  isClosedOrderStatus,
+  isExpirableOrderStatus,
+  getOrderStatusBucket,
+  resolveOrderActorRole
+} = require('./lib/p2p-order-state');
 const { createAdminStore } = require('./admin/services/admin-store');
 const { createAdminExtendedStore } = require('./admin/services/admin-extended-store');
 const { createAdminAuthMiddleware } = require('./admin/middleware/admin-auth');
@@ -69,30 +90,21 @@ const P2P_USER_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const P2P_ACCESS_COOKIE_NAME = 'p2p_access_token';
 const P2P_REFRESH_COOKIE_NAME = 'p2p_refresh_token';
 const P2P_ORDER_TTL_MS = 1000 * 60 * 15;
-const P2P_EXPIRY_SWEEP_INTERVAL_MS = 30 * 1000;
-const MERCHANT_ACTIVATION_DEPOSIT = 500;
-
-// In-memory merchant applications store (backed by MongoDB)
-const merchantApplications = new Map(); // id -> application
-let merchantAppCounter = 1;
-
-async function saveMerchantApp(app) {
-  try {
-    const collections = getCollections();
-    await collections.merchantApplications.updateOne(
-      { id: app.id },
-      { $set: app },
-      { upsert: true }
-    );
-  } catch (e) {
-    console.error('[merchants] MongoDB save failed:', e.message);
-  }
-}
+const P2P_EXPIRY_SWEEP_INTERVAL_MS = 10 * 1000;
+const STARTUP_RETRY_ATTEMPTS = Math.max(
+  1,
+  Number.parseInt(String(process.env.STARTUP_RETRY_ATTEMPTS || '5'), 10) || 5
+);
+const STARTUP_RETRY_BASE_DELAY_MS = Math.max(
+  500,
+  Number.parseInt(String(process.env.STARTUP_RETRY_BASE_DELAY_MS || '2500'), 10) || 2500
+);
+const MERCHANT_ACTIVATION_DEPOSIT = 200;
 const SIGNUP_OTP_TTL_MS = Math.max(
   60 * 1000,
   Number.parseInt(String(process.env.SIGNUP_OTP_TTL_MS || '600000'), 10) || 600000
 );
-const P2P_ORDER_ACTIVE_STATUSES = ['CREATED', 'PENDING', 'PAID', 'PAYMENT_SENT', 'DISPUTED'];
+const P2P_ORDER_ACTIVE_STATUSES = ACTIVE_ORDER_STATUSES;
 const IS_PRODUCTION = String(process.env.NODE_ENV || '')
   .trim()
   .toLowerCase() === 'production';
@@ -103,26 +115,15 @@ const ENABLE_DEV_TEST_ROUTES = String(process.env.ENABLE_DEV_TEST_ROUTES || '')
 const p2pOrderStreams = new Map();
 // Per-user SSE streams: userId → Set of res objects
 const p2pUserStreams = new Map();
-// Admin support SSE clients
-const adminSupportSseClients = new Set();
-function broadcastAdminSupportEvent(payload) {
-  const msg = `data: ${JSON.stringify(payload)}\n\n`;
-  adminSupportSseClients.forEach(res => { try { res.write(msg); } catch(e) {} });
-}
-const adminWithdrawalSseClients = new Set();
-function broadcastAdminWithdrawalEvent(payload) {
-  const msg = `data: ${JSON.stringify(payload)}\n\n`;
-  adminWithdrawalSseClients.forEach(res => { try { res.write(msg); } catch(e) {} });
-}
 function getUserStreams(userId) {
   if (!p2pUserStreams.has(userId)) p2pUserStreams.set(userId, new Set());
   return p2pUserStreams.get(userId);
 }
-function broadcastUserEvent(userId, eventName, payload) {
-  const streams = p2pUserStreams.get(userId);
-  if (!streams || streams.size === 0) return;
-  const data = `event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
-  for (const stream of streams) stream.write(data);
+// Per-user WebSocket clients: userId → Set of WebSocket objects
+const p2pWsClients = new Map();
+function getWsClients(userId) {
+  if (!p2pWsClients.has(userId)) p2pWsClients.set(userId, new Set());
+  return p2pWsClients.get(userId);
 }
 const DEFAULT_TICKER_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT'];
 const DEFAULT_SYMBOL_PRICES = {
@@ -194,8 +195,6 @@ const dataDir = path.join(__dirname, 'data');
 const dataFile = path.join(dataDir, 'leads.json');
 
 let repos = null;
-const { getIpLocation } = require('./lib/geo-lookup');
-
 let walletService = null;
 let authMiddleware = null;
 let adminStore = null;
@@ -215,8 +214,20 @@ let socialFeedService = null;
 let persistenceReady = false;
 let httpServer = null;
 let shuttingDown = false;
-let bootRetryTimer = null;
 let p2pExpirySweepTimer = null;
+let bootRetryTimer = null;
+let bootInProgress = false;
+let bootRoutesRegistered = false;
+let shutdownHandlersRegistered = false;
+let bootAttemptCount = 0;
+const bootState = {
+  state: 'starting',
+  attempt: 0,
+  startedAt: new Date().toISOString(),
+  readyAt: null,
+  lastFailureAt: null,
+  lastError: null
+};
 const socialFeedBootstrapConfig = readSocialFeedConfig();
 const socialFeedBootstrapStore = createSocialFeedFallbackStore();
 const socialFeedBootstrapInitPromise = socialFeedBootstrapStore
@@ -237,21 +248,38 @@ app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(sanitizeRequestPayload);
 applySecurityHardening(app);
-
-// Rewrite /api/v1/* → /* so frontend calls like /api/v1/auth/login hit /auth/login
-// (skip /api/v1/market/* which has its own explicit routes)
-app.use(function(req, res, next) {
-  if (req.url.startsWith('/api/v1/') && !req.url.startsWith('/api/v1/market/')) {
-    req.url = req.url.slice('/api/v1'.length);
-  }
-  next();
-});
 app.use('/downloads', (req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
   next();
 });
+
+// ── Clean-URL redirects: must be BEFORE express.static so .html requests are
+//    caught here first instead of being served as raw files. ──
+(function registerHtmlRedirects() {
+  const HTML_REDIRECTS = {
+    '/auth.html'    : '/auth',
+    '/login.html'   : '/auth',   // alias — p2p-order-flow.html links here
+    '/markets.html' : '/markets',
+    '/signup.html'  : '/signup',
+    '/chart.html'   : '/chart',
+    '/download.html': '/download',
+    '/p2p.html'     : '/p2p',
+    '/p2p-buy.html' : '/p2p-buy',
+    '/wallet.html'  : '/wallet',
+    '/kyc.html'     : '/kyc',
+    '/trade.html'   : '/trade',
+  };
+  Object.entries(HTML_REDIRECTS).forEach(([from, to]) => {
+    app.get(from, (req, res) => {
+      // preserve query string (e.g. /auth.html?mode=signup → /auth?mode=signup)
+      const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+      res.redirect(301, to + qs);
+    });
+  });
+})();
+
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
   maxAge: 0,
@@ -262,11 +290,64 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
+app.use((req, res, next) => {
+  const pathname = String(req.path || '').trim();
+  if (!pathname.startsWith('/api/')) {
+    return next();
+  }
+
+  if (persistenceReady || isPrebootApiAllowed(pathname)) {
+    return next();
+  }
+
+  return respondServiceInitializing(res);
+});
+
 function readLeads() {
   if (!repos) {
     throw new Error('Persistence layer not initialized');
   }
   return repos.getLeadsLatest();
+}
+
+function getBootStatusSnapshot() {
+  return {
+    state: bootState.state,
+    attempt: bootState.attempt,
+    startedAt: bootState.startedAt,
+    readyAt: bootState.readyAt,
+    lastFailureAt: bootState.lastFailureAt,
+    lastError: bootState.lastError,
+    ready: persistenceReady
+  };
+}
+
+function isPrebootApiAllowed(pathname) {
+  const normalizedPath = String(pathname || '').trim();
+  if (!normalizedPath) {
+    return false;
+  }
+
+  if (normalizedPath === '/api/health' || normalizedPath === '/healthz') {
+    return true;
+  }
+
+  if (normalizedPath.startsWith('/api/social/')) {
+    return true;
+  }
+
+  return (
+    normalizedPath === '/api/admin/auth/login' ||
+    normalizedPath === '/api/admin/login'
+  );
+}
+
+function respondServiceInitializing(res) {
+  return res.status(503).json({
+    message: 'Bitegit is starting up. Please try again in a moment.',
+    code: 'SERVICE_INITIALIZING',
+    boot: getBootStatusSnapshot()
+  });
 }
 
 function validateStartupConfig() {
@@ -681,7 +762,7 @@ function buildP2PKycProfileFromCredential(credential = {}) {
   return {
     status,
     statusLabel: getKycStatusLabel(status),
-    canBuy: true,
+    canBuy: status === 'VERIFIED',
     level: String(credential?.kycLevel || 'BASIC').trim().toUpperCase() || 'BASIC',
     aadhaarLast4: String(credential?.kycAadhaarLast4 || '').trim(),
     requestId: String(credential?.kycRequestId || '').trim(),
@@ -690,6 +771,27 @@ function buildP2PKycProfileFromCredential(credential = {}) {
     rejectedAt: credential?.kycRejectedAt ? new Date(credential.kycRejectedAt).toISOString() : null,
     rejectionReason: String(credential?.kycRejectionReason || credential?.kycRemarks || '').trim()
   };
+}
+
+function isTradeableP2PAd(offer) {
+  if (!offer || typeof offer !== 'object') {
+    return false;
+  }
+  const moderationStatus = String(offer.moderationStatus || 'APPROVED').trim().toUpperCase();
+  return moderationStatus === 'APPROVED';
+}
+
+function getTradeableOfferPayments(offer) {
+  if (!offer || !Array.isArray(offer.payments)) {
+    return [];
+  }
+  return offer.payments
+    .map((method) => String(method || '').trim())
+    .filter((method) => method.length > 0);
+}
+
+function getTradeableOfferAdvertiser(offer) {
+  return String(offer?.advertiser || offer?.createdByUsername || '').trim().toLowerCase();
 }
 
 async function getP2PKycProfileByEmail(email) {
@@ -922,10 +1024,40 @@ function appendSetCookie(res, cookieValue) {
   res.setHeader('Set-Cookie', [existing, cookieValue]);
 }
 
+function getRequestCookieContext(res) {
+  const req = res?.req || null;
+  const forwardedProto = String(req?.headers?.['x-forwarded-proto'] || '')
+    .split(',')[0]
+    .trim()
+    .toLowerCase();
+  const hostHeader = String(req?.headers?.['x-forwarded-host'] || req?.headers?.host || '')
+    .split(',')[0]
+    .trim()
+    .toLowerCase();
+  const rawHost = hostHeader.replace(/^\[/, '').replace(/\]$/, '');
+  const hostname = rawHost.split(':')[0].trim();
+  const isHttpsRequest = Boolean(req?.secure) || forwardedProto === 'https';
+  const isLocalHost =
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname.endsWith('.local') ||
+    /^10\./.test(hostname) ||
+    /^192\.168\./.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
+  return {
+    isHttpsRequest,
+    isLocalHost
+  };
+}
+
 function setCookie(res, key, value, maxAgeSeconds, options = {}) {
   const sameSite = options.sameSite || 'Lax';
   const pathValue = options.path || '/';
-  const secure = options.secure === undefined ? IS_PRODUCTION : Boolean(options.secure);
+  const requestedSecure = options.secure === undefined ? IS_PRODUCTION : Boolean(options.secure);
+  const cookieContext = getRequestCookieContext(res);
+  const secure = cookieContext.isLocalHost && !cookieContext.isHttpsRequest ? false : requestedSecure;
   const httpOnly = options.httpOnly === undefined ? true : Boolean(options.httpOnly);
   const cookieParts = [
     `${key}=${encodeURIComponent(String(value || ''))}`,
@@ -985,22 +1117,6 @@ function getRequestIp(req) {
   const forwardedRaw = String(req.headers['x-forwarded-for'] || '').trim();
   const firstForwarded = forwardedRaw.split(',')[0].trim();
   return firstForwarded || String(req.ip || req.connection?.remoteAddress || 'unknown');
-}
-
-function getGeoInfo(ip) {
-  if (!geoip || !ip || ip === 'unknown') return {};
-  try {
-    const cleanIp = ip.replace(/^::ffff:/, '');
-    const geo = geoip.lookup(cleanIp);
-    if (!geo) return {};
-    return {
-      country: geo.country || '',
-      region: geo.region || '',
-      city: geo.city || '',
-      timezone: geo.timezone || '',
-      ll: geo.ll || []
-    };
-  } catch(e) { return {}; }
 }
 
 const loginAttemptLimiter = createIpAttemptLimiter({
@@ -1128,13 +1244,16 @@ app.post('/api/admin/login', async (req, res, next) => {
   return handleLegacyAdminLogin(req, res);
 });
 
-function buildP2PUserFromEmail(email, role = 'USER') {
-  const normalizedEmail = String(email || '').trim().toLowerCase();
-  const baseName = normalizedEmail.split('@')[0] || 'trader';
-  const username = baseName.replace(/[^a-z0-9_]/gi, '_').slice(0, 20) || 'trader';
+function buildP2PUserFromEmail(email, role = 'USER', seed = {}) {
+  const normalizedEmail = String(email || seed?.email || '').trim().toLowerCase();
+  const baseName = normalizedEmail.split('@')[0] || String(seed?.username || '').trim() || 'trader';
+  const username =
+    String(seed?.username || '').trim() ||
+    (baseName.replace(/[^a-z0-9_]/gi, '_').slice(0, 20) || 'trader');
+  const seededId = String(seed?.id || seed?.userId || '').trim();
   const userHash = crypto.createHash('sha1').update(normalizedEmail).digest('hex').slice(0, 16);
   return {
-    id: `usr_${userHash}`,
+    id: seededId || `usr_${userHash}`,
     username,
     email: normalizedEmail,
     role: tokenService.normalizeRole(role),
@@ -1142,9 +1261,9 @@ function buildP2PUserFromEmail(email, role = 'USER') {
   };
 }
 
-async function createP2PUserSession(email, role = 'USER') {
+async function createP2PUserSession(email, role = 'USER', seed = {}) {
   const token = createToken();
-  const user = buildP2PUserFromEmail(email, role);
+  const user = buildP2PUserFromEmail(email, role, seed);
 
   await repos.createP2PUserSession(token, user, user.expiresAt);
   return { token, user };
@@ -1164,8 +1283,108 @@ async function persistRefreshToken(user, refreshToken, refreshTokenExpiresAtMs) 
 
 async function issueAuthTokenPairForUser(user) {
   const tokenPair = tokenService.createTokenPair(user);
-  await persistRefreshToken(user, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt);
+  // Fire-and-forget — JWT is self-contained; DB failure must not block login.
+  persistRefreshToken(user, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt).catch(() => {});
   return tokenPair;
+}
+
+async function restoreP2PUserFromRefreshToken(req, options = {}) {
+  const shouldIssueTokens = options.issueTokens !== false;
+  if (!req || !repos) {
+    return null;
+  }
+  if (req._restoredP2PUser) {
+    return req._restoredP2PUser;
+  }
+
+  const cookies = parseCookies(req);
+  const refreshToken = authMiddleware
+    ? authMiddleware.extractRefreshTokenFromRequest(req)
+    : String(cookies[P2P_REFRESH_COOKIE_NAME] || '').trim();
+
+  if (!refreshToken) {
+    return null;
+  }
+
+  try {
+    const decoded = tokenService.verifyRefreshToken(refreshToken);
+    const refreshTokenHash = tokenService.hashRefreshToken(refreshToken);
+    const dbToken = await repos.getRefreshTokenByHash(refreshTokenHash);
+
+    if (!dbToken || String(dbToken.userId || '') !== String(decoded?.sub || '')) {
+      return null;
+    }
+
+    const expiresAtMs = new Date(dbToken.expiresAt).getTime();
+    if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
+      await repos.deleteRefreshTokenByHash(refreshTokenHash).catch(() => {});
+      return null;
+    }
+
+    const restoredUser = normalizeP2PUserObject({
+      id: dbToken.userId,
+      userId: dbToken.userId,
+      username: dbToken.username,
+      email: dbToken.email,
+      role: tokenService.normalizeRole(dbToken.role || 'USER'),
+      expiresAt: Date.now() + P2P_USER_TTL_MS
+    });
+
+    if (!restoredUser) {
+      return null;
+    }
+
+    req._restoredP2PUser = restoredUser;
+    if (shouldIssueTokens && !req._restoredP2PTokenPair) {
+      req._restoredP2PTokenPair = await issueAuthTokenPairForUser(restoredUser);
+    }
+    return restoredUser;
+  } catch (_) {
+    return null;
+  }
+}
+
+function runDetached(task) {
+  Promise.resolve()
+    .then(task)
+    .catch(() => {});
+}
+
+function safeP2PAuditLog(entry) {
+  if (!auditLogService || typeof auditLogService.safeLog !== 'function') {
+    return;
+  }
+  runDetached(() => auditLogService.safeLog(entry));
+}
+
+async function verifyP2PPassword(password, storedHash) {
+  if (typeof repos.verifyPasswordAsync === 'function') {
+    return repos.verifyPasswordAsync(password, storedHash);
+  }
+  return repos.verifyPassword(password, storedHash);
+}
+
+async function hashP2PPassword(password) {
+  if (typeof repos.hashPasswordAsync === 'function') {
+    return repos.hashPasswordAsync(password);
+  }
+  return repos.hashPassword(password);
+}
+
+async function getP2PKycProfileFast(email, timeoutMs = 250) {
+  const fallback = buildP2PKycProfileFromCredential();
+  try {
+    const profilePromise = Promise.resolve().then(() => getP2PKycProfileByEmail(email));
+    profilePromise.catch(() => {});
+    return await Promise.race([
+      profilePromise,
+      new Promise((resolve) => {
+        setTimeout(() => resolve(fallback), timeoutMs);
+      })
+    ]);
+  } catch (error) {
+    return fallback;
+  }
 }
 
 function setP2PAuthCookies(res, tokenPair) {
@@ -1188,151 +1407,98 @@ function clearAdminAuthCookies(res) {
   clearCookie(res, ADMIN_REFRESH_COOKIE_NAME);
 }
 
-function toP2PRequestUser(input = {}) {
-  const userId = String(input.id || input.userId || input.sub || '').trim();
-  if (!userId) {
-    return null;
-  }
-
-  return {
-    id: userId,
-    userId,
-    username: String(input.username || '').trim(),
-    email: String(input.email || '')
-      .trim()
-      .toLowerCase(),
-    role: tokenService.normalizeRole(input.role || 'USER'),
-    expiresAt: Date.now() + P2P_USER_TTL_MS
-  };
-}
-
-async function restoreP2PUserFromRefreshToken(req, res) {
-  if (!repos) {
-    return null;
-  }
-
+async function getP2PUserFromRequest(req) {
+  // ── JWT check — runs ALWAYS, even before DB connects (authMiddleware may be null on cold start) ──
   const cookies = parseCookies(req);
-  const refreshToken = authMiddleware
-    ? authMiddleware.extractRefreshTokenFromRequest(req)
-    : String(cookies[P2P_REFRESH_COOKIE_NAME] || '').trim();
+  const authHeader = String(req.headers.authorization || '').trim();
+  const jwtToken = (authHeader.toLowerCase().startsWith('bearer ') ? authHeader.slice(7).trim() : '') ||
+    String(cookies[P2P_ACCESS_COOKIE_NAME] || '').trim() ||
+    String(cookies.bitegit_auth_access || '').trim() ||
+    String(cookies.access_token || '').trim();
 
-  if (!refreshToken) {
-    return null;
-  }
-
-  const clearAuthState = async () => {
-    const refreshTokenHash = tokenService.hashRefreshToken(refreshToken);
-    await repos.deleteRefreshTokenByHash(refreshTokenHash).catch(() => {});
-    if (res) {
-      clearCookie(res, P2P_USER_COOKIE_NAME);
-      clearP2PAuthCookies(res);
-    }
-  };
-
-  try {
-    const decoded = tokenService.verifyRefreshToken(refreshToken);
-    const refreshTokenHash = tokenService.hashRefreshToken(refreshToken);
-    const dbToken = await repos.getRefreshTokenByHash(refreshTokenHash);
-    if (!dbToken || String(dbToken.userId || '').trim() !== String(decoded.sub || '').trim()) {
-      await clearAuthState();
-      return null;
-    }
-
-    const expiresAtMs = new Date(dbToken.expiresAt).getTime();
-    if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
-      await clearAuthState();
-      return null;
-    }
-
-    const user = toP2PRequestUser({
-      id: dbToken.userId,
-      username: dbToken.username,
-      email: dbToken.email,
-      role: dbToken.role
-    });
-    if (!user) {
-      await clearAuthState();
-      return null;
-    }
-
-    if (res) {
-      const tokenPair = await issueAuthTokenPairForUser(user);
-      setP2PAuthCookies(res, tokenPair);
-
-      if (user.email) {
-        const legacySession = await createP2PUserSession(user.email, user.role);
-        setCookie(res, P2P_USER_COOKIE_NAME, legacySession.token, P2P_USER_TTL_MS / 1000);
+  if (jwtToken) {
+    try {
+      const decoded = tokenService.verifyAccessToken(jwtToken);
+      if (String(decoded?.typ || 'access').trim().toLowerCase() === 'access' && String(decoded?.sub || '').trim()) {
+        return normalizeP2PUserObject({
+          id: String(decoded.sub).trim(),
+          username: String(decoded.username || '').trim(),
+          email: String(decoded.email || '').trim().toLowerCase(),
+          role: tokenService.normalizeRole(decoded.role || 'USER'),
+          expiresAt: Date.now() + P2P_USER_TTL_MS
+        });
       }
-    }
-
-    return user;
-  } catch (error) {
-    await clearAuthState();
-    return null;
-  }
-}
-
-async function getP2PUserFromRequest(req, res = null) {
-  if (authMiddleware) {
-    const accessToken = authMiddleware.extractAccessTokenFromRequest(req);
-    if (accessToken) {
-      try {
-        const decoded = tokenService.verifyAccessToken(accessToken);
-        if (String(decoded?.typ || 'access').trim().toLowerCase() === 'access' && String(decoded?.sub || '').trim()) {
-          return toP2PRequestUser(decoded);
-        }
-      } catch (error) {
-        // Fall back to legacy session lookup and refresh-token recovery.
-      }
+    } catch (_) {
+      // JWT invalid/expired — fall through to legacy session
     }
   }
 
-  const cookies = parseCookies(req);
+  // ── Legacy session fallback (requires DB) ──
   const token = cookies[P2P_USER_COOKIE_NAME];
 
-  if (!token) {
-    return restoreP2PUserFromRefreshToken(req, res);
+  if (repos && token) {
+    // In-memory session cache (5 min) to avoid hitting DB on every request
+    if (!global._p2pSessionCache) global._p2pSessionCache = new Map();
+    const cached = global._p2pSessionCache.get(token);
+    if (cached && cached._cacheExp > Date.now() && cached.expiresAt && new Date(cached.expiresAt).getTime() > Date.now()) {
+      return normalizeP2PUserObject({ id: cached.userId, username: cached.username, email: cached.email, role: tokenService.normalizeRole(cached.role || 'USER'), expiresAt: cached.expiresAt });
+    }
+    try {
+      const session = await repos.getP2PUserSession(token);
+      if (session && session.expiresAt) {
+        if (new Date(session.expiresAt).getTime() < Date.now()) {
+          await repos.deleteP2PUserSession(token).catch(() => {});
+          global._p2pSessionCache.delete(token);
+        } else {
+          const expiresAt = Date.now() + P2P_USER_TTL_MS;
+          repos.refreshP2PUserSession(token, expiresAt).catch(() => {}); // fire-and-forget
+          // Cache for 5 min
+          global._p2pSessionCache.set(token, { ...session, expiresAt, _cacheExp: Date.now() + 5 * 60 * 1000 });
+          return normalizeP2PUserObject({ id: session.userId, username: session.username, email: session.email, role: tokenService.normalizeRole(session.role || 'USER'), expiresAt });
+        }
+      }
+    } catch (_sessionErr) {
+      // DB temporarily unavailable — check cache with extended grace period
+      if (cached && cached.expiresAt && new Date(cached.expiresAt).getTime() > Date.now()) {
+        return normalizeP2PUserObject({ id: cached.userId, username: cached.username, email: cached.email, role: tokenService.normalizeRole(cached.role || 'USER'), expiresAt: cached.expiresAt });
+      }
+    }
   }
 
-  if (!repos) return restoreP2PUserFromRefreshToken(req, res); // DB not ready yet
-
-  const session = await repos.getP2PUserSession(token);
-  if (!session || !session.expiresAt) {
-    return restoreP2PUserFromRefreshToken(req, res);
-  }
-
-  if (new Date(session.expiresAt).getTime() < Date.now()) {
-    await repos.deleteP2PUserSession(token);
-    return restoreP2PUserFromRefreshToken(req, res);
-  }
-
-  const expiresAt = Date.now() + P2P_USER_TTL_MS;
-  await repos.refreshP2PUserSession(token, expiresAt);
-
-  return {
-    id: session.userId,
-    userId: session.userId,
-    username: session.username,
-    email: session.email,
-    role: tokenService.normalizeRole(session.role || 'USER'),
-    expiresAt
-  };
+  return restoreP2PUserFromRefreshToken(req, { issueTokens: true });
 }
 
 async function requiresP2PUser(req, res, next) {
+  if (authMiddleware) {
+    const middleware = authMiddleware.requireAuth({ roles: ['USER', 'ADMIN'], allowLegacy: true });
+    return middleware(req, res, function authComplete(error) {
+      if (error) {
+        return next(error);
+      }
+      const normalized = normalizeP2PUserObject(req.p2pUser || req.authUser);
+      if (!normalized) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      if (req._restoredP2PTokenPair) {
+        setP2PAuthCookies(res, req._restoredP2PTokenPair);
+      }
+      req.p2pUser = normalized;
+      req.authUser = normalized;
+      markUserOnline(normalized.id);
+      return next();
+    });
+  }
   try {
-    const user = await getP2PUserFromRequest(req, res);
+    const user = normalizeP2PUserObject(await getP2PUserFromRequest(req));
     if (!user) {
       return res.status(401).json({ message: 'Please login to continue.' });
     }
 
-    req.authUser = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: tokenService.normalizeRole(user.role || 'USER')
-    };
+    if (req._restoredP2PTokenPair) {
+      setP2PAuthCookies(res, req._restoredP2PTokenPair);
+    }
     req.p2pUser = user;
+    markUserOnline(user.id);
     return next();
   } catch (error) {
     return res.status(500).json({ message: 'Server error while validating user session.' });
@@ -1349,7 +1515,12 @@ function findOrderByReference(reference) {
 
 function getParticipantsText(order) {
   if (Array.isArray(order.participants) && order.participants.length > 0) {
-    return order.participants.map((participant) => participant.username).join(', ');
+    const names = order.participants
+      .map((participant) => String(participant?.username || '').trim())
+      .filter(Boolean);
+    if (names.length > 0) {
+      return names.join(', ');
+    }
   }
 
   const sellerName = String(order.sellerUsername || 'seller').trim();
@@ -1357,15 +1528,197 @@ function getParticipantsText(order) {
   return `${buyerName}, ${sellerName}`;
 }
 
+function normalizeUserAliasValue(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function buildP2PUserAliases(userOrId) {
+  const user = userOrId && typeof userOrId === 'object'
+    ? userOrId
+    : { id: userOrId };
+  const ids = new Set();
+  const usernames = new Set();
+  const emails = new Set();
+
+  const id = String(user?.id || '').trim();
+  const email = normalizeUserAliasValue(user?.email);
+  const username = normalizeUserAliasValue(user?.username);
+
+  if (id) {
+    ids.add(id);
+  }
+  if (email) {
+    ids.add(email);
+    emails.add(email);
+    usernames.add(email.split('@')[0] || '');
+  }
+  if (username) {
+    ids.add(username);
+    usernames.add(username);
+  }
+
+  usernames.delete('');
+  return {
+    ids,
+    emails,
+    usernames
+  };
+}
+
+function normalizeP2PUserObject(user) {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+  const normalizedId = String(user.id || user.userId || '').trim();
+  if (!normalizedId) {
+    return null;
+  }
+  return {
+    ...user,
+    id: normalizedId,
+    userId: normalizedId,
+    username: String(user.username || '').trim(),
+    email: normalizeUserAliasValue(user.email),
+    role: tokenService.normalizeRole(user.role || 'USER')
+  };
+}
+
+function getP2PUserAliasKeys(userOrId) {
+  const aliases = buildP2PUserAliases(userOrId);
+  const keys = new Set();
+  aliases.ids.forEach((value) => {
+    if (value) keys.add(`id:${value}`);
+  });
+  aliases.emails.forEach((value) => {
+    if (value) keys.add(`email:${value}`);
+  });
+  aliases.usernames.forEach((value) => {
+    if (value) keys.add(`username:${value}`);
+  });
+  return Array.from(keys);
+}
+
+function broadcastUserEvent(userOrId, eventName, payload) {
+  const aliasKeys = getP2PUserAliasKeys(userOrId);
+  if (!aliasKeys.length) {
+    return;
+  }
+
+  const deliveredStreams = new Set();
+  const deliveredSockets = new Set();
+  const sseData = `event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
+  const wsMsg = JSON.stringify({ event: eventName, data: payload });
+
+  for (const aliasKey of aliasKeys) {
+    const streams = p2pUserStreams.get(aliasKey);
+    if (streams && streams.size > 0) {
+      for (const stream of streams) {
+        if (deliveredStreams.has(stream)) {
+          continue;
+        }
+        deliveredStreams.add(stream);
+        try {
+          stream.write(sseData);
+        } catch (error) {
+          streams.delete(stream);
+        }
+      }
+      if (streams.size === 0) {
+        p2pUserStreams.delete(aliasKey);
+      }
+    }
+
+    const wsClients = p2pWsClients.get(aliasKey);
+    if (wsClients && wsClients.size > 0) {
+      for (const ws of wsClients) {
+        if (deliveredSockets.has(ws)) {
+          continue;
+        }
+        deliveredSockets.add(ws);
+        if (ws.readyState === 1 /* OPEN */) {
+          ws.send(wsMsg);
+        } else {
+          wsClients.delete(ws);
+        }
+      }
+      if (wsClients.size === 0) {
+        p2pWsClients.delete(aliasKey);
+      }
+    }
+  }
+}
+
+function buildOrderParticipantAlias(role, order = {}) {
+  const participant = Array.isArray(order.participants)
+    ? order.participants.find((row) => String(row?.role || '').trim().toLowerCase() === role)
+    : null;
+  const prefix = role === 'seller' ? 'seller' : 'buyer';
+  return {
+    id: String(order[`${prefix}UserId`] || order[`${prefix}Id`] || participant?.id || '').trim(),
+    username: String(order[`${prefix}Username`] || participant?.username || '').trim(),
+    email: normalizeUserAliasValue(order[`${prefix}Email`])
+  };
+}
+
+function broadcastOrderParticipantEvent(order, eventName, payload) {
+  if (!order) {
+    return;
+  }
+  const seller = buildOrderParticipantAlias('seller', order);
+  const buyer = buildOrderParticipantAlias('buyer', order);
+  if (seller.id || seller.username || seller.email) {
+    broadcastUserEvent(seller, eventName, payload);
+  }
+  if (
+    buyer.id || buyer.username || buyer.email
+  ) {
+    const sellerFingerprint = `${seller.id}|${seller.username}|${seller.email}`;
+    const buyerFingerprint = `${buyer.id}|${buyer.username}|${buyer.email}`;
+    if (buyerFingerprint !== sellerFingerprint) {
+      broadcastUserEvent(buyer, eventName, payload);
+    }
+  }
+}
+
+function toOrderTimestamp(value, fallbackMs) {
+  if (value instanceof Date) {
+    const ms = value.getTime();
+    return Number.isFinite(ms) ? ms : fallbackMs;
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallbackMs;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) {
+      return numeric;
+    }
+    const parsed = new Date(value).getTime();
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return fallbackMs;
+}
+
 function normalizeOrderState(order) {
   if (!order) {
     return null;
   }
 
-  const disputedDate = order.disputedAt ? new Date(order.disputedAt) : null;
+  const now = Date.now();
+  const normalizedStatus = normalizeOrderStatus(order.status);
+  const statusBucket = getOrderStatusBucket(normalizedStatus);
+  const createdAtMs = toOrderTimestamp(order.createdAt, now);
+  const updatedAtMs = toOrderTimestamp(order.updatedAt, createdAtMs);
+  const expiresFallbackMs = isExpirableOrderStatus(normalizedStatus)
+    ? Math.max(updatedAtMs, createdAtMs)
+    : updatedAtMs;
+  const expiresAtMs = toOrderTimestamp(order.expiresAt, expiresFallbackMs);
+
   const remainingSeconds =
-    P2P_ORDER_ACTIVE_STATUSES.includes(order.status) && Number(order.expiresAt) > Date.now()
-      ? Math.max(0, Math.floor((Number(order.expiresAt) - Date.now()) / 1000))
+    isExpirableOrderStatus(normalizedStatus) && expiresAtMs > now
+      ? Math.max(0, Math.floor((expiresAtMs - now) / 1000))
       : 0;
 
   return {
@@ -1373,7 +1726,9 @@ function normalizeOrderState(order) {
     reference: order.reference,
     side: order.side,
     asset: order.asset,
-    status: order.status,
+    status: normalizedStatus,
+    rawStatus: String(order.status || '').trim().toUpperCase(),
+    statusBucket,
     advertiser: order.advertiser,
     price: order.price,
     amountInr: order.amountInr,
@@ -1381,17 +1736,21 @@ function normalizeOrderState(order) {
     paymentMethod: order.paymentMethod || 'UPI',
     participants: order.participants,
     participantsLabel: getParticipantsText(order),
-    sellerUserId: order.sellerUserId,
+    sellerUserId: order.sellerUserId || order.sellerId,
     sellerUsername: order.sellerUsername,
-    buyerUserId: order.buyerUserId,
+    buyerUserId: order.buyerUserId || order.buyerId,
     buyerUsername: order.buyerUsername,
+    fiatAmount: order.fiatAmount || order.amountInr,
+    cryptoAmount: order.cryptoAmount || order.assetAmount,
+    assetAmount: order.assetAmount || order.cryptoAmount,
     escrowAmount: order.escrowAmount,
-    disputedAt: disputedDate && !Number.isNaN(disputedDate.getTime()) ? disputedDate.toISOString() : null,
-    disputedBy: order.disputedBy || null,
-    disputeReason: order.disputeReason || null,
-    disputeStatus: order.disputeStatus || null,
-    appealDetails: order.appealDetails || null,
     isParticipant: true,
+    sellerPaymentDetails: order.sellerPaymentDetails || null,
+    notes: order.notes || null,
+    paymentProof: order.paymentProof || null,
+    disputeReason: order.disputeReason || null,
+    disputedAt: order.disputedAt ? new Date(order.disputedAt).toISOString() : null,
+    disputedBy: order.disputedBy || null,
     createdAt: new Date(order.createdAt).toISOString(),
     expiresAt: new Date(order.expiresAt).toISOString(),
     updatedAt: new Date(order.updatedAt).toISOString(),
@@ -1399,29 +1758,122 @@ function normalizeOrderState(order) {
   };
 }
 
-function isParticipant(order, userId) {
-  if (!order || !userId) {
+function safeNormalizeOrderState(order, context = {}) {
+  try {
+    return normalizeOrderState(order);
+  } catch (error) {
+    console.error('[p2p-order-normalize] failed', {
+      route: context.route || 'unknown',
+      orderId: String(order?.id || '').trim(),
+      reference: String(order?.reference || '').trim(),
+      userId: String(context.userId || '').trim(),
+      message: error.message
+    });
+    return null;
+  }
+}
+
+function normalizeOrdersForClient(rows, context = {}) {
+  const normalizedRows = [];
+  const seen = new Set();
+
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const normalized = safeNormalizeOrderState(row, context);
+    if (!normalized || !normalized.id || seen.has(normalized.id)) {
+      continue;
+    }
+    seen.add(normalized.id);
+    normalizedRows.push({
+      ...normalized,
+      isParticipant: true,
+      paymentMethod: normalized.paymentMethod
+    });
+  }
+
+  return normalizedRows.sort((left, right) => {
+    return new Date(right.updatedAt || right.createdAt || 0).getTime() - new Date(left.updatedAt || left.createdAt || 0).getTime();
+  });
+}
+
+function mergeNormalizedOrdersById() {
+  const seen = new Set();
+  const merged = [];
+
+  Array.from(arguments)
+    .flat()
+    .forEach((order) => {
+      if (!order || !order.id || seen.has(order.id)) {
+        return;
+      }
+      seen.add(order.id);
+      merged.push(order);
+    });
+
+  return merged.sort((left, right) => {
+    return new Date(right.updatedAt || right.createdAt || 0).getTime() - new Date(left.updatedAt || left.createdAt || 0).getTime();
+  });
+}
+
+function isParticipant(order, userOrId) {
+  if (!order || !userOrId) {
     return false;
   }
 
-  if (Array.isArray(order.participants) && order.participants.some((participant) => participant.id === userId)) {
+  const aliases = buildP2PUserAliases(userOrId);
+  const matchesId = (value) => aliases.ids.has(String(value || '').trim());
+  const matchesEmail = (value) => aliases.emails.has(normalizeUserAliasValue(value));
+  const matchesUsername = (value) => aliases.usernames.has(normalizeUserAliasValue(value));
+
+  if (
+    Array.isArray(order.participants) &&
+    order.participants.some((participant) => matchesId(participant?.id) || matchesUsername(participant?.username))
+  ) {
     return true;
   }
 
-  return [order.sellerUserId, order.buyerUserId].includes(userId);
+  return [
+    order.sellerUserId,
+    order.buyerUserId,
+    order.sellerId,
+    order.buyerId
+  ].some(matchesId) || [
+    order.sellerEmail,
+    order.buyerEmail
+  ].some(matchesEmail) || [
+    order.sellerUsername,
+    order.buyerUsername
+  ].some(matchesUsername);
 }
 
-function resolveMyRole(order, p2pUser) {
-  const myId = String(p2pUser?.id || '').trim();
-  const myName = String(p2pUser?.username || '').trim().toLowerCase();
-  const sellerMatches =
-    order.sellerUserId === myId ||
-    order.sellerId === myId ||
-    String(order.sellerUsername || '').trim().toLowerCase() === myName ||
-    (Array.isArray(order.participants) && order.participants.some(
-      (p) => p.role === 'seller' && (p.id === myId || String(p.username || '').trim().toLowerCase() === myName)
-    ));
-  return sellerMatches ? 'seller' : 'buyer';
+async function listActiveOrdersForUserResponse(user, { limit = 50 } = {}) {
+  const normalizedUser = normalizeP2PUserObject(user);
+  const activeStatuses = P2P_ORDER_ACTIVE_STATUSES;
+  let rows = [];
+
+  if (typeof repos?.listP2PActiveOrdersForUser === 'function') {
+    try {
+      rows = await repos.listP2PActiveOrdersForUser({ user: normalizedUser || user, limit });
+    } catch (error) {
+      console.error('[p2p-orders] primary active lookup failed', {
+        route: 'active',
+        userId: String(normalizedUser?.id || '').trim(),
+        email: String(normalizedUser?.email || '').trim(),
+        message: error.message
+      });
+    }
+  }
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    const history = await repos.listP2POrderHistory(normalizedUser || user, { limit: Math.max(limit, 50), offset: 0 });
+    rows = Array.isArray(history?.orders)
+      ? history.orders.filter((order) => activeStatuses.includes(String(order?.status || '').trim().toUpperCase()))
+      : [];
+  }
+
+  return normalizeOrdersForClient(rows, {
+    route: 'active',
+    userId: normalizedUser?.id || normalizedUser?.userId || ''
+  });
 }
 
 function addSystemMessage(order, text) {
@@ -1445,8 +1897,10 @@ function toClientMessages(messages) {
     if (msg.imageBase64) m.imageBase64 = msg.imageBase64;
     if (msg.role) m.role = msg.role; // 'buyer' | 'seller' | undefined=all
     if (msg.senderRole) m.senderRole = msg.senderRole;
+    if (msg.senderUserId) m.senderUserId = String(msg.senderUserId);
+    if (msg.senderEmail) m.senderEmail = String(msg.senderEmail);
     if (msg.messageType) m.messageType = msg.messageType;
-    if (msg.isSystem != null) m.isSystem = Boolean(msg.isSystem);
+    if (msg.isSystem) m.isSystem = true;
     return m;
   });
 }
@@ -1467,23 +1921,6 @@ function broadcastOrderEvent(orderId, eventName, payload) {
   const data = `event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
   for (const stream of streams) {
     stream.write(data);
-  }
-}
-
-function getOrderParticipantIds(order) {
-  const participantIds = new Set();
-  for (const candidate of [order?.sellerUserId, order?.buyerUserId, order?.sellerId, order?.buyerId]) {
-    const normalized = String(candidate || '').trim();
-    if (normalized) {
-      participantIds.add(normalized);
-    }
-  }
-  return Array.from(participantIds);
-}
-
-function broadcastParticipantOrderEvent(order, eventName, payload) {
-  for (const participantId of getOrderParticipantIds(order)) {
-    broadcastUserEvent(participantId, eventName, payload);
   }
 }
 
@@ -1515,17 +1952,14 @@ async function withOrderMutation(orderId, mutator, maxRetries = 4) {
 
 app.post('/api/p2p/login', async (req, res) => {
   const requestIp = getRequestIp(req);
-  const requestUa = String(req.headers['user-agent'] || '').trim().slice(0, 1024);
   const ipCheck = loginAttemptLimiter(`p2p_login:${getRequestIp(req)}`);
   if (!ipCheck.allowed) {
-    if (auditLogService) {
-      await auditLogService.safeLog({
-        userId: '',
-        action: 'login_failed',
-        ipAddress: requestIp,
-        metadata: { reason: 'rate_limited', route: '/api/p2p/login' }
-      });
-    }
+    safeP2PAuditLog({
+      userId: '',
+      action: 'login_failed',
+      ipAddress: requestIp,
+      metadata: { reason: 'rate_limited', route: '/api/p2p/login' }
+    });
     res.setHeader('Retry-After', String(ipCheck.retryAfterSeconds));
     return res.status(429).json({
       message: 'Too many login attempts. Please try again later.',
@@ -1539,75 +1973,89 @@ app.post('/api/p2p/login', async (req, res) => {
   const password = String(req.body.password || '').trim();
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    if (auditLogService) {
-      await auditLogService.safeLog({
-        userId: '',
-        action: 'login_failed',
-        ipAddress: requestIp,
-        metadata: { reason: 'invalid_email', route: '/api/p2p/login', email }
-      });
-    }
+    safeP2PAuditLog({
+      userId: '',
+      action: 'login_failed',
+      ipAddress: requestIp,
+      metadata: { reason: 'invalid_email', route: '/api/p2p/login', email }
+    });
     return res.status(400).json({ message: 'Enter a valid email address.' });
   }
   if (password.length < 6) {
-    if (auditLogService) {
-      await auditLogService.safeLog({
-        userId: '',
-        action: 'login_failed',
-        ipAddress: requestIp,
-        metadata: { reason: 'invalid_password_length', route: '/api/p2p/login', email }
-      });
-    }
+    safeP2PAuditLog({
+      userId: '',
+      action: 'login_failed',
+      ipAddress: requestIp,
+      metadata: { reason: 'invalid_password_length', route: '/api/p2p/login', email }
+    });
     return res.status(400).json({ message: 'Password must be at least 6 characters.' });
   }
 
   try {
     const existingCredential = await repos.getP2PCredential(email);
-    if (existingCredential && !repos.verifyPassword(password, existingCredential.passwordHash)) {
-      if (auditLogService) {
-        await auditLogService.safeLog({
-          userId: '',
-          action: 'login_failed',
-          ipAddress: requestIp,
-          metadata: { reason: 'invalid_credentials', route: '/api/p2p/login', email }
-        });
-      }
+    if (!existingCredential || !existingCredential.passwordHash) {
+      safeP2PAuditLog({
+        userId: '',
+        action: 'login_failed',
+        ipAddress: requestIp,
+        metadata: { reason: 'invalid_credentials', route: '/api/p2p/login', email }
+      });
       return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
-    let userRole = tokenService.normalizeRole(existingCredential?.role || 'USER');
-    if (!existingCredential) {
-      const hash = repos.hashPassword(password);
-      await repos.setP2PCredential(email, hash, {
-        role: 'USER'
+    const passwordMatches = await verifyP2PPassword(password, existingCredential.passwordHash);
+    if (!passwordMatches) {
+      safeP2PAuditLog({
+        userId: '',
+        action: 'login_failed',
+        ipAddress: requestIp,
+        metadata: { reason: 'invalid_credentials', route: '/api/p2p/login', email }
       });
-      userRole = 'USER';
+      return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
-    const { token, user } = await createP2PUserSession(email, userRole);
-    const tokenPair = await issueAuthTokenPairForUser(user);
-    await walletService.ensureWallet(user.id, { username: user.username });
+    const userRole = tokenService.normalizeRole(existingCredential?.role || 'USER');
+
+    const { token, user } = await createP2PUserSession(email, userRole, existingCredential);
+    // Fire-and-forget credential sync — don't block login response
+    if (
+      typeof repos.setP2PCredential === 'function' &&
+      (
+        !existingCredential?.emailVerified ||
+        String(existingCredential?.userId || '').trim() !== String(user.id || '').trim()
+      )
+    ) {
+      repos.setP2PCredential(email, existingCredential.passwordHash, {
+        role: userRole,
+        username: existingCredential?.username,
+        avatar: existingCredential?.avatar,
+        isMerchant: existingCredential?.isMerchant,
+        merchantDepositLocked: existingCredential?.merchantDepositLocked,
+        merchantLevel: existingCredential?.merchantLevel,
+        userId: user.id,
+        emailVerified: true
+      }).catch(() => {});
+      existingCredential.emailVerified = true;
+      existingCredential.userId = user.id;
+    }
+    // Parallelize token issuance and KYC profile fetch — saves ~100-200ms
+    const [tokenPair, kycProfile] = await Promise.all([
+      issueAuthTokenPairForUser(user),
+      getP2PKycProfileFast(user.email)
+    ]);
     setCookie(res, P2P_USER_COOKIE_NAME, token, P2P_USER_TTL_MS / 1000);
     setP2PAuthCookies(res, tokenPair);
-    if (auditLogService) {
-      const loc = await getIpLocation(requestIp);
-      await auditLogService.safeLog({
-        userId: user.id,
-        action: 'login_success',
-        ipAddress: requestIp,
-        metadata: {
-          route: '/api/p2p/login',
-          email: user.email,
-          role: user.role,
-          userAgent: requestUa,
-          country: loc.country,
-          city: loc.city,
-          region: loc.region
-        }
-      });
-    }
-
-    const kycProfile = await getP2PKycProfileByEmail(user.email);
+    runDetached(() => walletService.ensureWallet(user.id, { username: user.username }));
+    safeP2PAuditLog({
+      userId: user.id,
+      action: 'login_success',
+      ipAddress: requestIp,
+      metadata: {
+        route: '/api/p2p/login',
+        email: user.email,
+        role: user.role
+      }
+    });
 
     return res.json({
       message: 'P2P login successful.',
@@ -1615,6 +2063,8 @@ app.post('/api/p2p/login', async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        avatar: String(existingCredential?.avatar || '').trim(),
+        createdAt: existingCredential?.createdAt || null,
         role: user.role,
         kyc: kycProfile
       },
@@ -1623,18 +2073,16 @@ app.post('/api/p2p/login', async (req, res) => {
     });
   } catch (error) {
     clearP2PAuthCookies(res);
-    if (auditLogService) {
-      await auditLogService.safeLog({
-        userId: '',
-        action: 'login_failed',
-        ipAddress: requestIp,
-        metadata: {
-          reason: 'server_error',
-          route: '/api/p2p/login',
-          email
-        }
-      });
-    }
+    safeP2PAuditLog({
+      userId: '',
+      action: 'login_failed',
+      ipAddress: requestIp,
+      metadata: {
+        reason: 'server_error',
+        route: '/api/p2p/login',
+        email
+      }
+    });
     if (String(error.message || '').includes('JWT_SECRET')) {
       return res.status(503).json({ message: 'JWT auth is not configured.' });
     }
@@ -1785,6 +2233,30 @@ app.post('/api/p2p/reset-password', async (req, res) => {
   }
 });
 
+// ── Online presence tracking ──────────────────────────────────────────
+// In-memory map: userId → lastActiveMs (no DB write per request)
+if (!global._p2pOnlineMap) global._p2pOnlineMap = new Map();
+const ONLINE_THRESHOLD_MS  = 5  * 60 * 1000; // < 5 min  = Online
+const AWAY_THRESHOLD_MS    = 30 * 60 * 1000; // < 30 min = Away
+
+function markUserOnline(userId) {
+  if (userId) global._p2pOnlineMap.set(String(userId), Date.now());
+}
+function getUserOnlineStatus(userId) {
+  const last = global._p2pOnlineMap.get(String(userId || ''));
+  if (!last) return 'offline';
+  const diff = Date.now() - last;
+  if (diff < ONLINE_THRESHOLD_MS)  return 'online';
+  if (diff < AWAY_THRESHOLD_MS)    return 'away';
+  return 'offline';
+}
+
+// Lightweight ping endpoint — client calls every 60s
+app.post('/api/p2p/ping', requiresP2PUser, (req, res) => {
+  markUserOnline(req.p2pUser.id);
+  return res.json({ ok: true });
+});
+
 app.post('/api/p2p/logout', async (req, res) => {
   const cookies = parseCookies(req);
   const token = cookies[P2P_USER_COOKIE_NAME];
@@ -1813,67 +2285,76 @@ app.post('/api/p2p/logout', async (req, res) => {
   }
 });
 
-// ── Update P2P username ──
-app.put('/api/p2p/profile', requiresP2PUser, async (req, res) => {
-  try {
-    const userId = req.p2pUser.id;
-    const email = req.p2pUser.email;
-    const newUsername = String(req.body.nickname || req.body.username || '').trim();
-
-    if (!newUsername || newUsername.length < 3 || newUsername.length > 20) {
-      return res.status(400).json({ ok: false, message: 'Username must be 3–20 characters.' });
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(newUsername)) {
-      return res.status(400).json({ ok: false, message: 'Only letters, numbers and underscores allowed.' });
-    }
-
-    const collections = getCollections();
-
-    // Check uniqueness
-    const taken = await collections.p2pCredentials.findOne({ username: newUsername, email: { $ne: email } });
-    if (taken) return res.status(400).json({ ok: false, message: 'Username already taken. Try another.' });
-
-    // Update credential
-    await collections.p2pCredentials.updateOne({ email }, { $set: { username: newUsername, updatedAt: new Date() } });
-
-    // Update all offers by this user
-    await collections.p2pOffers.updateMany(
-      { createdByUserId: userId },
-      { $set: { advertiser: newUsername, createdByUsername: newUsername } }
-    );
-
-    // Update wallet username
-    await collections.wallets.updateOne({ userId }, { $set: { username: newUsername } });
-
-    // Update ALL active sessions so refresh returns the new username immediately
-    await collections.p2pUserSessions.updateMany({ userId }, { $set: { username: newUsername } });
-
-    return res.json({ ok: true, nickname: newUsername, message: 'Username updated.' });
-  } catch (err) {
-    console.error('[profile] update error:', err.message);
-    return res.status(500).json({ ok: false, message: 'Server error while updating username.' });
-  }
-});
-
 app.get('/api/p2p/me', async (req, res) => {
-  const user = await getP2PUserFromRequest(req, res);
+  let user;
+  try {
+    user = normalizeP2PUserObject(await getP2PUserFromRequest(req));
+  } catch (_meErr) {
+    // DB error on auth lookup — don't log user out, return 503 so client retries
+    return res.status(503).json({ error: 'Service temporarily unavailable', retry: true });
+  }
 
   if (!user) {
     return res.json({ loggedIn: false, user: null });
   }
 
-  const kycProfile = await getP2PKycProfileByEmail(user.email);
+  const [kycProfile, cred] = await Promise.all([
+    getP2PKycProfileByEmail(user.email),
+    repos ? repos.getP2PCredentialByUserId(user).catch(() => null) : null
+  ]);
 
   return res.json({
     loggedIn: true,
     user: {
       id: user.id,
-      username: user.username,
+      userId: user.userId,
+      username: String(cred?.username || user.username || '').trim() || user.username,
       email: user.email,
+      avatar: String(cred?.avatar || '').trim(),
       role: tokenService.normalizeRole(user.role || 'USER'),
-      kyc: kycProfile
+      kyc: kycProfile,
+      createdAt: cred && cred.createdAt ? cred.createdAt : null,
+      emailVerified: cred ? Boolean(cred.emailVerified) : false
     }
   });
+});
+
+app.put('/api/p2p/profile', requiresP2PUser, async (req, res) => {
+  const email = String(req.p2pUser?.email || '').trim().toLowerCase();
+  const userId = String(req.p2pUser?.id || req.p2pUser?.userId || '').trim();
+  const nickname = String(req.body?.nickname || '').trim().replace(/\s+/g, ' ').slice(0, 24);
+  const avatar = typeof req.body?.avatar === 'string' ? String(req.body.avatar || '').trim() : undefined;
+
+  if (!email || !userId) {
+    return res.status(401).json({ message: 'Please login to continue.' });
+  }
+  if (!nickname || nickname.length < 2) {
+    return res.status(400).json({ message: 'Display name must be at least 2 characters.' });
+  }
+  if (avatar && !/^data:image\//i.test(avatar) && !/^https?:\/\//i.test(avatar)) {
+    return res.status(400).json({ message: 'Profile photo format is not supported.' });
+  }
+  if (avatar && avatar.length > 2 * 1024 * 1024) {
+    return res.status(400).json({ message: 'Profile photo is too large.' });
+  }
+  if (typeof repos.updateP2PCredentialProfile !== 'function') {
+    return res.status(503).json({ message: 'Profile update is not available right now.' });
+  }
+
+  try {
+    const profile = await repos.updateP2PCredentialProfile(email, { nickname, avatar }, { userId });
+    return res.json({
+      success: true,
+      profile: {
+        username: String(profile?.username || nickname).trim() || nickname,
+        avatar: String(profile?.avatar || '').trim(),
+        email,
+        createdAt: profile?.createdAt || null
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while updating profile.' });
+  }
 });
 
 app.get('/api/p2p/kyc/status', requiresP2PUser, async (req, res) => {
@@ -2095,6 +2576,238 @@ app.get('/api/p2p/wallet', requiresP2PUser, async (req, res) => {
   }
 });
 
+// ════════════════════════════════════════════════════
+// PROFILE FEATURE ROUTES — Settings, Notifications,
+// Follow/Block, Ad Code, Recently Viewed, Fund Password
+// ════════════════════════════════════════════════════
+
+// ── P2P Settings ──
+app.get('/api/p2p/settings', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    const user = await User.findById(req.p2pUser.id).select('p2pSettings').lean();
+    return res.json(user?.p2pSettings || {});
+  } catch { return res.json({}); }
+});
+
+app.put('/api/p2p/settings', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    const allowed = ['nickname','autoReply','onlineVisible','verifiedOnly','currency'];
+    const update = {};
+    allowed.forEach(k => { if (req.body[k] !== undefined) update[`p2pSettings.${k}`] = req.body[k]; });
+    await User.findByIdAndUpdate(req.p2pUser.id, { $set: update });
+    return res.json({ ok: true });
+  } catch { return res.status(500).json({ error: 'Failed to save settings' }); }
+});
+
+// ── Notifications preferences ──
+app.get('/api/p2p/notifications', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    const user = await User.findById(req.p2pUser.id).select('notifPrefs').lean();
+    return res.json(user?.notifPrefs || { newOrders:false, orderUpdates:true, chat:true, priceAlerts:false, email:true, security:true });
+  } catch { return res.json({}); }
+});
+
+app.put('/api/p2p/notifications', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    const allowed = ['newOrders','orderUpdates','chat','priceAlerts','email','security'];
+    const update = {};
+    allowed.forEach(k => { if (req.body[k] !== undefined) update[`notifPrefs.${k}`] = !!req.body[k]; });
+    await User.findByIdAndUpdate(req.p2pUser.id, { $set: update });
+    return res.json({ ok: true });
+  } catch { return res.status(500).json({ error: 'Failed' }); }
+});
+
+// ── Follow / Block ──
+// ── Block / Unblock user ──────────────────────────────────────────────
+app.post('/api/p2p/block/:userId', requiresP2PUser, async (req, res) => {
+  try {
+    const targetId = String(req.params.userId || '').trim();
+    if (!targetId || targetId === String(req.p2pUser.id)) {
+      return res.status(400).json({ message: 'Invalid user.' });
+    }
+    const creds = getCollections().p2pCredentials;
+    await creds.updateOne(
+      { userId: String(req.p2pUser.id) },
+      { $addToSet: { blockedUserIds: targetId } }
+    );
+    return res.json({ ok: true });
+  } catch { return res.status(500).json({ message: 'Failed to block user.' }); }
+});
+
+app.post('/api/p2p/unblock/:userId', requiresP2PUser, async (req, res) => {
+  try {
+    const targetId = String(req.params.userId || '').trim();
+    const creds = getCollections().p2pCredentials;
+    await creds.updateOne(
+      { userId: String(req.p2pUser.id) },
+      { $pull: { blockedUserIds: targetId } }
+    );
+    return res.json({ ok: true });
+  } catch { return res.status(500).json({ message: 'Failed to unblock user.' }); }
+});
+
+// GET blocked list
+app.get('/api/p2p/blocked', requiresP2PUser, async (req, res) => {
+  try {
+    const creds = getCollections().p2pCredentials;
+    const me = await creds.findOne(
+      { userId: String(req.p2pUser.id) },
+      { projection: { blockedUserIds: 1 } }
+    );
+    const ids = me?.blockedUserIds || [];
+    if (!ids.length) return res.json([]);
+    const users = await creds
+      .find({ userId: { $in: ids } }, { projection: { userId: 1, username: 1, email: 1 } })
+      .toArray();
+    return res.json(users);
+  } catch { return res.json([]); }
+});
+
+// Legacy GET /api/p2p/follow
+app.get('/api/p2p/follow', requiresP2PUser, async (req, res) => {
+  if (req.query.type === 'blocked') {
+    try {
+      const creds = getCollections().p2pCredentials;
+      const me = await creds.findOne(
+        { userId: String(req.p2pUser.id) }, { projection: { blockedUserIds: 1 } }
+      );
+      const ids = me?.blockedUserIds || [];
+      if (!ids.length) return res.json([]);
+      const users = await creds
+        .find({ userId: { $in: ids } }, { projection: { userId: 1, username: 1, email: 1 } })
+        .toArray();
+      return res.json(users.map(u => ({ _id: u.userId, nickname: u.username, email: u.email })));
+    } catch { return res.json([]); }
+  }
+  try {
+    const User = mongoose.model('User');
+    const me = await User.findById(req.p2pUser.id).select('following').lean();
+    const ids = me?.following || [];
+    if (!ids.length) return res.json([]);
+    const users = await User.find({ _id: { $in: ids } }).select('nickname email totalTrades').lean();
+    return res.json(users);
+  } catch { return res.json([]); }
+});
+
+app.delete('/api/p2p/follow/:userId', requiresP2PUser, async (req, res) => {
+  try {
+    if (req.query.type === 'blocked') {
+      const creds = getCollections().p2pCredentials;
+      await creds.updateOne(
+        { userId: String(req.p2pUser.id) },
+        { $pull: { blockedUserIds: req.params.userId } }
+      );
+      return res.json({ ok: true });
+    }
+    const User = mongoose.model('User');
+    await User.findByIdAndUpdate(req.p2pUser.id, { $pull: { following: req.params.userId } });
+    return res.json({ ok: true });
+  } catch { return res.status(500).json({ error: 'Failed' }); }
+});
+
+// ── Ad Code ──
+function generateAdCode(userId) {
+  const base = String(userId).slice(-6).toUpperCase();
+  const suffix = Math.random().toString(36).slice(2,5).toUpperCase();
+  return 'BG' + base + suffix;
+}
+
+app.get('/api/p2p/ad-code', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    let user = await User.findById(req.p2pUser.id).select('adCode').lean();
+    if (!user?.adCode) {
+      const code = generateAdCode(req.p2pUser.id);
+      await User.findByIdAndUpdate(req.p2pUser.id, { $set: { adCode: code } });
+      return res.json({ code });
+    }
+    return res.json({ code: user.adCode });
+  } catch { return res.status(500).json({ error: 'Failed' }); }
+});
+
+app.post('/api/p2p/ad-code/regenerate', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    const code = generateAdCode(req.p2pUser.id) + Math.random().toString(36).slice(2,4).toUpperCase();
+    await User.findByIdAndUpdate(req.p2pUser.id, { $set: { adCode: code } });
+    return res.json({ code });
+  } catch { return res.status(500).json({ error: 'Failed' }); }
+});
+
+// ── Recently Viewed ──
+app.get('/api/p2p/recently-viewed', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    const user = await User.findById(req.p2pUser.id).select('recentlyViewed').lean();
+    const list = (user?.recentlyViewed || []).reverse().slice(0, 20);
+    return res.json(list);
+  } catch { return res.json([]); }
+});
+
+app.post('/api/p2p/recently-viewed', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    const entry = {
+      adId:       String(req.body.adId || ''),
+      asset:      String(req.body.asset || 'USDT'),
+      side:       req.body.side || 'buy',
+      price:      req.body.price || '--',
+      sellerName: String(req.body.sellerName || ''),
+      timeAgo:    new Date().toISOString()
+    };
+    await User.findByIdAndUpdate(req.p2pUser.id, {
+      $push: { recentlyViewed: { $each: [entry], $slice: -50 } }
+    });
+    return res.json({ ok: true });
+  } catch { return res.status(500).json({ error: 'Failed' }); }
+});
+
+app.delete('/api/p2p/recently-viewed', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    await User.findByIdAndUpdate(req.p2pUser.id, { $set: { recentlyViewed: [] } });
+    return res.json({ ok: true });
+  } catch { return res.status(500).json({ error: 'Failed' }); }
+});
+
+// ── Fund Password ──
+app.get('/api/p2p/fund-password/status', requiresP2PUser, async (req, res) => {
+  try {
+    const User = mongoose.model('User');
+    const user = await User.findById(req.p2pUser.id).select('fundPasswordHash').lean();
+    return res.json({ isSet: !!user?.fundPasswordHash });
+  } catch { return res.json({ isSet: false }); }
+});
+
+app.post('/api/p2p/fund-password/set', requiresP2PUser, async (req, res) => {
+  try {
+    const { newPassword, currentPassword } = req.body;
+    if (!newPassword || !/^\d{6}$/.test(newPassword)) {
+      return res.status(400).json({ error: 'Fund password must be exactly 6 digits.' });
+    }
+    const User = mongoose.model('User');
+    const user = await User.findById(req.p2pUser.id).select('fundPasswordHash').lean();
+    if (user?.fundPasswordHash) {
+      if (!currentPassword) return res.status(400).json({ error: 'Current password required.' });
+      const bcrypt = require('bcryptjs');
+      const ok = await bcrypt.compare(String(currentPassword), user.fundPasswordHash);
+      if (!ok) return res.status(400).json({ error: 'Current password incorrect.' });
+    }
+    const bcrypt = require('bcryptjs');
+    const hash = await bcrypt.hash(String(newPassword), 10);
+    await User.findByIdAndUpdate(req.p2pUser.id, { $set: { fundPasswordHash: hash } });
+    return res.json({ ok: true, success: true });
+  } catch (e) { return res.status(500).json({ error: 'Server error' }); }
+});
+
+// ════════════════════════════════════════════════════
+// END PROFILE FEATURE ROUTES
+// ════════════════════════════════════════════════════
+
 app.get('/api/wallet/summary', requiresP2PUser, async (req, res) => {
   try {
     const wallet = await walletService.ensureWallet(req.p2pUser.id, {
@@ -2297,6 +3010,7 @@ app.post(
     const address = String(req.body.address || '').trim();
     const requestedNetwork = String(req.body.network || req.body.chain || req.body.blockchain || '').trim();
     const network = normalizeUsdtNetwork(requestedNetwork || 'TRC20');
+    const walletType = String(req.body.wallet_type || req.body.walletType || 'spot').trim().toLowerCase();
     const requestIp = getRequestIp(req);
 
     if (currency === 'USDT' && !isValidAddressForNetwork(address, network)) {
@@ -2314,37 +3028,10 @@ app.post(
         metadata: {
           source: 'api_withdrawals',
           network,
+          walletType,
           ipAddress: requestIp,
           userAgent: String(req.headers['user-agent'] || '').trim()
         }
-      });
-
-      if (adminStore && typeof adminStore.createWithdrawalRequest === 'function') {
-        await adminStore.createWithdrawalRequest({
-          requestId: withdrawal.requestId || withdrawal.id,
-          userId: req.p2pUser.id,
-          username: req.p2pUser.username || req.p2pUser.email || 'User',
-          amount: withdrawal.amount,
-          currency: withdrawal.currency || currency,
-          coin: withdrawal.currency || currency,
-          network: withdrawal.metadata?.network || network,
-          address: withdrawal.address || address,
-          source: 'assets_withdrawal',
-          createdAt: withdrawal.createdAt
-        });
-      }
-
-      // Notify admin via SSE
-      broadcastAdminWithdrawalEvent({
-        type: 'new_withdrawal',
-        requestId: withdrawal.requestId || withdrawal.id,
-        userId: req.p2pUser.id,
-        username: req.p2pUser.username || req.p2pUser.email || 'User',
-        amount: withdrawal.amount,
-        currency: withdrawal.currency,
-        network: withdrawal.network,
-        address: withdrawal.address,
-        createdAt: new Date()
       });
 
       if (auditLogService) {
@@ -2356,7 +3043,8 @@ app.post(
             requestId: withdrawal.requestId,
             amount: withdrawal.amount,
             currency: withdrawal.currency,
-            network
+            network,
+            walletType
           }
         });
       }
@@ -2453,47 +3141,45 @@ app.post('/api/withdrawals/:requestId/cancel', requiresP2PUser, async (req, res)
   }
 });
 
-app.get('/api/p2p/exchange-ticker', async (req, res) => {
-  const requestedSymbols = String(req.query.symbols || '')
-    .split(',')
-    .map((item) => item.trim().toUpperCase())
-    .filter((item) => /^[A-Z0-9]{5,12}$/.test(item))
-    .slice(0, 10);
-  const symbols = requestedSymbols.length > 0 ? requestedSymbols : DEFAULT_TICKER_SYMBOLS;
-  const encodedSymbols = encodeURIComponent(JSON.stringify(symbols));
-
+// ── Withdrawal OTP ────────────────────────────────────────────────────────────
+app.post('/api/withdrawals/send-otp', requiresP2PUser, async (req, res) => {
+  const amount = req.body.amount;
+  const currency = String(req.body.currency || 'USDT').toUpperCase();
+  const address = String(req.body.address || '').trim();
+  if (!amount || Number(amount) <= 0) return res.status(400).json({ message: 'Amount is required.' });
+  if (!address) return res.status(400).json({ message: 'Withdrawal address is required.' });
   try {
-    const response = await fetch(
-      `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodedSymbols}`
-    );
-    const data = await response.json();
-
-    if (!response.ok || !Array.isArray(data)) {
-      throw new Error('Exchange API unavailable');
-    }
-
-    const ticker = data.map((item) => ({
-      symbol: item.symbol,
-      lastPrice: Number(item.lastPrice),
-      change24h: Number(item.priceChangePercent)
-    }));
-
-    return res.json({
-      source: 'binance',
-      updatedAt: new Date().toISOString(),
-      ticker
-    });
-  } catch (error) {
-    return res.json({
-      source: 'fallback',
-      updatedAt: new Date().toISOString(),
-      ticker: createFallbackTickerSnapshot(symbols)
-    });
+    const cred = await repos.getP2PCredentialByUserId(req.p2pUser);
+    if (!cred) return res.status(403).json({ message: 'P2P profile not found.' });
+    const email = cred.email || req.p2pUser.email;
+    if (!email) return res.status(400).json({ message: 'No email on account.' });
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await repos.storeEmailOtp(req.p2pUser, otp, expiresAt);
+    await p2pEmailService.sendWithdrawalOtp(email, otp, amount, currency, address);
+    return res.json({ sent: true });
+  } catch (err) {
+    console.error('[withdrawal-otp] error:', err);
+    return res.status(500).json({ message: 'Failed to send OTP.' });
   }
 });
 
-// API v1 ticker endpoint - used by frontend market pages
-app.get('/api/v1/market/tickers', async (req, res) => {
+app.post('/api/withdrawals/verify-otp', requiresP2PUser, async (req, res) => {
+  const otp = String(req.body.otp || '').trim();
+  if (otp.length !== 6) return res.status(400).json({ message: 'Invalid OTP.' });
+  try {
+    const result = await repos.verifyAndConsumeEmailOtp(req.p2pUser.id, otp);
+    if (!result.ok) {
+      const msgs = { EXPIRED: 'OTP expired. Please request a new one.', INVALID: 'Incorrect OTP.', NOT_FOUND: 'No OTP found. Please request a new one.' };
+      return res.status(400).json({ message: msgs[result.reason] || 'OTP verification failed.' });
+    }
+    return res.json({ verified: true });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to verify OTP.' });
+  }
+});
+
+app.get('/api/p2p/exchange-ticker', async (req, res) => {
   const requestedSymbols = String(req.query.symbols || '')
     .split(',')
     .map((item) => item.trim().toUpperCase())
@@ -2766,50 +3452,6 @@ app.get('/api/leads', requiresAdminSession, async (req, res) => {
   }
 });
 
-// ── /api/p2p/ping — merchant heartbeat to track online status ──
-app.post('/api/p2p/ping', requiresP2PUser, async (req, res) => {
-  try {
-    const userId = String(req.p2pUser.id || req.p2pUser.userId || req.p2pUser._id || '').trim();
-    const username = String(req.p2pUser.username || '').trim();
-    if (!userId) return res.json({ ok: false });
-    await repos.updateLastActive(userId, username);
-    return res.json({ ok: true });
-  } catch (_) { return res.json({ ok: false }); }
-});
-
-// ── /api/p2p/public — used by p2p-live.js to load buy/sell ads ──
-app.get('/api/p2p/public', async (req, res) => {
-  try {
-    const allOffers = await repos.listOffers({ activeOnly: true, availableOnly: true, excludeDemo: true });
-    const mapAd = (o) => ({
-      id: o.id || o._id,
-      advertiser: o.advertiser,
-      price: o.price,
-      availableUsdt: Number(o.available || o.availableAmount || 0),
-      totalUsdt: Number(o.totalAmount || o.available || 0),
-      minLimit: o.minLimit,
-      maxLimit: o.maxLimit,
-      paymentMethods: Array.isArray(o.payments) ? o.payments : (o.payMethod ? [o.payMethod] : []),
-      completionRate: o.completionRate || 100,
-      totalOrders: o.totalOrders || 0,
-      status: o.status === 'ACTIVE' ? 'active' : 'paused',
-      createdAt: o.createdAt,
-      asset: o.asset || 'USDT',
-      side: o.side,
-      createdByUserId: o.createdByUserId,
-      merchantBadge: o.merchantBadge,
-      releaseTime: o.releaseTime || '15',
-      onlineStatus: (o.lastActiveAt && (Date.now() - new Date(o.lastActiveAt).getTime()) < 300000) ? 'online' : 'offline',
-    });
-    const sell_ads = allOffers.filter(o => o.side === 'sell').map(mapAd).sort((a, b) => a.price - b.price);
-    const buy_ads  = allOffers.filter(o => o.side === 'buy').map(mapAd).sort((a, b) => a.price - b.price);
-    const payment_methods = ['UPI','PhonePe','Paytm','Google Pay','IMPS','Bank Transfer','Digital eRupee','NEFT','RTGS'];
-    return res.json({ status: 'success', data: { sell_ads, buy_ads, payment_methods } });
-  } catch (err) {
-    return res.status(500).json({ status: 'error', message: 'Failed to load P2P public data.' });
-  }
-});
-
 app.get('/api/p2p/offers', async (req, res) => {
   const side = String(req.query.side || 'buy').toLowerCase();
   const asset = String(req.query.asset || 'USDT').toUpperCase();
@@ -2833,34 +3475,19 @@ app.get('/api/p2p/offers', async (req, res) => {
       escrowBackedOnly: true,
       merchantOwnedOnly: true
     });
-
-    // Get blocked user IDs for the logged-in user (if authenticated)
-    let blockedSet = new Set();
-    try {
-      const sessionToken = req.cookies && req.cookies[P2P_USER_COOKIE_NAME];
-      if (sessionToken) {
-        const session = await repos.getP2PUserSession(sessionToken);
-        if (session && (session.userId || session.id)) {
-          const viewerId = session.userId || session.id;
-          const blocked = await repos.getBlockedUsers(viewerId);
-          blockedSet = new Set(blocked.map((b) => b.blockedId));
-        }
-      }
-    } catch (_) { /* non-fatal — skip filter if session check fails */ }
-
     const filtered = allOffers
-      .filter((offer) => !blockedSet.has(String(offer.createdByUserId || '')))
+      .filter((offer) => isTradeableP2PAd(offer))
       .filter((offer) => {
         if (!payment) {
           return true;
         }
-        return offer.payments.some((method) => method.toLowerCase().includes(payment));
+        return getTradeableOfferPayments(offer).some((method) => method.toLowerCase().includes(payment));
       })
       .filter((offer) => {
         if (!advertiser) {
           return true;
         }
-        return offer.advertiser.toLowerCase().includes(advertiser);
+        return getTradeableOfferAdvertiser(offer).includes(advertiser);
       })
       .filter((offer) => {
         if (!amount || Number.isNaN(amount)) {
@@ -2868,38 +3495,24 @@ app.get('/api/p2p/offers', async (req, res) => {
         }
         return amount >= offer.minLimit && amount <= offer.maxLimit;
       })
-      .sort((a, b) => a.price - b.price); // lowest price first for both sides
+      .sort((a, b) => {
+        if (normalizedSide === 'buy') {
+          return a.price - b.price;
+        }
+        return b.price - a.price;
+      });
 
     const totalCount = filtered.length;
     const paginated = filtered.slice(pageOffset, pageOffset + pageSize);
 
-    // Enrich each offer with advertiser reputation + merchant badge
+    // Enrich each offer with advertiser reputation
     const enriched = await Promise.all(paginated.map(async (offer) => {
       try {
         const userId = offer.createdByUserId;
-        const advertiserName = offer.advertiser || '';
-
-        // Always look up merchant badge — pick the MOST RECENTLY approved application
-        let merchantBadge = null;
-        let latestReviewedAt = null;
-        for (const [, app] of merchantApplications) {
-          if (app.status === 'approved' && app.assignedBadge) {
-            const userIdMatch = userId && String(app.userId) === String(userId);
-            const usernameMatch = advertiserName && app.username === advertiserName;
-            if (userIdMatch || usernameMatch) {
-              const reviewedAt = app.reviewedAt ? new Date(app.reviewedAt).getTime() : 0;
-              if (!latestReviewedAt || reviewedAt > latestReviewedAt) {
-                merchantBadge = app.assignedBadge;
-                latestReviewedAt = reviewedAt;
-              }
-            }
-          }
-        }
-
-        const onlineStatus = (offer.lastActiveAt && (Date.now() - new Date(offer.lastActiveAt).getTime()) < 300000) ? 'online' : 'offline';
-        if (!userId) return { ...offer, merchantBadge, onlineStatus };
+        if (!userId) return offer;
         const rep = await repos.getUserReputation(userId);
-        return { ...offer, reputation: rep || undefined, merchantBadge, onlineStatus };
+        if (!rep) return { ...offer, onlineStatus: getUserOnlineStatus(userId) };
+        return { ...offer, reputation: rep, onlineStatus: getUserOnlineStatus(userId) };
       } catch (_) { return offer; }
     }));
 
@@ -2928,11 +3541,11 @@ app.get('/api/p2p/payment-methods', requiresP2PUser, async (req, res) => {
 
 app.post('/api/p2p/payment-methods', requiresP2PUser, async (req, res) => {
   try {
-    const { type, nickname, upiId, bankName, accountNumber, ifsc, accountHolder, details } = req.body;
+    const { type, provider, nickname, upiId, bankName, accountNumber, ifsc, accountHolder, details, qrCode, accountType, bankBranch } = req.body;
     if (!type) return res.status(400).json({ message: 'type is required.' });
     const existing = await repos.listPaymentMethods(req.p2pUser.userId);
     if (existing.length >= 20) return res.status(400).json({ message: 'Max 20 payment methods allowed.' });
-    const method = await repos.addPaymentMethod(req.p2pUser.userId, { type, nickname, upiId, bankName, accountNumber, ifsc, accountHolder, details });
+    const method = await repos.addPaymentMethod(req.p2pUser.userId, { type, provider, nickname, upiId, bankName, accountNumber, ifsc, accountHolder, details, qrCode, accountType, bankBranch });
     return res.json({ method });
   } catch (e) { return res.status(500).json({ message: 'Server error.' }); }
 });
@@ -2959,7 +3572,7 @@ app.get('/api/p2p/users/:userId/reputation', async (req, res) => {
   try {
     const rep = await repos.getUserReputation(req.params.userId);
     if (!rep) return res.status(404).json({ message: 'User not found.' });
-    return res.json(rep);
+    return res.json({ ...rep, onlineStatus: getUserOnlineStatus(req.params.userId) });
   } catch (err) {
     return res.status(500).json({ message: 'Server error.' });
   }
@@ -2982,10 +3595,12 @@ app.get('/api/p2p/ads', async (req, res) => {
       merchantOwnedOnly: true
     });
 
+    const approvedOffers = offers.filter((offer) => isTradeableP2PAd(offer));
+
     return res.json({
       success: true,
-      total: offers.length,
-      ads: offers
+      total: approvedOffers.length,
+      ads: approvedOffers
     });
   } catch (error) {
     return res.status(500).json({ message: 'Server error while fetching ads.' });
@@ -2996,134 +3611,104 @@ app.get('/api/p2p/ads', async (req, res) => {
 app.get('/api/p2p/ads/:adId', async (req, res) => {
   try {
     const offer = await repos.getOfferById(req.params.adId);
-    if (!offer) return res.status(404).json({ message: 'Ad not found.' });
+    if (!offer || !isTradeableP2PAd(offer)) return res.status(404).json({ message: 'Ad not found.' });
     return res.json({ success: true, ad: offer });
   } catch (error) {
     return res.status(500).json({ message: 'Server error.' });
   }
 });
 
+// Keep create-order reachable even while boot is still wiring the controller.
+app.post('/api/p2p/orders', requiresP2PUser, async (req, res, next) => {
+  if (!p2pOrderController || typeof p2pOrderController.createOrder !== 'function') {
+    return res.status(503).json({
+      success: false,
+      message: 'P2P orders are warming up. Please retry in a moment.',
+      code: 'SERVICE_UNAVAILABLE'
+    });
+  }
+
+  try {
+    return await p2pOrderController.createOrder(req, res, next);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 // Convenience: mark order paid
 app.post('/api/p2p/orders/:orderId/mark-paid', requiresP2PUser, async (req, res) => {
   try {
-    const updatedOrder = await walletService.markOrderPaid(req.params.orderId, req.p2pUser);
+    const proofBase64 = req.body && req.body.proofBase64 ? String(req.body.proofBase64) : null;
+    const updatedOrder = await walletService.markOrderPaid(req.params.orderId, req.p2pUser, { proofBase64 });
     const normalizedOrder = normalizeOrderState(updatedOrder);
+    broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
+    // Push real-time status update to both buyer and seller (try both field names)
+    const pushPayload = { orderId: updatedOrder.id, reference: updatedOrder.reference, status: normalizeOrderStatus(updatedOrder.status) };
+    broadcastOrderParticipantEvent(updatedOrder, 'order_updated', pushPayload);
+    return res.json({ success: true, order: normalizedOrder });
+  } catch (error) {
+    const statusCode = Number(error?.statusCode || error?.status || 500);
+    return res.status(statusCode).json({ message: error.message || 'Server error.' });
+  }
+});
+
+// Convenience: expire order when payment window lapses on client
+app.post('/api/p2p/orders/:orderId/expire', requiresP2PUser, async (req, res) => {
+  try {
+    const updatedOrder = await walletService.cancelOrder(req.params.orderId, req.p2pUser, 'EXPIRED');
+    const normalizedOrder = safeNormalizeOrderState(updatedOrder, {
+      route: 'expire-convenience',
+      userId: req.p2pUser.id
+    });
+    if (!normalizedOrder) {
+      return res.status(500).json({ message: 'Order data is invalid.' });
+    }
     const normalizedMessages = toClientMessages(updatedOrder.messages || []);
-    const participantPayload = {
-      order: normalizedOrder,
-      orderId: normalizedOrder.id,
-      reference: normalizedOrder.reference,
-      status: normalizedOrder.status,
-      updatedAt: normalizedOrder.updatedAt
-    };
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
-    broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
-    return res.json({ success: true, order: { ...normalizedOrder, messages: normalizedMessages }, messages: normalizedMessages });
+    const pushPayload = { orderId: updatedOrder.id, reference: updatedOrder.reference, status: normalizeOrderStatus(updatedOrder.status) };
+    broadcastOrderParticipantEvent(updatedOrder, 'order_updated', pushPayload);
+    return res.json({ success: true, order: normalizedOrder, messages: normalizedMessages });
   } catch (error) {
-    return res.status(500).json({ message: error.message || 'Server error.' });
+    const statusCode = Number(error?.statusCode || error?.status || 500);
+    return res.status(statusCode).json({ message: error.message || 'Server error.' });
   }
 });
 
 // Convenience: cancel order
 app.post('/api/p2p/orders/:orderId/cancel', requiresP2PUser, async (req, res) => {
   try {
-    const updatedOrder = await walletService.cancelOrder(req.params.orderId, req.p2pUser, 'CANCELLED');
-    const normalizedOrder = normalizeOrderState(updatedOrder);
+    const actor = Object.assign({}, req.p2pUser, {
+      reason: String(req.body?.reason || '').trim()
+    });
+    const updatedOrder = await walletService.cancelOrder(req.params.orderId, actor, 'CANCELLED');
+    const normalizedOrder = safeNormalizeOrderState(updatedOrder, {
+      route: 'cancel-convenience',
+      userId: req.p2pUser.id
+    });
+    if (!normalizedOrder) {
+      return res.status(500).json({ message: 'Order data is invalid.' });
+    }
     const normalizedMessages = toClientMessages(updatedOrder.messages || []);
-    const participantPayload = {
-      order: normalizedOrder,
-      orderId: normalizedOrder.id,
-      reference: normalizedOrder.reference,
-      status: normalizedOrder.status,
-      updatedAt: normalizedOrder.updatedAt
-    };
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
-    broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
-    return res.json({ success: true, order: { ...normalizedOrder, messages: normalizedMessages }, messages: normalizedMessages });
+    // Push real-time status update to both buyer and seller (try both field names)
+    const pushPayload = { orderId: updatedOrder.id, reference: updatedOrder.reference, status: normalizeOrderStatus(updatedOrder.status) };
+    broadcastOrderParticipantEvent(updatedOrder, 'order_updated', pushPayload);
+    return res.json({ success: true, order: normalizedOrder, messages: normalizedMessages });
   } catch (error) {
-    return res.status(500).json({ message: error.message || 'Server error.' });
+    const statusCode = Number(error?.statusCode || error?.status || 500);
+    return res.status(statusCode).json({ message: error.message || 'Server error.' });
   }
 });
 
 async function createP2PAdController(req, res) {
   try {
-    const userId = String(req.p2pUser.id || '').trim();
-    const username = String(req.p2pUser.username || '').trim();
-
-    // Only approved merchants can post ads
-    let isMerchant = false;
-    for (const [, app] of merchantApplications) {
-      if (app.status === 'approved' && app.assignedBadge) {
-        if ((userId && String(app.userId) === userId) || (username && app.username === username)) {
-          isMerchant = true; break;
-        }
-      }
-    }
-    if (!isMerchant) {
-      return res.status(403).json({ message: 'Only approved merchants can post ads. Apply to become a merchant first.' });
-    }
-
-    // Balance check: user must have USDT balance > 0
-    try {
-      const wallet = await walletService.getWallet(userId);
-      const available = Number(wallet?.availableBalance ?? wallet?.balance ?? 0);
-      if (available <= 0) {
-        return res.status(400).json({ message: 'Insufficient balance. Please deposit USDT before posting an ad.' });
-      }
-    } catch (_) {}
-
-    // Must have at least one payment method
-    const cols = getCollections();
-    try {
-      const userPms = await repos.listPaymentMethods(userId);
-      if (!userPms || userPms.length === 0) {
-        return res.status(400).json({ message: 'Add a payment method before posting an ad.' });
-      }
-    } catch (_) {}
-
-    // Enforce 1 buy + 1 sell limit per merchant
-    const requestedSide = String(req.body.side || req.body.type || '').toLowerCase();
-    if (!requestedSide || !['buy', 'sell'].includes(requestedSide)) {
-      return res.status(400).json({ message: 'Ad side must be buy or sell.' });
-    }
-    const existingOfSide = await cols.p2pOffers.countDocuments({
-      $or: [{ createdByUserId: userId }, { advertiser: username }],
-      side: requestedSide,
-      status: { $ne: 'DELETED' }
-    });
-    if (existingOfSide >= 1) {
-      return res.status(400).json({ message: `You already have an active ${requestedSide} ad. Delete it first before posting a new one.` });
-    }
-
     const savedOffer = await walletService.createEscrowAd({
       actor: req.p2pUser,
       offerId: await createOfferId(),
       payload: req.body || {}
     });
-
-    // Mark seller as online immediately so buyers see Online status right away
-    try { await repos.updateLastActive(userId, req.p2pUser.username); } catch (_) {}
-
-    // If this merchant already has an approved badge, stamp it on the new offer immediately
-    try {
-      const cols = getCollections();
-      const userId = String(req.p2pUser.id || '').trim();
-      const username = String(req.p2pUser.username || '').trim();
-      let approvedBadge = null;
-      for (const [, app] of merchantApplications) {
-        if (app.status === 'approved' && app.assignedBadge) {
-          if ((userId && String(app.userId) === userId) || (username && app.username === username)) {
-            approvedBadge = app.assignedBadge;
-            break;
-          }
-        }
-      }
-      if (approvedBadge && savedOffer?.id) {
-        await cols.p2pOffers.updateOne({ id: savedOffer.id }, { $set: { merchantBadge: approvedBadge } });
-      }
-    } catch (_) {}
 
     return res.status(201).json({
       message: 'Ad created successfully.',
@@ -3173,7 +3758,7 @@ app.get('/api/p2p/my-ads', requiresP2PUser, async (req, res) => {
   try {
     const userId = req.p2pUser.userId;
     const allOffers = await repos.listOffers({ excludeDemo: true });
-    const mine = allOffers.filter(o => o.createdByUserId === userId && o.status !== 'DELETED');
+    const mine = allOffers.filter(o => o.createdByUserId === userId);
     return res.json({ offers: mine });
   } catch (err) {
     return res.status(500).json({ message: 'Server error.' });
@@ -3183,22 +3768,65 @@ app.get('/api/p2p/my-ads', requiresP2PUser, async (req, res) => {
 // PATCH /api/p2p/offers/:offerId — edit price/limits/payments/status(pause/resume)
 app.patch('/api/p2p/offers/:offerId', requiresP2PUser, async (req, res) => {
   try {
-    const userId = req.p2pUser.userId;
+    const userId = String(req.p2pUser.userId || req.p2pUser.id || '').trim();
     const { offerId } = req.params;
     const offer = await repos.getOfferById(offerId);
     if (!offer) return res.status(404).json({ message: 'Offer not found.' });
-    if (offer.createdByUserId !== userId) return res.status(403).json({ message: 'Not your ad.' });
+    if (String(offer.createdByUserId || '').trim() !== userId) return res.status(403).json({ message: 'Not your ad.' });
 
-    const { price, minLimit, maxLimit, payments, status, remark, totalAmount, releaseTime } = req.body;
+    const { price, minLimit, maxLimit, payments, status, remark } = req.body;
     // Validate status transitions
     if (status && !['ACTIVE', 'PAUSED'].includes(status)) {
       return res.status(400).json({ message: 'Status must be ACTIVE or PAUSED.' });
     }
-    const updated = await repos.updateOffer(offerId, userId, { price, minLimit, maxLimit, payments, status, remark, totalAmount, releaseTime });
+    const updates = {};
+    if (price !== undefined) {
+      const nextPrice = Number(price);
+      if (!Number.isFinite(nextPrice) || nextPrice <= 0) {
+        return res.status(400).json({ message: 'Price must be greater than 0.' });
+      }
+      updates.price = Number(nextPrice.toFixed(8));
+    }
+    if (minLimit !== undefined) {
+      const nextMinLimit = Number(minLimit);
+      if (!Number.isFinite(nextMinLimit) || nextMinLimit <= 0) {
+        return res.status(400).json({ message: 'Min limit must be greater than 0.' });
+      }
+      updates.minLimit = Number(nextMinLimit.toFixed(2));
+    }
+    if (maxLimit !== undefined) {
+      const nextMaxLimit = Number(maxLimit);
+      if (!Number.isFinite(nextMaxLimit) || nextMaxLimit <= 0) {
+        return res.status(400).json({ message: 'Max limit must be greater than 0.' });
+      }
+      updates.maxLimit = Number(nextMaxLimit.toFixed(2));
+    }
+    const nextMin = updates.minLimit ?? Number(offer.minLimit || 0);
+    const nextMax = updates.maxLimit ?? Number(offer.maxLimit || 0);
+    if (Number.isFinite(nextMin) && Number.isFinite(nextMax) && nextMin >= nextMax) {
+      return res.status(400).json({ message: 'Min limit must be less than max limit.' });
+    }
+    if (payments !== undefined) {
+      const nextPayments = Array.isArray(payments)
+        ? payments.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 4)
+        : [];
+      if (nextPayments.length === 0) {
+        return res.status(400).json({ message: 'Add at least one payment method.' });
+      }
+      updates.payments = nextPayments;
+    }
+    if (status !== undefined) {
+      updates.status = status;
+    }
+    if (remark !== undefined) {
+      updates.remark = String(remark || '').trim().slice(0, 500);
+    }
+
+    const updated = await repos.updateOffer(offerId, userId, updates);
     if (!updated) return res.status(404).json({ message: 'Update failed.' });
-    return res.json({ offer: updated });
+    return res.json({ success: true, offer: updated });
   } catch (err) {
-    return res.status(500).json({ message: 'Server error.' });
+    return res.status(500).json({ message: 'Server error while updating ad.' });
   }
 });
 
@@ -3212,7 +3840,7 @@ app.delete('/api/p2p/offers/:offerId', requiresP2PUser, async (req, res) => {
     if (offer.createdByUserId !== userId) return res.status(403).json({ message: 'Not your ad.' });
     // Check no active orders on this offer
     const activeOrders = await repos.listP2PLiveOrders({ asset: offer.asset, side: offer.side });
-    const hasActive = activeOrders.some(o => (o.adId === offerId || o.offerId === offerId) && ['CREATED','PAYMENT_SENT','DISPUTED'].includes(o.status));
+    const hasActive = activeOrders.some((o) => (o.adId === offerId || o.offerId === offerId) && isActiveOrderStatus(o.status));
     if (hasActive) return res.status(409).json({ message: 'Cannot delete ad with active orders.' });
     const deleted = await repos.deleteOffer(offerId, userId);
     if (!deleted) return res.status(404).json({ message: 'Delete failed.' });
@@ -3251,254 +3879,136 @@ app.post('/api/merchant/activate', requiresP2PUser, async (req, res) => {
   }
 });
 
-// ── Merchant Application: User submits application ──
-app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
-  try {
-    const { photoBase64, currency, socialAccounts } = req.body || {};
-    const userId = req.p2pUser.id;
-    const username = req.p2pUser.username;
-    const email = req.p2pUser.email;
-
-    // Validate required fields
-    if (!photoBase64) return res.status(400).json({ success: false, message: 'ID photo is required.' });
-    if (!currency) return res.status(400).json({ success: false, message: 'Please select a currency.' });
-    const social = socialAccounts || {};
-    if (!social.twitter && !social.telegram && !social.instagram) {
-      return res.status(400).json({ success: false, message: 'At least one social media account is required.' });
-    }
-
-    // Check if already applied
-    for (const [, app] of merchantApplications) {
-      if (app.userId === userId && app.status === 'pending') {
-        return res.status(400).json({ success: false, message: 'You already have a pending merchant application.' });
-      }
-    }
-
-    const id = `MRC-${String(merchantAppCounter++).padStart(5, '0')}`;
-    const application = {
-      id,
-      userId,
-      username,
-      email,
-      photoBase64: photoBase64 || '',   // base64 data URL of ID photo
-      currency: currency || '',          // preferred fiat currency
-      socialAccounts: {                  // social media handles
-        twitter: social.twitter || '',
-        telegram: social.telegram || '',
-        instagram: social.instagram || ''
-      },
-      status: 'pending', // pending | approved | rejected
-      assignedBadge: null, // 1 = Verified, 2 = Pro, 3 = Elite
-      submittedAt: new Date().toISOString(),
-      reviewedAt: null
-    };
-    merchantApplications.set(id, application);
-    await saveMerchantApp(application);
-
-    return res.json({ success: true, message: 'Application submitted! Admin will review within 2-5 business days.', applicationId: id });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server error while submitting application.' });
-  }
+// ── GET /api/p2p/ping — no auth, no DB, instant server health check ────────
+app.get('/api/p2p/ping', (req, res) => {
+  res.json({ ok: true, dbReady: !!repos, ts: Date.now() });
 });
 
-// ── Admin: P2P Release Escrow (direct) ────────────────────────────────────────
-app.post('/api/admin/p2p/orders/:orderId/admin-release', requiresAdminSession, async (req, res) => {
-  try {
-    const orderId = String(req.params.orderId || '').trim();
-    const { p2pOrders, wallets } = getCollections();
-    const order = await p2pOrders.findOne({ id: orderId });
-    if (!order) return res.status(404).json({ message: 'Order not found.' });
-    const now = Date.now();
-    const adminLabel = process.env.ADMIN_EMAIL || 'admin';
-    // Credit buyer wallet
-    const buyerId = String(order.buyerUserId || '');
-    const asset = String(order.asset || 'USDT');
-    const amount = Number(order.assetAmount || order.escrowAmount || 0);
-    if (buyerId && amount > 0) {
-      await wallets.updateOne(
-        { userId: buyerId },
-        { $inc: { [`balances.${asset}`]: amount }, $set: { updatedAt: now } },
-        { upsert: true }
-      );
-    }
-    // Update order status + push system message
-    await p2pOrders.updateOne({ id: orderId }, {
-      $set: { status: 'RELEASED', releasedAt: now, releasedByAdmin: adminLabel, updatedAt: now },
-      $push: { messages: { id: 'msg_' + now + '_release', sender: 'system', senderRole: 'system',
-        text: 'Escrow released by admin. Funds credited to buyer.', createdAt: now } }
+// ── GET /api/p2p/orders ────────────────────────────────────────────────────
+// Combined endpoint: returns active + history in { orders:[] } shape.
+// Prevents ROUTE_NOT_FOUND (404) when any client calls the bare /orders path.
+// Also acts as a readiness probe: returns 503 + { orders:[] } before DB is ready.
+app.get('/api/p2p/orders', requiresP2PUser, async (req, res) => {
+  if (!repos) {
+    return res.status(503).json({
+      message: 'Server is starting up — please retry in a moment.',
+      code: 'SERVICE_UNAVAILABLE',
+      orders: []
     });
-    const updated = await p2pOrders.findOne({ id: orderId });
-    return res.json({ message: 'Escrow released.', order: updated });
-  } catch (err) {
-    console.error('[admin-release]', err);
-    return res.status(500).json({ message: err.message || 'Server error.' });
   }
-});
-
-// ── Admin: P2P Dispute — Admin Reply ──────────────────────────────────────────
-app.post('/api/admin/p2p/orders/:orderId/admin-reply', requiresAdminSession, async (req, res) => {
   try {
-    const orderId = String(req.params.orderId || '').trim();
-    const message = String(req.body?.message || '').trim();
-    if (!message) return res.status(400).json({ message: 'Message is required.' });
-    const { p2pOrders } = getCollections();
-    const order = await p2pOrders.findOne({ id: orderId });
-    if (!order) return res.status(404).json({ message: 'Order not found.' });
-    const now = Date.now();
-    const msg = {
-      id: 'msg_' + now + '_admin',
-      sender: 'admin:' + (req.adminAuth?.adminEmail || process.env.ADMIN_EMAIL || 'admin'),
-      senderRole: 'admin',
-      text: message,
-      createdAt: now
-    };
-    await p2pOrders.updateOne({ id: orderId }, { $push: { messages: msg }, $set: { updatedAt: now } });
-    const updated = await p2pOrders.findOne({ id: orderId });
-    return res.json({ message: 'Reply sent.', order: updated });
-  } catch (err) {
-    console.error('[admin-reply]', err);
-    return res.status(500).json({ message: err.message || 'Server error.' });
+    const limit  = Math.min(Math.max(Number(req.query.limit  || 50), 1), 50);
+    const offset = Math.max(Number(req.query.offset || 0), 0);
+    const result = await repos.listP2POrderHistory(req.p2pUser, { limit, offset });
+    const orders = normalizeOrdersForClient(result.orders, {
+      route: 'history_combined',
+      userId: req.p2pUser.id
+    });
+    return res.json({ success: true, orders, total: result.total, hasMore: result.hasMore });
+  } catch (error) {
+    console.error('[GET /api/p2p/orders] error:', error.message);
+    return res.status(500).json({ message: 'Server error fetching orders.', orders: [] });
   }
-});
-
-// ── Merchant Application: Admin list all ──
-app.get('/api/admin/merchant-applications', requiresAdminSession, (req, res) => {
-  const list = Array.from(merchantApplications.values()).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-  return res.json({ success: true, applications: list });
-});
-
-// ── Merchant Application: Admin assign badge ──
-app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { badge, action } = req.body; // badge: 1|2|3, action: 'approve'|'reject'
-
-    let app = merchantApplications.get(id);
-    if (!app) {
-      // Fallback: load from MongoDB if not in memory (e.g. server restarted mid-session)
-      try {
-        const collections = getCollections();
-        const doc = await collections.merchantApplications.findOne({ id });
-        if (doc) { merchantApplications.set(id, doc); app = doc; }
-      } catch (_) {}
-    }
-    if (!app) return res.status(404).json({ success: false, message: 'Application not found.' });
-
-    if (action === 'reject') {
-      app.status = 'rejected';
-      app.assignedBadge = null;
-      app.reviewedAt = new Date().toISOString();
-      merchantApplications.set(id, app);
-      await saveMerchantApp(app);
-      // Remove badge from all offers for this merchant
-      try {
-        const cols = getCollections();
-        const matchQ = { $or: [] };
-        if (app.userId) matchQ.$or.push({ createdByUserId: String(app.userId) });
-        if (app.username) matchQ.$or.push({ advertiser: app.username });
-        if (matchQ.$or.length) {
-          await cols.p2pOffers.updateMany(matchQ, { $unset: { merchantBadge: '' } });
-        }
-      } catch (_) {}
-      return res.json({ success: true, message: 'Application rejected.' });
-    }
-
-    const badgeNum = Number(badge);
-    if (![1, 2, 3].includes(badgeNum)) {
-      return res.status(400).json({ success: false, message: 'Badge must be 1, 2, or 3.' });
-    }
-
-    app.status = 'approved';
-    app.assignedBadge = badgeNum;
-    app.reviewedAt = new Date().toISOString();
-    merchantApplications.set(id, app);
-    await saveMerchantApp(app);
-
-    // Stamp badge onto all of this merchant's offer documents so buyers always see it
-    try {
-      const cols = getCollections();
-      const matchQ = { $or: [] };
-      if (app.userId) matchQ.$or.push({ createdByUserId: String(app.userId) });
-      if (app.username) matchQ.$or.push({ advertiser: app.username });
-      if (matchQ.$or.length) {
-        await cols.p2pOffers.updateMany(matchQ, { $set: { merchantBadge: badgeNum } });
-      }
-    } catch (_) {}
-
-    return res.json({ success: true, message: `Badge ${badgeNum} assigned to ${app.username}.`, application: app });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server error.' });
-  }
-});
-
-// ── Merchant Application: User checks their status ──
-app.get('/api/merchant/application-status', requiresP2PUser, (req, res) => {
-  const userId = req.p2pUser.id;
-  // Return most recently reviewed approved app, or latest pending
-  let best = null;
-  for (const [, app] of merchantApplications) {
-    if (app.userId !== userId) continue;
-    if (!best) { best = app; continue; }
-    // Prefer approved over non-approved
-    if (app.status === 'approved' && best.status !== 'approved') { best = app; continue; }
-    if (app.status !== 'approved' && best.status === 'approved') continue;
-    // Among same status, prefer most recently reviewed
-    const t1 = app.reviewedAt ? new Date(app.reviewedAt).getTime() : new Date(app.submittedAt || 0).getTime();
-    const t2 = best.reviewedAt ? new Date(best.reviewedAt).getTime() : new Date(best.submittedAt || 0).getTime();
-    if (t1 > t2) best = app;
-  }
-  if (best) {
-    return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || best.badge || null, applicationId: best.id });
-  }
-  return res.json({ success: true, found: false, status: null, badge: null });
 });
 
 // Returns only the current user's own active orders (for mobile Active tab)
 app.get('/api/p2p/orders/my-active', requiresP2PUser, async (req, res) => {
+  if (!repos) {
+    return res.status(503).json({ message: 'Server is starting up — please retry in a moment.', code: 'SERVICE_UNAVAILABLE', orders: [] });
+  }
   try {
-    const userId = req.p2pUser.id;
-    const username = req.p2pUser.username;
-    const result = await repos.listP2POrderHistory(userId, { limit: 50, offset: 0, username });
-    console.log(`[my-active] user=${username} id=${userId} total_orders=${result.total}`);
-    const activeStatuses = ['CREATED', 'PENDING', 'PAID', 'PAYMENT_SENT', 'DISPUTED'];
-    const recentCutoff = Date.now() - 24 * 60 * 60 * 1000; // 24h
-    const activeOrders = result.orders
-      .filter((o) => activeStatuses.includes(o.status) ||
-        (['RELEASED', 'COMPLETED'].includes(o.status) && Number(o.updatedAt || 0) > recentCutoff))
-      .map((order) => {
-        const normalized = normalizeOrderState(order);
-        return { ...normalized, isParticipant: true, paymentMethod: order.paymentMethod, myRole: resolveMyRole(order, req.p2pUser) };
-      });
-    console.log(`[my-active] active_orders=${activeOrders.length}`);
-    return res.json({ orders: activeOrders });
+    const activeOrders = await listActiveOrdersForUserResponse(req.p2pUser, { limit: 50 });
+    console.log(`[my-active] active_orders=${activeOrders.length} user=${req.p2pUser.id}`);
+    return res.json({ total: activeOrders.length, orders: activeOrders });
   } catch (error) {
     console.error('[my-active] error:', error);
-    return res.status(500).json({ message: 'Server error fetching active orders.' });
+    try {
+      const history = await repos.listP2POrderHistory(req.p2pUser, { limit: 50, offset: 0 });
+      const fallbackOrders = normalizeOrdersForClient(
+        (history.orders || []).filter((order) => isActiveOrderStatus(order?.status)),
+        { route: 'my-active-fallback', userId: req.p2pUser.id }
+      );
+      return res.json({ total: fallbackOrders.length, orders: fallbackOrders, degraded: true });
+    } catch (fallbackError) {
+      console.error('[my-active:fallback] error:', fallbackError);
+      return res.status(500).json({ message: 'Server error fetching active orders.' });
+    }
+  }
+});
+
+app.get('/api/p2p/orders/bootstrap', requiresP2PUser, async (req, res) => {
+  if (!repos) {
+    return res.status(503).json({
+      message: 'Server is starting up — please retry in a moment.',
+      code: 'SERVICE_UNAVAILABLE',
+      activeOrders: [],
+      historyOrders: [],
+      orders: []
+    });
+  }
+
+  const activeLimit = Math.min(Math.max(Number(req.query.activeLimit || 50), 1), 50);
+  const historyLimit = Math.min(Math.max(Number(req.query.historyLimit || 50), 1), 50);
+  const historyTimeoutMs = Math.min(Math.max(Number(req.query.historyTimeoutMs || 3500), 1000), 8000);
+
+  try {
+    const activeOrders = await listActiveOrdersForUserResponse(req.p2pUser, { limit: activeLimit });
+    const historyResult = await Promise.race([
+      repos.listP2POrderHistory(req.p2pUser, { limit: historyLimit, offset: 0 }),
+      new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            total: 0,
+            hasMore: false,
+            orders: [],
+            timedOut: true
+          });
+        }, historyTimeoutMs);
+      })
+    ]);
+
+    const historyOrders = normalizeOrdersForClient(historyResult.orders, {
+      route: 'bootstrap_history',
+      userId: req.p2pUser.id
+    });
+
+    const mergedOrders = mergeNormalizedOrdersById(activeOrders, historyOrders);
+
+    return res.json({
+      activeOrders,
+      historyOrders,
+      orders: mergedOrders,
+      activeTotal: activeOrders.length,
+      historyTotal: Number(historyResult.total || historyOrders.length || 0),
+      degradedHistory: historyResult.timedOut === true
+    });
+  } catch (error) {
+    console.error('[p2p-orders/bootstrap] error:', error);
+    try {
+      const historyResult = await repos.listP2POrderHistory(req.p2pUser, { limit: historyLimit, offset: 0 });
+      const historyOrders = normalizeOrdersForClient(historyResult.orders, {
+        route: 'bootstrap_fallback',
+        userId: req.p2pUser.id
+      });
+      const activeOrders = historyOrders.filter((order) => isActiveOrderStatus(order?.status));
+      return res.json({
+        activeOrders,
+        historyOrders,
+        orders: mergeNormalizedOrdersById(activeOrders, historyOrders),
+        activeTotal: activeOrders.length,
+        historyTotal: Number(historyResult.total || historyOrders.length || 0),
+        degraded: true
+      });
+    } catch (fallbackError) {
+      console.error('[p2p-orders/bootstrap:fallback] error:', fallbackError);
+      return res.status(500).json({ message: 'Server error fetching orders bootstrap.' });
+    }
   }
 });
 
 app.get('/api/p2p/orders/live', requiresP2PUser, async (req, res) => {
-  const side = String(req.query.side || '').trim().toLowerCase();
-  const asset = String(req.query.asset || '').trim().toUpperCase();
-
   try {
-    const liveOrders = (await repos.listP2PLiveOrders({ side: side || undefined, asset: asset || undefined, limit: 20 }))
-      .map((order) => normalizeOrderState(order))
-      .map((order) => ({
-        id: order.id,
-        reference: order.reference,
-        side: order.side,
-        asset: order.asset,
-        status: order.status,
-        advertiser: order.advertiser,
-        amountInr: order.amountInr,
-        price: order.price,
-        participantsLabel: order.participantsLabel,
-        isParticipant: order.participants.some((participant) => participant.id === req.p2pUser.id),
-        updatedAt: order.updatedAt,
-        remainingSeconds: order.remainingSeconds
-      }));
-
+    const liveOrders = await listActiveOrdersForUserResponse(req.p2pUser, { limit: 50 });
     return res.json({
       total: liveOrders.length,
       orders: liveOrders
@@ -3509,11 +4019,17 @@ app.get('/api/p2p/orders/live', requiresP2PUser, async (req, res) => {
 });
 
 app.get('/api/p2p/orders/history', requiresP2PUser, async (req, res) => {
-  const limit = Math.min(Math.max(Number(req.query.limit || 10), 1), 50);
+  if (!repos) {
+    return res.status(503).json({ message: 'Server is starting up — please retry in a moment.', code: 'SERVICE_UNAVAILABLE', orders: [] });
+  }
+  const limit = Math.min(Math.max(Number(req.query.limit || 50), 1), 50);
   const offset = Math.max(Number(req.query.offset || 0), 0);
   try {
-    const result = await repos.listP2POrderHistory(req.p2pUser.id, { limit, offset, username: req.p2pUser.username });
-    const orders = result.orders.map((o) => ({ ...normalizeOrderState(o), myRole: resolveMyRole(o, req.p2pUser) }));
+    const result = await repos.listP2POrderHistory(req.p2pUser, { limit, offset });
+    const orders = normalizeOrdersForClient(result.orders, {
+      route: 'history',
+      userId: req.p2pUser.id
+    });
     return res.json({ total: result.total, hasMore: result.hasMore, offset, limit, orders });
   } catch (error) {
     return res.status(500).json({ message: 'Server error.' });
@@ -3530,13 +4046,18 @@ app.get('/api/p2p/orders/by-reference/:reference', requiresP2PUser, async (req, 
       return res.status(404).json({ message: 'Order not found for this reference.' });
     }
 
-    if (!isParticipant(orderByReference, req.p2pUser.id)) {
+    if (!isParticipant(orderByReference, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
-    return res.json({
-      order: normalizeOrderState(orderByReference)
+    const normalizedOrder = safeNormalizeOrderState(orderByReference, {
+      route: 'by-reference',
+      userId: req.p2pUser.id
     });
+    if (!normalizedOrder) {
+      return res.status(500).json({ message: 'Order data is invalid.' });
+    }
+    return res.json({ order: normalizedOrder });
   } catch (error) {
     return res.status(500).json({ message: 'Server error while fetching order by reference.' });
   }
@@ -3549,14 +4070,18 @@ app.post('/api/p2p/orders/:orderId/join', requiresP2PUser, async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: 'Order not found.' });
     }
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
-    return res.json({
-      message: 'Order opened.',
-      order: normalizeOrderState(order)
+    const normalizedOrder = safeNormalizeOrderState(order, {
+      route: 'join',
+      userId: req.p2pUser.id
     });
+    if (!normalizedOrder) {
+      return res.status(500).json({ message: 'Order data is invalid.' });
+    }
+    return res.json({ message: 'Order opened.', order: normalizedOrder });
   } catch (error) {
     return res.status(500).json({ message: 'Server error while opening order.' });
   }
@@ -3570,165 +4095,31 @@ app.get('/api/p2p/orders/:orderId', requiresP2PUser, async (req, res) => {
       return res.status(404).json({ message: 'Order not found.' });
     }
 
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
-    const myUserId = req.p2pUser.id;
-    const myUsername = String(req.p2pUser.username || '').trim().toLowerCase();
-    const sellerMatches =
-      order.sellerUserId === myUserId ||
-      order.sellerId === myUserId ||
-      String(order.sellerUsername || '').trim().toLowerCase() === myUsername ||
-      (Array.isArray(order.participants) && order.participants.some(
-        (p) => p.role === 'seller' && (p.id === myUserId || String(p.username || '').trim().toLowerCase() === myUsername)
-      ));
-    const myRole = sellerMatches ? 'seller' : 'buyer';
-
+    const normalizedOrder = safeNormalizeOrderState(order, {
+      route: 'detail',
+      userId: req.p2pUser.id
+    });
+    if (!normalizedOrder) {
+      return res.status(500).json({ message: 'Order data is invalid.' });
+    }
+    // Attach counterparty online status + reputation
+    const isBuyer = String(req.p2pUser.id) === String(order.buyerUserId);
+    const counterpartyId = isBuyer ? order.sellerUserId : order.buyerUserId;
+    const [counterpartyRep] = await Promise.all([
+      counterpartyId ? repos.getUserReputation(counterpartyId).catch(() => null) : Promise.resolve(null)
+    ]);
     return res.json({
-      order: {
-        ...normalizeOrderState(order),
-        myRole,
-        messages: toClientMessages(order.messages || [])
-      }
+      order: normalizedOrder,
+      counterparty: counterpartyRep
+        ? { ...counterpartyRep, onlineStatus: getUserOnlineStatus(counterpartyId) }
+        : { onlineStatus: getUserOnlineStatus(counterpartyId) }
     });
   } catch (error) {
     return res.status(500).json({ message: 'Server error while fetching order.' });
-  }
-});
-
-app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) => {
-  const appealType = String(req.body.reason || req.body.appealType || '').trim();
-  const appealReason = String(req.body.description || req.body.appealReason || '').trim();
-  const appealImages = Array.isArray(req.body.images)
-    ? req.body.images.slice(0, 3)
-    : Array.isArray(req.body.appealImages)
-      ? req.body.appealImages.slice(0, 3)
-      : [];
-
-  if (!appealType) {
-    return res.status(400).json({ message: 'Appeal reason is required.' });
-  }
-  if (appealReason.length < 10) {
-    return res.status(400).json({ message: 'Describe your issue in at least 10 characters.' });
-  }
-
-  try {
-    const updatedOrder = await walletService.setOrderDisputed(req.params.orderId, req.p2pUser, {
-      reason: appealReason,
-      appealType,
-      appealReason,
-      appealImages
-    });
-
-    const normalizedOrder = normalizeOrderState(updatedOrder);
-    const normalizedMessages = toClientMessages(updatedOrder.messages || []);
-    const participantPayload = {
-      order: normalizedOrder,
-      orderId: normalizedOrder.id,
-      reference: normalizedOrder.reference,
-      status: normalizedOrder.status,
-      updatedAt: normalizedOrder.updatedAt
-    };
-
-    broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
-    broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
-    broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
-
-    if (p2pEmailService) {
-      setImmediate(async () => {
-        try {
-          const [sellerCred, buyerCred] = await Promise.all([
-            repos.getP2PCredentialByUserId(updatedOrder.sellerUserId),
-            repos.getP2PCredentialByUserId(updatedOrder.buyerUserId)
-          ]);
-          const raisedBy = req.p2pUser.username || req.p2pUser.email;
-          const adminEmail = String(process.env.ADMIN_EMAIL || '').trim();
-          if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, raisedBy);
-          if (sellerCred?.email) await p2pEmailService.sendDisputeRaised(sellerCred.email, updatedOrder, raisedBy);
-          if (buyerCred?.email && buyerCred.email !== sellerCred?.email) {
-            await p2pEmailService.sendDisputeRaised(buyerCred.email, updatedOrder, raisedBy);
-          }
-        } catch (emailErr) {
-          console.warn('[p2p-email] appeal notification failed:', emailErr.message);
-        }
-      });
-    }
-
-    return res.json({
-      message: 'Appeal submitted. Redirecting to dispute orders.',
-      order: normalizedOrder
-    });
-  } catch (error) {
-    console.error('Appeal error:', error.message);
-    return res.status(error.status || 500).json({
-      message: error.message || 'Failed to submit appeal.'
-    });
-  }
-});
-
-app.post('/api/p2p/orders/:orderId/rate', requiresP2PUser, async (req, res) => {
-  try {
-    const order = await repos.getP2POrderById(req.params.orderId);
-    if (!order) return res.status(404).json({ message: 'Order not found.' });
-    if (!isParticipant(order, req.p2pUser.id)) {
-      return res.status(403).json({ message: 'Only participants can rate this order.' });
-    }
-
-    const stars = Number(req.body.stars);
-    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
-      return res.status(400).json({ message: 'Stars must be between 1 and 5.' });
-    }
-    const comment = String(req.body.comment || '').trim().slice(0, 500);
-
-    const { p2pRatings } = getCollections();
-    await p2pRatings.updateOne(
-      { orderId: req.params.orderId, raterId: req.p2pUser.id },
-      { $set: { orderId: req.params.orderId, raterId: req.p2pUser.id, stars, comment, createdAt: new Date() } },
-      { upsert: true }
-    );
-
-    return res.json({ success: true, message: 'Rating submitted.' });
-  } catch (error) {
-    return res.status(500).json({ message: 'Server error while submitting rating.' });
-  }
-});
-
-// POST /api/p2p/block/:userId — block a counterparty
-app.post('/api/p2p/block/:userId', requiresP2PUser, async (req, res) => {
-  try {
-    const blockerId = req.p2pUser.userId || req.p2pUser.id;
-    const blockedId = String(req.params.userId || '').trim();
-    if (!blockedId) return res.status(400).json({ message: 'userId is required.' });
-    if (blockerId === blockedId) return res.status(400).json({ message: 'Cannot block yourself.' });
-    await repos.blockUser(blockerId, blockedId);
-    return res.json({ success: true, message: 'User blocked.' });
-  } catch (error) {
-    return res.status(500).json({ message: 'Server error while blocking user.' });
-  }
-});
-
-// DELETE /api/p2p/block/:userId — unblock a user
-app.delete('/api/p2p/block/:userId', requiresP2PUser, async (req, res) => {
-  try {
-    const blockerId = req.p2pUser.userId || req.p2pUser.id;
-    const blockedId = String(req.params.userId || '').trim();
-    if (!blockedId) return res.status(400).json({ message: 'userId is required.' });
-    await repos.unblockUser(blockerId, blockedId);
-    return res.json({ success: true, message: 'User unblocked.' });
-  } catch (error) {
-    return res.status(500).json({ message: 'Server error while unblocking user.' });
-  }
-});
-
-// GET /api/p2p/blocked-users — list users blocked by current user
-app.get('/api/p2p/blocked-users', requiresP2PUser, async (req, res) => {
-  try {
-    const blockerId = req.p2pUser.userId || req.p2pUser.id;
-    const blocked = await repos.getBlockedUsers(blockerId);
-    return res.json({ success: true, blockedUsers: blocked.map((b) => b.blockedId) });
-  } catch (error) {
-    return res.status(500).json({ message: 'Server error while fetching blocked users.' });
   }
 });
 
@@ -3739,38 +4130,43 @@ app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) =>
 
     let updatedOrder = null;
     if (action === 'cancel') {
-      updatedOrder = await walletService.cancelOrder(req.params.orderId, req.p2pUser, 'CANCELLED');
+      const actor = Object.assign({}, req.p2pUser, {
+        reason: String(req.body?.reason || '').trim()
+      });
+      updatedOrder = await walletService.cancelOrder(req.params.orderId, actor, 'CANCELLED');
+    } else if (action === 'expire') {
+      updatedOrder = await walletService.cancelOrder(req.params.orderId, req.p2pUser, 'EXPIRED');
     } else if (action === 'mark_paid') {
       updatedOrder = await walletService.markOrderPaid(req.params.orderId, req.p2pUser);
     } else if (action === 'release') {
       updatedOrder = await walletService.releaseOrder(req.params.orderId, req.p2pUser);
     } else if (action === 'dispute') {
-      const appealType = String(req.body.appealType || '').trim();
-      const appealReason = String(req.body.appealReason || '').trim();
-      const disputeReason = String(req.body.reason || appealReason || appealType || '').trim();
+      const disputeReason = req.body.reason ? String(req.body.reason).slice(0, 500) : '';
       updatedOrder = await walletService.setOrderDisputed(req.params.orderId, req.p2pUser, {
         reason: disputeReason,
-        appealType,
-        appealReason,
+        appealType: String(req.body.appealType || '').trim(),
+        appealReason: String(req.body.appealReason || '').trim(),
         appealImages: Array.isArray(req.body.appealImages) ? req.body.appealImages.slice(0, 3) : []
       });
     } else {
       return res.status(400).json({ message: 'Invalid action.' });
     }
 
-    const normalizedOrder = normalizeOrderState(updatedOrder);
+    const normalizedOrder = safeNormalizeOrderState(updatedOrder, {
+      route: 'status-update',
+      userId: req.p2pUser.id
+    });
+    if (!normalizedOrder) {
+      return res.status(500).json({ message: 'Order data is invalid.' });
+    }
     const normalizedMessages = toClientMessages(updatedOrder.messages || []);
-    const participantPayload = {
-      order: normalizedOrder,
-      orderId: normalizedOrder.id,
-      reference: normalizedOrder.reference,
-      status: normalizedOrder.status,
-      updatedAt: normalizedOrder.updatedAt
-    };
 
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
-    broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
+
+    // Push real-time status update to both buyer and seller via user SSE stream
+    const _pushPayload = { orderId: updatedOrder.id, reference: updatedOrder.reference, status: normalizeOrderStatus(updatedOrder.status) };
+    broadcastOrderParticipantEvent(updatedOrder, 'order_updated', _pushPayload);
 
     // Send email notifications (non-blocking)
     if (p2pEmailService) {
@@ -3789,7 +4185,7 @@ app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) =>
             // Seller released — notify buyer (USDT received) and seller (confirmation)
             if (buyerEmail) await p2pEmailService.sendOrderReleased(buyerEmail, updatedOrder);
             if (sellerEmail && sellerEmail !== buyerEmail) await p2pEmailService.sendOrderReleased(sellerEmail, updatedOrder);
-          } else if (action === 'cancel') {
+          } else if (action === 'cancel' || action === 'expire') {
             if (sellerEmail) await p2pEmailService.sendOrderCancelled(sellerEmail, updatedOrder);
             if (buyerEmail && buyerEmail !== sellerEmail) await p2pEmailService.sendOrderCancelled(buyerEmail, updatedOrder);
           } else if (action === 'dispute') {
@@ -3807,8 +4203,7 @@ app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) =>
 
     return res.json({
       message: 'Order updated.',
-      order: { ...normalizedOrder, messages: normalizedMessages },
-      messages: normalizedMessages
+      order: normalizedOrder
     });
   } catch (error) {
     if (error.status) {
@@ -3826,7 +4221,7 @@ app.get('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) =
       return res.status(404).json({ message: 'Order not found.' });
     }
 
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -3848,20 +4243,22 @@ app.post('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) 
 
   try {
     const mutation = await withOrderMutation(req.params.orderId, (next) => {
-      if (!isParticipant(next, req.p2pUser.id)) {
+      if (!isParticipant(next, req.p2pUser)) {
         return { error: 'not_participant' };
       }
 
-      if (['RELEASED', 'CANCELLED', 'EXPIRED'].includes(next.status)) {
+      if (isClosedOrderStatus(next.status)) {
         return { error: 'chat_closed' };
       }
 
       const now = Date.now();
-      const senderRole = next.buyerId === req.p2pUser.id ? 'buyer' : 'seller';
+      const senderRole = resolveOrderActorRole(next, req.p2pUser) || '';
       const msgObj = {
         id: `msg_${now}_${Math.floor(Math.random() * 1000)}`,
-        sender: req.p2pUser.username,
+        sender: req.p2pUser.username || req.p2pUser.email || 'User',
         senderRole,
+        senderUserId: String(req.p2pUser.id || req.p2pUser.userId || '').trim(),
+        senderEmail: String(req.p2pUser.email || '').trim().toLowerCase(),
         text: text || '',
         createdAt: now
       };
@@ -3896,6 +4293,121 @@ app.post('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) 
   }
 });
 
+// ── Rate counterparty after order completes ──────────────────────────────────
+app.post('/api/p2p/orders/:orderId/rate', requiresP2PUser, async (req, res) => {
+  const stars = parseInt(req.body.stars, 10);
+  const comment = String(req.body.comment || '').trim().slice(0, 300);
+  if (!stars || stars < 1 || stars > 5) {
+    return res.status(400).json({ message: 'stars must be 1–5.' });
+  }
+  try {
+    const order = await repos.getP2POrderById(req.params.orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    if (!isParticipant(order, req.p2pUser.id)) {
+      return res.status(403).json({ message: 'Only order participants can rate.' });
+    }
+    if (!['RELEASED', 'COMPLETED'].includes(order.status)) {
+      return res.status(400).json({ message: 'Can only rate completed orders.' });
+    }
+    const alreadyRated = await repos.hasRatedOrder(req.p2pUser.id, order.id);
+    if (alreadyRated) return res.status(409).json({ message: 'You have already rated this order.' });
+    const toUserId = req.p2pUser.id === (order.buyerUserId || order.buyerId)
+      ? (order.sellerUserId || order.sellerId)
+      : (order.buyerUserId || order.buyerId);
+    await repos.submitRating(req.p2pUser.id, toUserId, order.id, stars, comment);
+    return res.json({ success: true, message: 'Rating submitted.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error while submitting rating.' });
+  }
+});
+
+// ── Order Appeal ─────────────────────────────────────────────────────────────
+app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) => {
+  try {
+    const { reason, description, images } = req.body;
+    if (!reason) return res.status(400).json({ message: 'Reason is required.' });
+    if (!description || description.length < 10) return res.status(400).json({ message: 'Description too short.' });
+    const order = await repos.getP2POrderById(req.params.orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    if (!isParticipant(order, req.p2pUser.id)) return res.status(403).json({ message: 'Not a participant.' });
+    const appealDoc = {
+      orderId: order.id || order._id,
+      orderReference: order.reference,
+      userId: req.p2pUser.id,
+      userEmail: req.p2pUser.email || req.p2pUser.username,
+      reason,
+      description: description.slice(0, 1000),
+      images: Array.isArray(images) ? images.slice(0, 3) : [],
+      status: 'PENDING',
+      createdAt: new Date()
+    };
+    const db = mongoose.connection.db;
+    await db.collection('p2pAppeals').insertOne(appealDoc);
+    const updatedOrder = await walletService.setOrderDisputed(req.params.orderId, req.p2pUser, {
+      reason: String(reason || '').slice(0, 500),
+      appealType: String(reason || '').trim(),
+      appealReason: description.slice(0, 1000),
+      appealImages: Array.isArray(images) ? images.slice(0, 3) : []
+    });
+    const normalizedOrder = safeNormalizeOrderState(updatedOrder, {
+      route: 'appeal-submit',
+      userId: req.p2pUser.id
+    });
+    if (!normalizedOrder) {
+      return res.status(500).json({ message: 'Order data is invalid.' });
+    }
+    const normalizedMessages = toClientMessages(updatedOrder.messages || []);
+    broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
+    broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
+    broadcastOrderParticipantEvent(updatedOrder, 'order_updated', {
+      orderId: updatedOrder.id,
+      reference: updatedOrder.reference,
+      status: normalizeOrderStatus(updatedOrder.status)
+    });
+    console.log(`[Appeal] Order ${order.reference} by ${req.p2pUser.id}: ${reason}`);
+    return res.json({
+      success: true,
+      message: 'Appeal submitted. Redirecting to dispute orders.',
+      order: normalizedOrder,
+      messages: normalizedMessages
+    });
+  } catch (e) {
+    console.error('Appeal error:', e.message);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+// ── Email verification OTP ────────────────────────────────────────────────────
+app.post('/api/p2p/verify-email/send', requiresP2PUser, async (req, res) => {
+  try {
+    const cred = await repos.getP2PCredentialByUserId(req.p2pUser);
+    if (!cred) return res.status(404).json({ message: 'User not found.' });
+    if (cred.emailVerified) return res.json({ success: true, message: 'Email already verified.' });
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 min
+    await repos.storeEmailOtp(req.p2pUser, otp, expiresAt);
+    await p2pEmailService.sendEmailVerificationOtp(req.p2pUser.email, otp);
+    return res.json({ success: true, message: 'OTP sent to your email.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Could not send OTP. Try again.' });
+  }
+});
+
+app.post('/api/p2p/verify-email/confirm', requiresP2PUser, async (req, res) => {
+  const otp = String(req.body.otp || '').trim();
+  if (!otp || otp.length !== 6) return res.status(400).json({ message: 'Enter the 6-digit OTP.' });
+  try {
+    const result = await repos.verifyAndConsumeEmailOtp(req.p2pUser, otp);
+    if (!result.ok) {
+      const msgs = { no_otp: 'No OTP found. Request a new one.', expired: 'OTP expired. Request a new one.', wrong_otp: 'Incorrect OTP.', user_not_found: 'User not found.' };
+      return res.status(400).json({ message: msgs[result.reason] || 'Verification failed.' });
+    }
+    return res.json({ success: true, message: 'Email verified successfully.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error during verification.' });
+  }
+});
+
 app.get('/api/p2p/orders/:orderId/stream', requiresP2PUser, async (req, res) => {
   try {
     const order = await repos.getP2POrderById(req.params.orderId);
@@ -3904,7 +4416,7 @@ app.get('/api/p2p/orders/:orderId/stream', requiresP2PUser, async (req, res) => 
       return res.status(404).json({ message: 'Order not found.' });
     }
 
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -3935,172 +4447,24 @@ app.get('/api/p2p/me/stream', requiresP2PUser, (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
-  const userId = req.p2pUser.id;
-  const streams = getUserStreams(userId);
-  streams.add(res);
+  const aliasKeys = getP2PUserAliasKeys(req.p2pUser);
+  aliasKeys.forEach((aliasKey) => {
+    getUserStreams(aliasKey).add(res);
+  });
   res.write(`event: connected\ndata: ${JSON.stringify({ message: 'user-stream-connected' })}\n\n`);
   // Keepalive ping every 20s
   const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
   req.on('close', () => {
     clearInterval(ping);
-    streams.delete(res);
-    if (streams.size === 0) p2pUserStreams.delete(userId);
+    aliasKeys.forEach((aliasKey) => {
+      const streams = p2pUserStreams.get(aliasKey);
+      if (!streams) {
+        return;
+      }
+      streams.delete(res);
+      if (streams.size === 0) p2pUserStreams.delete(aliasKey);
+    });
   });
-});
-
-// ── Admin Support SSE — live notify ──────────────────────────────────────────
-app.get('/api/admin/support/live-notify', async (req, res) => {
-  // Allow admin cookie or skip auth in dev
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.flushHeaders();
-  adminSupportSseClients.add(res);
-  res.write(': connected\n\n');
-  const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
-  req.on('close', () => { clearInterval(ping); adminSupportSseClients.delete(res); });
-});
-
-// ── Admin: Withdrawal live-notify SSE ─────────────────────────────────────────
-app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
-  try {
-    const cookies = parseCookies(req);
-    const accessToken = String(cookies[ADMIN_ACCESS_COOKIE_NAME] || '').trim();
-    if (!accessToken) return res.status(401).end();
-  } catch(_) {}
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.flushHeaders();
-  adminWithdrawalSseClients.add(res);
-  res.write(': connected\n\n');
-  const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
-  req.on('close', () => { clearInterval(ping); adminWithdrawalSseClients.delete(res); });
-});
-
-// ── Public Support Chat — user submits message ────────────────────────────────
-app.post('/api/support/chat', async (req, res) => {
-  try {
-    const { message, topic, email, name } = req.body || {};
-    if (!message || !String(message).trim()) {
-      return res.status(400).json({ message: 'Message is required.' });
-    }
-    const ticketData = {
-      id: `tkt_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
-      userId: email || 'guest',
-      subject: topic ? `[${topic}] ${String(message).slice(0, 60)}` : String(message).slice(0, 80),
-      status: 'OPEN',
-      priority: 'MEDIUM',
-      assignedTo: '',
-      email: email || '',
-      name: name || 'User',
-      messages: [{
-        id: `tmsg_${Date.now()}`,
-        sender: 'user',
-        senderName: name || 'User',
-        text: String(message).trim(),
-        createdAt: new Date()
-      }],
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    // Save to DB if adminStore is ready
-    let savedId = ticketData.id;
-    if (adminStore && typeof adminStore.createSupportTicket === 'function') {
-      const saved = await adminStore.createSupportTicket(ticketData);
-      if (saved && saved.id) savedId = saved.id;
-    }
-    // Notify admin via SSE
-    broadcastAdminSupportEvent({
-      ticketId: savedId,
-      subject: ticketData.subject,
-      agentName: name || 'User',
-      email: email || 'guest',
-      message: String(message).trim().slice(0, 100)
-    });
-    return res.json({ success: true, ticketId: savedId, message: 'Support request submitted.' });
-  } catch (err) {
-    return res.status(500).json({ message: 'Failed to submit support request.' });
-  }
-});
-
-// ── Public: get ticket messages (user polling for admin replies) ──────────────
-app.get('/api/support/ticket/:ticketId/messages', async (req, res) => {
-  try {
-    const { ticketId } = req.params;
-    if (!ticketId) return res.status(400).json({ message: 'ticketId required' });
-    if (!adminStore || typeof adminStore.getSupportTicket !== 'function') {
-      return res.status(503).json({ message: 'Support service unavailable' });
-    }
-    const ticket = await adminStore.getSupportTicket(String(ticketId).trim());
-    // Return messages array and current status
-    return res.json({
-      ticketId: ticket.id,
-      status: ticket.status,
-      messages: (ticket.messages || []).map(m => {
-        const isUser = m.sender === 'user';
-        return {
-          id: m.id,
-          sender: isUser ? 'user' : 'admin',
-          senderName: m.senderName || (isUser ? 'You' : 'Support Agent'),
-          text: m.text,
-          createdAt: m.createdAt
-        };
-      })
-    });
-  } catch (err) {
-    if (err && err.status === 404) return res.status(404).json({ message: 'Ticket not found' });
-    return res.status(500).json({ message: 'Could not fetch messages' });
-  }
-});
-
-// ── Public: user sends a reply on an existing ticket ─────────────────────────
-app.post('/api/support/ticket/:ticketId/user-reply', async (req, res) => {
-  try {
-    const { ticketId } = req.params;
-    const { message, name } = req.body || {};
-    if (!ticketId || !message || !String(message).trim()) {
-      return res.status(400).json({ message: 'ticketId and message required' });
-    }
-    if (!adminStore || typeof adminStore.getSupportTicket !== 'function') {
-      return res.status(503).json({ message: 'Support service unavailable' });
-    }
-    const ticket = await adminStore.getSupportTicket(String(ticketId).trim());
-    const newMsg = {
-      id: `tmsg_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
-      sender: 'user',
-      senderName: name || ticket.name || 'User',
-      text: String(message).trim(),
-      createdAt: new Date()
-    };
-    // Push message to ticket's messages array in DB
-    const { getCollections } = require('./lib/db');
-    const cols = getCollections ? getCollections() : null;
-    const adminSupportTickets = cols ? cols.adminSupportTickets : null;
-    if (adminSupportTickets) {
-      await adminSupportTickets.updateOne(
-        { id: String(ticketId).trim() },
-        {
-          $push: { messages: newMsg },
-          $set: { updatedAt: new Date(), status: 'OPEN' }
-        }
-      );
-    }
-    // Notify admin via SSE that user replied
-    broadcastAdminSupportEvent({
-      type: 'user_reply',
-      ticketId: ticket.id,
-      subject: ticket.subject,
-      agentName: name || ticket.name || 'User',
-      message: newMsg.text.slice(0, 100)
-    });
-    return res.json({ success: true, messageId: newMsg.id });
-  } catch (err) {
-    if (err && err.status === 404) return res.status(404).json({ message: 'Ticket not found' });
-    return res.status(500).json({ message: 'Could not send reply' });
-  }
 });
 
 app.get('/admin-login', (req, res) => {
@@ -4108,11 +4472,11 @@ app.get('/admin-login', (req, res) => {
 });
 
 app.get('/admin/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
+  res.sendFile(path.join(__dirname, 'public', 'bitegit-admin-login.html'));
 });
 
 app.get('/bitegit-admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
+  res.sendFile(path.join(__dirname, 'public', 'bitegit-admin-login.html'));
 });
 
 app.get('/admin', async (req, res) => {
@@ -4143,7 +4507,7 @@ app.get('/admin', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'gate-home.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 app.get('/markets', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'markets.html'));
@@ -4154,14 +4518,29 @@ app.get('/assets', (req, res) => {
 app.get('/chart', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chart.html'));
 });
-app.get('/chart.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'chart.html'));
-});
 app.get('/auth', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'auth.html'));
 });
+app.get('/signup', (req, res) => {
+  const joiner = req.url.includes('?') ? '&' : '?';
+  const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?') + 1) : '';
+  const suffix = qs ? `${joiner}${qs}` : '';
+  res.redirect(301, `/auth?mode=signup${suffix}`);
+});
+app.get('/login', (req, res) => {
+  // /login is a canonical alias for /auth — preserves query string
+  const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  res.redirect(301, '/auth' + qs);
+});
+app.get('/download', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'download.html'));
+});
 app.get('/p2p', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p.html'));
+});
+
+app.get('/wallet', (req, res) => {
+  res.redirect(301, '/assets');
 });
 
 app.get('/p2p-buy', (req, res) => {
@@ -4169,15 +4548,7 @@ app.get('/p2p-buy', (req, res) => {
 });
 
 app.get('/kyc', (req, res) => {
-  res.redirect('/p2p#kyc');
-});
-
-app.get('/earn', (req, res) => {
-  res.redirect('/');
-});
-
-app.get('/rewards', (req, res) => {
-  res.redirect('/p2p#rewards');
+  res.sendFile(path.join(__dirname, 'public', 'kyc.html'));
 });
 
 app.get('/trade', (req, res) => {
@@ -4194,16 +4565,27 @@ app.get('/trade/:market/:symbol', (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'trade.html'));
 });
 
+app.get('/favicon.ico', (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'logos', 'bitegit-b.png'));
+});
+
 app.get('/healthz', (req, res) => {
   return res.status(200).json({
-    status: 'ok',
+    status: persistenceReady ? 'ok' : 'starting',
     ready: persistenceReady,
-    db: isDbConnected() ? 'connected' : 'disconnected'
+    db: isDbConnected() ? 'connected' : 'disconnected',
+    boot: getBootStatusSnapshot()
   });
 });
 
 app.get('/api/health', (req, res) => {
-  return res.status(200).json({ status: 'OK', service: 'bitegit-backend' });
+  return res.status(200).json({
+    status: persistenceReady ? 'OK' : 'STARTING',
+    service: 'bitegit-backend',
+    ready: persistenceReady,
+    db: isDbConnected() ? 'connected' : 'disconnected',
+    boot: getBootStatusSnapshot()
+  });
 });
 
 // Keep social feed live even before full boot/module registration completes.
@@ -4337,6 +4719,11 @@ if (ENABLE_DEV_TEST_ROUTES) {
 }
 
 function registerShutdownHandlers() {
+  if (shutdownHandlersRegistered) {
+    return;
+  }
+  shutdownHandlersRegistered = true;
+
   ['SIGINT', 'SIGTERM'].forEach((signal) => {
     process.on(signal, () => {
       if (shuttingDown) {
@@ -4345,14 +4732,13 @@ function registerShutdownHandlers() {
       shuttingDown = true;
       console.log(`${signal} received, shutting down HTTP server...`);
 
-      if (bootRetryTimer) {
-        clearTimeout(bootRetryTimer);
-        bootRetryTimer = null;
-      }
-
       if (p2pExpirySweepTimer) {
         clearInterval(p2pExpirySweepTimer);
         p2pExpirySweepTimer = null;
+      }
+      if (bootRetryTimer) {
+        clearTimeout(bootRetryTimer);
+        bootRetryTimer = null;
       }
 
       const forceExitTimer = setTimeout(() => {
@@ -4421,22 +4807,127 @@ function registerShutdownHandlers() {
   });
 }
 
-async function boot() {
-  try {
-    if (!httpServer) {
-      httpServer = app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Server running on port ${PORT}`);
-      });
-      registerShutdownHandlers();
-    }
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
+async function retryStartupStep(label, task, {
+  attempts = STARTUP_RETRY_ATTEMPTS,
+  baseDelayMs = STARTUP_RETRY_BASE_DELAY_MS
+} = {}) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      if (attempt > 1) {
+        console.log(`[boot] Retrying ${label} (attempt ${attempt}/${attempts})...`);
+      }
+      return await task();
+    } catch (error) {
+      lastError = error;
+      const message = String(error?.message || error);
+      console.error(`[boot] ${label} failed on attempt ${attempt}/${attempts}: ${message}`);
+
+      if (attempt >= attempts) {
+        break;
+      }
+
+      const delayMs = baseDelayMs * attempt;
+      console.log(`[boot] Waiting ${delayMs}ms before retrying ${label}...`);
+      await sleep(delayMs);
+    }
+  }
+
+  throw lastError || new Error(`${label} failed after ${attempts} attempt(s).`);
+}
+
+async function startHttpServer() {
+  if (httpServer) {
+    return;
+  }
+
+  await new Promise((resolve, reject) => {
+    httpServer = app.listen(PORT, HOST, () => {
+      console.log(`[boot] Server started — PID ${process.pid} on port ${PORT}`);
+
+      // Attach WebSocket server for real-time order push
+      const wss = new WebSocketServer({ server: httpServer, path: '/ws/p2p' });
+      wss.on('connection', async (ws, req) => {
+        const user = normalizeP2PUserObject(await getP2PUserFromRequest(req).catch(() => null));
+        if (!user) { ws.close(4401, 'Unauthorized'); return; }
+        const aliasKeys = getP2PUserAliasKeys(user);
+        aliasKeys.forEach((aliasKey) => {
+          getWsClients(aliasKey).add(ws);
+        });
+        ws.send(JSON.stringify({ event: 'connected', data: { userId: user.id } }));
+        const cleanup = () => {
+          aliasKeys.forEach((aliasKey) => {
+            const clients = p2pWsClients.get(aliasKey);
+            if (!clients) {
+              return;
+            }
+            clients.delete(ws);
+            if (clients.size === 0) {
+              p2pWsClients.delete(aliasKey);
+            }
+          });
+        };
+        ws.on('close', cleanup);
+        ws.on('error', cleanup);
+      });
+
+      resolve();
+    });
+
+    httpServer.once('error', (err) => {
+      httpServer = null;
+      reject(err);
+    });
+  });
+}
+
+function scheduleBootRetry() {
+  if (persistenceReady || bootRetryTimer) {
+    return;
+  }
+
+  const delayMs = Math.min(60_000, STARTUP_RETRY_BASE_DELAY_MS * Math.max(1, bootAttemptCount));
+  console.log(`[boot] Scheduling retry in ${delayMs}ms.`);
+  bootRetryTimer = setTimeout(() => {
+    bootRetryTimer = null;
+    boot().catch((error) => {
+      console.error('[boot] Retry crashed unexpectedly:', error?.message || error);
+    });
+  }, delayMs);
+  if (typeof bootRetryTimer.unref === 'function') {
+    bootRetryTimer.unref();
+  }
+}
+
+async function boot() {
+  if (persistenceReady) {
+    return;
+  }
+  if (bootInProgress) {
+    console.warn('[boot] boot() called while initialization is already in progress — ignoring duplicate call');
+    return;
+  }
+  bootInProgress = true;
+  bootAttemptCount += 1;
+  bootState.state = 'initializing';
+  bootState.attempt = bootAttemptCount;
+  bootState.lastError = null;
+
+  try {
+    await startHttpServer();
+    registerShutdownHandlers();
     validateStartupConfig();
     tokenService.ensureJwtSecret();
     const mongoConfig = getMongoConfig();
-    console.log(`MongoDB target URI: ${mongoConfig.maskedUri}`);
+    console.log(`MongoDB target URI (${mongoConfig.uriSource || 'unknown'}): ${mongoConfig.maskedUri}`);
     console.log('Environment loader: dotenv');
 
-    await connectToMongo();
+    await retryStartupStep('MongoDB connection', () => connectToMongo());
     const collections = getCollections();
     repos = createRepositories(collections);
     auditLogService = createAuditLogService(collections);
@@ -4477,27 +4968,6 @@ async function boot() {
       }
     });
     p2pOrderExpiryService = createP2POrderExpiryService({ walletService });
-
-    // Load merchant applications from MongoDB into in-memory map
-    try {
-      const savedApps = await collections.merchantApplications.find({}).toArray();
-      for (const doc of savedApps) {
-        merchantApplications.set(doc.id, doc);
-        const num = parseInt(String(doc.id || '').replace('MRC-', ''), 10);
-        if (!isNaN(num) && num >= merchantAppCounter) merchantAppCounter = num + 1;
-      }
-      console.log(`[merchants] loaded ${savedApps.length} applications from MongoDB`);
-    } catch (e) {
-      console.error('[merchants] failed to load from MongoDB:', e.message);
-    }
-
-    // Run expireOrders in background every 30 seconds — NOT on each request
-    setInterval(async () => {
-      try { await walletService.expireOrders(); } catch(e) { /* ignore */ }
-    }, 30 * 1000);
-    // Run once immediately on boot
-    walletService.expireOrders().catch(() => {});
-
     authMiddleware = createAuthMiddleware({
       verifyAccessToken: tokenService.verifyAccessToken,
       resolveLegacyUser: async (req) => {
@@ -4520,38 +4990,6 @@ async function boot() {
     const otpAuthConfig = readAuthOtpConfig();
     const geetestService = createGeetestService(otpAuthConfig.geetest);
 
-    registerAuthRoutes(app, {
-      repos,
-      walletService,
-      authMiddleware,
-      tokenService,
-      buildP2PUserFromEmail,
-      createLegacyP2PUserSession: createP2PUserSession,
-      setCookie,
-      clearCookie,
-      cookieNames: {
-        accessToken: P2P_ACCESS_COOKIE_NAME,
-        refreshToken: P2P_REFRESH_COOKIE_NAME,
-        legacyP2PSession: P2P_USER_COOKIE_NAME
-      },
-      p2pUserTtlMs: P2P_USER_TTL_MS,
-      auditLogService,
-      authEmailService,
-      collections,
-      captchaVerifier: geetestService,
-      otpTtlMs: SIGNUP_OTP_TTL_MS,
-      enableLegacyOtpEndpoints: false,
-      onLoginSuccess: async ({ user, ipAddress, userAgent }) => {
-        if (!userCenterService) {
-          return;
-        }
-        await userCenterService.recordLoginEvent(user, {
-          ip: ipAddress,
-          device: userAgent
-        });
-      }
-    });
-
     const buildFallbackOtpAuthService = () =>
       createRepoFallbackOtpAuthService({
         repos,
@@ -4562,7 +5000,7 @@ async function boot() {
         otpConfig: otpAuthConfig.otp
       });
 
-    if (otpAuthConfig.mysql && otpAuthConfig.mysql.enabled) {
+    if (otpAuthConfig.mysql.enabled) {
       try {
         otpAuthStore = createMySqlAuthStore(otpAuthConfig.mysql);
         await otpAuthStore.initialize();
@@ -4575,6 +5013,40 @@ async function boot() {
           otpConfig: otpAuthConfig.otp
         });
         console.log('[auth-otp] Modular OTP auth enabled with MySQL + Geetest + SMTP');
+
+        try {
+          const cursor = collections.p2pCredentials.find(
+            {},
+            {
+              projection: {
+                email: 1,
+                passwordHash: 1,
+                role: 1,
+                emailVerified: 1,
+                userId: 1,
+                username: 1,
+                kycStatus: 1
+              }
+            }
+          );
+          let syncedCredentials = 0;
+          for await (const credential of cursor) {
+            if (!credential?.email || !credential?.passwordHash) {
+              continue;
+            }
+            await otpAuthStore.setP2PCredential(credential.email, credential.passwordHash, {
+              role: credential.role,
+              emailVerified: credential.emailVerified,
+              userId: credential.userId,
+              username: credential.username,
+              kycStatus: credential.kycStatus
+            });
+            syncedCredentials += 1;
+          }
+          console.log(`[auth-otp] Synced ${syncedCredentials} Mongo credential(s) into MySQL auth store`);
+        } catch (syncError) {
+          console.warn('[auth-otp] Credential sync to MySQL auth store skipped:', syncError?.message || syncError);
+        }
       } catch (error) {
         otpAuthStore = null;
         otpAuthService = buildFallbackOtpAuthService();
@@ -4588,25 +5060,8 @@ async function boot() {
       console.log('[auth-otp] MySQL config missing; fallback OTP auth enabled with repository store + Geetest + SMTP.');
     }
 
-    registerOtpAuthRoutes(app, {
-      otpAuthService,
-      setCookie,
-      tokenService,
-      cookieNames: otpAuthConfig.cookieNames,
-      isProduction: IS_PRODUCTION,
-      onLoginSuccess: async ({ user, ipAddress, userAgent }) => {
-        if (!userCenterService) {
-          return;
-        }
-        await userCenterService.recordLoginEvent(user, {
-          ip: ipAddress,
-          device: userAgent
-        });
-      }
-    });
-
     const userCenterConfig = readUserCenterConfig();
-    if (userCenterConfig.mysql && userCenterConfig.mysql.enabled) {
+    if (userCenterConfig.mysql.enabled) {
       try {
         userCenterStore = createUserCenterStore(userCenterConfig.mysql);
         await userCenterStore.initialize();
@@ -4627,11 +5082,6 @@ async function boot() {
       console.log('[user-center] MySQL config missing; User Center APIs will return 503.');
     }
 
-    registerUserCenterRoutes(app, {
-      requiresP2PUser,
-      userCenterService
-    });
-
     const socialFeedConfig = readSocialFeedConfig();
     async function enableSocialFeedFallback(reason) {
       socialFeedStore = createSocialFeedFallbackStore();
@@ -4643,7 +5093,7 @@ async function boot() {
       console.warn(`[social-feed] ${reason}. Using in-memory fallback store for live feed APIs.`);
     }
 
-    if (socialFeedConfig.mysql && socialFeedConfig.mysql.enabled) {
+    if (socialFeedConfig.mysql.enabled) {
       try {
         socialFeedStore = createSocialFeedStore(socialFeedConfig.mysql);
         await socialFeedStore.initialize();
@@ -4663,45 +5113,12 @@ async function boot() {
       await enableSocialFeedFallback('MySQL config missing');
     }
 
-    registerSocialFeedRoutes(app, {
-      socialFeedService,
-      requiresP2PUser,
-      getP2PUserFromRequest,
-      requiresAdminSession
-    });
-
     p2pOrderController = createP2POrderController({
       repos,
       walletService,
       orderTtlMs: P2P_ORDER_TTL_MS,
       p2pEmailService,
       broadcastUserEvent
-    });
-    // One active order per user check
-    app.post('/api/p2p/orders', requiresP2PUser, async (req, res, next) => {
-      // Prevent a buyer from placing a new order while they already have one in progress.
-      // Uses correct field names (buyerUserId) and excludes expired orders.
-      try {
-        const userId = String(req.p2pUser?.id || '').trim();
-        if (userId) {
-          const cols = getCollections();
-          const now = Date.now();
-          const activeCount = await cols.p2pOrders.countDocuments({
-            buyerUserId: userId,
-            status: { $in: ['CREATED', 'PAYMENT_SENT', 'PAID'] },
-            expiresAt: { $gt: now }
-          });
-          if (activeCount >= 1) {
-            return res.status(400).json({ success: false, message: 'You already have an active order. Complete or cancel it first.' });
-          }
-        }
-      } catch (_) {}
-      next();
-    });
-
-    registerP2POrderRoutes(app, {
-      requiresP2PUser,
-      controller: p2pOrderController
     });
 
     adminStore = createAdminStore({
@@ -4737,43 +5154,48 @@ async function boot() {
       }
     });
 
-    registerAdminRoutes(app, {
-      adminStore,
-      adminAuthMiddleware,
-      adminControllers,
-      auditLogService,
-      collections
-    });
-
     const extendedStore = createAdminExtendedStore({ collections });
-    registerAdminExtendedRoutes(app, {
-      adminStore,
-      extendedStore,
-      adminAuthMiddleware
-    });
 
-    await repos.ensureIndexes();
-    await adminStore.ensureIndexes();
+    await retryStartupStep('MongoDB index setup', async () => {
+      await repos.ensureIndexes();
+      await adminStore.ensureIndexes();
+    });
     console.log('MongoDB indexes ensured');
 
-    const migration = await repos.migrateLegacyLeadsJsonOnce(dataFile);
+    const migration = await retryStartupStep('legacy lead migration', async () => {
+      return repos.migrateLegacyLeadsJsonOnce(dataFile);
+    }, {
+      attempts: 3,
+      baseDelayMs: 1500
+    });
     if (migration.migrated) {
       console.log(`Legacy leads migration completed. Imported ${migration.imported || 0} rows.`);
     } else {
       console.log(`Legacy leads migration skipped (${migration.reason || 'n/a'}).`);
     }
 
-    await repos.ensureSeedOffers([]);
+    await retryStartupStep('seed offer initialization', () => repos.ensureSeedOffers([]), {
+      attempts: 3,
+      baseDelayMs: 1500
+    });
 
-    await adminStore.ensureDefaults();
+    await retryStartupStep('admin defaults initialization', async () => {
+      await adminStore.ensureDefaults();
+    }, {
+      attempts: 3,
+      baseDelayMs: 1500
+    });
     const enableDemoSeedData =
       String(process.env.ENABLE_DEMO_SEED_DATA || '')
         .trim()
         .toLowerCase() === 'true';
     if (enableDemoSeedData) {
-      await adminStore.ensureDemoSupportTicket();
+      await retryStartupStep('demo support seed', () => adminStore.ensureDemoSupportTicket(), {
+        attempts: 3,
+        baseDelayMs: 1500
+      });
     }
-    const seededAdmin = await adminStore.seedAdminUser({
+    const seededAdmin = await retryStartupStep('admin seed initialization', () => adminStore.seedAdminUser({
       username: ADMIN_SEED_USERNAME,
       email: ADMIN_SEED_EMAIL,
       password: ADMIN_PASSWORD,
@@ -4790,18 +5212,107 @@ async function boot() {
         String(process.env.ADMIN_FORCE_ACTIVATE || '')
           .trim()
           .toLowerCase() === 'true'
+    }), {
+      attempts: 3,
+      baseDelayMs: 1500
     });
     if (seededAdmin) {
       console.log(`Admin seed ensured for ${seededAdmin.email} (${seededAdmin.role})`);
     }
 
-    app.use(apiNotFoundHandler);
+    if (!bootRoutesRegistered) {
+      registerAuthRoutes(app, {
+        repos,
+        authStore: otpAuthStore,
+        walletService,
+        authMiddleware,
+        tokenService,
+        buildP2PUserFromEmail,
+        createLegacyP2PUserSession: createP2PUserSession,
+        setCookie,
+        clearCookie,
+        cookieNames: {
+          accessToken: P2P_ACCESS_COOKIE_NAME,
+          refreshToken: P2P_REFRESH_COOKIE_NAME,
+          legacyP2PSession: P2P_USER_COOKIE_NAME
+        },
+        p2pUserTtlMs: P2P_USER_TTL_MS,
+        auditLogService,
+        authEmailService,
+        captchaVerifier: geetestService,
+        otpTtlMs: SIGNUP_OTP_TTL_MS,
+        enableLegacyOtpEndpoints: false,
+        onLoginSuccess: async ({ user, ipAddress, userAgent }) => {
+          if (!userCenterService) {
+            return;
+          }
+          await userCenterService.recordLoginEvent(user, {
+            ip: ipAddress,
+            device: userAgent
+          });
+        }
+      });
 
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
+      registerOtpAuthRoutes(app, {
+        otpAuthService,
+        setCookie,
+        tokenService,
+        cookieNames: otpAuthConfig.cookieNames,
+        isProduction: IS_PRODUCTION,
+        onLoginSuccess: async ({ user, ipAddress, userAgent }) => {
+          if (!userCenterService) {
+            return;
+          }
+          await userCenterService.recordLoginEvent(user, {
+            ip: ipAddress,
+            device: userAgent
+          });
+        }
+      });
 
-    app.use(errorHandler);
+      registerUserCenterRoutes(app, {
+        requiresP2PUser,
+        userCenterService
+      });
+
+      registerSocialFeedRoutes(app, {
+        socialFeedService,
+        requiresP2PUser,
+        getP2PUserFromRequest,
+        requiresAdminSession
+      });
+
+      registerP2POrderRoutes(app, {
+        requiresP2PUser,
+        controller: p2pOrderController
+      });
+
+      registerAdminRoutes(app, {
+        adminStore,
+        adminAuthMiddleware,
+        adminControllers,
+        auditLogService
+      });
+
+      registerAdminExtendedRoutes(app, {
+        adminStore,
+        extendedStore,
+        adminAuthMiddleware
+      });
+
+      app.use(apiNotFoundHandler);
+
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+      });
+
+      // Sentry must be before other error handlers
+      if (process.env.SENTRY_DSN) {
+        app.use(Sentry.expressErrorHandler());
+      }
+      app.use(errorHandler);
+      bootRoutesRegistered = true;
+    }
 
     if (p2pExpirySweepTimer) {
       clearInterval(p2pExpirySweepTimer);
@@ -4809,8 +5320,48 @@ async function boot() {
     p2pExpirySweepTimer = setInterval(async () => {
       try {
         const result = await p2pOrderExpiryService.runExpirySweep();
+        if (result.warningCount > 0 && Array.isArray(result.warningOrders)) {
+          console.log(`P2P payment warning sent for ${result.warningCount} order(s).`);
+          for (const order of result.warningOrders) {
+            const normalizedOrder = safeNormalizeOrderState(order, {
+              route: 'expiry-warning-sweep',
+              userId: 'system'
+            });
+            if (!normalizedOrder) {
+              continue;
+            }
+            const normalizedMessages = toClientMessages(order.messages || []);
+            broadcastOrderEvent(order.id, 'message_update', { messages: normalizedMessages });
+            broadcastOrderParticipantEvent(order, 'order_updated', {
+              type: 'order_update',
+              orderId: order.id,
+              status: normalizedOrder.status,
+              order: normalizedOrder
+            });
+          }
+        }
         if (result.cancelledCount > 0) {
           console.log(`Auto-cancelled expired P2P orders: ${result.cancelledCount}`);
+          // Broadcast real-time update to affected buyers and sellers
+          if (Array.isArray(result.orders)) {
+            for (const order of result.orders) {
+              const normalizedOrder = safeNormalizeOrderState(order, {
+                route: 'expiry-cancel-sweep',
+                userId: 'system'
+              });
+              if (!normalizedOrder) {
+                continue;
+              }
+              const normalizedMessages = toClientMessages(order.messages || []);
+              broadcastOrderEvent(order.id, 'message_update', { messages: normalizedMessages });
+              broadcastOrderParticipantEvent(order, 'order_updated', {
+                type: 'order_update',
+                orderId: order.id,
+                status: normalizedOrder.status,
+                order: normalizedOrder
+              });
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to run P2P expiry sweep:', error.message);
@@ -4821,26 +5372,47 @@ async function boot() {
     }
 
     persistenceReady = true;
+    bootState.state = 'ready';
+    bootState.readyAt = new Date().toISOString();
+    bootState.lastFailureAt = null;
+    bootState.lastError = null;
+    if (bootRetryTimer) {
+      clearTimeout(bootRetryTimer);
+      bootRetryTimer = null;
+    }
     console.log(`MongoDB connected to ${mongoConfig.dbName}`);
   } catch (error) {
-    console.error('Failed to start server:', error.message);
-    if (!IS_PRODUCTION && error.stack) {
-      console.error(error.stack);
+    persistenceReady = false;
+    bootState.state = 'error';
+    bootState.lastFailureAt = new Date().toISOString();
+    bootState.lastError = String(error?.message || error);
+    if (error?.code === 'EADDRINUSE') {
+      console.error(`[boot] Startup error: port ${PORT} is already in use.`);
+    } else {
+      console.error('[boot] Startup error:', error.message);
     }
-
-    if (!persistenceReady && !bootRetryTimer) {
-      bootRetryTimer = setTimeout(() => {
-        bootRetryTimer = null;
-        boot().catch((bootError) => {
-          console.error('Boot retry failed:', bootError?.message || bootError);
-        });
-      }, 15000);
-      if (typeof bootRetryTimer.unref === 'function') {
-        bootRetryTimer.unref();
-      }
-      console.log('Will retry startup in 15 seconds...');
-    }
+    if (error.stack) console.error(error.stack);
+    scheduleBootRetry();
+  } finally {
+    bootInProgress = false;
   }
 }
 
-boot();
+// ── Always export so require('./server') works from any file ──────────────
+module.exports = { app, boot };
+
+// ── Entry-point guard ──────────────────────────────────────────────────────
+// boot() must run ONLY when server.js is the DIRECT entry point.
+//   node server.js          → require.main === module → TRUE  → boot() called here
+//   require('./server')     → require.main === module → FALSE → boot() NOT called here
+//                                                               caller calls it explicitly
+//
+// This prevents the duplicate app.listen(PORT) that causes EADDRINUSE:
+//   Without this guard: index.js does require('./server') which executes boot()
+//   AND node server.js also executes boot() → two listeners on the same port.
+if (require.main === module) {
+  boot().catch((err) => {
+    console.error('[boot] Unhandled startup error:', err?.message || err);
+    process.exit(1);
+  });
+}

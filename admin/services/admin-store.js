@@ -1,9 +1,14 @@
 const crypto = require('crypto');
 const { decryptText } = require('../../lib/crypto-utils');
+const {
+  ORDER_STATUS,
+  normalizeOrderStatus,
+  createOrderStatusHistoryEntry
+} = require('../../lib/p2p-order-state');
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'FINANCE_ADMIN', 'SUPPORT_ADMIN', 'COMPLIANCE_ADMIN'];
 const USER_STATUSES = ['ACTIVE', 'FROZEN', 'BANNED'];
-const WITHDRAWAL_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'];
+const WITHDRAWAL_STATUSES = ['PENDING', 'APPROVED', 'REJECTED', 'SENT'];
 const DEPOSIT_STATUSES = ['PENDING', 'COMPLETED', 'REJECTED'];
 const USDT_NETWORKS = ['TRC20', 'ERC20', 'BEP20'];
 
@@ -68,6 +73,34 @@ function normalizeWithdrawalStatus(status) {
   return 'PENDING';
 }
 
+function toAdminWithdrawal(row = {}) {
+  const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+  const requestId = String(row.requestId || row.id || '').trim();
+  const status = normalizeWithdrawalStatus(row.status || 'PENDING');
+  const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
+
+  return {
+    ...row,
+    id: String(row.id || requestId).trim(),
+    requestId,
+    userId: String(row.userId || '').trim(),
+    amount: toNumber(row.amount, 0),
+    currency,
+    coin: currency,
+    address: String(row.address || row.toAddress || row.to || '').trim(),
+    network: String(row.network || metadata.network || '').trim().toUpperCase(),
+    walletType: String(row.walletType || metadata.walletType || '').trim().toLowerCase(),
+    fee: toNumber(row.fee || metadata.fee, 0),
+    status,
+    createdAt: row.createdAt || null,
+    processedAt: row.processedAt || row.reviewedAt || null,
+    reviewedAt: row.reviewedAt || row.processedAt || null,
+    reviewedBy: row.reviewedBy || metadata.actorId || '',
+    reviewReason: row.reviewReason || metadata.reason || '',
+    metadata
+  };
+}
+
 function normalizeDepositDecision(decision) {
   const normalized = String(decision || '').trim().toUpperCase();
   if (['APPROVE', 'APPROVED', 'COMPLETED', 'CONFIRMED', 'CREDITED'].includes(normalized)) {
@@ -101,43 +134,6 @@ function sanitizeAddress(value) {
     throw new Error('Address format is invalid');
   }
   return address;
-}
-
-function toAdminWithdrawalStatus(status) {
-  const normalized = String(status || '').trim().toUpperCase();
-  if (['APPROVED', 'SENT', 'COMPLETED', 'SUCCESS'].includes(normalized)) {
-    return 'APPROVED';
-  }
-  if (['REJECTED', 'CANCELLED', 'CANCELED', 'FAILED'].includes(normalized)) {
-    return 'REJECTED';
-  }
-  return 'PENDING';
-}
-
-function walletWithdrawalToAdminDoc(row = {}) {
-  const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
-  const requestId = String(row.requestId || row.id || '').trim();
-  const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
-  const address = String(row.address || row.toAddress || row.to || '').trim();
-
-  return {
-    id: requestId,
-    requestId,
-    userId: String(row.userId || '').trim(),
-    username: String(row.username || metadata.username || '').trim(),
-    coin: currency,
-    currency,
-    amount: toNumber(row.amount, 0),
-    network: normalizeNetwork(row.network || metadata.network) || '',
-    address,
-    toAddress: address,
-    status: toAdminWithdrawalStatus(row.status),
-    fee: toNumber(row.fee || metadata.fee, 0),
-    source: String(metadata.source || row.source || 'assets_withdrawal').trim(),
-    createdAt: row.createdAt ? toDate(row.createdAt) : new Date(),
-    updatedAt: row.updatedAt ? toDate(row.updatedAt) : new Date(),
-    processedAt: row.processedAt ? toDate(row.processedAt) : null
-  };
 }
 
 function createEmptyNetworkMap() {
@@ -390,6 +386,9 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       adminHotWallets.createIndex({ coin: 1 }, { unique: true }),
       adminWithdrawals.createIndex({ id: 1 }, { unique: true }),
       adminWithdrawals.createIndex({ status: 1, createdAt: -1 }),
+      withdrawalRequests.createIndex({ requestId: 1 }, { unique: true }),
+      withdrawalRequests.createIndex({ status: 1, createdAt: -1 }),
+      withdrawalRequests.createIndex({ userId: 1, createdAt: -1 }),
       adminDeposits.createIndex({ id: 1 }, { unique: true }),
       adminDeposits.createIndex({ createdAt: -1 }),
       adminSpotPairs.createIndex({ symbol: 1 }, { unique: true }),
@@ -1015,6 +1014,8 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
 
     return {
       userId: normalizedUserId,
+      email: String(profile?.email || '').trim().toLowerCase(),
+      username: String(profile?.username || profile?.email || '').trim(),
       kycStatus: String(profile?.kycStatus || 'PENDING').toUpperCase(),
       remarks: String(profile?.kycRemarks || ''),
       documents: Array.isArray(document?.documents) ? document.documents : []
@@ -1043,6 +1044,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     }
 
     let aadhaarFront = null;
+    let aadhaarBack = null;
     let selfie = null;
 
     if (kycRequest.aadhaarFrontImage) {
@@ -1050,6 +1052,14 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
         aadhaarFront = decryptText(kycRequest.aadhaarFrontImage);
       } catch (_err) {
         aadhaarFront = null;
+      }
+    }
+
+    if (kycRequest.aadhaarBackImage) {
+      try {
+        aadhaarBack = decryptText(kycRequest.aadhaarBackImage);
+      } catch (_err) {
+        aadhaarBack = null;
       }
     }
 
@@ -1068,6 +1078,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       userId: normalizedUserId,
       status: String(profile?.kycStatus || kycRequest.status || 'PENDING').toUpperCase(),
       aadhaarFront,
+      aadhaarBack,
       selfie,
       aadhaarLast4,
       aadhaarMasked,
@@ -1107,23 +1118,23 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       { upsert: true }
     );
 
-    // Also sync p2p_credentials so /api/p2p/me returns the correct KYC status
-    const profileEmail = existingProfile?.email || '';
-    if (profileEmail && repos && typeof repos.updateP2PCredentialKyc === 'function') {
-      try {
-        await repos.updateP2PCredentialKyc(profileEmail, {
-          status: normalizedDecision, // 'APPROVED' → 'VERIFIED', 'REJECTED' → 'REJECTED', 'PENDING' → 'PENDING_REVIEW'
-          rejectionReason: normalizedDecision === 'REJECTED' ? String(remarks || 'Rejected by admin') : ''
-        });
-      } catch (_) {}
+    // Sync KYC decision to p2pCredentials so P2P app sees the change
+    const p2pKycStatusMap = { APPROVED: 'VERIFIED', REJECTED: 'REJECTED', PENDING: 'PENDING_REVIEW' };
+    const p2pKycStatus = p2pKycStatusMap[normalizedDecision] || 'PENDING_REVIEW';
+    const credUpdate = { kycStatus: p2pKycStatus, kycRemarks: String(remarks || ''), kycReviewedAt: Date.now() };
+    if (normalizedDecision === 'REJECTED') {
+      credUpdate.kycRejectionReason = String(remarks || '');
+      credUpdate.kycRejectedAt = Date.now();
+    } else if (normalizedDecision === 'APPROVED') {
+      credUpdate.kycVerifiedAt = Date.now();
+      credUpdate.kycRejectionReason = '';
     }
+    await p2pCredentials.updateOne({ userId: normalizedUserId }, { $set: credUpdate });
 
     return getUserKyc(normalizedUserId);
   }
 
   async function getWalletOverview() {
-    await syncWithdrawalRequestsToAdmin();
-
     const [walletAgg] = await wallets
       .aggregate([
         {
@@ -1141,9 +1152,9 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       ])
       .toArray();
 
-    const [withdrawalAgg] = await adminWithdrawals
+    const [withdrawalAgg] = await withdrawalRequests
       .aggregate([
-        { $match: { status: 'PENDING' } },
+        { $match: { status: 'pending' } },
         { $group: { _id: null, pendingAmount: { $sum: '$amount' }, pendingCount: { $sum: 1 } } }
       ])
       .toArray();
@@ -1250,175 +1261,50 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       { returnDocument: 'after' }
     );
 
-    const _doc = result?.value ?? result;
-    if (!_doc) {
+    if (!result.value) {
       throw new Error('Deposit request not found');
     }
 
-    return _doc;
+    return result.value;
   }
 
   async function listWithdrawals(params = {}) {
-    await syncWithdrawalRequestsToAdmin();
-
     const { page, limit, skip } = parsePagination(params);
-    const status = String(params.status || '').trim().toUpperCase();
+    const rawStatus = String(params.status || '').trim();
+    const status = rawStatus ? normalizeWithdrawalStatus(rawStatus) : '';
     const query = {};
-    if (status && WITHDRAWAL_STATUSES.includes(status)) {
-      query.status = status;
+    if (status) {
+      query.status = status.toLowerCase();
     }
 
-    const rows = await adminWithdrawals.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray();
-    const total = await adminWithdrawals.countDocuments(query);
-    return { page, limit, total, withdrawals: rows };
-  }
-
-  async function syncWithdrawalRequestsToAdmin() {
-    if (!withdrawalRequests || !adminWithdrawals) {
-      return;
-    }
-
-    const rows = await withdrawalRequests
-      .find({})
-      .sort({ createdAt: -1 })
-      .limit(200)
-      .toArray();
-
-    const operations = rows
-      .map((row) => walletWithdrawalToAdminDoc(row))
-      .filter((doc) => doc.id && doc.userId && doc.amount > 0)
-      .map((doc) => ({
-        updateOne: {
-          filter: { id: doc.id },
-          update: {
-            $set: {
-              requestId: doc.requestId,
-              userId: doc.userId,
-              username: doc.username,
-              coin: doc.coin,
-              currency: doc.currency,
-              amount: doc.amount,
-              network: doc.network,
-              address: doc.address,
-              toAddress: doc.toAddress,
-              status: doc.status,
-              fee: doc.fee,
-              source: doc.source,
-              updatedAt: doc.updatedAt,
-              processedAt: doc.processedAt
-            },
-            $setOnInsert: {
-              id: doc.id,
-              createdAt: doc.createdAt
-            }
-          },
-          upsert: true
-        }
-      }));
-
-    if (operations.length) {
-      await adminWithdrawals.bulkWrite(operations, { ordered: false });
-    }
-  }
-
-  async function createWithdrawalRequest(payload = {}) {
-    const requestId = String(payload.requestId || payload.id || '').trim();
-    const userId = String(payload.userId || '').trim();
-    const amount = Number(toNumber(payload.amount, 0).toFixed(8));
-    const coin = String(payload.coin || payload.currency || 'USDT').trim().toUpperCase();
-    const network = normalizeNetwork(payload.network) || normalizeNetwork(payload.chain) || 'TRC20';
-    const address = sanitizeAddress(payload.address || payload.toAddress || payload.to || '');
-
-    if (!requestId) {
-      throw new Error('Withdrawal request id is required');
-    }
-    if (!userId) {
-      throw new Error('User id is required');
-    }
-    if (!amount || !Number.isFinite(amount) || amount <= 0) {
-      throw new Error('Invalid withdrawal amount');
-    }
-
-    const now = new Date();
-    const doc = {
-      id: requestId,
-      requestId,
-      userId,
-      username: String(payload.username || payload.email || '').trim(),
-      coin,
-      currency: coin,
-      amount,
-      network,
-      address,
-      toAddress: address,
-      status: 'PENDING',
-      fee: toNumber(payload.fee, 0),
-      source: String(payload.source || 'assets_withdrawal').trim(),
-      createdAt: payload.createdAt ? toDate(payload.createdAt) : now,
-      updatedAt: now
-    };
-
-    const result = await adminWithdrawals.findOneAndUpdate(
-      { id: requestId },
-      { $setOnInsert: doc, $set: { updatedAt: now } },
-      { upsert: true, returnDocument: 'after' }
-    );
-
-    return result?.value ?? result ?? doc;
+    const rows = await withdrawalRequests.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray();
+    const total = await withdrawalRequests.countDocuments(query);
+    return { page, limit, total, withdrawals: rows.map((row) => toAdminWithdrawal(row)) };
   }
 
   async function reviewWithdrawal(withdrawalId, decision, reason, actor) {
-    const normalizedWithdrawalId = String(withdrawalId || '').trim();
     const normalizedDecision = normalizeWithdrawalStatus(decision);
     if (!['APPROVED', 'REJECTED'].includes(normalizedDecision)) {
       throw new Error('Decision must be APPROVED or REJECTED');
     }
 
-    const existing = await adminWithdrawals.findOne({ id: normalizedWithdrawalId });
-    if (!existing) {
-      throw new Error('Withdrawal request not found');
+    if (!walletService || typeof walletService.processWithdrawalRequest !== 'function') {
+      throw new Error('Wallet service is not available');
     }
 
-    const currentStatus = String(existing.status || '').trim().toUpperCase();
-    if (currentStatus === normalizedDecision) {
-      return existing;
-    }
-    if (currentStatus !== 'PENDING') {
-      throw new Error('Only pending withdrawals can be reviewed');
-    }
-
-    if (walletService && typeof walletService.processWithdrawalRequest === 'function') {
-      const targetWalletStatus = normalizedDecision === 'APPROVED' ? 'sent' : 'rejected';
-      await walletService.processWithdrawalRequest(existing.requestId || existing.id, targetWalletStatus, {
-        isAdmin: true,
-        id: actor.id,
-        username: actor.role || 'admin',
-        reason
-      });
-    }
-
-    const now = new Date();
-    const result = await adminWithdrawals.findOneAndUpdate(
-      { id: normalizedWithdrawalId },
+    const processed = await walletService.processWithdrawalRequest(
+      String(withdrawalId || '').trim(),
+      normalizedDecision === 'APPROVED' ? 'approved' : 'rejected',
       {
-        $set: {
-          status: normalizedDecision,
-          reviewedBy: actor.id,
-          reviewedByRole: actor.role,
-          reviewReason: String(reason || ''),
-          reviewedAt: now,
-          updatedAt: now
-        }
-      },
-      { returnDocument: 'after' }
+        id: actor.id,
+        userId: actor.id,
+        role: actor.role,
+        isAdmin: true,
+        reason: String(reason || '')
+      }
     );
 
-    const _doc = result?.value ?? result;
-    if (!_doc) {
-      throw new Error('Withdrawal request not found');
-    }
-
-    return _doc;
+    return toAdminWithdrawal(processed);
   }
 
   async function setCoinWithdrawalConfig(coin, payload) {
@@ -1606,12 +1492,11 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       { returnDocument: 'after' }
     );
 
-    const _doc = result?.value ?? result;
-    if (!_doc) {
+    if (!result.value) {
       throw new Error('Trade order not found');
     }
 
-    return _doc;
+    return result.value;
   }
 
   async function listSpotTrades(params = {}) {
@@ -1693,12 +1578,11 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       { returnDocument: 'after' }
     );
 
-    const _doc = result?.value ?? result;
-    if (!_doc) {
+    if (!result.value) {
       throw new Error('P2P offer not found');
     }
 
-    return _doc;
+    return result.value;
   }
 
   async function listP2PDisputes(params = {}) {
@@ -1710,19 +1594,411 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       .limit(limit)
       .toArray();
     const total = await p2pOrders.countDocuments({ status: 'DISPUTED' });
+    const disputes = await Promise.all(rows.map((row) => enrichP2POrder(row)));
+    return { page, limit, total, disputes };
+  }
+
+  async function resolveP2PParticipant(order, role) {
+    const normalizedRole = String(role || '').trim().toLowerCase() === 'seller' ? 'seller' : 'buyer';
+    const participant = Array.isArray(order?.participants)
+      ? order.participants.find((item) => String(item?.role || '').trim().toLowerCase() === normalizedRole)
+      : null;
+    const prefix = normalizedRole === 'seller' ? 'seller' : 'buyer';
+    const userId = String(order?.[`${prefix}UserId`] || order?.[`${prefix}Id`] || participant?.id || '').trim();
+    const rawEmail = String(order?.[`${prefix}Email`] || participant?.email || '').trim().toLowerCase();
+    const rawUsername = String(order?.[`${prefix}Username`] || participant?.username || '').trim();
+
+    let profile = null;
+    let credential = null;
+
+    if (userId) {
+      profile = await adminUserProfiles.findOne({ userId });
+    }
+
+    const profileEmail = String(profile?.email || '').trim().toLowerCase();
+    const email = rawEmail || profileEmail;
+
+    if (email) {
+      credential = await p2pCredentials.findOne({ email });
+    }
+
+    const username =
+      rawUsername ||
+      String(credential?.username || '').trim() ||
+      (email ? email.split('@')[0] : '') ||
+      userId;
+
     return {
-      page,
-      limit,
-      total,
-      disputes: rows.map((row) => ({
-        ...row,
-        buyerUserId: String(row.buyerUserId || row.buyerId || '').trim(),
-        sellerUserId: String(row.sellerUserId || row.sellerId || '').trim(),
-        buyerUsername: String(row.buyerUsername || '').trim(),
-        sellerUsername: String(row.sellerUsername || '').trim(),
-        appealDetails: normalizeAdminAppealDetails(row.appealDetails),
-        chatMessages: Array.isArray(row.messages) ? row.messages : []
-      }))
+      userId,
+      email,
+      username
+    };
+  }
+
+  function normalizeAdminP2PMessage(message = {}, index = 0) {
+    return {
+      id: String(message.id || `msg_${index}`),
+      sender: String(message.sender || '').trim(),
+      senderRole: '',
+      text: String(message.text || message.message || '').trim(),
+      message: String(message.message || message.text || '').trim(),
+      isSystem: Boolean(message.isSystem),
+      createdAt: message.timestamp || message.createdAt || message.at || null,
+      timestamp: message.timestamp || message.createdAt || message.at || null
+    };
+  }
+
+  function buildP2PMessageAliasSet(values = []) {
+    const aliases = new Set();
+    values.forEach((value) => {
+      const normalized = String(value || '').trim().toLowerCase();
+      if (!normalized) {
+        return;
+      }
+      aliases.add(normalized);
+      if (normalized.includes('@')) {
+        aliases.add(normalized.split('@')[0] || '');
+      }
+    });
+    aliases.delete('');
+    return aliases;
+  }
+
+  function inferAdminP2PMessageRole(message = {}, order = {}, buyer = {}, seller = {}) {
+    const explicitRole = String(message.senderRole || message.role || '').trim().toLowerCase();
+    if (['buyer', 'seller', 'support', 'admin', 'system'].includes(explicitRole)) {
+      return explicitRole;
+    }
+    if (message.isSystem) {
+      return 'system';
+    }
+
+    const sender = String(message.sender || '').trim();
+    if (/^support$/i.test(sender) || /^admin:/i.test(sender)) {
+      return /^support$/i.test(sender) ? 'support' : 'admin';
+    }
+
+    const senderAliases = buildP2PMessageAliasSet([
+      sender,
+      message.senderUserId,
+      message.userId,
+      message.senderEmail,
+      message.email
+    ]);
+    const buyerAliases = buildP2PMessageAliasSet([
+      buyer.userId,
+      buyer.email,
+      buyer.username,
+      order.buyerUserId,
+      order.buyerId,
+      order.buyerEmail,
+      order.buyerUsername
+    ]);
+    const sellerAliases = buildP2PMessageAliasSet([
+      seller.userId,
+      seller.email,
+      seller.username,
+      order.sellerUserId,
+      order.sellerId,
+      order.sellerEmail,
+      order.sellerUsername
+    ]);
+
+    for (const alias of senderAliases) {
+      if (sellerAliases.has(alias)) {
+        return 'seller';
+      }
+      if (buyerAliases.has(alias)) {
+        return 'buyer';
+      }
+    }
+
+    const fallbackSender = sender.toLowerCase();
+    if (fallbackSender.includes('seller')) {
+      return 'seller';
+    }
+    if (fallbackSender.includes('buyer')) {
+      return 'buyer';
+    }
+    if (fallbackSender.includes('support')) {
+      return 'support';
+    }
+
+    return '';
+  }
+
+  function normalizeAdminP2PMessageWithContext(message = {}, index = 0, order = {}, buyer = {}, seller = {}) {
+    const base = normalizeAdminP2PMessage(message, index);
+    const senderRole = inferAdminP2PMessageRole(message, order, buyer, seller);
+    const sender =
+      senderRole === 'support' || senderRole === 'admin'
+        ? 'Support'
+        : base.sender;
+
+    return {
+      ...base,
+      sender,
+      senderRole
+    };
+  }
+
+  async function enrichP2POrder(order) {
+    if (!order) {
+      return null;
+    }
+
+    const [buyer, seller] = await Promise.all([
+      resolveP2PParticipant(order, 'buyer'),
+      resolveP2PParticipant(order, 'seller')
+    ]);
+
+    const normalizedMessages = (Array.isArray(order.messages) ? order.messages : [])
+      .map((message, index) => normalizeAdminP2PMessageWithContext(message, index, order, buyer, seller));
+
+    return {
+      ...order,
+      buyerUserId: String(order.buyerUserId || order.buyerId || buyer.userId || '').trim(),
+      sellerUserId: String(order.sellerUserId || order.sellerId || seller.userId || '').trim(),
+      buyerEmail: buyer.email,
+      sellerEmail: seller.email,
+      buyerUsername: buyer.username,
+      sellerUsername: seller.username,
+      appealDetails: normalizeAdminAppealDetails(order.appealDetails),
+      messages: normalizedMessages,
+      chatMessages: normalizedMessages
+    };
+  }
+
+  async function getP2POrder(orderId) {
+    const normalizedOrderId = String(orderId || '').trim();
+    if (!normalizedOrderId) {
+      throw new Error('Order ID is required');
+    }
+
+    const row = await p2pOrders.findOne({ id: normalizedOrderId });
+    if (!row) {
+      throw new Error('P2P order not found');
+    }
+
+    return enrichP2POrder(row);
+  }
+
+  async function sendP2POrderMessage(orderId, actor, text) {
+    const normalizedOrderId = String(orderId || '').trim();
+    const normalizedText = String(text || '').trim();
+    if (!normalizedOrderId) {
+      throw new Error('Order ID is required');
+    }
+    if (!normalizedText) {
+      throw new Error('Support message is required');
+    }
+
+    const order = await p2pOrders.findOne({ id: normalizedOrderId });
+    if (!order) {
+      throw new Error('P2P order not found');
+    }
+
+    const now = Date.now();
+    await p2pOrders.updateOne(
+      { id: normalizedOrderId },
+      {
+        $set: { updatedAt: now },
+        $push: {
+          messages: {
+            id: `msg_${now}_support`,
+            sender: 'Support',
+            senderRole: 'support',
+            text: normalizedText,
+            createdAt: now
+          }
+        }
+      }
+    );
+
+    return getP2POrder(normalizedOrderId);
+  }
+
+  function buildSupportActor(actor = {}) {
+    return {
+      id: String(actor?.id || '').trim() || 'support_bulk_cancel',
+      email: String(actor?.email || '').trim().toLowerCase() || 'support@bitegit.com',
+      username: 'Support',
+      role: 'support',
+      isSystem: true
+    };
+  }
+
+  async function repairLegacyP2POrderParticipants(orderId) {
+    const order = await p2pOrders.findOne({ id: String(orderId || '').trim() });
+    if (!order) {
+      return null;
+    }
+
+    const buyerParticipant = Array.isArray(order?.participants)
+      ? order.participants.find((item) => String(item?.role || '').trim().toLowerCase() === 'buyer')
+      : null;
+    const sellerParticipant = Array.isArray(order?.participants)
+      ? order.participants.find((item) => String(item?.role || '').trim().toLowerCase() === 'seller')
+      : null;
+    const repairPatch = {};
+
+    if (!String(order?.buyerUserId || order?.buyerId || '').trim() && String(buyerParticipant?.id || '').trim()) {
+      repairPatch.buyerUserId = String(buyerParticipant.id).trim();
+      repairPatch.buyerId = String(buyerParticipant.id).trim();
+    }
+    if (!String(order?.buyerUsername || '').trim() && String(buyerParticipant?.username || '').trim()) {
+      repairPatch.buyerUsername = String(buyerParticipant.username).trim();
+    }
+    if (!String(order?.sellerUserId || order?.sellerId || '').trim() && String(sellerParticipant?.id || '').trim()) {
+      repairPatch.sellerUserId = String(sellerParticipant.id).trim();
+      repairPatch.sellerId = String(sellerParticipant.id).trim();
+    }
+    if (!String(order?.sellerUsername || '').trim() && String(sellerParticipant?.username || '').trim()) {
+      repairPatch.sellerUsername = String(sellerParticipant.username).trim();
+    }
+
+    if (Object.keys(repairPatch).length > 0) {
+      await p2pOrders.updateOne({ id: String(orderId || '').trim() }, { $set: repairPatch });
+      return p2pOrders.findOne({ id: String(orderId || '').trim() });
+    }
+
+    return order;
+  }
+
+  async function forceCloseP2POrderToCancelled(orderOrId, actor = {}) {
+    const supportActor = buildSupportActor(actor);
+    let order =
+      orderOrId && typeof orderOrId === 'object'
+        ? orderOrId
+        : await p2pOrders.findOne({ id: String(orderOrId || '').trim() });
+
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    const normalizedStatus = normalizeOrderStatus(order.status);
+    if (normalizedStatus === ORDER_STATUS.CANCELLED || normalizedStatus === ORDER_STATUS.EXPIRED) {
+      return getP2POrder(order.id);
+    }
+    if (normalizedStatus === ORDER_STATUS.COMPLETED) {
+      throw new Error('Completed order cannot be cancelled.');
+    }
+
+    if (normalizedStatus === ORDER_STATUS.CREATED) {
+      try {
+        return await walletService.cancelOrder(order.id, supportActor, 'CANCELLED');
+      } catch (_) {
+        order = await repairLegacyP2POrderParticipants(order.id);
+        return walletService.cancelOrder(order.id, supportActor, 'CANCELLED');
+      }
+    }
+
+    const now = Date.now();
+    const escrowAmount = Math.max(0, toNumber(order.escrowAmount ?? order.assetAmount, 0));
+    const offerId = String(order.adId || order.offerId || '').trim();
+    if (offerId && escrowAmount > 0) {
+      const offer = await p2pOffers.findOne({ id: offerId });
+      if (offer) {
+        const currentAvailable = toNumber(offer.availableAmount ?? offer.available, 0);
+        const restoredAvailable = toNumber(currentAvailable + escrowAmount, 8);
+        await p2pOffers.updateOne(
+          { _id: offer._id },
+          {
+            $set: {
+              availableAmount: restoredAvailable,
+              available: restoredAvailable,
+              updatedAt: new Date(now)
+            }
+          }
+        );
+      }
+    }
+
+    const buyerUserId = String(order.buyerUserId || order.buyerId || '').trim();
+    if (buyerUserId) {
+      await wallets.updateOne(
+        {
+          userId: buyerUserId,
+          activeP2POrderId: String(order.id || '').trim()
+        },
+        {
+          $set: {
+            activeP2POrderId: null,
+            activeP2POrderReleasedAt: new Date(now),
+            updatedAt: new Date(now)
+          }
+        }
+      );
+    }
+
+    await p2pOrders.updateOne(
+      { id: String(order.id || '').trim() },
+      {
+        $set: {
+          status: ORDER_STATUS.CANCELLED,
+          updatedAt: now,
+          cancelledAt: now,
+          disputeResolvedAt: normalizedStatus === ORDER_STATUS.DISPUTED ? now : order.disputeResolvedAt || null
+        },
+        $push: {
+          messages: {
+            id: `msg_${now}_support_force_cancel`,
+            sender: 'Support',
+            senderRole: 'support',
+            text: 'Support cancelled this order and moved it to the cancelled bucket.',
+            createdAt: now,
+            isSystem: true,
+            messageType: 'system'
+          },
+          statusHistory: createOrderStatusHistoryEntry({
+            status: ORDER_STATUS.CANCELLED,
+            actor: {
+              id: supportActor.id,
+              username: supportActor.username,
+              role: 'support'
+            },
+            reason: 'support_force_cancel',
+            at: now,
+            metadata: {
+              orderId: String(order.id || '').trim(),
+              previousStatus: normalizedStatus
+            }
+          })
+        }
+      }
+    );
+
+    return getP2POrder(order.id);
+  }
+
+  async function forceCancelPendingP2POrders(actor, params = {}) {
+    const limit = Math.min(500, Math.max(1, Number.parseInt(params.limit, 10) || 200));
+    const rows = await p2pOrders
+      .find({ status: { $in: ['OPEN', 'PENDING', 'CREATED', 'PAID', 'PAYMENT_SENT', 'DISPUTED'] } }, { projection: { id: 1 } })
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .toArray();
+
+    let cancelledCount = 0;
+    const failed = [];
+
+    for (const row of rows) {
+      try {
+        await forceCloseP2POrderToCancelled(String(row.id || '').trim(), actor);
+        cancelledCount += 1;
+      } catch (error) {
+        const orderId = String(row.id || '').trim();
+        failed.push({
+          orderId,
+          message: String(error?.message || 'Unable to cancel order')
+        });
+      }
+    }
+
+    return {
+      matchedCount: rows.length,
+      cancelledCount,
+      failed
     };
   }
 
@@ -1740,19 +2016,12 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return released;
   }
 
-  async function adminReplyP2PDispute(orderId, message, actor) {
+  async function manualCancelOrder(orderId, actor) {
     const order = await p2pOrders.findOne({ id: String(orderId || '').trim() });
-    if (!order) throw new Error('Order not found');
-    const now = Date.now();
-    const msg = {
-      id: `msg_${now}_admin`,
-      sender: `admin:${actor.email}`,
-      senderRole: 'admin',
-      text: String(message || '').trim(),
-      createdAt: now
-    };
-    await p2pOrders.updateOne({ id: order.id }, { $push: { messages: msg }, $set: { updatedAt: now } });
-    return p2pOrders.findOne({ id: order.id });
+    if (!order) {
+      throw new Error('Order not found');
+    }
+    return forceCloseP2POrderToCancelled(order, actor);
   }
 
   async function freezeEscrow(orderId, actor) {
@@ -2102,11 +2371,6 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return { page, limit, total, tickets: rows };
   }
 
-  async function createSupportTicket(data) {
-    await adminSupportTickets.insertOne(data);
-    return data;
-  }
-
   async function ensureDemoSupportTicket() {
     const count = await adminSupportTickets.countDocuments({});
     if (count > 0) {
@@ -2157,9 +2421,11 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       { returnDocument: 'after' }
     );
 
-    const doc = result?.value ?? result;
-    if (!doc) throw new Error('Ticket not found');
-    return doc;
+    if (!result.value) {
+      throw new Error('Ticket not found');
+    }
+
+    return result.value;
   }
 
   async function updateSupportTicketStatus(ticketId, status) {
@@ -2179,9 +2445,11 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       { returnDocument: 'after' }
     );
 
-    const doc = result?.value ?? result;
-    if (!doc) throw new Error('Ticket not found');
-    return doc;
+    if (!result.value) {
+      throw new Error('Ticket not found');
+    }
+
+    return result.value;
   }
 
   async function assignSupportTicket(ticketId, adminId) {
@@ -2196,17 +2464,11 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       { returnDocument: 'after' }
     );
 
-    const doc = result?.value ?? result;
-    if (!doc) throw new Error('Ticket not found');
-    return doc;
-  }
-
-  async function getSupportTicket(ticketId) {
-    const ticket = await adminSupportTickets.findOne({ id: String(ticketId || '').trim() });
-    if (!ticket) {
-      throw Object.assign(new Error('Ticket not found'), { status: 404 });
+    if (!result.value) {
+      throw new Error('Ticket not found');
     }
-    return ticket;
+
+    return result.value;
   }
 
   async function getMonitoringOverview() {
@@ -2278,7 +2540,6 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     listUserDeposits,
     reviewDeposit,
     listWithdrawals,
-    createWithdrawalRequest,
     reviewWithdrawal,
     getCoinWalletConfig,
     getUserDepositConfig,
@@ -2292,9 +2553,12 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     listP2PAds,
     reviewP2PAd,
     listP2PDisputes,
+    getP2POrder,
+    sendP2POrderMessage,
+    forceCancelPendingP2POrders,
     manualReleaseEscrow,
+    manualCancelOrder,
     freezeEscrow,
-    adminReplyP2PDispute,
     getP2PSettings,
     updateP2PSettings,
     cleanupDemoP2PAds,
@@ -2305,9 +2569,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     createComplianceFlag,
     exportTransactionsCsv,
     listSupportTickets,
-    getSupportTicket,
     ensureDemoSupportTicket,
-    createSupportTicket,
     replySupportTicket,
     updateSupportTicketStatus,
     assignSupportTicket,
