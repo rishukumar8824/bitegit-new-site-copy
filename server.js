@@ -4599,13 +4599,17 @@ async function boot() {
     });
     // One active order per user check
     app.post('/api/p2p/orders', requiresP2PUser, async (req, res, next) => {
+      // Prevent a buyer from placing a new order while they already have one in progress.
+      // Uses correct field names (buyerUserId) and excludes expired orders.
       try {
         const userId = String(req.p2pUser?.id || '').trim();
         if (userId) {
           const cols = getCollections();
+          const now = Date.now();
           const activeCount = await cols.p2pOrders.countDocuments({
-            $or: [{ buyerId: userId }, { sellerId: userId }],
-            status: { $in: ['CREATED', 'PAYMENT_SENT'] }
+            buyerUserId: userId,
+            status: { $in: ['CREATED', 'PAYMENT_SENT', 'PAID'] },
+            $or: [{ expiresAt: { $gt: now } }, { expiresAt: { $exists: false } }]
           });
           if (activeCount >= 1) {
             return res.status(400).json({ success: false, message: 'You already have an active order. Complete or cancel it first.' });

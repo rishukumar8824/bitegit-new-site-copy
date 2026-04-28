@@ -1703,8 +1703,8 @@ async function loadProfilePanel(options = {}) {
       const response = await fetch('/api/p2p/wallet');
       const data = await response.json();
       if (response.ok && data.wallet) {
-        profileWalletBalance = Number(data.wallet.balance || 0);
-        profileWalletLocked = Number(data.wallet.lockedBalance || 0);
+        profileWalletBalance = Number(data.wallet.availableBalance || data.wallet.balance || 0);
+        profileWalletLocked = Number(data.wallet.lockedBalance || data.wallet.p2pLocked || 0);
         profileWalletSyncedAt = Date.now();
       }
     } catch (error) {
