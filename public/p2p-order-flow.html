@@ -1435,6 +1435,7 @@
     try {
       var raw = JSON.parse(localStorage.getItem(ORDERS_CACHE_KEY) || 'null');
       // p2p.js stores cache as { ts, userId, orders } — preserve that format
+      var currentUserId = String(currentUser && (currentUser.id || currentUser.userId) || '').trim();
       var wrapper = (raw && !Array.isArray(raw) && raw.orders) ? raw : { ts: Date.now(), userId: '', orders: [] };
       var list = Array.isArray(wrapper.orders) ? wrapper.orders : [];
       var found = false;
@@ -1453,9 +1454,52 @@
         }));
       }
       wrapper.orders = list.slice(0, 80);
+      if (currentUserId) {
+        wrapper.userId = currentUserId;
+      }
       wrapper.ts = wrapper.ts || Date.now();
       localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(wrapper));
     } catch (_) {}
+  }
+
+  function _readPerOrderSnapshot(orderId) {
+    var normalizedOrderId = String(orderId || '').trim();
+    if (!normalizedOrderId) return null;
+    try {
+      var raw = localStorage.getItem('p2p_order_' + normalizedOrderId);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function _readOrderSnapshotFromOrdersCache(orderId) {
+    var normalizedOrderId = String(orderId || '').trim();
+    if (!normalizedOrderId) return null;
+    try {
+      var raw = JSON.parse(localStorage.getItem(ORDERS_CACHE_KEY) || 'null');
+      var currentUserId = String(currentUser && (currentUser.id || currentUser.userId) || '').trim();
+      if (!raw || Array.isArray(raw) || !Array.isArray(raw.orders)) return null;
+      if (raw.userId && (!currentUserId || raw.userId !== currentUserId)) return null;
+      var match = raw.orders.find(function(item) {
+        return item && String(item.id || '').trim() === normalizedOrderId;
+      });
+      return match && typeof match === 'object' ? match : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function _readCachedOrderSnapshot(orderId) {
+    var directSnapshot = _readPerOrderSnapshot(orderId);
+    var ordersCacheSnapshot = _readOrderSnapshotFromOrdersCache(orderId);
+    if (!directSnapshot) return ordersCacheSnapshot;
+    if (!ordersCacheSnapshot) return directSnapshot;
+    var merged = Object.assign({}, ordersCacheSnapshot, directSnapshot);
+    merged.messages = _mergeMessages(ordersCacheSnapshot.messages, directSnapshot.messages);
+    return merged;
   }
 
   function _warmChatMessages(orderId) {
@@ -2171,14 +2215,18 @@
     _cacheOrderMessagesFromOrder(order);
     _syncOrderIntoOrdersCache(order);
     syncOrderUrl(requestedScreen);
-    // Prefer server-set myRole (100% reliable) over client-side guessing
-    if (order.myRole === 'seller' || order.myRole === 'buyer') {
-      isSeller = order.myRole === 'seller';
-    } else {
-      isSeller = resolveCurrentUserRole(order) === 'seller';
-      // Persist computed role so next load from cache uses it directly
-      currentOrder.myRole = isSeller ? 'seller' : 'buyer';
+    // Cached order snapshots can carry another user's stale myRole; prefer a fresh
+    // role inferred from the current logged-in identity when available.
+    var inferredRole = resolveCurrentUserRole(order);
+    var effectiveRole =
+      inferredRole ||
+      (order.myRole === 'seller' || order.myRole === 'buyer' ? order.myRole : '');
+    if (effectiveRole === 'seller' || effectiveRole === 'buyer') {
+      isSeller = effectiveRole === 'seller';
+      currentOrder.myRole = effectiveRole;
       try { localStorage.setItem('p2p_order_' + order.id, JSON.stringify(currentOrder)); } catch(_) {}
+    } else {
+      isSeller = false;
     }
     renderOrderDetails();
     startTimerFromOrder(order);
@@ -2247,14 +2295,13 @@
   async function loadExistingOrder(orderId, forceOpenChat, requestedScreen) {
     // Show from localStorage cache instantly
     try {
-      var cached = localStorage.getItem('p2p_order_' + orderId);
-      if (cached) {
-        var cachedOrder = JSON.parse(cached);
+      var cachedOrder = _readCachedOrderSnapshot(orderId);
+      if (cachedOrder) {
         applyOrderAndShow(cachedOrder, forceOpenChat, requestedScreen);
         hideLoading();
         _warmChatMessages(orderId);
         // Verify & refresh from API in background (silent)
-      fetchJsonWithTimeout('/api/p2p/orders/' + encodeURIComponent(orderId), { credentials: 'include' }, 7000)
+        fetchJsonWithTimeout('/api/p2p/orders/' + encodeURIComponent(orderId), { credentials: 'include' }, 7000)
           .then(function(result){
             if (!result || !result.response || !result.response.ok) return null;
             return result.payload || null;
@@ -2271,19 +2318,12 @@
               _retryPendingPaidSync(orderId, forceOpenChat, requestedScreen);
               return;
             }
-            if (fresh.status !== cachedOrder.status) {
-              // status changed — re-apply
-              try { localStorage.setItem('p2p_order_' + orderId, JSON.stringify(fresh)); } catch(e){}
-              applyOrderAndShow(fresh, forceOpenChat, requestedScreen);
-            } else {
-              currentOrder = Object.assign({}, cachedOrder, fresh);
-              if (Array.isArray(fresh.messages) && fresh.messages.length) {
-                currentOrder.messages = _mergeMessages(cachedOrder.messages, fresh.messages);
-              }
-              cacheCurrentOrder();
-              syncOrderUrl(requestedScreen);
-              startTimerFromOrder(fresh);
+            currentOrder = Object.assign({}, cachedOrder, fresh);
+            if (Array.isArray(fresh.messages) && fresh.messages.length) {
+              currentOrder.messages = _mergeMessages(cachedOrder.messages, fresh.messages);
             }
+            cacheCurrentOrder();
+            applyOrderAndShow(currentOrder, forceOpenChat, requestedScreen);
           }).catch(function(){});
         return;
       }
