@@ -1757,29 +1757,21 @@
     var requestedScreen = String(params.get('screen') || '').trim();
     _entrySource = String(params.get('source') || (orderId ? 'orders' : 'ad')).trim().toLowerCase() || 'ad';
 
-    if (orderId) {
-      loadExistingOrder(orderId, openChat, requestedScreen);
-    } else {
-      showScreen('screen-buy');
-      loadAd();
-      hideLoading();
-    }
-
+    // Always resolve auth FIRST so isSeller is determined correctly on the very first
+    // call to applyOrderAndShow — prevents seller seeing buyer's transfer screen briefly.
     checkAuth().then(function() {
-      if (!currentUser) {
-        return;
-      }
       if (orderId) {
         if (currentOrder) {
+          // Order already loaded (rare fast-path)
           applyOrderAndShow(currentOrder, openChat, requestedScreen);
           hideLoading();
         } else {
           loadExistingOrder(orderId, openChat, requestedScreen);
         }
-        return;
-      }
-      if (!orderId && !currentAd) {
+      } else {
+        showScreen('screen-buy');
         loadAd();
+        hideLoading();
       }
     });
   });
