@@ -5098,26 +5098,32 @@ function _ordFetchActiveOrdersFallback(fetchOpts, parentReqId) {
 }
 
 function _ordFetchMyActive(fetchOpts, parentReqId) {
+  console.log('[orders] fetching my-active uid=' + getCurrentUserId());
   return _ordFetchWithTimeout('/api/p2p/orders/my-active', fetchOpts, 8000)
     .then(function(response) {
       if (parentReqId !== _ordReqId) return null;
-      if (!response) return null;
+      if (!response) { console.warn('[orders] my-active: no response'); return null; }
       if (response.status === 401) {
+        console.warn('[orders] my-active: 401 not logged in');
         _ordShowLogin();
         return null;
       }
-      if (!response.ok) return null;
+      if (!response.ok) { console.warn('[orders] my-active: status ' + response.status); return null; }
       return response.json().catch(function() { return null; });
     })
     .then(function(data) {
       if (!data || parentReqId !== _ordReqId) return null;
+      var all = _ordExtractOrders(data);
+      var active = _ordFilterActiveOrders(all);
+      console.log('[orders] my-active: total=' + all.length + ' active=' + active.length, all.map(function(o){return o.id+':'+o.status+':seller='+o.sellerUserId;}));
       return {
         total: Number(data.total || 0),
-        orders: _ordFilterActiveOrders(_ordExtractOrders(data))
+        orders: active
       };
     })
     .catch(function(error) {
       if (error && error.name === 'AbortError') return null;
+      console.error('[orders] my-active error:', error && error.message);
       return null;
     });
 }
