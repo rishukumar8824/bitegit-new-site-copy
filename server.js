@@ -2757,8 +2757,9 @@ app.get('/api/leads', requiresAdminSession, async (req, res) => {
 app.post('/api/p2p/ping', requiresP2PUser, async (req, res) => {
   try {
     const userId = String(req.p2pUser.id || req.p2pUser.userId || req.p2pUser._id || '').trim();
+    const username = String(req.p2pUser.username || '').trim();
     if (!userId) return res.json({ ok: false });
-    await repos.updateLastActive(userId);
+    await repos.updateLastActive(userId, username);
     return res.json({ ok: true });
   } catch (_) { return res.json({ ok: false }); }
 });
@@ -3090,7 +3091,7 @@ async function createP2PAdController(req, res) {
     });
 
     // Mark seller as online immediately so buyers see Online status right away
-    try { await repos.updateLastActive(userId); } catch (_) {}
+    try { await repos.updateLastActive(userId, req.p2pUser.username); } catch (_) {}
 
     // If this merchant already has an approved badge, stamp it on the new offer immediately
     try {
