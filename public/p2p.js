@@ -1712,6 +1712,20 @@ async function loadProfilePanel(options = {}) {
     }
   }
 
+  // If local cache is empty, fetch from server first then re-run
+  if (currentUser && getProfileOrdersSnapshot().length === 0) {
+    try {
+      const histResp = await fetch('/api/p2p/orders/history?limit=50&offset=0', { credentials: 'include', headers: { 'Cache-Control': 'no-store' } });
+      if (histResp.ok) {
+        const histData = await histResp.json();
+        const histOrders = Array.isArray(histData) ? histData : (histData.orders || []);
+        histOrders.forEach(function(o) {
+          if (o && o.id) { try { localStorage.setItem('p2p_order_' + o.id, JSON.stringify(o)); } catch(_) {} }
+        });
+      }
+    } catch(_) {}
+  }
+
   const nowMs = Date.now();
   const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
   const orders = getProfileOrdersSnapshot();
@@ -1800,6 +1814,9 @@ async function loadProfilePanel(options = {}) {
     profileMeta,
     `All trades: ${totalOrdersAll} | 30D trades: ${totalOrders30d} | Cancelled: ${cancelledOrders30d.length} | Wallet: ${formatNumber(profileWalletBalance)}`
   );
+
+  // Sync computed stats to mobile profile screen
+  syncMobProfile();
 
   // Fetch own reputation (stars + rating count) and show on profile
   if (currentUser && getCurrentUserId()) {
