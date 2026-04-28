@@ -2692,6 +2692,9 @@ async function loadCurrentUser() {
         // Show cached orders instantly — no network fetch yet to avoid aborting the confirmed fetch below
         var _hintCache = _loadOrdCache();
         if (_hintCache.length) { _ordRenderAll(_hintCache, true); } else { _ordShowSkeleton(); }
+        if (typeof loadProfilePanel === 'function') {
+          loadProfilePanel({ refreshWallet: false });
+        }
       }
     }
   } catch(_) {}
@@ -2712,7 +2715,7 @@ async function loadCurrentUser() {
       if (_prevId !== normalizedUser.id) {
         _clearOrdersCache({ preserveSnapshots: true }); // keep per-order snapshots for instant reloads
       }
-      currentUser = normalizedUser;
+      currentUser = Object.assign({}, currentUser || {}, normalizedUser);
       updateCurrentUserKyc(currentUser.kyc || {});
       try { localStorage.setItem('_p2p_hint', JSON.stringify({ id: getCurrentUserId(), username: currentUser.username, email: currentUser.email, role: currentUser.role, avatar: currentUser.avatar || '', createdAt: currentUser.createdAt || null })); } catch(_) {}
       // Load merchant badge on login so ad cards show it immediately

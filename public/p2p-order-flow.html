@@ -1609,6 +1609,19 @@
     });
   }
 
+  function hydrateCurrentUserFromHint() {
+    try {
+      var hint = localStorage.getItem('_p2p_hint');
+      if (!hint) return null;
+      var hintedUser = normalizeCurrentUserPayload(JSON.parse(hint));
+      if (!hintedUser) return null;
+      currentUser = hintedUser;
+      return hintedUser;
+    } catch (_) {
+      return null;
+    }
+  }
+
   function buildPreviewAd() {
     return {
       id: 'preview_usdt_sell_ad',
@@ -1804,22 +1817,27 @@
     var openChat = params.get('openChat') === '1';
     var requestedScreen = String(params.get('screen') || '').trim();
     _entrySource = String(params.get('source') || (orderId ? 'orders' : 'ad')).trim().toLowerCase() || 'ad';
+    var hintedUser = hydrateCurrentUserFromHint();
+
+    if (orderId && hintedUser) {
+      loadExistingOrder(orderId, openChat, requestedScreen);
+    } else if (!orderId) {
+      showScreen('screen-buy');
+      loadAd();
+      hideLoading();
+    }
 
     // Always resolve auth FIRST so isSeller is determined correctly on the very first
     // call to applyOrderAndShow — prevents seller seeing buyer's transfer screen briefly.
     checkAuth().then(function() {
       if (orderId) {
-        if (currentOrder) {
+        if (currentOrder && currentOrder.id === orderId) {
           // Order already loaded (rare fast-path)
           applyOrderAndShow(currentOrder, openChat, requestedScreen);
           hideLoading();
         } else {
           loadExistingOrder(orderId, openChat, requestedScreen);
         }
-      } else {
-        showScreen('screen-buy');
-        loadAd();
-        hideLoading();
       }
     });
   });
@@ -2665,13 +2683,26 @@
   // AUTH
   // ============================================================
   async function checkAuth() {
+    hydrateCurrentUserFromHint();
     try {
       var authResult = await fetchJsonWithTimeout('/api/p2p/me', { credentials: 'include' }, 6000);
       var res = authResult.response;
       if (res.ok) {
         var data = authResult.payload || {};
         if (data.loggedIn && data.user) {
-          currentUser = normalizeCurrentUserPayload(data.user);
+          var hintedUser = currentUser ? Object.assign({}, currentUser) : null;
+          currentUser = normalizeCurrentUserPayload(Object.assign({}, hintedUser || {}, data.user));
+          try {
+            localStorage.setItem('_p2p_hint', JSON.stringify({
+              id: currentUser.id,
+              username: currentUser.username,
+              email: currentUser.email,
+              role: currentUser.role,
+              avatar: currentUser.avatar || '',
+              createdAt: currentUser.createdAt || null,
+              emailVerified: Boolean(currentUser.emailVerified)
+            }));
+          } catch (_) {}
           return;
         }
       }

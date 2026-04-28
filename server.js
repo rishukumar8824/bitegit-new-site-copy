@@ -1382,9 +1382,13 @@ function normalizeOrderState(order) {
     participants: order.participants,
     participantsLabel: getParticipantsText(order),
     sellerUserId: order.sellerUserId,
+    sellerId: order.sellerId || order.sellerUserId || null,
     sellerUsername: order.sellerUsername,
+    sellerEmail: order.sellerEmail || null,
     buyerUserId: order.buyerUserId,
+    buyerId: order.buyerId || order.buyerUserId || null,
     buyerUsername: order.buyerUsername,
+    buyerEmail: order.buyerEmail || null,
     escrowAmount: order.escrowAmount,
     disputedAt: disputedDate && !Number.isNaN(disputedDate.getTime()) ? disputedDate.toISOString() : null,
     disputedBy: order.disputedBy || null,
@@ -1414,14 +1418,37 @@ function isParticipant(order, userId) {
 function resolveMyRole(order, p2pUser) {
   const myId = String(p2pUser?.id || '').trim();
   const myName = String(p2pUser?.username || '').trim().toLowerCase();
+  const myEmail = String(p2pUser?.email || '').trim().toLowerCase();
   const sellerMatches =
     order.sellerUserId === myId ||
     order.sellerId === myId ||
     String(order.sellerUsername || '').trim().toLowerCase() === myName ||
+    String(order.sellerEmail || '').trim().toLowerCase() === myEmail ||
     (Array.isArray(order.participants) && order.participants.some(
-      (p) => p.role === 'seller' && (p.id === myId || String(p.username || '').trim().toLowerCase() === myName)
+      (p) => p.role === 'seller' && (
+        p.id === myId ||
+        String(p.username || '').trim().toLowerCase() === myName ||
+        String(p.email || '').trim().toLowerCase() === myEmail
+      )
     ));
-  return sellerMatches ? 'seller' : 'buyer';
+  if (sellerMatches) {
+    return 'seller';
+  }
+
+  const buyerMatches =
+    order.buyerUserId === myId ||
+    order.buyerId === myId ||
+    String(order.buyerUsername || '').trim().toLowerCase() === myName ||
+    String(order.buyerEmail || '').trim().toLowerCase() === myEmail ||
+    (Array.isArray(order.participants) && order.participants.some(
+      (p) => p.role === 'buyer' && (
+        p.id === myId ||
+        String(p.username || '').trim().toLowerCase() === myName ||
+        String(p.email || '').trim().toLowerCase() === myEmail
+      )
+    ));
+
+  return buyerMatches ? 'buyer' : '';
 }
 
 function addSystemMessage(order, text) {
@@ -1871,6 +1898,9 @@ app.get('/api/p2p/me', async (req, res) => {
       username: user.username,
       email: user.email,
       role: tokenService.normalizeRole(user.role || 'USER'),
+      createdAt: user.createdAt || null,
+      avatar: user.avatar || '',
+      emailVerified: Boolean(user.emailVerified),
       kyc: kycProfile
     }
   });
