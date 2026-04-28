@@ -148,7 +148,6 @@ const adCreateBtn = document.getElementById('adCreateBtn');
 const adCreateMeta = document.getElementById('adCreateMeta');
 const myAdsList = document.getElementById('myAdsList');
 const refreshMyAdsBtn = document.getElementById('refreshMyAdsBtn');
-let myAdsCache = [];
 
 const profileAvatar = document.getElementById('profileAvatar');
 const profileName = document.getElementById('profileName');
@@ -260,25 +259,25 @@ const KYC_MAX_FILE_SIZE = 6 * 1024 * 1024;
 const KYC_TARGET_IMAGE_BYTES = 320 * 1024;
 // SVG icon helpers for payment methods
 var PM_ICONS = {
-  UPI: '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#ff9900"/><path d="M10 22L14 10l4 8 4-12" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  'Bank Transfer(India)': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#00b4d8"/><path d="M7 14h18M7 24h18M9 14v10M13 14v10M19 14v10M23 14v10M8 11l8-5 8 5z" stroke="#fff" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>',
-  Paytm: '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#00baf2"/><text x="16" y="20" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="sans-serif">Pay</text></svg>',
-  PhonePe: '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#5f259f"/><path d="M12 8v16M12 8l8 5v3l-8-4" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="10" r="2" fill="#fff"/></svg>',
-  'Google Pay': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#fff"/><text x="16" y="21" text-anchor="middle" font-size="14" font-weight="700" fill="#4285f4" font-family="sans-serif">G</text><rect x="9" y="14" width="3" height="6" rx="1" fill="#ea4335"/><rect x="20" y="12" width="3" height="8" rx="1" fill="#34a853"/><rect x="14.5" y="10" width="3" height="12" rx="1" fill="#fbbc05"/></svg>',
-  'Bank Transfer(Union Bank)': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#e8590c"/><path d="M7 14h18M7 24h18M9 14v10M13 14v10M19 14v10M23 14v10M8 11l8-5 8 5z" stroke="#fff" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>',
-  GoPay: '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#00aed6"/><circle cx="16" cy="16" r="8" fill="#fff" opacity="0.3"/><text x="16" y="20" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="sans-serif">Go</text></svg>',
-  'Bank Jago': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#ff5733"/><text x="16" y="21" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="sans-serif">J</text></svg>',
-  'A-Bank': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#2d9d3a"/><circle cx="16" cy="14" r="5" fill="#fff" opacity="0.25"/><text x="16" y="21" text-anchor="middle" font-size="14" font-weight="700" fill="#fff" font-family="sans-serif">A</text></svg>',
-  NETELLER: '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#83c341"/><text x="16" y="21" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="sans-serif">N</text></svg>',
-  'Volet.com(Formerly Advcash)': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#5cb85c"/><text x="16" y="20" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="sans-serif">volet</text></svg>',
-  Cashapp: '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#00d632"/><text x="16" y="22" text-anchor="middle" font-size="16" font-weight="800" fill="#fff" font-family="sans-serif">$</text></svg>',
-  'STC PAY': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#6f42c1"/><text x="16" y="19" text-anchor="middle" font-size="8" font-weight="700" fill="#fff" font-family="sans-serif">stc</text><text x="16" y="25" text-anchor="middle" font-size="6" fill="#d4b8ff" font-family="sans-serif">pay</text></svg>',
-  'Transfers with specific bank': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#0d6efd"/><path d="M7 14h18M7 24h18M9 14v10M13 14v10M19 14v10M23 14v10M8 11l8-5 8 5z" stroke="#fff" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>',
-  'Cash Deposit to Bank': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#198754"/><path d="M10 18h12M10 22h12M10 14h12M12 10h8" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M16 6v5M14 9l2 2 2-2" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  'Western Union': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#ffdd00"/><text x="16" y="21" text-anchor="middle" font-size="11" font-weight="800" fill="#000" font-family="sans-serif">WU</text></svg>',
-  'Faster Payment System': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#fd7e14"/><path d="M14 8l-2 10h6l-2 10 8-14h-6l4-6z" fill="#fff"/></svg>',
-  GeoPay: '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#e8590c"/><circle cx="16" cy="14" r="5" stroke="#fff" stroke-width="1.5" fill="none"/><path d="M16 19v5M12 26h8" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>',
-  'Digital eRupee': '<svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#0d6efd"/><text x="16" y="22" text-anchor="middle" font-size="16" font-weight="700" fill="#fff" font-family="sans-serif">₹</text></svg>'
+  UPI: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#f0f0f0"/><text x="9" y="27" font-size="14" font-weight="900" fill="#888" font-family="Arial,sans-serif" font-style="italic">UPI</text><polygon points="30,14 36,22 30,22" fill="#f26522"/><polygon points="30,22 36,22 30,30" fill="#1a9b3c"/></svg>',
+  'Bank Transfer(India)': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#1565c0"/><polygon points="20,7 34,16 6,16" fill="#fff"/><rect x="8" y="17" width="3.5" height="12" rx="1" fill="#fff"/><rect x="14" y="17" width="3.5" height="12" rx="1" fill="#fff"/><rect x="20" y="17" width="3.5" height="12" rx="1" fill="#fff"/><rect x="26" y="17" width="3.5" height="12" rx="1" fill="#fff"/><rect x="6" y="30" width="28" height="2.5" rx="1" fill="#fff"/></svg>',
+  Paytm: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#fff"/><text x="6" y="26" font-size="13" font-weight="900" fill="#002970" font-family="Arial,sans-serif">pay</text><text x="25" y="26" font-size="13" font-weight="900" fill="#00b9f1" font-family="Arial,sans-serif">tm</text></svg>',
+  PhonePe: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#5f259f"/><text x="20" y="28" text-anchor="middle" font-size="22" font-weight="900" fill="#fff" font-family="Noto Sans Devanagari,Arial,sans-serif">पे</text></svg>',
+  'Google Pay': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="20" fill="#fff" stroke="#e0e0e0" stroke-width="1.5"/><g transform="translate(6,12)"><path d="M11.5 8.5 C11.5 5.5 13.8 3 17 3 C18.5 3 19.7 3.6 20.6 4.5 L19 6.1 C18.4 5.5 17.8 5.2 17 5.2 C15 5.2 13.5 6.8 13.5 8.5 C13.5 10.2 15 11.8 17 11.8 C18.6 11.8 19.7 10.9 20 9.6 L17 9.6 L17 7.5 L22.2 7.5 C22.3 7.9 22.3 8.2 22.3 8.6 C22.3 12 20 14 17 14 C13.8 14 11.5 11.5 11.5 8.5Z" fill="#4285f4"/><path d="M3.5 8.5 C3.5 4 7 1 11.5 1" stroke="#ea4335" stroke-width="2" fill="none" stroke-linecap="round"/><text x="25" y="12" font-size="9" font-weight="700" fill="#444" font-family="Arial,sans-serif">Pay</text></g></svg>',
+  'Bank Transfer(Union Bank)': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#be4b08"/><rect x="5" y="12" width="30" height="5" rx="2.5" fill="#f0c040"/><rect x="5" y="19" width="30" height="5" rx="2.5" fill="#f0c040"/><rect x="5" y="26" width="30" height="5" rx="2.5" fill="#f0c040"/></svg>',
+  GoPay: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#00aed6"/><circle cx="20" cy="20" r="12" fill="#fff"/><text x="20" y="24.5" text-anchor="middle" font-size="12" font-weight="900" fill="#00aed6" font-family="Arial,sans-serif">Go</text></svg>',
+  'Bank Jago': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#ff4500"/><text x="20.5" y="30" text-anchor="middle" font-size="26" font-weight="900" fill="#fff" font-family="Georgia,serif">J</text></svg>',
+  'A-Bank': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#1b7c2c"/><ellipse cx="20" cy="19" rx="9" ry="10" fill="#4caf50"/><path d="M14 13 Q20 7 26 13" fill="#8bc34a"/><line x1="20" y1="7" x2="20" y2="5" stroke="#4caf50" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="22" cy="6" rx="3" ry="2" fill="#8bc34a"/></svg>',
+  NETELLER: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#7ab648"/><text x="20" y="29" text-anchor="middle" font-size="26" font-weight="900" fill="#fff" font-family="Arial,sans-serif">N</text></svg>',
+  'Volet.com(Formerly Advcash)': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#a89500"/><text x="20" y="24" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="Arial,sans-serif" letter-spacing="0.5">volet</text></svg>',
+  Cashapp: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#00c244"/><text x="20" y="29" text-anchor="middle" font-size="24" font-weight="900" fill="#fff" font-family="Arial,sans-serif">$</text></svg>',
+  'STC PAY': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#5b1e9c"/><text x="20" y="21" text-anchor="middle" font-size="12" font-weight="900" fill="#fff" font-family="Arial,sans-serif">stc</text><text x="20" y="31" text-anchor="middle" font-size="9" font-weight="600" fill="#c9a0f5" font-family="Arial,sans-serif">pay</text></svg>',
+  'Transfers with specific bank': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#1565c0"/><polygon points="20,7 34,16 6,16" fill="#fff"/><rect x="8" y="17" width="3.5" height="10" rx="1" fill="#fff"/><rect x="14" y="17" width="3.5" height="10" rx="1" fill="#fff"/><rect x="20" y="17" width="3.5" height="10" rx="1" fill="#fff"/><rect x="26" y="17" width="3.5" height="10" rx="1" fill="#fff"/><rect x="6" y="28" width="28" height="2.5" rx="1" fill="#fff"/><path d="M30 22 L35 22 M33 20 L35 22 L33 24" stroke="#7ec8ff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  'Cash Deposit to Bank': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#6d4c3d"/><rect x="8" y="18" width="24" height="16" rx="3" fill="#fff" opacity="0.95"/><rect x="8" y="18" width="24" height="5" rx="3" fill="#4e342e"/><rect x="16" y="11" width="8" height="9" rx="4" fill="#fff" opacity="0.95"/><rect x="13" y="25" width="6" height="3" rx="1.5" fill="#6d4c3d"/><rect x="21" y="25" width="6" height="3" rx="1.5" fill="#6d4c3d"/></svg>',
+  'Western Union': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#fdd835"/><text x="20" y="27" text-anchor="middle" font-size="15" font-weight="900" fill="#111" font-family="Arial,sans-serif">WU</text></svg>',
+  'Faster Payment System': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#00205b"/><rect x="6" y="6" width="12" height="12" rx="2.5" fill="#e2231a"/><rect x="22" y="6" width="12" height="12" rx="2.5" fill="#fff"/><rect x="6" y="22" width="12" height="12" rx="2.5" fill="#fff"/><rect x="22" y="22" width="12" height="12" rx="2.5" fill="#009f6b"/><text x="28" y="17" text-anchor="middle" font-size="6" font-weight="800" fill="#00205b" font-family="Arial,sans-serif">FPS</text></svg>',
+  GeoPay: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#f5a623"/><text x="20" y="20" text-anchor="middle" font-size="9" font-weight="900" fill="#1a1a1a" font-family="Arial,sans-serif" letter-spacing="1">GEO</text><rect x="9" y="22" width="22" height="1.5" rx="1" fill="rgba(0,0,0,0.25)"/><text x="20" y="31" text-anchor="middle" font-size="9" font-weight="700" fill="#1a1a1a" font-family="Arial,sans-serif">pay</text></svg>',
+  'Digital eRupee': '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#f0f0f0"/><text x="9" y="28" font-size="13" font-weight="700" font-style="italic" fill="#002244" font-family="Arial,sans-serif">e</text><text x="18" y="28" font-size="16" font-weight="700" fill="#002244" font-family="Arial,sans-serif">₹</text></svg>'
 };
 
 const PAYMENT_METHOD_OPTIONS = [
@@ -422,9 +421,13 @@ function normalizeKycStatus(status) {
   const normalized = String(status || '')
     .trim()
     .toUpperCase();
+  // Admin stores 'APPROVED' → treat as VERIFIED on frontend
+  if (normalized === 'APPROVED') return 'VERIFIED';
   if (['VERIFIED', 'PENDING_REVIEW', 'REJECTED', 'NOT_SUBMITTED'].includes(normalized)) {
     return normalized;
   }
+  // PENDING from admin = under review
+  if (normalized === 'PENDING') return 'PENDING_REVIEW';
   return 'NOT_SUBMITTED';
 }
 
@@ -464,12 +467,12 @@ function updateCurrentUserKyc(kyc) {
     ...next,
     status,
     statusLabel: getKycStatusLabel(status),
-    canBuy: status === 'VERIFIED'
+    canBuy: true
   };
 }
 
 function isKycVerifiedForBuy() {
-  return normalizeKycStatus(currentUser?.kyc?.status) === 'VERIFIED';
+  return true; // KYC not required to buy
 }
 
 function isKycBlockedError(error) {
@@ -1198,7 +1201,6 @@ function setAdCreateMeta(text, type = '') {
 
 function renderMyAds(offers = []) {
   if (!myAdsList) return;
-  myAdsCache = Array.isArray(offers) ? offers : [];
   if (!offers.length) {
     myAdsList.innerHTML = '<p class="empty-row">No ads posted yet.</p>';
     return;
@@ -1238,7 +1240,6 @@ async function togglePauseAd(offerId, newStatus) {
     const res = await fetch(`/api/p2p/offers/${offerId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ status: newStatus })
     });
     const data = await res.json();
@@ -1250,89 +1251,136 @@ async function togglePauseAd(offerId, newStatus) {
 async function deleteMyAd(offerId) {
   if (!confirm('Delete this ad? This cannot be undone.')) return;
   try {
-    const res = await fetch(`/api/p2p/offers/${offerId}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
+    const res = await fetch(`/api/p2p/offers/${offerId}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) { alert(data.message || 'Failed to delete ad.'); return; }
     await loadMyAds();
   } catch (e) { alert('Network error.'); }
 }
 
-function openEditAdModal(offerId) {
-  var offer = myAdsCache.find((item) => String(item.id || '') === String(offerId)) || {};
-  var paymentsValue = Array.isArray(offer.payments) ? offer.payments.join(', ') : '';
-  // Show edit modal
+// Alias so both mobile and desktop use the same working function
+window.openMobEditAd = function(offerId) { openEditAdModal(offerId); };
+
+function closeEditAdModal() {
+  var modal = document.getElementById('editAdModal');
+  if (!modal) return;
+  modal.classList.remove('ead-visible');
+  setTimeout(function() { modal.remove(); }, 260);
+}
+
+async function openEditAdModal(offerId) {
+  var o = (window._myAdsCache || {})[offerId] || {};
   var existing = document.getElementById('editAdModal');
   if (existing) existing.remove();
+
+  // Fetch seller's saved payment methods
+  var savedMethods = [];
+  try {
+    var pmRes = await fetch('/api/p2p/payment-methods', { credentials: 'include' });
+    var pmData = await pmRes.json();
+    savedMethods = Array.isArray(pmData.methods) ? pmData.methods : [];
+  } catch(_) {}
+
+  var selectedPayments = Array.isArray(o.payments) ? o.payments.map(function(p){ return p.toLowerCase(); }) : [];
+  var paymentsHtml;
+  if (!savedMethods.length) {
+    paymentsHtml = `<div style="background:#111;border-radius:10px;padding:12px 14px;text-align:center;">
+      <p style="color:#f6a623;font-size:13px;margin:0 0 10px;">No payment methods saved yet.</p>
+      <button onclick="openPaymentMethodsScreen();closeEditAdModal();" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:13px;touch-action:manipulation;">Add Payment Method</button>
+    </div>`;
+  } else {
+    paymentsHtml = savedMethods.map(function(pm) {
+      var label = pm.nickname || pm.type || 'Unknown';
+      var checked = selectedPayments.includes(label.toLowerCase()) ? 'checked' : '';
+      return `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#111;border-radius:10px;cursor:pointer;user-select:none;-webkit-user-select:none;">
+        <input type="checkbox" name="eadPayment" value="${escapeHtml(label)}" ${checked} style="width:18px;height:18px;accent-color:#00c2b2;flex-shrink:0;">
+        <span style="font-size:14px;color:#fff;font-weight:600;">${escapeHtml(label)}</span>
+      </label>`;
+    }).join('');
+  }
+
+  var totalVal = o.totalAmount || o.available || o.availableAmount || '';
   var modal = document.createElement('div');
   modal.id = 'editAdModal';
   modal.className = 'edit-ad-modal-overlay';
   modal.innerHTML = `
-    <div class="edit-ad-modal">
+    <div class="edit-ad-modal" id="editAdModalInner">
       <div class="edit-ad-head">
         <h3>Edit Ad</h3>
-        <button onclick="document.getElementById('editAdModal').remove()" class="edit-ad-close">✕</button>
+        <button onclick="closeEditAdModal()" class="edit-ad-close">✕</button>
       </div>
       <div class="edit-ad-body">
-        <label class="edit-ad-label">Price (INR)</label>
-        <input id="eadPrice" type="number" step="0.01" min="0.01" class="edit-ad-input" placeholder="Enter price" value="${escapeHtml(offer.price || '')}"/>
+        <label class="edit-ad-label">Price (INR per USDT)</label>
+        <input id="eadPrice" type="number" inputmode="decimal" class="edit-ad-input" value="${o.price || ''}" placeholder="Enter price"/>
+        <label class="edit-ad-label">Total Amount (USDT)</label>
+        <input id="eadTotal" type="number" inputmode="decimal" class="edit-ad-input" value="${totalVal}" placeholder="e.g. 500"/>
         <label class="edit-ad-label">Min Limit (INR)</label>
-        <input id="eadMin" type="number" step="0.01" min="0.01" class="edit-ad-input" placeholder="Min limit" value="${escapeHtml(offer.minLimit || '')}"/>
+        <input id="eadMin" type="number" inputmode="decimal" class="edit-ad-input" value="${o.minLimit || ''}" placeholder="Min limit"/>
         <label class="edit-ad-label">Max Limit (INR)</label>
-        <input id="eadMax" type="number" step="0.01" min="0.01" class="edit-ad-input" placeholder="Max limit" value="${escapeHtml(offer.maxLimit || '')}"/>
-        <label class="edit-ad-label">Payment Methods (comma separated)</label>
-        <input id="eadPayments" type="text" class="edit-ad-input" placeholder="UPI, Bank Transfer" value="${escapeHtml(paymentsValue)}"/>
-        <label class="edit-ad-label">Remark (optional)</label>
-        <input id="eadRemark" type="text" class="edit-ad-input" placeholder="Note for buyers" value="${escapeHtml(offer.remark || '')}"/>
+        <input id="eadMax" type="number" inputmode="decimal" class="edit-ad-input" value="${o.maxLimit || ''}" placeholder="Max limit"/>
+        <label class="edit-ad-label">Payment Methods</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">${paymentsHtml}</div>
+        <label class="edit-ad-label">Payment Release Time</label>
+        <select id="eadReleaseTime" class="edit-ad-input" style="appearance:auto;">
+          ${['10','15','30','45','60'].map(function(v){ return '<option value="'+v+'"'+(String(o.releaseTime||'15')===v?' selected':'')+'>'+v+' min</option>'; }).join('')}
+        </select>
+        <label class="edit-ad-label">Terms / Remark (shown to buyer)</label>
+        <input id="eadRemark" type="text" inputmode="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="e.g. Only IMPS transfer accepted"/>
+        <p id="eadMsg" style="font-size:12px;min-height:16px;margin:4px 0 0;color:#f6465d;"></p>
       </div>
-      <button class="mob-kyc-fp-btn" style="background:linear-gradient(96deg,#00c2b2,#0099a8);margin:0 1rem 1rem;" onclick="submitEditAd('${offerId}')">Save Changes</button>
+      <button class="mob-kyc-fp-btn" style="background:linear-gradient(96deg,#00c2b2,#0099a8);margin:0 1rem 1rem;touch-action:manipulation;" onclick="submitEditAd('${offerId}')">Save Changes</button>
     </div>
   `;
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeEditAdModal();
+  });
   document.body.appendChild(modal);
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { modal.classList.add('ead-visible'); });
+  });
+  function _onEsc(e) {
+    if (e.key === 'Escape') { closeEditAdModal(); document.removeEventListener('keydown', _onEsc); }
+  }
+  document.addEventListener('keydown', _onEsc);
 }
 
 async function submitEditAd(offerId) {
-  const priceRaw = document.getElementById('eadPrice')?.value || '';
-  const minLimitRaw = document.getElementById('eadMin')?.value || '';
-  const maxLimitRaw = document.getElementById('eadMax')?.value || '';
-  const price = Number(priceRaw);
-  const minLimit = Number(minLimitRaw);
-  const maxLimit = Number(maxLimitRaw);
-  const paymentsRaw = document.getElementById('eadPayments')?.value || '';
+  const price = Number(document.getElementById('eadPrice')?.value);
+  const totalAmount = Number(document.getElementById('eadTotal')?.value);
+  const minLimit = Number(document.getElementById('eadMin')?.value);
+  const maxLimit = Number(document.getElementById('eadMax')?.value);
   const remark = document.getElementById('eadRemark')?.value || '';
-  const payments = paymentsRaw.split(',').map(p => p.trim()).filter(Boolean);
-  const body = {};
-  if (priceRaw.trim()) body.price = price;
-  if (minLimitRaw.trim()) body.minLimit = minLimit;
-  if (maxLimitRaw.trim()) body.maxLimit = maxLimit;
-  if (payments.length) body.payments = payments;
-  body.remark = remark.trim();
-  if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(minLimit) || minLimit <= 0 || !Number.isFinite(maxLimit) || maxLimit <= 0) {
-    alert('Enter valid price and limits.');
+  const releaseTime = document.getElementById('eadReleaseTime')?.value || '15';
+  const payments = Array.from(document.querySelectorAll('input[name="eadPayment"]:checked')).map(function(cb){ return cb.value; });
+  const msgEl = document.getElementById('eadMsg');
+  if (!price || !minLimit || !maxLimit || !payments.length) {
+    if (msgEl) msgEl.textContent = 'Price, limits and payment method are required.';
     return;
   }
-  if (minLimit >= maxLimit) {
-    alert('Min limit must be less than max limit.');
+  if (minLimit > maxLimit) {
+    if (msgEl) msgEl.textContent = 'Min limit cannot exceed max limit.';
     return;
   }
-  if (!payments.length) {
-    alert('Add at least one payment method.');
-    return;
-  }
+  const body = { price, minLimit, maxLimit, payments, remark, releaseTime };
+  if (totalAmount) body.totalAmount = totalAmount;
   try {
     const res = await fetch(`/api/p2p/offers/${offerId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     const data = await res.json();
-    if (!res.ok) { alert(data.message || 'Update failed.'); return; }
-    document.getElementById('editAdModal')?.remove();
+    if (!res.ok) {
+      if (msgEl) msgEl.textContent = data.message || 'Update failed.';
+      return;
+    }
+    closeEditAdModal();
     await loadMyAds();
-  } catch (e) { alert('Network error.'); }
+    loadOffers();
+  } catch (e) {
+    if (msgEl) msgEl.textContent = 'Network error. Try again.';
+  }
 }
 
 async function loadMyAds() {
@@ -1349,7 +1397,10 @@ async function loadMyAds() {
     clearTimeout(_adsTimer);
     console.log('[loadMyAds] response', res.status);
     const data = await res.json().catch(() => ({ offers: [] }));
-    const myOffers = Array.isArray(data.offers) ? data.offers.sort((a, b) => Number(b.price || 0) - Number(a.price || 0)) : [];
+    const myOffers = Array.isArray(data.offers) ? data.offers.sort((a, b) => Number(a.price || 0) - Number(b.price || 0)) : [];
+    // Build cache for edit modal prefill
+    window._myAdsCache = {};
+    myOffers.forEach(o => { window._myAdsCache[o.id] = o; });
     console.log('[loadMyAds] rendering', myOffers.length, 'ads');
     renderMyAds(myOffers);
   } catch (error) {
@@ -1434,7 +1485,7 @@ function syncMobProfile() {
     emailChip.textContent = isEmailVerified ? '\u2713 Email' : 'Verify Email';
     emailChip.style.cssText = isEmailVerified
       ? 'background:rgba(22,199,132,.15);border-color:rgba(22,199,132,.4);color:#16c784;cursor:default;'
-      : 'background:rgba(0,180,216,.1);border-color:rgba(0,180,216,.3);color:#00B4D8;cursor:pointer;';
+      : 'background:rgba(168,255,62,.1);border-color:rgba(168,255,62,.3);color:#a8ff3e;cursor:pointer;';
   }
   var chips = s.querySelectorAll('.mob-verify-chip');
   if (chips[2]) {
@@ -1622,7 +1673,7 @@ async function loadProfilePanel(options = {}) {
       kycBadge.style.cssText = 'font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(22,199,132,0.15);border:1px solid rgba(22,199,132,0.35);color:#16c784;margin-left:6px;';
     } else if (currentKycStatus === 'PENDING_REVIEW') {
       kycBadge.textContent = 'Under Review';
-      kycBadge.style.cssText = 'font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,180,216,0.12);border:1px solid rgba(0,180,216,0.3);color:#00B4D8;margin-left:6px;';
+      kycBadge.style.cssText = 'font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(168,255,62,0.12);border:1px solid rgba(168,255,62,0.3);color:#a8ff3e;margin-left:6px;';
     } else if (currentKycStatus === 'REJECTED') {
       kycBadge.textContent = 'Rejected';
       kycBadge.style.cssText = 'font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(246,70,93,0.15);border:1px solid rgba(246,70,93,0.3);color:#f6465d;margin-left:6px;cursor:pointer;';
@@ -1644,21 +1695,39 @@ async function loadProfilePanel(options = {}) {
   }
   setNodeText(profileSecurity, currentKycStatus === 'VERIFIED' ? 'KYC + Email Protected' : 'KYC Required');
 
+  // ── Fire wallet + history fetches in background — don't block stats render ──
   const shouldRefreshWallet =
     Boolean(options.refreshWallet) || Date.now() - profileWalletSyncedAt > 30 * 1000;
 
   if (shouldRefreshWallet) {
-    try {
-      const response = await fetch('/api/p2p/wallet');
-      const data = await response.json();
-      if (response.ok && data.wallet) {
-        profileWalletBalance = Number(data.wallet.balance || 0);
-        profileWalletLocked = Number(data.wallet.lockedBalance || 0);
-        profileWalletSyncedAt = Date.now();
-      }
-    } catch (error) {
-      // Wallet panel remains with previous values.
-    }
+    fetch('/api/p2p/wallet')
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (data && data.wallet) {
+          profileWalletBalance = Number(data.wallet.availableBalance || data.wallet.balance || 0);
+          profileWalletLocked = Number(data.wallet.lockedBalance || data.wallet.p2pLocked || 0);
+          profileWalletSyncedAt = Date.now();
+          // Re-render wallet line after balance loads
+          const walletLbl = '₹' + formatNumber(profileWalletBalance + profileWalletLocked);
+          setNodeText(profileDeposit, walletLbl);
+          setNodeText(profileDepositMobile, walletLbl);
+          syncMobProfile();
+        }
+      }).catch(function() {});
+  }
+
+  // If local cache is empty, kick off history fetch in background then re-run stats
+  if (currentUser && getProfileOrdersSnapshot().length === 0) {
+    fetch('/api/p2p/orders/history?limit=50&offset=0', { credentials: 'include', headers: { 'Cache-Control': 'no-store' } })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(histData) {
+        if (!histData) return;
+        const histOrders = Array.isArray(histData) ? histData : (histData.orders || []);
+        histOrders.forEach(function(o) {
+          if (o && o.id) { try { localStorage.setItem('p2p_order_' + o.id, JSON.stringify(o)); } catch(_) {} }
+        });
+        if (histOrders.length) loadProfilePanel({ refreshWallet: false }); // re-run stats with fresh data
+      }).catch(function() {});
   }
 
   const nowMs = Date.now();
@@ -1749,6 +1818,9 @@ async function loadProfilePanel(options = {}) {
     profileMeta,
     `All trades: ${totalOrdersAll} | 30D trades: ${totalOrders30d} | Cancelled: ${cancelledOrders30d.length} | Wallet: ${formatNumber(profileWalletBalance)}`
   );
+
+  // Sync computed stats to mobile profile screen
+  syncMobProfile();
 
   // Fetch own reputation (stars + rating count) and show on profile
   if (currentUser && getCurrentUserId()) {
@@ -1913,6 +1985,18 @@ function openProfileEditModal() {
     // Prefill
     var nicknameInput = document.getElementById('editNicknameInput');
     if (nicknameInput) nicknameInput.value = currentUser.nickname || currentUser.username || '';
+    // Show remaining name-change quota
+    var left = _nameChangesLeft();
+    var quotaEl = document.getElementById('editNicknameChangesLeft');
+    var saveBtn = document.getElementById('editNicknameSaveBtn');
+    var msgEl = document.getElementById('editNicknameMsg');
+    if (quotaEl) quotaEl.textContent = left + ' username change' + (left === 1 ? '' : 's') + ' remaining this month';
+    if (saveBtn) {
+      saveBtn.disabled = left <= 0;
+      saveBtn.style.opacity = left <= 0 ? '0.4' : '1';
+      saveBtn.style.cursor = left <= 0 ? 'not-allowed' : 'pointer';
+    }
+    if (msgEl) { msgEl.textContent = ''; }
     if (profileScreen) { profileScreen.classList.add('hidden'); profileScreen.style.display = 'none'; }
     editScreen.classList.remove('hidden');
     editScreen.style.setProperty('display', 'flex', 'important');
@@ -1920,37 +2004,87 @@ function openProfileEditModal() {
   }
 }
 
+// ── Name-change quota: 3 times per rolling 30 days ───────────────────────────
+function _getNameChanges() {
+  try {
+    var raw = localStorage.getItem('_p2p_name_changes');
+    var arr = raw ? JSON.parse(raw) : [];
+    var now = Date.now();
+    // Keep only changes within last 30 days
+    arr = arr.filter(function(ts) { return now - ts < 30 * 24 * 60 * 60 * 1000; });
+    return arr;
+  } catch(_) { return []; }
+}
+function _recordNameChange() {
+  try {
+    var arr = _getNameChanges();
+    arr.push(Date.now());
+    localStorage.setItem('_p2p_name_changes', JSON.stringify(arr));
+  } catch(_) {}
+}
+function _nameChangesLeft() { return Math.max(0, 3 - _getNameChanges().length); }
+
 function saveProfileNickname() {
   var nicknameInput = document.getElementById('editNicknameInput');
-  var msg = document.getElementById('editProfileMsg');
-  var nickname = (nicknameInput && nicknameInput.value || '').trim();
-  if (!nickname || nickname.length < 2) {
-    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Nickname must be at least 2 characters.'; }
+  var msg = document.getElementById('editNicknameMsg');
+  var nickname = (nicknameInput ? nicknameInput.value : '').trim();
+  if (!nickname || nickname.length < 3) {
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Username must be at least 3 characters.'; }
     return;
   }
-  if (msg) { msg.style.color = '#555'; msg.textContent = 'Saving...'; }
+  if (!/^[a-zA-Z0-9_]+$/.test(nickname)) {
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Only letters, numbers and underscores allowed.'; }
+    return;
+  }
+  // Enforce 3x/month limit (client-side guard)
+  if (_nameChangesLeft() <= 0) {
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'You can only change your username 3 times per month.'; }
+    return;
+  }
+  if (msg) { msg.style.color = 'rgba(255,255,255,0.5)'; msg.textContent = 'Saving...'; }
   fetch('/api/p2p/profile', {
     method: 'PUT', credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nickname: nickname })
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.ok || d.success || d.nickname) {
-      if (msg) { msg.style.color = '#16c784'; msg.textContent = '✓ Nickname updated!'; }
-      if (currentUser) currentUser.nickname = nickname;
-      // Update displays
+      _recordNameChange();
+      if (msg) {
+        var left = _nameChangesLeft();
+        msg.style.color = '#16c784';
+        msg.textContent = '✓ Username updated! (' + left + ' change' + (left === 1 ? '' : 's') + ' left this month)';
+      }
+      // Update currentUser everywhere
+      if (currentUser) { currentUser.username = nickname; currentUser.nickname = nickname; }
+      // Persist to localStorage so name survives refresh
+      try {
+        localStorage.setItem('_p2p_hint', JSON.stringify({
+          id: getCurrentUserId(),
+          username: nickname,
+          email: currentUser ? currentUser.email : '',
+          role: currentUser ? currentUser.role : '',
+          avatar: currentUser ? (currentUser.avatar || '') : '',
+          createdAt: currentUser ? (currentUser.createdAt || null) : null
+        }));
+      } catch(_) {}
       var el;
       if ((el = document.getElementById('profileNameMobile'))) el.textContent = nickname;
       if ((el = document.getElementById('profileName'))) el.textContent = nickname;
       if ((el = document.getElementById('profileAvatarMobile'))) el.textContent = nickname.charAt(0).toUpperCase();
       if ((el = document.getElementById('profileAvatar'))) el.textContent = nickname.charAt(0).toUpperCase();
+      // Clear offer cache and reload so ad cards show new username immediately
+      if (_offersResponseCache) _offersResponseCache.clear();
+      _lastOffersData = null;
       setTimeout(function() {
         closeMobScreen('mobProfileEditScreen', 'mobProfileScreen');
-      }, 800);
+        loadOffers();
+        loadMyAds();
+      }, 700);
     } else {
       if (msg) { msg.style.color = '#f6465d'; msg.textContent = d.error || d.message || 'Failed to save.'; }
     }
   }).catch(function() {
-    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Network error.'; }
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Network error. Please try again.'; }
   });
 }
 
@@ -2564,7 +2698,9 @@ async function loadCurrentUser() {
 
   let _networkErr = false; // true only on real network/parse failure
   try {
-    const response = await fetch('/api/p2p/me', { credentials: 'include' });
+    var _jwtTok = (typeof localStorage !== 'undefined' && localStorage.getItem('bitegit_token')) || '';
+    var _meHeaders = _jwtTok ? { 'Authorization': 'Bearer ' + _jwtTok } : {};
+    const response = await fetch('/api/p2p/me', { credentials: 'include', headers: _meHeaders });
     // Treat 5xx as network error — don't log out on server hiccups
     if (!response.ok && response.status >= 500) { _networkErr = true; throw new Error('server_error'); }
     const data = await response.json();
@@ -2579,9 +2715,18 @@ async function loadCurrentUser() {
       currentUser = normalizedUser;
       updateCurrentUserKyc(currentUser.kyc || {});
       try { localStorage.setItem('_p2p_hint', JSON.stringify({ id: getCurrentUserId(), username: currentUser.username, email: currentUser.email, role: currentUser.role, avatar: currentUser.avatar || '', createdAt: currentUser.createdAt || null })); } catch(_) {}
+      // Load merchant badge on login so ad cards show it immediately
+      loadMerchantBadge && loadMerchantBadge();
+      // Poll badge every 30s so admin badge changes appear without page refresh
+      if (!window._badgePollTimer) {
+        window._badgePollTimer = setInterval(function() {
+          if (currentUser) loadMerchantBadge && loadMerchantBadge();
+        }, 30000);
+      }
       // Single call — fetchOrdersSafe shows cache instantly then fetches fresh
       fetchOrdersSafe();
       _startFallbackPoll(); // 15s fallback poll in case SSE is down
+      _p2pPing(); // ping immediately so seller shows online to buyers right away
     } else {
       currentUser = null;
       try { localStorage.removeItem('_p2p_hint'); } catch(_) {}
@@ -2742,8 +2887,7 @@ async function logoutUser() {
 }
 
 function requireLoginNotice() {
-  setUserStatus('Please login first using email and password.', 'user-error');
-  setAuthModalOpen(true);
+  window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.hash);
 }
 
 async function loadExchangeTicker() {
@@ -2813,10 +2957,15 @@ function renderOffers(data, append) {
     const rowClass = index === 0 ? 'top-pick-row offer-highlight' : '';
     const topPickTag = index === 0 ? '<p class="top-pick-label">Top Picks for New Users</p>' : '';
     const actionText = isOwnAd ? 'Your Ad' : currentUser ? actionLabel : 'Login';
-    const verificationBadge =
-      Number(offer.completionRate || 0) >= 95
-        ? '<span class="verification-badge" title="Verified">✔</span>'
-        : '<span class="verification-badge muted" title="Basic">•</span>';
+    // Admin-assigned merchant badge — use server value OR fall back to current user's own badge
+    const _BADGE_SVG = {
+      1: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet()"><path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#1a6ff4"/><path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#2979ff" opacity="0.4"/><polyline points="14,22 20,28 30,16" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      2: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet()"><path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#f7931a"/><path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#ffb347" opacity="0.35"/><path d="M13 28 L13 20 L17 24 L22 15 L27 24 L31 20 L31 28 Z" fill="#fff" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/></svg>`,
+      3: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet()"><path d="M22 4 L36 10 L36 22 C36 30 29 37 22 40 C15 37 8 30 8 22 L8 10 Z" fill="#f5a623"/><path d="M22 8 L33 13 L33 22 C33 28.5 27.5 34 22 37 C16.5 34 11 28.5 11 22 L11 13 Z" fill="#ffc849" opacity="0.4"/><path d="M22 13 L28 16 L28 22 C28 26 25 29 22 31 C19 29 16 26 16 22 L16 16 Z" fill="#fff" opacity="0.9"/></svg>`
+    };
+    const _isMyAd = currentUser && currentUser.username && offer.advertiser === currentUser.username;
+    const _badgeNum = offer.merchantBadge || (_isMyAd && _myMerchantBadge ? _myMerchantBadge : null);
+    const verificationBadge = _badgeNum && _BADGE_SVG[_badgeNum] ? _BADGE_SVG[_badgeNum] : '';
     const initial = String(offer.advertiser || 'U')
       .trim()
       .slice(0, 1)
@@ -2829,7 +2978,7 @@ function renderOffers(data, append) {
             <span class="table-user-avatar">${escapeHtml(initial)}</span>
             <div>
               <p class="adv-name">${escapeHtml(offer.advertiser)} ${verificationBadge}</p>
-              <p class="adv-meta">${(offer.reputation && offer.reputation.completedOrders != null) ? offer.reputation.completedOrders : offer.orders} Orders | ${(offer.reputation && offer.reputation.completionRate != null) ? offer.reputation.completionRate : offer.completionRate}% | <span style="color:${offer.onlineStatus==='online'?'#2ebd85':offer.onlineStatus==='away'?'#00B4D8':'#888'}">${offer.onlineStatus==='online'?'● Online':offer.onlineStatus==='away'?'● Away':'● Offline'}</span></p>
+              <p class="adv-meta">${(offer.reputation && offer.reputation.completedOrders != null) ? offer.reputation.completedOrders : offer.orders} Orders | ${(offer.reputation && offer.reputation.completionRate != null) ? offer.reputation.completionRate : offer.completionRate}% | <span style="color:${offer.onlineStatus==='online'?'#2ebd85':offer.onlineStatus==='away'?'#a8ff3e':'#888'}">${offer.onlineStatus==='online'?'● Online':offer.onlineStatus==='away'?'● Away':'● Offline'}</span></p>
             </div>
           </div>
         </td>
@@ -2854,9 +3003,9 @@ function renderOffers(data, append) {
     const rep = offer.reputation || {};
     const repOrders = rep.completedOrders != null ? rep.completedOrders : (offer.orders || 0);
     const repRate = rep.completionRate != null ? rep.completionRate : (offer.completionRate || 100);
-    const repTime = rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes + ' min' : '~15 min';
-    const onlineStatus = offer.onlineStatus || 'offline';
-    const onlineDotColor = onlineStatus === 'online' ? '#2ebd85' : onlineStatus === 'away' ? '#00B4D8' : '#555';
+    const repTime = offer.releaseTime ? offer.releaseTime + ' min' : (rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes + ' min' : '15 min');
+    const onlineStatus = isOwnAd ? 'online' : (offer.onlineStatus || 'offline');
+    const onlineDotColor = onlineStatus === 'online' ? '#2ebd85' : onlineStatus === 'away' ? '#a8ff3e' : '#555';
     const onlineLabel = onlineStatus === 'online' ? 'Online' : onlineStatus === 'away' ? 'Away' : 'Offline';
     const paymentGate = offerPayments.map(m => `<span class="gt-pay">${escapeHtml(m)}</span>`).join('');
 
@@ -2865,14 +3014,14 @@ function renderOffers(data, append) {
         <div class="gt-left">
           <div class="gt-user-row">
             <span class="gt-username">${escapeHtml(offer.advertiser)}</span>
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 1L14 6.5L8 15L2 6.5Z" fill="#2563eb"/><line x1="2" y1="6.5" x2="14" y2="6.5" stroke="white" stroke-width="1"/></svg>
+            ${verificationBadge}
           </div>
           <div class="gt-stats">
             <span>${repOrders} Orders</span>
             <span class="gt-div">|</span>
             <span>${repRate}%</span>
             <span class="gt-div">|</span>
-            <span>⏱ ${repTime}</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;opacity:0.75;margin-right:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${repTime}</span>
           </div>
           <div class="gt-online"><span class="gt-dot" style="background:${onlineDotColor};box-shadow:0 0 4px ${onlineDotColor};"></span>${onlineLabel}</div>
           <p class="gt-price">₹${formatNumber(offer.price)} <span class="gt-cur">INR</span></p>
@@ -2935,8 +3084,9 @@ function getDummyOffers(side) {
 var _offersOffset = 0;
 var _offersHasMore = false;
 var _offersFetching = false; // in-flight lock — prevents stacked parallel calls
+var _lastOffersData = null; // last successful offers response for badge re-renders
 var _offersResponseCache = new Map();
-var _OFFERS_CACHE_TTL_MS = 25 * 1000;
+var _OFFERS_CACHE_TTL_MS = 10 * 1000; // 10s — keeps online status fresh for buyers
 var _P2P_SELECTED_AD_CACHE_KEY = 'p2p_selected_ad';
 var _orderFlowWarmPromise = null;
 var _orderFlowWarmStartedAt = 0;
@@ -3160,6 +3310,7 @@ async function loadOffers(append) {
 
     if (!append) _offersFetching = false;
     if (!append) _writeOffersCache(cacheKey, data);
+    if (!append) _lastOffersData = data;
     console.log('[loadOffers] rendered', data.offers ? data.offers.length : 0, 'offers');
     renderOffers(data, append);
     _offersOffset += data.offers.length;
@@ -3257,7 +3408,8 @@ async function createOrder(offerId, options = {}) {
     }
 
     if (openAfterCreate) {
-      openOrder(data.order);
+      // Navigate to standalone order flow page
+      window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(data.order.id) + '&source=buy&v=' + Date.now();
     }
 
     // ── Immediately inject new order into cache + orders screen ──
@@ -3331,7 +3483,8 @@ async function submitDealOrder() {
     console.log('[submitDealOrder] order created ref=' + data.order.reference + ' id=' + data.order.id);
     setDealHint('Order created! Ref: ' + data.order.reference, 'success');
     closeDealModal();
-    openOrder(data.order);
+    // Navigate to the standalone order flow page — works for buyer immediately
+    window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(data.order.id) + '&source=buy&v=' + Date.now();
   } catch (error) {
     console.warn('[submitDealOrder] FAILED:', error.message, 'code=' + (error.code || 'none'));
     if (error.code === 'EMAIL_NOT_VERIFIED') {
@@ -3372,7 +3525,10 @@ function renderLiveOrders(orders) {
     .filter((order) => Boolean(order?.isParticipant));
   participantOrders.forEach((order) => storeOrderForMobile(order));
   pruneMobileOrdersCache();
-  const visibleOrders = participantOrders.filter((order) => isOngoingOrderStatus(order.status));
+  const visibleOrders = participantOrders.filter((order) => {
+    const s = normalizeStatusForUi(order.status);
+    return isOngoingOrderStatus(order.status) || s === 'RELEASED' || s === 'COMPLETED';
+  });
 
   if (!visibleOrders.length) {
     if (liveOrdersRows) {
@@ -3695,7 +3851,7 @@ function updateOrderUi(order) {
     timerLabel.style.color = '';
     if (isCreated && isBuyer)        { timerLabel.textContent = 'Pay before timer expires'; }
     else if (isCreated && isSeller)  { timerLabel.textContent = 'Waiting for buyer payment'; }
-    else if (isPaid && isSeller)     { timerLabel.textContent = 'Release payment to buyer'; timerLabel.style.color = '#00B4D8'; }
+    else if (isPaid && isSeller)     { timerLabel.textContent = 'Release payment to buyer'; timerLabel.style.color = '#a8ff3e'; }
     else if (isPaid && isBuyer)      { timerLabel.textContent = 'Waiting for seller to release'; }
     else if (isDisputed)             { timerLabel.textContent = 'Appeal under review'; timerLabel.style.color = '#f6465d'; }
     else                             { timerLabel.textContent = ''; }
@@ -3723,7 +3879,7 @@ document.addEventListener('click', function(e) {
   if (!star) return;
   _selectedStars = parseInt(star.dataset.star);
   document.querySelectorAll('#ratingStars [data-star]').forEach(function(s){
-    s.style.color = parseInt(s.dataset.star) <= _selectedStars ? '#00B4D8' : '#555';
+    s.style.color = parseInt(s.dataset.star) <= _selectedStars ? '#a8ff3e' : '#555';
   });
 });
 (function(){
@@ -4023,10 +4179,10 @@ function renderCounterpartyReputation(rep) {
   if (rep.completionRate != null) parts.push(rep.completionRate + '% completion');
   if (rep.avgStars != null) parts.push('★ ' + rep.avgStars);
   meta.textContent = parts.join('  ·  ');
-  meta.style.color = rep.onlineStatus === 'online' ? '#2ebd85' : rep.onlineStatus === 'away' ? '#00B4D8' : 'rgba(255,255,255,0.4)';
+  meta.style.color = rep.onlineStatus === 'online' ? '#2ebd85' : rep.onlineStatus === 'away' ? '#a8ff3e' : 'rgba(255,255,255,0.4)';
 }
 
-function openOrder(order) {
+function openOrder(order, opts) {
   // Close any previous stream before opening new one
   if (orderStream) { try { orderStream.close(); } catch(e){} orderStream = null; }
 
@@ -4035,11 +4191,19 @@ function openOrder(order) {
   messagePollTick = 0;
   resetChatMessages();
   setChatUploading(false);
-  setModalOpen(true);
-  setPaymentPanelOpen(false);
-  setCancelModalOpen(false);
+  // Always update snapshot/timer (needed for chat, cancel, etc.)
   updateOrderUi(order);
   fetchMessages({ forceScroll: true });
+  // Only show old modal if NOT in bf mode
+  var suppressModal = (opts && opts.suppressModal) || document.body.classList.contains('bf-open');
+  if (!suppressModal) {
+    setModalOpen(true);
+    setPaymentPanelOpen(false);
+    setCancelModalOpen(false);
+  } else {
+    // Hide old modal in case it was open
+    setModalOpen(false);
+  }
 
   resetOrderWatch();
 
@@ -4097,34 +4261,15 @@ function openOrder(order) {
   };
 }
 
-async function openOrderById(orderId) {
-  if (!liveOrdersMeta) {
-    return;
-  }
+async function openOrderById(orderId, opts) {
+  if (!currentUser) { requireLoginNotice(); return; }
+  if (!orderId) return;
 
-  if (!currentUser) {
-    requireLoginNotice();
-    return;
-  }
-
-  try {
-    const response = await fetch(`/api/p2p/orders/${orderId}`, {
-      credentials: 'include',
-      headers: { 'Cache-Control': 'no-store' }
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Unable to open order.');
-    }
-    if (!isOngoingOrderStatus(data?.order?.status)) {
-      throw new Error('Only ongoing orders can be opened.');
-    }
-    openOrder(data.order);
-    if (data.counterparty) renderCounterpartyReputation(data.counterparty);
-    await loadLiveOrders();
-  } catch (error) {
-    liveOrdersMeta.textContent = error.message;
-  }
+  // Navigate directly — order data will be loaded from localStorage cache or server on the standalone page
+  var openChat = opts && opts.openChat;
+  var url = '/p2p-order-flow.html?orderId=' + encodeURIComponent(orderId) + '&source=orders&v=' + Date.now();
+  if (openChat) url += '&openChat=1';
+  window.location.href = url;
 }
 
 async function sendOrderMessage(text) {
@@ -4220,7 +4365,6 @@ function bindOfferActionDelegation(container) {
     if (offer) {
       cacheSelectedOffer(offer);
     }
-    prefetchOrderFlowAssets();
   }
 
   container.addEventListener('mouseenter', primeOfferNavigation, true);
@@ -4293,7 +4437,7 @@ function renderMobileActiveOrders() {
         '<span class="status-pill ' + statusCls + '">' + statusTxt + '</span>' +
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 1rem;font-size:0.87rem;margin-bottom:0.75rem;">' +
-        '<div><span style="color:rgba(255,255,255,0.45);">Type</span><br/><strong style="color:' + (sideLabel==='BUY'?'#16a34a':'#00B4D8') + ';">' + sideLabel + ' ' + escapeHtml(order.asset || 'USDT') + '</strong></div>' +
+        '<div><span style="color:rgba(255,255,255,0.45);">Type</span><br/><strong style="color:' + (sideLabel==='BUY'?'#16a34a':'#a8ff3e') + ';">' + sideLabel + ' ' + escapeHtml(order.asset || 'USDT') + '</strong></div>' +
         '<div><span style="color:rgba(255,255,255,0.45);">Amount</span><br/><strong>' + amtLabel + '</strong></div>' +
         '<div><span style="color:rgba(255,255,255,0.45);">Price</span><br/><strong>₹' + formatNumber(order.price || 0) + '</strong></div>' +
         '<div><span style="color:rgba(255,255,255,0.45);">Payment</span><br/><strong>' + escapeHtml(order.paymentMethod || '--') + '</strong></div>' +
@@ -4353,7 +4497,7 @@ async function loadMobileOrderHistory() {
           '<span class="status-pill ' + statusCls + '">' + statusTxt + '</span>' +
         '</div>' +
         '<div style="display:flex;justify-content:space-between;font-size:0.87rem;">' +
-          '<span><strong style="color:' + (sideLabel==='BUY'?'#16a34a':'#00B4D8') + ';">' + sideLabel + '</strong> ₹' + formatNumber(order.amountInr || 0) + '</span>' +
+          '<span><strong style="color:' + (sideLabel==='BUY'?'#16a34a':'#a8ff3e') + ';">' + sideLabel + '</strong> ₹' + formatNumber(order.amountInr || 0) + '</span>' +
           '<span style="color:rgba(255,255,255,0.4);">' + date + '</span>' +
         '</div>' +
       '</article>';
@@ -4388,8 +4532,8 @@ function switchMobileOrderTab(tab) {
   if (tabs) {
     tabs.querySelectorAll('[data-order-filter]').forEach(function(btn) {
       var isActive = btn.dataset.orderFilter === tab;
-      btn.style.color = isActive ? '#00B4D8' : 'rgba(255,255,255,0.5)';
-      btn.style.borderBottom = isActive ? '2px solid #00B4D8' : '2px solid transparent';
+      btn.style.color = isActive ? '#a8ff3e' : 'rgba(255,255,255,0.5)';
+      btn.style.borderBottom = isActive ? '2px solid #a8ff3e' : '2px solid transparent';
       btn.style.fontWeight = isActive ? '600' : '400';
     });
   }
@@ -4455,9 +4599,9 @@ function _ordCard(order) {
   var status = String(order.status || '').toUpperCase();
   var isEnded = ['RELEASED','COMPLETED','CANCELLED','CANCELED','EXPIRED'].indexOf(status) !== -1;
   var _statusLabel = { CREATED:'In Progress', PAYMENT_SENT:'Payment Sent', PAID:'Payment Sent', RELEASED:'Completed', COMPLETED:'Completed', CANCELLED:'Cancelled', CANCELED:'Cancelled', EXPIRED:'Expired', DISPUTED:'Disputed' }[status] || status;
-  var _statusColor = { CREATED:'#00B4D8', PAYMENT_SENT:'#00b4d8', PAID:'#00b4d8', RELEASED:'#2ebd85', COMPLETED:'#2ebd85', CANCELLED:'rgba(255,255,255,0.35)', CANCELED:'rgba(255,255,255,0.35)', EXPIRED:'rgba(255,255,255,0.35)', DISPUTED:'#f6465d' }[status] || '#fff';
+  var _statusColor = { CREATED:'#a8ff3e', PAYMENT_SENT:'#00b4d8', PAID:'#00b4d8', RELEASED:'#2ebd85', COMPLETED:'#2ebd85', CANCELLED:'rgba(255,255,255,0.35)', CANCELED:'rgba(255,255,255,0.35)', EXPIRED:'rgba(255,255,255,0.35)', DISPUTED:'#f6465d' }[status] || '#fff';
   var statusBadge = '<span style="font-size:11px;font-weight:600;color:'+_statusColor+';">'+_statusLabel+'</span>';
-  var chatBtn = '<a href="'+chatUrl+'" class="ord-open-link" data-order-id="'+rawIdAttr+'" data-open-chat="1" data-url="'+chatUrl+'" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;-webkit-tap-highlight-color:rgba(0,180,216,0.15);">'+
+  var chatBtn = '<a href="'+chatUrl+'" class="ord-open-link" data-order-id="'+rawIdAttr+'" data-open-chat="1" data-url="'+chatUrl+'" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;-webkit-tap-highlight-color:rgba(240,185,11,0.15);">'+
     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</a>';
   // Amount + chat row:
   // Active: left=info cols, right=amount. Below: left=counterparty, right=Chat
@@ -4558,12 +4702,12 @@ function switchOrdMain(tab) {
   var tabPend = document.getElementById('ordTabPending');
   var tabEnd = document.getElementById('ordTabEnded');
   if (tabPend) {
-    tabPend.style.borderBottomColor = tab === 'pending' ? '#00B4D8' : 'transparent';
+    tabPend.style.borderBottomColor = tab === 'pending' ? '#a8ff3e' : 'transparent';
     tabPend.style.color = tab === 'pending' ? '#fff' : 'rgba(255,255,255,0.4)';
     tabPend.style.fontWeight = tab === 'pending' ? '700' : '500';
   }
   if (tabEnd) {
-    tabEnd.style.borderBottomColor = tab === 'ended' ? '#00B4D8' : 'transparent';
+    tabEnd.style.borderBottomColor = tab === 'ended' ? '#a8ff3e' : 'transparent';
     tabEnd.style.color = tab === 'ended' ? '#fff' : 'rgba(255,255,255,0.4)';
     tabEnd.style.fontWeight = tab === 'ended' ? '700' : '500';
   }
@@ -4800,6 +4944,17 @@ function _ordSyncSingleOrder(order, options) {
     localStorage.setItem('p2p_order_' + normalizedOrder.id, JSON.stringify(normalizedOrder));
   } catch (_) {}
 
+  // When order first becomes RELEASED: refresh offers + profile from server
+  if (normalizedOrder.status === 'RELEASED') {
+    var _prevOrd2 = (_ordAllOrders || []).find(function(o) { return o && o.id === normalizedOrder.id; });
+    if (!_prevOrd2 || _prevOrd2.status !== 'RELEASED') {
+      setTimeout(function() {
+        if (typeof loadOffers === 'function') loadOffers();
+        if (typeof loadProfilePanel === 'function') loadProfilePanel({ refreshWallet: true });
+      }, 1500);
+    }
+  }
+
   var found = false;
   _ordAllOrders = (Array.isArray(_ordAllOrders) ? _ordAllOrders : []).map(function(existing) {
     if (existing && existing.id === normalizedOrder.id) {
@@ -4982,7 +5137,9 @@ function _fetchOrderHistoryInBackground(parentReqId) {
     .then(function(data) {
       if (!data || parentReqId !== _ordReqId) return;
       var historyOrders = Array.isArray(data) ? data : (data.orders || []);
-      _ordRenderAll(_ordMergeById(_ordAllOrders, historyOrders), false);
+      // Active orders in _ordAllOrders must WIN over stale history — pass history as primary
+      // so active records (secondary) overwrite any stale history entries for same ID
+      _ordRenderAll(_ordMergeById(historyOrders, _ordAllOrders), false);
     })
     .catch(function(error) {
       if (error && error.name === 'AbortError') return;
@@ -5029,7 +5186,7 @@ function _ordShowLogin() {
     '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">' +
     '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>' +
     '<p style="color:rgba(255,255,255,0.45);font-size:14px;margin:0;text-align:center;">Login to view your orders</p>' +
-    '<button onclick="requireLoginNotice()" style="background:#00B4D8;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Login</button>' +
+    '<button onclick="window.location.href=\'/auth.html?redirect=/p2p.html\'" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
     '</div>';
 }
 
@@ -5825,12 +5982,21 @@ window.addEventListener('pagehide', () => {
   // For non-logged-in users, showLoginPrompt is shown when they open the orders screen.
 })();
 
-// ── Online presence ping — marks current user as online every 60s ───
-setInterval(function() {
+// ── Online presence ping — marks current user as online ──────────────
+function _p2pPing() {
   if (currentUser && document.visibilityState !== 'hidden') {
     fetch('/api/p2p/ping', { method: 'POST', credentials: 'include' }).catch(function() {});
   }
-}, 60 * 1000);
+}
+// Ping every 30s; also called immediately after login confirmation
+setInterval(_p2pPing, 30 * 1000);
+
+// ── Auto-refresh offers every 30s so online status stays current ─────
+setInterval(function() {
+  if (document.visibilityState !== 'hidden' && typeof loadOffers === 'function') {
+    loadOffers();
+  }
+}, 30 * 1000);
 
 // ── Keep Render free-tier server awake ──────────────────────────────
 setInterval(function() {
@@ -6300,7 +6466,8 @@ async function deletePaymentMethod(pmId) {
   var qrBtn = document.getElementById('paymentMethodQrBtn');
   if (qrBtn) {
     qrBtn.addEventListener('click', function() {
-      openPaymentQrSheet();
+      var albumInput = document.getElementById('paymentMethodQrAlbumInput');
+      if (albumInput) albumInput.click();
     });
   }
 
@@ -6330,14 +6497,16 @@ async function deletePaymentMethod(pmId) {
   var takePhotoBtn = document.getElementById('paymentMethodTakePhotoBtn');
   if (takePhotoBtn && cameraInput) {
     takePhotoBtn.addEventListener('click', function() {
-      cameraInput.click();
+      closePaymentQrSheet();
+      setTimeout(function() { cameraInput.click(); }, 200);
     });
   }
 
   var selectAlbumBtn = document.getElementById('paymentMethodSelectAlbumBtn');
   if (selectAlbumBtn && albumInput) {
     selectAlbumBtn.addEventListener('click', function() {
-      albumInput.click();
+      closePaymentQrSheet();
+      setTimeout(function() { albumInput.click(); }, 200);
     });
   }
 
@@ -6367,6 +6536,7 @@ async function deletePaymentMethod(pmId) {
     var paymentBack = event.target.closest('[data-payment-back]');
     if (paymentBack) {
       event.preventDefault();
+      closePaymentQrSheet();
       var target = paymentBack.getAttribute('data-payment-back');
       if (target === 'profile') {
         showProfileFlowScreen('mobProfileScreen', 'profile');
@@ -6396,12 +6566,211 @@ function openP2PScreen(id) {
   document.body.classList.add('mob-screen-open');
 }
 function closeP2PScreen(id) {
+  closePaymentQrSheet();
   var el = document.getElementById(id);
   if (el) el.style.display = 'none';
   // only remove mob-screen-open if no other screen is open
   var any = document.querySelector('.mob-screen[style*="flex"]');
   if (!any) document.body.classList.remove('mob-screen-open');
 }
+// ── Merchant perks table ──
+(function buildPerksTable() {
+  var rows = [
+    ['Number of buy ads',                      '✗', 'Up to 3'],
+    ['Buy ad limit (per ad)',                   '✗', 'Up to 150000 USDT'],
+    ['Number of sell ads',                      '✗', 'Up to 5'],
+    ['Sell ad Limit (per ad)',                  '✗', 'Up to 300000 USDT'],
+    ['Max active orders',                       '✗', 'Up to 35'],
+    ['Identity badge',                          '✗', 'Exclusive logo for VIP3+'],
+    ['Gain priority to ad sorting',             '✗', 'V4>V3>V2>V1'],
+    ['Eligibility to publish order acceptance ads', '✗', '✓'],
+    ['Gain priority as promotional merchant',   '✗', 'Supported'],
+    ['Customer service response time',          '✗', 'Dedicated & timely'],
+    ['Counterparty conditions',                 '✗', 'Basic'],
+  ];
+  document.addEventListener('DOMContentLoaded', function() {
+    var tbody = document.getElementById('perksTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = rows.map(function(r, i) {
+      var bg = i % 2 === 0 ? '' : 'background:rgba(255,255,255,0.02);';
+      var merch = r[2] === '✓'
+        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00c853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<span style="font-size:0.82rem;color:rgba(255,255,255,0.7);">' + r[2] + '</span>';
+      return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:13px 8px;border-bottom:1px solid rgba(255,255,255,0.05);' + bg + 'align-items:center;">'
+        + '<span style="font-size:0.78rem;color:rgba(255,255,255,0.55);line-height:1.4;">' + r[0] + '</span>'
+        + '<span style="text-align:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="#e05260" stroke-width="2.5" stroke-linecap="round"/></svg></span>'
+        + '<span style="text-align:center;display:flex;justify-content:center;">' + merch + '</span>'
+        + '</div>';
+    }).join('');
+  });
+})();
+
+// ── Merchant Application Form State ──
+var merchantFormData = { idPhotoBase64: '', currency: '', twitter: '', telegram: '', instagram: '' };
+
+var _MERCH_GREEN_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c853" stroke="#00c853" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function merchantPhotoChanged(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 6 * 1024 * 1024) { alert('Photo must be under 6MB.'); input.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    merchantFormData.idPhotoBase64 = e.target.result;
+    var prev = document.getElementById('merchantPhotoPreview');
+    var wrap = document.getElementById('merchantPhotoPreviewWrap');
+    var check = document.getElementById('merchantPhotoCheck');
+    var btn = document.getElementById('merchantPhotoAddBtn');
+    if (prev) prev.src = e.target.result;
+    if (wrap) wrap.style.display = 'block';
+    if (check) check.innerHTML = _MERCH_GREEN_SVG;
+    if (btn) { btn.textContent = 'Done'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.color = 'rgba(255,255,255,0.45)'; btn.onclick = null; }
+  };
+  reader.readAsDataURL(file);
+}
+
+function merchantToggleCurrency() {
+  var p = document.getElementById('merchantCurrencyPanel');
+  if (p) p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+}
+
+function merchantSelectCurrency(val) {
+  merchantFormData.currency = val;
+  var label = document.getElementById('merchantCurrencyLabel');
+  var check = document.getElementById('merchantCurrencyCheck');
+  var btn = document.getElementById('merchantCurrencyAddBtn');
+  var panel = document.getElementById('merchantCurrencyPanel');
+  if (label) label.textContent = '(' + val + ')';
+  if (check) check.innerHTML = _MERCH_GREEN_SVG;
+  if (panel) panel.style.display = 'none';
+  if (btn) { btn.textContent = 'Done'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.color = 'rgba(255,255,255,0.45)'; }
+}
+
+function merchantToggleSocial() {
+  var p = document.getElementById('merchantSocialPanel');
+  if (p) p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+}
+
+function merchantSaveSocial() {
+  var twitter = (document.getElementById('merchantTwitter') || {}).value || '';
+  var telegram = (document.getElementById('merchantTelegram') || {}).value || '';
+  var instagram = (document.getElementById('merchantInstagram') || {}).value || '';
+  twitter = twitter.trim(); telegram = telegram.trim(); instagram = instagram.trim();
+  if (!twitter && !telegram && !instagram) { alert('Please enter at least one social media account.'); return; }
+  merchantFormData.twitter = twitter;
+  merchantFormData.telegram = telegram;
+  merchantFormData.instagram = instagram;
+  var panel = document.getElementById('merchantSocialPanel');
+  var check = document.getElementById('merchantSocialCheck');
+  var btn = document.getElementById('merchantSocialAddBtn');
+  if (panel) panel.style.display = 'none';
+  if (check) check.innerHTML = _MERCH_GREEN_SVG;
+  if (btn) { btn.textContent = 'Done'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.color = 'rgba(255,255,255,0.45)'; }
+}
+
+async function submitMerchantApp() {
+  // Validate all mandatory fields
+  if (!merchantFormData.idPhotoBase64) {
+    alert('⚠️ Please upload a photo of you holding your ID card.');
+    return;
+  }
+  if (!merchantFormData.currency) {
+    alert('⚠️ Please select your preferred trading currency.');
+    return;
+  }
+  if (!merchantFormData.twitter && !merchantFormData.telegram && !merchantFormData.instagram) {
+    alert('⚠️ Please add at least one social media account.');
+    return;
+  }
+  var cb = document.getElementById('merchantAgree');
+  if (!cb || !cb.checked) {
+    alert('⚠️ Please agree to the Merchant Service Agreement first.');
+    return;
+  }
+
+  var submitBtn = document.querySelector('#merchantApplyScreen button[onclick="submitMerchantApp()"]');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting...'; }
+  try {
+    var res = await fetch('/api/merchant/apply', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        photoBase64: merchantFormData.idPhotoBase64,
+        currency: merchantFormData.currency,
+        socialAccounts: {
+          twitter: merchantFormData.twitter,
+          telegram: merchantFormData.telegram,
+          instagram: merchantFormData.instagram
+        }
+      })
+    });
+    var data = await res.json();
+    if (data.success) {
+      alert('✅ ' + data.message);
+      // Reset form state
+      merchantFormData = { idPhotoBase64: '', currency: '', twitter: '', telegram: '', instagram: '' };
+      closeP2PScreen('merchantApplyScreen');
+      closeP2PScreen('merchantScreen');
+    } else {
+      alert('❌ ' + (data.message || 'Application failed.'));
+    }
+  } catch (e) {
+    alert('Network error. Please try again.');
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Application'; }
+  }
+}
+
+// Merchant badge names & colors
+var MERCHANT_BADGES = {
+  1: { name: 'Blue V',  color: '#1a6ff4', icon: '◆' },
+  2: { name: 'Crown',   color: '#f7931a', icon: '♛' },
+  3: { name: 'Shield',  color: '#f5a623', icon: '❖' }
+};
+
+// Global: current user's own merchant badge number (1/2/3), set after loadMerchantBadge()
+// Seed from localStorage so cards render badge on first load without waiting for API
+var _myMerchantBadge = (function() { try { return JSON.parse(localStorage.getItem('_p2p_badge') || 'null'); } catch(_) { return null; } })();
+
+async function loadMerchantBadge() {
+  try {
+    var res = await fetch('/api/merchant/application-status', { credentials: 'include' });
+    var data = await res.json();
+    if (data.success && data.status === 'approved' && data.badge) {
+      var b = MERCHANT_BADGES[data.badge];
+      if (!b) return;
+      // Store globally so ad cards can use it as fallback
+      var _prevBadge = _myMerchantBadge;
+      _myMerchantBadge = data.badge;
+      try { localStorage.setItem('_p2p_badge', JSON.stringify(data.badge)); } catch(_) {}
+      // If badge changed, clear cache and re-fetch fresh from server
+      if (_prevBadge !== _myMerchantBadge) {
+        _offersResponseCache && _offersResponseCache.clear && _offersResponseCache.clear();
+        _lastOffersData = null;
+        if (typeof loadOffers === 'function') loadOffers();
+      } else if (_lastOffersData) {
+        renderOffers(_lastOffersData, false);
+      }
+      // Show badge in profile
+      var badgeEl = document.getElementById('mobMerchantBadge');
+      if (badgeEl) {
+        badgeEl.textContent = b.icon + ' ' + b.name + ' Merchant';
+        badgeEl.style.display = 'inline-flex';
+        badgeEl.style.background = b.color + '22';
+        badgeEl.style.color = b.color;
+        badgeEl.style.border = '1px solid ' + b.color + '55';
+      }
+      // Change "Apply to Become Merchant" text
+      var applyItem = document.getElementById('mobMerchantApplyItem');
+      if (applyItem) applyItem.querySelector('span') && (applyItem.querySelector('.bg-menu-label').textContent = b.name + ' Merchant ✓');
+    } else {
+      _myMerchantBadge = null;
+      try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
+    }
+  } catch(e) {}
+}
+
 function toggleFaqSection(head) {
   var section = head.parentElement;
   section.classList.toggle('open');
@@ -6886,7 +7255,7 @@ function submitKycAdvance() {
         });
       }
       var badge = document.getElementById('kycStatusBadge');
-      if(badge){ badge.textContent='Under Review'; badge.style.cssText='font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,180,216,0.12);border:1px solid rgba(0,180,216,0.3);color:#00B4D8;margin-left:6px;'; }
+      if(badge){ badge.textContent='Under Review'; badge.style.cssText='font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(168,255,62,0.12);border:1px solid rgba(168,255,62,0.3);color:#a8ff3e;margin-left:6px;'; }
       if(btn){ btn.textContent='Submitted for Review ✓'; }
       loadProfilePanel({ refreshWallet: true });
       setTimeout(function() {
@@ -6909,9 +7278,29 @@ function submitKycAdvance() {
 }
 
 // ===== MOBILE POST AD SCREEN =====
+// ── Post Ad Tab: non-merchants redirected to merchant screen ────────────────
+async function handlePostAdTabClick() {
+  if (!currentUser) { setAuthModalOpen(true); return; }
+  // Check merchant status via API (most reliable)
+  try {
+    var res = await fetch('/api/merchant/application-status', { credentials: 'include' });
+    var data = await res.json();
+    var isMerchant = data.success && data.status === 'approved' && data.badge;
+    if (!isMerchant) {
+      // Not a merchant — redirect to merchant info/apply screen
+      openP2PScreen('merchantScreen');
+      return;
+    }
+  } catch(_) {
+    // On network error fall through to show the screen anyway
+  }
+  showMobScreen('mobPostAdScreen');
+  initMobPostAdScreen();
+}
+
 var _mobPostAdInited = false;
 function initMobPostAdScreen() {
-  // Load my ads list
+  // Load my ads list + enforce 1-ad limit on the create tab
   (async function() {
     var listEl = document.getElementById('mobMyAdsList');
     if (!listEl) return;
@@ -6921,15 +7310,66 @@ function initMobPostAdScreen() {
       var res = await fetch('/api/p2p/my-ads');
       var data = await res.json();
       var offers = Array.isArray(data.offers) ? data.offers : (Array.isArray(data) ? data : []);
+      // Enforce 1-ad limit: hide create form if merchant already has an ad
+      var createSection = document.getElementById('mobPostAdCreate');
+      var adLimitMsg = document.getElementById('mobAdLimitMsg');
+      // Cache offer data so edit modal can prefill
+      window._myAdsCache = {};
+      offers.forEach(function(o) { window._myAdsCache[o.id] = o; });
+
+      var hasBuy  = offers.some(function(o){ return o.side === 'buy'; });
+      var hasSell = offers.some(function(o){ return o.side === 'sell'; });
+      var bothFull = hasBuy && hasSell;
+
+      if (bothFull) {
+        // Both sides taken — hide create form and show My Ads tab
+        if (createSection) createSection.style.display = 'none';
+        if (adLimitMsg) { adLimitMsg.style.display = 'block'; adLimitMsg.textContent = 'You already have a Buy and a Sell ad. Edit or delete one below.'; }
+        var myadsTab = document.querySelector('.mob-ptab[data-ptab="myads"]');
+        if (myadsTab) myadsTab.click();
+      } else if (offers.length > 0) {
+        // Has one ad but other side is free — update note, but don't override tab display
+        if (adLimitMsg) {
+          adLimitMsg.style.display = 'block';
+          adLimitMsg.textContent = 'You have 1 active ' + (hasBuy ? 'Buy' : 'Sell') + ' ad. You can still post a ' + (hasBuy ? 'Sell' : 'Buy') + ' ad.';
+        }
+        var activeTabEl = document.querySelector('.mob-ptab.active[data-ptab]');
+        var isMyAdsTab = activeTabEl && activeTabEl.getAttribute('data-ptab') === 'myads';
+        if (createSection) createSection.style.display = isMyAdsTab ? 'none' : 'block';
+      } else {
+        // Check payment methods before showing create form
+        try {
+          var pmRes = await fetch('/api/p2p/payment-methods', { credentials: 'include' });
+          var pmData = await pmRes.json();
+          var methods = Array.isArray(pmData.methods) ? pmData.methods : (Array.isArray(pmData) ? pmData : []);
+          if (!methods.length) {
+            if (createSection) createSection.style.display = 'none';
+            if (adLimitMsg) {
+              adLimitMsg.style.display = 'block';
+              adLimitMsg.style.color = '#f6a623';
+              adLimitMsg.innerHTML = 'Add a payment method first before posting an ad. <button onclick="openPaymentMethodsScreen()" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:6px 14px;font-weight:700;cursor:pointer;margin-top:8px;display:block;width:100%;">Add Payment Method</button>';
+            }
+          } else {
+            if (createSection) createSection.style.display = 'block';
+            if (adLimitMsg) adLimitMsg.style.display = 'none';
+          }
+        } catch(_) {
+          if (createSection) createSection.style.display = 'block';
+          if (adLimitMsg) adLimitMsg.style.display = 'none';
+        }
+      }
       if (!offers.length) { listEl.innerHTML = '<p class="mob-myads-empty">No ads posted yet.</p>'; return; }
       listEl.innerHTML = offers.map(function(o) {
         var isActive = o.status === 'ACTIVE';
+        var pmList = Array.isArray(o.payments) ? o.payments.join(', ') : (o.payments || '');
         return '<div class="mob-myad-card">' +
           '<div class="mob-myad-row"><span class="mob-myad-type ' + (o.side === 'sell' ? 'sell' : 'buy') + '">' + (o.side === 'sell' ? 'SELL' : 'BUY') + '</span>' +
           '<span class="mob-myad-status ' + (isActive ? 'active' : 'paused') + '">' + (o.status || 'PAUSED') + '</span></div>' +
           '<div class="mob-myad-price">₹' + (o.price || 0) + ' / USDT</div>' +
           '<div class="mob-myad-meta">Available: ' + (o.available || 0) + ' USDT &nbsp;|&nbsp; ' + (o.minLimit || 0) + '–' + (o.maxLimit || 0) + ' INR</div>' +
+          (pmList ? '<div class="mob-myad-meta" style="color:rgba(255,255,255,0.45);font-size:11px;">💳 ' + pmList + '</div>' : '') +
           '<div class="mob-myad-actions">' +
+            '<button class="mob-myad-btn edit" onclick="openMobEditAd(\'' + o.id + '\')">Edit</button>' +
             '<button class="mob-myad-btn" onclick="toggleMobAd(\'' + o.id + '\',\'' + (isActive ? 'PAUSED' : 'ACTIVE') + '\')">' + (isActive ? 'Pause' : 'Activate') + '</button>' +
             '<button class="mob-myad-btn danger" onclick="deleteMobAd(\'' + o.id + '\')">Delete</button>' +
           '</div></div>';
@@ -6971,7 +7411,8 @@ function initMobPostAdScreen() {
       available: parseFloat(document.getElementById('mobAdAvailableInput').value),
       minLimit: parseFloat(document.getElementById('mobAdMinLimitInput').value),
       maxLimit: parseFloat(document.getElementById('mobAdMaxLimitInput').value),
-      payments: document.getElementById('mobAdPaymentsInput').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean)
+      payments: document.getElementById('mobAdPaymentsInput').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+      releaseTime: document.getElementById('mobAdReleaseTimeInput')?.value || '15'
     };
     if (!payload.price || !payload.available || !payload.minLimit || !payload.maxLimit) {
       if (meta) meta.textContent = 'All fields are required.';
@@ -7017,10 +7458,11 @@ window.toggleMobAd = async function(offerId, newStatus) {
 window.deleteMobAd = async function(offerId) {
   if (!confirm('Delete this ad?')) return;
   try {
-    var res = await fetch('/api/p2p/offers/' + offerId, {
-      method: 'DELETE',
-    });
+    var res = await fetch('/api/p2p/offers/' + offerId, { method: 'DELETE', credentials: 'include' });
     if (!res.ok) { var d = await res.json(); throw new Error(d.message); }
+    // Switch to Create tab so the refreshed screen shows create form
+    var createTab = document.querySelector('.mob-ptab[data-ptab="create"]');
+    if (createTab) createTab.click();
     _mobPostAdInited = false;
     initMobPostAdScreen();
     loadOffers();
@@ -7029,7 +7471,7 @@ window.deleteMobAd = async function(offerId) {
 
 // ===== MOB-SCREEN NAV (profile / orders screens) =====
 (function initMobScreenNav() {
-  var profileFlowScreens = new Set(['mobProfileScreen', 'mobPaymentMethodsScreen', 'mobPaymentMethodTypesScreen', 'mobPaymentMethodFormScreen']);
+  var profileFlowScreens = new Set(['mobProfileScreen', 'mobProfileEditScreen', 'mobPaymentMethodsScreen', 'mobPaymentMethodTypesScreen', 'mobPaymentMethodFormScreen', 'mobTradingDataScreen', 'mobSupportScreen', 'mobSupportChatScreen']);
   function showMobScreen(screenId) {
     var all = document.querySelectorAll('.mob-screen');
     all.forEach(function(s){ s.style.display = 'none'; s.classList.remove('mob-screen-visible'); });
@@ -7040,6 +7482,19 @@ window.deleteMobAd = async function(offerId) {
       // Trigger slide-in animation (double rAF ensures display change is flushed first)
       requestAnimationFrame(function() { requestAnimationFrame(function() { el.classList.add('mob-screen-visible'); }); });
     }
+    // Hide bottom nav on support screens + lock height for chat screen
+    var supportScreens = new Set(['mobSupportScreen','mobSupportChatScreen']);
+    if (supportScreens.has(screenId)) {
+      document.body.classList.add('sp-screen-open');
+      if (screenId === 'mobSupportChatScreen') {
+        requestAnimationFrame(function() {
+          if (typeof spLockHeight === 'function') spLockHeight();
+        });
+      }
+    } else {
+      document.body.classList.remove('sp-screen-open');
+    }
+
     if (profileFlowScreens.has(screenId) || screenId === 'mobOrdersScreen' || screenId === 'mobPostAdScreen') {
       document.body.classList.add('mob-screen-open');
       if (profileFlowScreens.has(screenId)) {
@@ -7047,12 +7502,12 @@ window.deleteMobAd = async function(offerId) {
         setMobileNavActive('profile');
         document.body.classList.add('mob-profile-open');
         if (screenId === 'mobProfileScreen') {
-          history.replaceState(null,'','/p2p#profile');
+          history.replaceState(null,'', window.location.pathname + '#profile');
         }
       } else if (screenId === 'mobOrdersScreen') {
         document.body.dataset.mobileTab = 'orders';
         setMobileNavActive('orders');
-        history.replaceState(null,'','/p2p#orders');
+        history.replaceState(null,'', window.location.pathname + '#orders');
         // Keep any already-rendered data visible; background refresh still runs.
         if (!_applyOrdersFocusState()) {
           switchOrdMain(_ordMainTab || 'pending');
@@ -7061,7 +7516,7 @@ window.deleteMobAd = async function(offerId) {
       } else if (screenId === 'mobPostAdScreen') {
         document.body.dataset.mobileTab = 'post';
         setMobileNavActive('post');
-        history.replaceState(null,'','/p2p#ads');
+        history.replaceState(null,'', window.location.pathname + '#ads');
       }
     }
   }
@@ -7072,23 +7527,28 @@ window.deleteMobAd = async function(offerId) {
     stopOrdPolling();
     var all = document.querySelectorAll('.mob-screen');
     all.forEach(function(s){ s.style.display = 'none'; s.classList.remove('mob-screen-visible'); });
-    document.body.classList.remove('mob-screen-open', 'mob-profile-open');
+    document.body.classList.remove('mob-screen-open', 'mob-profile-open', 'sp-screen-open');
     document.body.dataset.mobileTab = 'p2p';
     setMobileNavActive('p2p');
     ['kycBasicScreen','kycAdvanceScreen'].forEach(function(id){
       var el = document.getElementById(id);
       if(el) el.style.display = 'none';
     });
-    history.replaceState(null,'','/p2p');
+    history.replaceState(null,'', window.location.pathname);
   }
 
   // Restore screen on refresh from hash
   (function restoreFromHash() {
     var hash = window.location.hash.replace('#','');
-    if (hash === 'profile') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); }, 300); }
+    if (hash === 'profile') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); loadMerchantBadge && loadMerchantBadge(); }, 300); }
     else if (hash === 'profile-payment') { openPaymentMethodsScreen(); }
     else if (hash === 'profile-payment-add') { openPaymentMethodPickerScreen(); }
     else if (hash === 'orders') { showMobScreen('mobOrdersScreen'); }
+    else if (hash === 'buy') { setTimeout(function(){ var t = document.querySelector('.gt-side-tab[data-side="buy"],.side-tab[data-side="buy"]'); if(t) t.click(); }, 200); }
+    else if (hash === 'deposit') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); }, 300); }
+    else if (hash === 'withdraw') { setTimeout(function(){ if(typeof openWithdrawModal==='function') openWithdrawModal(); }, 400); }
+    else if (hash === 'support') { setTimeout(function(){ showMobScreen('mobSupportScreen'); }, 200); }
+    else if (hash === 'transfer') { setTimeout(function(){ var t = document.querySelector('.gt-side-tab[data-side="buy"],.side-tab[data-side="buy"]'); if(t) t.click(); }, 200); }
   })();
 
   // Unified click handler — nav tabs + back + KYC actions
@@ -7102,7 +7562,7 @@ window.deleteMobAd = async function(offerId) {
       tab.classList.add('active');
       if (mob === 'profile') showMobScreen('mobProfileScreen');
       else if (mob === 'orders') showMobScreen('mobOrdersScreen');
-      else if (mob === 'post') { showMobScreen('mobPostAdScreen'); initMobPostAdScreen(); }
+      else if (mob === 'post') { handlePostAdTabClick(); }
       else hideMobScreens();
       return;
     }
@@ -7135,10 +7595,23 @@ window.deleteMobAd = async function(offerId) {
     if (kycBack) { e.preventDefault(); backToKycBasic(); return; }
   });
 
+  // Track touch start position to distinguish tap from scroll
+  var _touchStartY = 0, _touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    _touchStartY = e.touches[0] ? e.touches[0].clientY : 0;
+    _touchStartX = e.touches[0] ? e.touches[0].clientX : 0;
+  }, { passive: true });
+
   // iOS touchend — ensures taps work inside fixed/overflow elements
   document.addEventListener('touchend', function(e) {
+    // If finger moved more than 10px, it's a scroll — ignore
+    var endY = e.changedTouches[0] ? e.changedTouches[0].clientY : 0;
+    var endX = e.changedTouches[0] ? e.changedTouches[0].clientX : 0;
+    var moved = Math.abs(endY - _touchStartY) > 10 || Math.abs(endX - _touchStartX) > 10;
+
     var pmRow = e.target.closest('[data-open-payment]');
     if (pmRow) {
+      if (moved) return; // scrolling, not tapping
       if (window._pmJustClosed && Date.now() - window._pmJustClosed < 500) return;
       if (window._pmJustOpened && Date.now() - window._pmJustOpened < 500) return;
       e.preventDefault(); openPaymentMethodsScreen(); return;
@@ -7166,7 +7639,6 @@ window.deleteMobAd = async function(offerId) {
   var _bfOffer = null;
   var _bfOrder = null;
   var _bfTimerTick = null;
-  var _bfPaidSel = 0;
 
   // ── Helpers ──────────────────────────────────────────────────────
   function fmt(n) { return typeof formatNumber === 'function' ? formatNumber(n) : Number(n || 0).toLocaleString('en-IN'); }
@@ -7183,26 +7655,36 @@ window.deleteMobAd = async function(offerId) {
     _bfTimerTick = setInterval(function() {
       var secs = typeof remainingSeconds !== 'undefined' ? remainingSeconds : 0;
       var txt = bfTimerFmt(secs);
-      ['bfOrderTimer','bfPayTimer'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = txt; });
+      ['bfOrderTimer','bfPayTimer','bfChatTimer'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = txt; });
     }, 500);
   }
   function bfStopTimer() { if (_bfTimerTick) { clearInterval(_bfTimerTick); _bfTimerTick = null; } }
 
   // ── Screen management ─────────────────────────────────────────────
+  function bfSetNav(hide) {
+    var nav = document.getElementById('p2pMobileNav');
+    if (nav) nav.style.display = hide ? 'none' : '';
+  }
+  var BF_SCREENS = ['bfBuyScreen','bfOrderScreen','bfPayScreen','bfCancelWarnScreen','bfCancelReasonScreen','bfCancelledScreen'];
+  var _bfCryptoMode = false; // false=Fiat, true=Crypto
+  var _bfPaidSel = 0;
   function bfShow(id) {
-    ['bfBuyScreen','bfOrderScreen','bfPayScreen'].forEach(function(sid) {
+    BF_SCREENS.forEach(function(sid) {
       var el = document.getElementById(sid);
       if (el) el.style.display = sid === id ? 'flex' : 'none';
     });
     document.body.style.overflow = id ? 'hidden' : '';
     document.body.classList.toggle('bf-open', !!id);
+    bfSetNav(!!id);
   }
   function bfClose() {
-    ['bfBuyScreen','bfOrderScreen','bfPayScreen'].forEach(function(sid) {
+    BF_SCREENS.forEach(function(sid) {
       var el = document.getElementById(sid); if (el) el.style.display = 'none';
     });
-    var sheet = document.getElementById('bfPaidSheet'); if (sheet) sheet.style.display = 'none';
+    var chatScr = document.getElementById('bfChatScreen'); if (chatScr) chatScr.style.display = 'none';
+    var paidSh  = document.getElementById('bfPaidSheet');  if (paidSh)  paidSh.style.display  = 'none';
     document.body.style.overflow = ''; document.body.classList.remove('bf-open'); bfStopTimer();
+    bfSetNav(false);
   }
   function bfShowOldOrderModal() {
     bfClose();
@@ -7210,6 +7692,27 @@ window.deleteMobAd = async function(offerId) {
     if (om) { om.classList.remove('hidden'); om.setAttribute('aria-hidden','false'); }
     document.body.classList.add('p2p-order-open'); document.body.style.overflow = 'hidden';
   }
+
+  // Expose close for external callers (e.g. chat screen)
+  window.bfClose = bfClose;
+
+  // Open existing order (from orders tab) in bf screens
+  window.bfOpenExistingOrder = function(order) {
+    if (!order) return;
+    // Set up _bfOffer FIRST so bfFillOrder has seller name + price
+    _bfOffer = {
+      advertiser: order.sellerUsername || order.advertiser || '--',
+      price: order.price || 0,
+      remark: order.notes || order.remark || '',
+      minLimit: order.minLimit || 0,
+      maxLimit: order.maxLimit || 0,
+      payments: order.paymentMethod ? [order.paymentMethod] : []
+    };
+    // Fill bf screens FIRST (sets _bfOrder + populates DOM), then start backend
+    bfFillOrder(order);
+    // Set up backend (SSE/polling) without showing old modal — called after screen is shown
+    openOrder(order, { suppressModal: true });
+  };
 
   // ── Copy SVG icon ─────────────────────────────────────────────────
   function copyBtn(val) {
@@ -7238,15 +7741,18 @@ window.deleteMobAd = async function(offerId) {
   function sellerRowHtml(name) {
     var init = String(name || 'S').slice(0,1).toUpperCase();
     return '<div style="display:inline-flex;align-items:center;gap:7px;">'
-      + '<div style="width:24px;height:24px;border-radius:5px;background:#2c2c2c;color:#fff;font-size:0.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + init + '.</div>'
-      + '<span style="font-weight:700;font-size:0.9rem;">' + esc(name || '--') + '</span>'
-      + '<span style="background:#1565ff;color:#fff;font-size:0.6rem;font-weight:800;padding:1px 5px;border-radius:3px;line-height:1.5;letter-spacing:0.02em;">+</span>'
+      + '<div style="width:32px;height:32px;border-radius:6px;background:#2c2c2c;color:#fff;font-size:0.85rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">'
+      + init
+      + '<span style="position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:#00c896;border:1.5px solid #000;"></span>'
+      + '</div>'
+      + '<span style="font-weight:700;font-size:0.92rem;">' + esc(name || '--') + '</span>'
+      + '<span style="color:#00c2b2;font-size:0.9rem;margin-left:1px;">✦</span>'
       + '</div>';
   }
 
   // ── Chat icon button ──────────────────────────────────────────────
   function chatBtnHtml(btnId, prevScreen) {
-    return '<button id="' + btnId + '" data-chat-prev="' + prevScreen + '" style="position:relative;width:38px;height:38px;border-radius:9px;background:#1e1e1e;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+    return '<button id="' + btnId + '" data-chat-prev="' + prevScreen + '" onclick="if(window.bfOpenChat)window.bfOpenChat(\'' + prevScreen + '\')" style="position:relative;width:38px;height:38px;border-radius:9px;background:#1e1e1e;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
       + '<svg width="18" height="17" viewBox="0 0 24 23" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'
       + '<span style="position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#00c2b2;border:1.5px solid #0d0d0d;"></span>'
       + '</button>';
@@ -7254,7 +7760,7 @@ window.deleteMobAd = async function(offerId) {
 
   // ── Inject all screen HTML ────────────────────────────────────────
   function injectHTML() {
-    var SCR = 'position:fixed;inset:0;z-index:620;background:#0d0d0d;flex-direction:column;font-family:Manrope,sans-serif;overflow:hidden;';
+    var SCR = 'position:fixed;inset:0;z-index:620;background:#000;flex-direction:column;font-family:Manrope,sans-serif;overflow:hidden;';
     var BACK = 'background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:0.25rem 0.5rem 0.25rem 0;line-height:1;';
     var BODY = 'flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 1.1rem;';
     var FOOT = 'flex-shrink:0;padding:0.9rem 1.1rem;padding-bottom:calc(0.9rem + env(safe-area-inset-bottom));background:#0d0d0d;border-top:1px solid #191919;display:flex;flex-direction:column;gap:0.5rem;';
@@ -7267,76 +7773,73 @@ window.deleteMobAd = async function(offerId) {
     // SCREEN 1  ─  Buy USDT
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     '<div id="bfBuyScreen" style="display:none;' + SCR + '">',
-      // Header
-      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.7rem;flex-shrink:0;">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.6rem;flex-shrink:0;">',
         '<button id="bfBuyBack" style="' + BACK + '">←</button>',
         '<h2 style="flex:1;text-align:center;margin:0;font-size:1rem;font-weight:700;color:#fff;">Buy USDT</h2>',
         '<div style="width:1.8rem;"></div>',
       '</div>',
-      // Body
       '<div style="' + BODY + 'padding-top:0.2rem;">',
-        // Crypto / Fiat tabs + price
+        // Tabs + price row
         '<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid #1e1e1e;margin-bottom:1.1rem;">',
-          '<div style="display:flex;gap:1.6rem;">',
-            '<span style="padding-bottom:0.6rem;font-size:0.88rem;font-weight:600;color:rgba(255,255,255,0.32);cursor:pointer;">Crypto</span>',
-            '<span style="padding-bottom:0.6rem;font-size:0.88rem;font-weight:700;color:#fff;border-bottom:2px solid #00c2b2;position:relative;top:1px;">Fiat</span>',
+          '<div style="display:flex;gap:1.5rem;">',
+            '<span id="bfCryptoTab" style="padding-bottom:0.6rem;font-size:0.92rem;font-weight:600;color:rgba(255,255,255,0.35);cursor:pointer;">Crypto</span>',
+            '<span id="bfFiatTab" style="padding-bottom:0.6rem;font-size:0.92rem;font-weight:700;color:#fff;border-bottom:2px solid #fff;position:relative;top:1px;cursor:pointer;">Fiat</span>',
           '</div>',
-          '<span id="bfPriceTag" style="font-size:0.76rem;color:rgba(255,255,255,0.38);padding-bottom:0.6rem;display:flex;align-items:center;gap:4px;">Price ₹-- <span style="color:#00c2b2;font-size:0.82rem;">↻</span></span>',
+          '<span id="bfPriceTag" style="font-size:0.76rem;color:rgba(255,255,255,0.4);padding-bottom:0.6rem;display:flex;align-items:center;gap:5px;">Price ₹-- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>',
         '</div>',
-        // Amount input
-        '<div style="background:#181818;border-radius:10px;padding:0.8rem 1rem;display:flex;align-items:center;gap:0.65rem;margin-bottom:0.4rem;">',
-          '<input id="bfPayInput" type="number" inputmode="decimal" placeholder="Enter amount" style="flex:1;background:none;border:none;color:#fff;font-size:1.15rem;font-weight:600;outline:none;font-family:Manrope,sans-serif;min-width:0;"/>',
-          '<span style="color:rgba(255,255,255,0.38);font-size:0.84rem;font-weight:700;flex-shrink:0;">INR</span>',
-          '<button id="bfMaxBtn" style="background:transparent;border:1px solid #00c2b2;color:#00c2b2;font-size:0.72rem;font-weight:700;padding:4px 11px;border-radius:5px;cursor:pointer;flex-shrink:0;font-family:Manrope,sans-serif;">Max</button>',
+        // Amount input box
+        '<div style="background:#1a1a1a;border-radius:10px;padding:0.85rem 1rem;display:flex;align-items:center;gap:0.7rem;margin-bottom:0.35rem;">',
+          '<input id="bfPayInput" type="number" inputmode="decimal" placeholder="Enter amount" style="flex:1;background:none;border:none;color:#fff;font-size:1.2rem;font-weight:600;outline:none;font-family:Manrope,sans-serif;min-width:0;"/>',
+          '<span id="bfInputUnit" style="color:rgba(255,255,255,0.55);font-size:0.9rem;font-weight:700;flex-shrink:0;">INR</span>',
+          '<button id="bfMaxBtn" style="background:transparent;border:none;color:#00c2b2;font-size:0.88rem;font-weight:700;padding:0;cursor:pointer;flex-shrink:0;font-family:Manrope,sans-serif;">Max</button>',
         '</div>',
-        '<div id="bfLimitInfo" style="font-size:0.74rem;color:rgba(255,255,255,0.36);margin-bottom:0.18rem;padding-left:2px;">Limit ₹-- - ₹--</div>',
-        '<div id="bfUsdtCalc" style="font-size:0.77rem;color:rgba(255,255,255,0.42);margin-bottom:1rem;padding-left:2px;">≈ -- USDT</div>',
+        '<div id="bfLimitInfo" style="font-size:0.78rem;color:rgba(255,255,255,0.38);margin-bottom:0.15rem;padding-left:2px;">Limit ₹-- - ₹--</div>',
+        '<div id="bfUsdtCalc" style="font-size:0.78rem;color:rgba(255,255,255,0.38);margin-bottom:1.1rem;padding-left:2px;">≈ -- USDT</div>',
         // Payment method
-        '<div style="background:#181818;border-radius:10px;padding:0.78rem 1rem;display:flex;align-items:center;gap:0.65rem;margin-bottom:1.1rem;">',
-          '<span style="width:9px;height:9px;border-radius:2px;background:#00c2b2;flex-shrink:0;"></span>',
-          '<select id="bfPayMethod" style="flex:1;background:none;border:none;color:#fff;font-size:0.89rem;font-family:Manrope,sans-serif;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;"></select>',
-          '<span style="color:rgba(255,255,255,0.28);font-size:0.75rem;">▼</span>',
+        '<div style="background:#1a1a1a;border-radius:10px;padding:0.82rem 1rem;display:flex;align-items:center;gap:0.65rem;margin-bottom:1.2rem;">',
+          '<span id="bfPayMethodDot" style="width:10px;height:10px;border-radius:2px;background:#00c2b2;flex-shrink:0;"></span>',
+          '<select id="bfPayMethod" style="flex:1;background:none;border:none;color:#fff;font-size:0.9rem;font-family:Manrope,sans-serif;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;font-weight:500;"></select>',
+          '<svg width="11" height="7" viewBox="0 0 11 7" fill="none"><path d="M1 1l4.5 4.5L10 1" stroke="rgba(255,255,255,0.4)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         '</div>',
         // Advertiser terms
-        '<div style="margin-bottom:1.2rem;">',
-          '<div style="font-size:0.8rem;color:rgba(255,255,255,0.48);font-weight:600;margin-bottom:0.32rem;">Advertiser terms</div>',
-          '<div id="bfTerms" style="font-size:0.82rem;color:rgba(255,255,255,0.7);line-height:1.55;"></div>',
+        '<div style="margin-bottom:1.3rem;">',
+          '<div style="font-size:0.82rem;color:rgba(255,255,255,0.55);font-weight:700;margin-bottom:0.35rem;">Advertiser terms</div>',
+          '<div id="bfTerms" style="font-size:0.82rem;color:rgba(255,255,255,0.75);line-height:1.6;"></div>',
         '</div>',
         // Seller card
-        '<div style="' + CARD + '">',
-          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">',
+        '<div style="' + CARD + 'padding:0.9rem 1rem;">',
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem;">',
             '<div id="bfSellerRow"></div>',
-            '<span style="color:rgba(255,255,255,0.28);font-size:0.9rem;margin-left:0.5rem;">→</span>',
+            '<svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M1 1l6 6-6 6" stroke="rgba(255,255,255,0.35)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
           '</div>',
-          '<div style="display:grid;gap:0.5rem;font-size:0.78rem;">',
+          '<div style="display:grid;gap:0.5rem;font-size:0.79rem;">',
             '<div style="display:flex;justify-content:space-between;">',
-              '<span style="color:rgba(255,255,255,0.4);">Pay within</span>',
+              '<span style="color:rgba(255,255,255,0.42);">Pay within</span>',
               '<span id="bfDuration" style="color:#fff;font-weight:600;">15 minute(s)</span>',
             '</div>',
             '<div style="display:flex;justify-content:space-between;">',
-              '<span style="color:rgba(255,255,255,0.4);">Historical orders</span>',
+              '<span style="color:rgba(255,255,255,0.42);">Historical orders</span>',
               '<span id="bfHistOrders" style="color:#fff;font-weight:600;">--</span>',
             '</div>',
             '<div style="display:flex;justify-content:space-between;">',
-              '<span style="color:rgba(255,255,255,0.4);">30D average release time</span>',
-              '<span style="color:#fff;font-weight:600;">1 min</span>',
+              '<span style="color:rgba(255,255,255,0.42);">30D average release time</span>',
+              '<span id="bfAvgRelease" style="color:#fff;font-weight:600;">--</span>',
             '</div>',
             '<div style="display:flex;justify-content:space-between;">',
-              '<span style="color:rgba(255,255,255,0.4);">Completed orders (both parties)</span>',
+              '<span style="color:rgba(255,255,255,0.42);">Completed orders (both parties)</span>',
               '<span id="bfCompletedOrds" style="color:#fff;font-weight:600;">0</span>',
             '</div>',
             '<div style="display:flex;justify-content:space-between;">',
-              '<span style="color:rgba(255,255,255,0.4);">Account signup time</span>',
-              '<span id="bfSignupDate" style="color:#fff;font-weight:600;">2024.01.01</span>',
+              '<span style="color:rgba(255,255,255,0.42);">Account signup time</span>',
+              '<span id="bfSignupDate" style="color:#fff;font-weight:600;">--</span>',
             '</div>',
           '</div>',
         '</div>',
         '<div style="height:0.5rem;"></div>',
       '</div>',
-      // Footer
       '<div style="' + FOOT + '">',
         '<div id="bfBuyHint" style="font-size:0.78rem;color:#f6465d;min-height:1em;text-align:center;"></div>',
-        '<button id="bfBuyBtn" style="' + PBTN + 'background:#00c2b2;color:#0d0d0d;">Buy USDT with 0 fees</button>',
+        '<button id="bfBuyBtn" style="' + PBTN + 'background:#00c2b2;color:#000;">Buy USDT with 0 fees</button>',
       '</div>',
     '</div>',
 
@@ -7348,14 +7851,18 @@ window.deleteMobAd = async function(offerId) {
         '<button id="bfOrderBack" style="' + BACK + '">←</button>',
       '</div>',
       '<div style="' + BODY + 'padding-top:0.1rem;">',
-        '<h2 style="margin:0 0 0.4rem;font-size:1.25rem;font-weight:800;line-height:1.35;color:#fff;">The order has been generated.<br>Proceed to payment.</h2>',
-        '<p style="margin:0 0 1.25rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfOrderTimer" style="color:#00c2b2;font-weight:700;">15:00s</span></p>',
-        // Seller card with chat btn
-        '<div style="' + CARD + 'display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;">',
-          '<div style="flex:1;min-width:0;">',
-            '<div id="bfOrdSellerRow" style="margin-bottom:0.8rem;"></div>',
+        '<h2 id="bfOrdTitle" style="margin:0 0 0.4rem;font-size:1.25rem;font-weight:800;line-height:1.35;color:#fff;">The order has been generated.<br>Proceed to payment.</h2>',
+        '<p id="bfOrdTimerLine" style="margin:0 0 1.25rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfOrderTimer" style="color:#00c2b2;font-weight:700;">15:00s</span></p>',
+        // Seller card + trust bullets (combined, matching Bitget)
+        '<div style="' + CARD + 'padding:0.9rem 1rem;margin-bottom:0.7rem;">',
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;">',
+            '<div id="bfOrdSellerRow"></div>',
+            '<div id="bfOrdChatWrap" style="flex-shrink:0;"></div>',
           '</div>',
-          '<div id="bfOrdChatWrap" style="flex-shrink:0;"></div>',
+          '<div style="display:flex;flex-direction:column;gap:0.35rem;">',
+            '<div style="font-size:0.76rem;color:rgba(255,255,255,0.45);line-height:1.5;">* The other party has passed our real-name and video identity verification.</div>',
+            '<div style="font-size:0.76rem;color:rgba(255,255,255,0.45);line-height:1.5;">* The cryptocurrency in this order is held in escrow by BITEGIT P2P and your payment is secure.</div>',
+          '</div>',
         '</div>',
         // Order details card
         '<div style="' + CARD + '">',
@@ -7370,8 +7877,20 @@ window.deleteMobAd = async function(offerId) {
         '</div>',
         '<div style="height:0.5rem;"></div>',
       '</div>',
+      // Support FAB
+      '<div onclick="void(0)" style="position:fixed;bottom:120px;right:18px;width:46px;height:46px;border-radius:50%;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,0.5);">',
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>',
+      '</div>',
+      // Waiting-for-release bar (shown only when PAID)
+      '<div id="bfOrdWaitBar" style="display:none;flex-shrink:0;padding:0.55rem 1.1rem;background:rgba(0,194,178,0.07);border-top:1px solid rgba(0,194,178,0.18);">',
+        '<div style="display:flex;align-items:center;gap:0.5rem;">',
+          '<span style="font-size:0.8rem;color:#00c2b2;">●</span>',
+          '<span style="font-size:0.8rem;color:rgba(255,255,255,0.75);font-weight:600;">Payment confirmed — waiting for seller to release crypto</span>',
+        '</div>',
+      '</div>',
       '<div style="' + FOOT + '">',
         '<button id="bfNextBtn" style="' + PBTN + '">Next →</button>',
+        '<button id="bfOrdAppealBtn" style="display:none;' + PBTN + 'background:#1a1a1a;color:#f6465d;border:1px solid rgba(246,70,93,0.3);">Raise Appeal</button>',
         '<button id="bfOrdCancelBtn" style="' + GBTN + '">Cancel</button>',
       '</div>',
     '</div>',
@@ -7380,37 +7899,49 @@ window.deleteMobAd = async function(offerId) {
     // SCREEN 3  ─  Payment Instructions
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     '<div id="bfPayScreen" style="display:none;' + SCR + '">',
-      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.6rem;flex-shrink:0;">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.5rem;flex-shrink:0;">',
         '<button id="bfPayBack" style="' + BACK + '">←</button>',
       '</div>',
       '<div style="' + BODY + 'padding-top:0.1rem;">',
-        '<h2 id="bfPayTitle" style="margin:0 0 0.4rem;font-size:1.2rem;font-weight:800;line-height:1.35;color:#fff;">Please use UPI to transfer funds</h2>',
-        '<p style="margin:0 0 1.25rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfPayTimer" style="color:#00c2b2;font-weight:700;">15:00s</span></p>',
+        '<h2 id="bfPayTitle" style="margin:0 0 0.3rem;font-size:1.15rem;font-weight:800;line-height:1.35;color:#fff;">Please use UPI to transfer funds</h2>',
+        '<p style="margin:0 0 1rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfPayTimer" style="color:#00c2b2;font-weight:700;">15:00s</span></p>',
         // Seller row + chat
-        '<div style="' + CARD + 'display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">',
+        '<div style="' + CARD + 'display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.8rem 1rem;margin-bottom:1.1rem;">',
           '<div id="bfPaySellerRow"></div>',
           '<div id="bfPayChatWrap" style="flex-shrink:0;"></div>',
         '</div>',
-        // ◆ Exit instruction
-        '<div style="display:flex;gap:0.7rem;margin-bottom:0.7rem;">',
-          '<span style="color:#f0a500;font-size:1rem;flex-shrink:0;margin-top:3px;">◆</span>',
-          '<div>',
-            '<p style="margin:0 0 0.4rem;font-size:0.85rem;color:#fff;font-weight:600;line-height:1.5;">Exit the App and transfer funds to the following recipient\'s account.</p>',
-            '<p style="margin:0;font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;">During the transfer, please avoid using terms like BTC, USDT, Bitget, or similar, in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>',
+        // Step 1
+        '<div style="display:flex;gap:0.85rem;margin-bottom:0.9rem;align-items:flex-start;">',
+          // Diamond step number
+          '<div style="width:26px;height:26px;background:#1a1a1a;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transform:rotate(45deg);border-radius:4px;">',
+            '<span style="font-size:0.72rem;font-weight:800;color:#fff;line-height:1;transform:rotate(-45deg);display:block;">1</span>',
+          '</div>',
+          '<div style="flex:1;">',
+            '<p style="margin:0 0 0.3rem;font-size:0.88rem;color:#fff;font-weight:700;line-height:1.45;">Exit the App and transfer funds to the following recipient\'s account.</p>',
+            '<p style="margin:0 0 0.7rem;font-size:0.75rem;color:rgba(255,255,255,0.38);line-height:1.55;">During the transfer, please avoid using terms like BTC, USDT, BITEGIT, or similar, in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>',
+            // Transfer detail card
+            '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:0.1rem 0.9rem;margin-bottom:0.7rem;">',
+              '<div id="bfPayDetails"></div>',
+              '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-top:1px solid #1e1e1e;">',
+                '<span style="color:rgba(255,255,255,0.42);font-size:0.79rem;">QR code</span>',
+                '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17v3M20 14v3"/></svg>',
+              '</div>',
+            '</div>',
+            '<p id="bfPayWarn" style="font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;margin:0 0 0.5rem;"></p>',
           '</div>',
         '</div>',
-        // Transfer details table
-        '<div style="background:#151515;border-radius:10px;padding:0.2rem 1rem;margin-bottom:0.8rem;">',
-          '<div id="bfPayDetails"></div>',
-        '</div>',
-        // Warning text
-        '<p id="bfPayWarn" style="font-size:0.74rem;color:rgba(255,255,255,0.38);line-height:1.55;margin:0 0 0.9rem;"></p>',
-        // ◆ Tap Paid
-        '<div style="display:flex;gap:0.7rem;margin-bottom:1rem;">',
-          '<span style="color:#f0a500;font-size:1rem;flex-shrink:0;margin-top:3px;">◆</span>',
-          '<p style="margin:0;font-size:0.85rem;color:#fff;line-height:1.5;">After completing the transfer, tap the <strong>Paid</strong> button</p>',
+        // Step 2
+        '<div style="display:flex;gap:0.85rem;margin-bottom:1rem;align-items:flex-start;">',
+          '<div style="width:26px;height:26px;background:#1a1a1a;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transform:rotate(45deg);border-radius:4px;">',
+            '<span style="font-size:0.72rem;font-weight:800;color:#fff;line-height:1;transform:rotate(-45deg);display:block;">2</span>',
+          '</div>',
+          '<p style="margin:0;font-size:0.88rem;color:#fff;font-weight:700;line-height:1.45;margin-top:4px;">After completing the transfer, tap the Paid button.</p>',
         '</div>',
         '<div style="height:0.5rem;"></div>',
+      '</div>',
+      // Floating headphone FAB
+      '<div onclick="void(0)" style="position:fixed;bottom:120px;right:18px;width:46px;height:46px;border-radius:50%;background:#1a1a1a;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,0.5);">',
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>',
       '</div>',
       '<div style="' + FOOT + '">',
         '<button id="bfPaidBtn" style="' + PBTN + '">Paid</button>',
@@ -7421,73 +7952,225 @@ window.deleteMobAd = async function(offerId) {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // PAID BOTTOM SHEET
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    '<div id="bfPaidSheet" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.55);align-items:flex-end;font-family:Manrope,sans-serif;">',
+    '<div id="bfPaidSheet" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.6);align-items:flex-end;font-family:Manrope,sans-serif;">',
       '<div style="background:#141414;border-radius:18px 18px 0 0;width:100%;padding-bottom:calc(1.4rem + env(safe-area-inset-bottom));">',
-        // drag handle
         '<div style="padding:0.8rem 0 0.2rem;display:flex;justify-content:center;">',
-          '<div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.18);"></div>',
+          '<div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.15);"></div>',
         '</div>',
         '<div style="padding:0.9rem 1.1rem 0;">',
           '<h3 style="margin:0 0 1rem;font-size:1.05rem;font-weight:700;color:#fff;">Paid</h3>',
-          // warning box
-          '<div style="background:rgba(240,165,0,0.07);border:1px solid rgba(240,165,0,0.28);border-radius:9px;padding:0.7rem 0.85rem;margin-bottom:0.9rem;display:flex;gap:0.5rem;align-items:flex-start;">',
-            '<span style="color:#f0a500;font-size:0.88rem;flex-shrink:0;">ℹ</span>',
+          '<div style="background:rgba(240,165,0,0.07);border:1px solid rgba(240,165,0,0.22);border-radius:9px;padding:0.7rem 0.85rem;margin-bottom:0.9rem;display:flex;gap:0.5rem;align-items:flex-start;">',
+            '<span style="color:#f0a500;font-size:0.9rem;flex-shrink:0;">ℹ</span>',
             '<p style="margin:0;font-size:0.76rem;color:rgba(255,255,255,0.62);line-height:1.5;">Complete the payment before clicking "Paid". False actions may lead to account restrictions.</p>',
           '</div>',
-          // option 1
-          '<div id="bfPaidOpt1" onclick="bfSelectPaidOpt(1)" style="background:#1c1c1c;border:1.5px solid #2a2a2a;border-radius:10px;padding:0.9rem 1rem;margin-bottom:0.45rem;cursor:pointer;transition:border-color 0.15s,background 0.15s;">',
+          '<div id="bfPaidOpt1" onclick="bfSelectPaidOpt(1)" style="background:#1c1c1c;border:1.5px solid #2a2a2a;border-radius:10px;padding:0.9rem 1rem;margin-bottom:0.45rem;cursor:pointer;">',
             '<span id="bfPaidOpt1Text" style="font-size:0.86rem;color:#fff;line-height:1.4;display:block;">I have transferred the amount to the above account.</span>',
           '</div>',
-          // option 2
-          '<div id="bfPaidOpt2" onclick="bfSelectPaidOpt(2)" style="background:#1c1c1c;border:1.5px solid #2a2a2a;border-radius:10px;padding:0.9rem 1rem;margin-bottom:1rem;cursor:pointer;transition:border-color 0.15s,background 0.15s;">',
+          '<div id="bfPaidOpt2" onclick="bfSelectPaidOpt(2)" style="background:#1c1c1c;border:1.5px solid #2a2a2a;border-radius:10px;padding:0.9rem 1rem;margin-bottom:1rem;cursor:pointer;">',
             '<span style="font-size:0.86rem;color:#fff;line-height:1.4;display:block;">I have not made the payment yet.</span>',
           '</div>',
-          // confirm btn
-          '<button id="bfPaidConfirmBtn" disabled style="width:100%;padding:1rem;background:#222;color:rgba(255,255,255,0.22);border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:not-allowed;font-family:Manrope,sans-serif;transition:all 0.15s;">Confirm</button>',
+          '<button id="bfPaidConfirmBtn" disabled style="width:100%;padding:1rem;background:#222;color:rgba(255,255,255,0.22);border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:not-allowed;font-family:Manrope,sans-serif;">Confirm</button>',
         '</div>',
       '</div>',
     '</div>',
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // CHAT SCREEN  (z:630, managed separately)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfChatScreen" style="display:none;position:fixed;inset:0;z-index:630;background:#000;flex-direction:column;font-family:Manrope,sans-serif;overflow:hidden;">',
+      // Header
+      '<div style="display:flex;align-items:center;padding:0.75rem 1rem 0.5rem;flex-shrink:0;border-bottom:1px solid #111;">',
+        '<button id="bfChatBack" style="' + BACK + '">←</button>',
+        '<div style="flex:1;text-align:center;">',
+          '<div id="bfChatSellerName" style="font-size:0.95rem;font-weight:700;color:#fff;line-height:1.2;"></div>',
+          '<div style="font-size:0.74rem;color:rgba(255,255,255,0.45);margin-top:1px;"><span style="color:#00c2b2;font-size:0.68rem;">●</span> Online</div>',
+        '</div>',
+        '<button id="bfChatMenuBtn" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:1.15rem;cursor:pointer;padding:0.25rem 0.35rem;letter-spacing:1px;">···</button>',
+      '</div>',
+      // Notice bar (dismissable, shown only while CREATED)
+      '<div id="bfChatNoticeBar" style="background:rgba(40,28,0,0.95);border-bottom:1px solid rgba(80,55,0,0.6);padding:0.6rem 1rem;display:flex;align-items:flex-start;gap:0.55rem;flex-shrink:0;">',
+        '<span style="color:#f0a500;font-size:0.85rem;flex-shrink:0;margin-top:1px;">ℹ</span>',
+        '<div style="flex:1;">',
+          '<span style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.9);">Notice</span>',
+          '<br>',
+          '<span style="font-size:0.76rem;color:rgba(255,255,255,0.65);line-height:1.4;">Remember to click paid after you have transferred funds from your bank account.</span>',
+        '</div>',
+        '<button onclick="document.getElementById(\'bfChatNoticeBar\').style.display=\'none\'" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:1rem;cursor:pointer;flex-shrink:0;padding:0;margin-top:-1px;">✕</button>',
+      '</div>',
+      // Waiting-for-release bar (shown when PAID)
+      '<div id="bfChatWaitBar" style="display:none;padding:0.55rem 1rem;border-bottom:1px solid rgba(0,194,178,0.18);background:rgba(0,194,178,0.07);flex-shrink:0;">',
+        '<div style="display:flex;align-items:center;gap:0.5rem;">',
+          '<span style="font-size:0.78rem;color:#00c2b2;">●</span>',
+          '<span style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.8);">Payment confirmed — waiting for seller to release crypto</span>',
+        '</div>',
+      '</div>',
+      // Pay bar (To be paid + Pay btn + timer) — CREATED only
+      '<div id="bfChatPayBar" style="padding:0.7rem 1rem 0.65rem;border-bottom:1px solid #111;flex-shrink:0;">',
+        '<div style="display:flex;align-items:center;justify-content:space-between;">',
+          '<div>',
+            '<div style="font-size:0.76rem;color:rgba(255,255,255,0.45);margin-bottom:1px;">To be paid</div>',
+            '<div id="bfChatPayAmt" style="font-size:1.18rem;font-weight:800;color:#fff;">₹ --</div>',
+          '</div>',
+          '<button id="bfChatPayBtn" style="background:#fff;color:#000;border:none;border-radius:10px;padding:0.62rem 1.4rem;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:Manrope,sans-serif;">Pay</button>',
+        '</div>',
+        '<div style="font-size:0.76rem;color:rgba(255,255,255,0.4);margin-top:4px;">Please pay within <span id="bfChatTimer" style="color:#00c2b2;font-weight:700;">15:00s</span></div>',
+      '</div>',
+      // Messages area
+      '<div id="bfChatMessages" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.9rem 1rem;display:flex;flex-direction:column;gap:0.55rem;background:#000;"></div>',
+      // Input bar
+      '<div style="display:flex;align-items:center;gap:0.6rem;padding:0.6rem 1rem;padding-bottom:calc(0.6rem + env(safe-area-inset-bottom));border-top:1px solid #111;flex-shrink:0;background:#000;">',
+        '<input id="bfChatInput" type="text" placeholder="" style="flex:1;background:#1a1a1a;border:none;color:#fff;border-radius:22px;padding:0.65rem 1rem;font-size:0.9rem;font-family:Manrope,sans-serif;outline:none;"/>',
+        '<button id="bfChatImgBtn" style="background:none;border:none;cursor:pointer;padding:4px;flex-shrink:0;">',
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+        '</button>',
+        '<button id="bfChatSendBtn" style="background:#00c2b2;border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">',
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+        '</button>',
+      '</div>',
+    '</div>',
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // SCREEN 4  ─  Cancel Warning
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfCancelWarnScreen" style="display:none;' + SCR + '">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.6rem;flex-shrink:0;">',
+        '<button id="bfCancelWarnBack" style="' + BACK + '">←</button>',
+      '</div>',
+      '<div style="' + BODY + 'padding-top:0.3rem;">',
+        '<h2 style="margin:0 0 1.5rem;font-size:1.2rem;font-weight:800;line-height:1.35;color:#fff;">Before you cancel, here are solutions for common issues.</h2>',
+        '<div style="background:#181818;border-radius:12px;padding:1rem 1.1rem;margin-bottom:0.6rem;display:flex;align-items:center;justify-content:space-between;">',
+          '<span style="font-size:0.9rem;color:#fff;font-weight:500;">How to make a payment</span>',
+          '<button onclick="void(0)" style="background:#2c2c2c;border:none;color:#fff;font-size:0.78rem;font-weight:600;padding:6px 14px;border-radius:7px;cursor:pointer;">View tip</button>',
+        '</div>',
+        '<div style="background:#181818;border-radius:12px;padding:1rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;">',
+          '<span style="font-size:0.9rem;color:#fff;font-weight:500;">Having trouble paying?</span>',
+          '<button id="bfCancelWarnChat" style="background:#2c2c2c;border:none;color:#fff;font-size:0.78rem;font-weight:600;padding:6px 14px;border-radius:7px;cursor:pointer;">Chat with seller</button>',
+        '</div>',
+        '<h3 style="margin:0 0 0.75rem;font-size:1rem;font-weight:800;color:#fff;line-height:1.4;">Other issue?<br>Please review the following before canceling your order.</h3>',
+        '<div style="font-size:0.82rem;color:rgba(255,255,255,0.5);line-height:1.9;">',
+          '<div>1. If you\'ve already paid, don\'t cancel your order. You may lose your funds.</div>',
+          '<div>2. Over <span style="color:#00c2b2;font-weight:700;">3</span> cancellations in a day will block P2P buying for 24 hours.</div>',
+          '<div>3. If canceled due to the seller\'s issue, you won\'t be affected.</div>',
+        '</div>',
+      '</div>',
+      '<div style="' + FOOT + '">',
+        '<button id="bfProceedCancelBtn" style="' + PBTN + '">Proceed to cancel</button>',
+      '</div>',
+    '</div>',
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // SCREEN 5  ─  Cancel Reason
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfCancelReasonScreen" style="display:none;' + SCR + '">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.6rem;flex-shrink:0;">',
+        '<button id="bfCancelReasonBack" style="' + BACK + '">←</button>',
+      '</div>',
+      '<div style="' + BODY + 'padding-top:0.3rem;">',
+        '<h2 style="margin:0 0 0.25rem;font-size:1.15rem;font-weight:800;color:#fff;">Please select a reason for cancellation</h2>',
+        '<div style="color:#00c2b2;font-size:0.82rem;font-weight:600;margin-bottom:1.4rem;cursor:pointer;">Order cancellation tips</div>',
+        '<div id="bfReasonList" style="display:flex;flex-direction:column;gap:0.1rem;"></div>',
+        '<div style="height:1rem;"></div>',
+        '<label style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem 0;border-top:1px solid #1e1e1e;cursor:pointer;">',
+          '<input type="checkbox" id="bfNotPaidCheck" style="width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:#00c2b2;">',
+          '<span style="font-size:0.82rem;color:rgba(255,255,255,0.65);line-height:1.5;">I have not paid the seller / I have received the seller\'s refund</span>',
+        '</label>',
+      '</div>',
+      '<div style="' + FOOT + '">',
+        '<button id="bfConfirmCancelBtn" disabled style="' + PBTN + 'background:#222;color:rgba(255,255,255,0.25);cursor:not-allowed;">Confirm</button>',
+      '</div>',
+    '</div>',
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // SCREEN 6  ─  Cancelled
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    '<div id="bfCancelledScreen" style="display:none;' + SCR + '">',
+      '<div style="display:flex;align-items:center;padding:1rem 1rem 0.6rem;flex-shrink:0;">',
+        '<button id="bfCancelledBack" style="' + BACK + '">←</button>',
+      '</div>',
+      '<div style="' + BODY + 'padding-top:0.3rem;">',
+        '<h2 style="margin:0 0 1.1rem;font-size:1.5rem;font-weight:800;color:#fff;">Canceled</h2>',
+        '<div style="background:#181818;border-radius:12px;padding:0.85rem 1rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;">',
+          '<div id="bfCancelledSellerRow"></div>',
+          '<div id="bfCancelledChatWrap" style="flex-shrink:0;"></div>',
+        '</div>',
+        '<div style="display:flex;gap:0.7rem;margin-bottom:0.9rem;">',
+          '<div style="width:22px;height:22px;border-radius:50%;background:#1a1a1a;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;font-weight:800;color:#888;margin-top:2px;">1</div>',
+          '<div style="font-size:0.83rem;color:rgba(255,255,255,0.65);line-height:1.55;">The order has been canceled. No payment is required.</div>',
+        '</div>',
+      '</div>',
+      '<div style="' + FOOT + '">',
+        '<button id="bfPlaceNewOrderBtn" style="' + PBTN + '">Place a new order</button>',
+        '<button id="bfOrderInquiryBtn" style="' + GBTN + '">Order inquiry</button>',
+      '</div>',
+    '</div>',
+
     ].join('');
 
     var w = document.createElement('div'); w.innerHTML = html; document.body.appendChild(w);
   }
 
-  // ── Fill Screen 1 ─────────────────────────────────────────────────
-  function bfFillBuy(offer) {
-    _bfOffer = offer;
-    var el;
-    var sellerRow = document.getElementById('bfSellerRow');
-    if (sellerRow) sellerRow.innerHTML = sellerRowHtml(offer.advertiser || '--');
-    el = document.getElementById('bfPriceTag');
-    if (el) el.innerHTML = 'Price ₹' + fmt(offer.price) + ' <span style="color:#00c2b2;font-size:0.82rem;">↻</span>';
-    el = document.getElementById('bfLimitInfo');
-    if (el) el.textContent = 'Limit ₹' + fmt(offer.minLimit) + ' - ₹' + fmt(offer.maxLimit);
-    el = document.getElementById('bfTerms');
-    if (el) el.textContent = offer.remark || 'Standard P2P terms apply.';
-    el = document.getElementById('bfHistOrders');
-    if (el) el.textContent = 'Buy ' + (offer.orders || 0) + ' Sell 0';
-    el = document.getElementById('bfCompletedOrds');
-    if (el) el.textContent = offer.orders || 0;
-    var pm = document.getElementById('bfPayMethod');
-    if (pm) pm.innerHTML = getOfferPayments(offer).map(function(m) { return '<option value="' + esc(m) + '">' + esc(m) + '</option>'; }).join('');
-    var pi = document.getElementById('bfPayInput');
-    if (pi) { pi.value = offer.minLimit || ''; bfUpdateCalc(); }
-    el = document.getElementById('bfBuyHint'); if (el) el.textContent = '';
-    bfShow('bfBuyScreen');
-    if (pi) setTimeout(function() { pi.focus(); }, 350);
-  }
-
+  // ── Fill Screen 1 ─ Buy ───────────────────────────────────────────
   function bfUpdateCalc() {
     var pi = document.getElementById('bfPayInput'), uc = document.getElementById('bfUsdtCalc');
     if (!pi || !_bfOffer) return;
-    var amt = Number(pi.value || 0), usdt = _bfOffer.price > 0 ? amt / _bfOffer.price : 0;
-    if (uc) uc.textContent = amt > 0 ? ('≈ ' + usdt.toFixed(2) + 'USDT') : '≈ -- USDT';
+    var amt = Number(pi.value || 0);
+    if (_bfCryptoMode) {
+      var inr = amt * (_bfOffer.price || 0);
+      if (uc) uc.textContent = amt > 0 ? ('≈ ' + fmt(inr) + 'INR') : '≈ -- INR';
+    } else {
+      var usdt = _bfOffer.price > 0 ? amt / _bfOffer.price : 0;
+      if (uc) uc.textContent = amt > 0 ? ('≈ ' + usdt.toFixed(2) + 'USDT') : '≈ -- USDT';
+    }
+  }
+
+  function bfSetTabMode(isCrypto) {
+    _bfCryptoMode = isCrypto;
+    var ct = document.getElementById('bfCryptoTab'), ft = document.getElementById('bfFiatTab');
+    var uu = document.getElementById('bfInputUnit'), li = document.getElementById('bfLimitInfo');
+    if (ct) { ct.style.color = isCrypto ? '#fff' : 'rgba(255,255,255,0.35)'; ct.style.fontWeight = isCrypto ? '700' : '600'; ct.style.borderBottom = isCrypto ? '2px solid #fff' : 'none'; }
+    if (ft) { ft.style.color = isCrypto ? 'rgba(255,255,255,0.35)' : '#fff'; ft.style.fontWeight = isCrypto ? '600' : '700'; ft.style.borderBottom = isCrypto ? 'none' : '2px solid #fff'; }
+    if (uu) uu.textContent = isCrypto ? 'USDT' : 'INR';
+    if (li && _bfOffer) {
+      if (isCrypto) {
+        var p = _bfOffer.price || 1;
+        li.textContent = 'Limit ' + (p > 0 ? (_bfOffer.minLimit / p).toFixed(2) : '--') + ' - ' + (p > 0 ? (_bfOffer.maxLimit / p).toFixed(2) : '--') + ' USDT';
+      } else {
+        li.textContent = 'Limit ₹' + fmt(_bfOffer.minLimit) + ' - ₹' + fmt(_bfOffer.maxLimit);
+      }
+    }
+    var pi = document.getElementById('bfPayInput');
+    if (pi && _bfOffer) {
+      if (isCrypto) { var p2 = _bfOffer.price || 1; pi.value = p2 > 0 ? (_bfOffer.minLimit / p2).toFixed(2) : ''; }
+      else { pi.value = _bfOffer.minLimit || ''; }
+    }
+    bfUpdateCalc();
+  }
+
+  function bfFillBuy(offer) {
+    _bfOffer = offer;
+    _bfCryptoMode = false;
+    var el;
+    el = document.getElementById('bfSellerRow'); if (el) el.innerHTML = sellerRowHtml(offer.advertiser || '--');
+    el = document.getElementById('bfPriceTag'); if (el) el.innerHTML = 'Price ₹' + fmt(offer.price) + ' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+    el = document.getElementById('bfTerms'); if (el) el.textContent = offer.remark || 'Standard P2P terms apply.';
+    el = document.getElementById('bfHistOrders'); if (el) el.textContent = 'Buy ' + (offer.orders || 0) + ' Sell 0';
+    el = document.getElementById('bfCompletedOrds'); if (el) el.textContent = offer.orders || 0;
+    el = document.getElementById('bfAvgRelease'); if (el) el.textContent = (offer.avgReleaseTime || '1') + ' min';
+    el = document.getElementById('bfSignupDate'); if (el) el.textContent = offer.signupDate || '--';
+    el = document.getElementById('bfDuration'); if (el) el.textContent = (offer.releaseTime || offer.duration || 15) + ' minute(s)';
+    var pm = document.getElementById('bfPayMethod');
+    if (pm) pm.innerHTML = getOfferPayments(offer).map(function(m) { return '<option value="' + esc(m) + '">' + esc(m) + '</option>'; }).join('');
+    el = document.getElementById('bfBuyHint'); if (el) el.textContent = '';
+    bfSetTabMode(false);
+    bfShow('bfBuyScreen');
+    var pi = document.getElementById('bfPayInput');
+    if (pi) setTimeout(function() { pi.focus(); }, 350);
   }
 
   // ── Fill Screen 2 ─────────────────────────────────────────────────
   function bfFillOrder(order) {
     _bfOrder = order;
-    var sellerName = order.sellerUsername || (_bfOffer && _bfOffer.advertiser) || '--';
+    var sellerName = order.sellerUsername || order.advertiser || (_bfOffer && _bfOffer.advertiser) || 'Seller';
     var el = document.getElementById('bfOrdSellerRow');
     if (el) el.innerHTML = sellerRowHtml(sellerName);
     var cw = document.getElementById('bfOrdChatWrap');
@@ -7516,171 +8199,256 @@ window.deleteMobAd = async function(offerId) {
     var secs = typeof remainingSeconds !== 'undefined' ? remainingSeconds : 900;
     var t = document.getElementById('bfOrderTimer'); if (t) t.textContent = bfTimerFmt(secs);
     bfStartTimer();
+
+    // Update title + buttons + status bar based on current order status
+    var normSt = String(order.status || '').toUpperCase().replace('PAYMENT_SENT','PAID').replace('COMPLETED','RELEASED');
+    var titleEl   = document.getElementById('bfOrdTitle');
+    var nextBtn   = document.getElementById('bfNextBtn');
+    var cancelBtn = document.getElementById('bfOrdCancelBtn');
+    var appealBtn = document.getElementById('bfOrdAppealBtn');
+    var waitBar   = document.getElementById('bfOrdWaitBar');
+    var timerP    = document.getElementById('bfOrdTimerLine');
+
+    // Hide all action buttons first; reveal based on status below
+    if (nextBtn)   nextBtn.style.display   = 'none';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (appealBtn) appealBtn.style.display = 'none';
+    if (waitBar)   waitBar.style.display   = 'none';
+
+    if (normSt === 'PAID') {
+      if (titleEl) titleEl.innerHTML = 'Payment sent.<br>Waiting for seller to release crypto.';
+      if (waitBar) waitBar.style.display = '';
+      if (appealBtn) appealBtn.style.display = '';
+      if (timerP) timerP.style.display = 'none';
+      bfStopTimer();
+    } else if (normSt === 'RELEASED') {
+      if (titleEl) titleEl.innerHTML = 'Order completed! Crypto released. ✓';
+      if (timerP) timerP.style.display = 'none';
+      bfStopTimer();
+    } else if (normSt === 'CANCELLED' || normSt === 'CANCELED' || normSt === 'EXPIRED') {
+      if (titleEl) titleEl.innerHTML = 'Order ' + (normSt === 'EXPIRED' ? 'expired.' : 'cancelled.');
+      if (timerP) timerP.style.display = 'none';
+      bfStopTimer();
+    } else if (normSt === 'DISPUTED') {
+      if (titleEl) titleEl.innerHTML = 'Order under dispute.<br>Admin is reviewing.';
+      if (appealBtn) appealBtn.style.display = '';
+      if (timerP) timerP.style.display = 'none';
+      bfStopTimer();
+    } else {
+      // CREATED — default: proceed to payment
+      if (titleEl) titleEl.innerHTML = 'The order has been generated.<br>Proceed to payment.';
+      if (nextBtn)   nextBtn.style.display   = '';
+      if (cancelBtn) cancelBtn.style.display = '';
+      if (timerP) timerP.style.display = '';
+    }
+
     bfShow('bfOrderScreen');
   }
 
-  // ── Fill Screen 3 ─────────────────────────────────────────────────
+  // ── Fill Screen 3 ─ Pay ───────────────────────────────────────────
   function bfFillPay() {
     if (!_bfOrder) return;
     var order = _bfOrder;
     var method = order.paymentMethod || (_bfOffer && _bfOffer.payments && _bfOffer.payments[0]) || 'UPI';
-    var sellerName = order.sellerUsername || (_bfOffer && _bfOffer.advertiser) || '--';
+    var sellerName = order.sellerUsername || (_bfOffer && _bfOffer.advertiser) || 'Seller';
     var el;
-    el = document.getElementById('bfPayTitle');
-    if (el) el.textContent = 'Please use ' + method + ' to transfer funds';
-    el = document.getElementById('bfPaySellerRow');
-    if (el) el.innerHTML = sellerRowHtml(sellerName);
+    el = document.getElementById('bfPayTitle'); if (el) el.textContent = 'Please use ' + method + ' to transfer funds';
+    el = document.getElementById('bfPaySellerRow'); if (el) el.innerHTML = sellerRowHtml(sellerName);
     var cw = document.getElementById('bfPayChatWrap');
     if (cw) cw.innerHTML = chatBtnHtml('bfPayChatBtn', 'bfPayScreen');
-
     var det = document.getElementById('bfPayDetails');
     if (det) {
       det.innerHTML =
         makeRow('Trading amount', '₹ ' + fmt(order.amountInr || 0), String(order.amountInr || '')) +
         makeRow('Recipient name', esc(sellerName), sellerName) +
         makeRow('Payment method', pmPill(method), null) +
-        makeRow(method + ' wallet VPA', '<span style="color:rgba(255,255,255,0.4);">ask in chat</span>', null);
+        makeRow(method + ' wallet VPA', '<span style="color:rgba(255,255,255,0.5);">ask in chat</span>', null);
     }
     var myName = (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.username || currentUser.name || 'you') : 'you';
-    el = document.getElementById('bfPayWarn');
-    if (el) el.textContent = 'Please use an account under your name (' + myName + ') to make the transfer. If the paying account and your personal information do not match, the seller may request a refund or cancel the order.';
+    el = document.getElementById('bfPayWarn'); if (el) el.textContent = 'Please use an account under your name (' + myName + ') to make the transfer. If the paying account and your personal information do not match, the seller may request a refund or cancel the order.';
+    var t1 = document.getElementById('bfPaidOpt1Text'); if (t1) t1.textContent = 'I have transferred ' + fmt(order.amountInr || 0) + ' INR to the above account.';
+    var secs = typeof remainingSeconds !== 'undefined' ? remainingSeconds : 900;
+    var t = document.getElementById('bfPayTimer'); if (t) t.textContent = bfTimerFmt(secs);
+    // Hide Paid + Cancel buttons if order is already paid/completed
+    var paySt = String(order.status || '').toUpperCase().replace('PAYMENT_SENT','PAID').replace('COMPLETED','RELEASED');
+    var paidBtn = document.getElementById('bfPaidBtn'), payCancelBtn = document.getElementById('bfPayCancelBtn');
+    var alreadyPaid = ['PAID','RELEASED','CANCELLED','CANCELED','EXPIRED','DISPUTED'].indexOf(paySt) !== -1;
+    if (paidBtn) paidBtn.style.display = alreadyPaid ? 'none' : '';
+    if (payCancelBtn) payCancelBtn.style.display = alreadyPaid ? 'none' : '';
     bfShow('bfPayScreen');
   }
 
   // ── Paid sheet ─────────────────────────────────────────────────────
   function bfShowPaidSheet() {
     _bfPaidSel = 0;
-    var o1 = document.getElementById('bfPaidOpt1'), o2 = document.getElementById('bfPaidOpt2'), btn = document.getElementById('bfPaidConfirmBtn'), t1 = document.getElementById('bfPaidOpt1Text');
+    var o1 = document.getElementById('bfPaidOpt1'), o2 = document.getElementById('bfPaidOpt2'), btn = document.getElementById('bfPaidConfirmBtn');
     if (o1) { o1.style.borderColor = '#2a2a2a'; o1.style.background = '#1c1c1c'; }
     if (o2) { o2.style.borderColor = '#2a2a2a'; o2.style.background = '#1c1c1c'; }
     if (btn) { btn.disabled = true; btn.style.background = '#222'; btn.style.color = 'rgba(255,255,255,0.22)'; btn.style.cursor = 'not-allowed'; }
-    if (t1 && _bfOrder) t1.textContent = 'I have transferred ' + fmt(_bfOrder.amountInr || 0) + ' INR to the above account.';
-    var sheet = document.getElementById('bfPaidSheet'); if (sheet) sheet.style.display = 'flex';
+    var sh = document.getElementById('bfPaidSheet'); if (sh) sh.style.display = 'flex';
   }
-
   window.bfSelectPaidOpt = function(opt) {
     _bfPaidSel = opt;
     var o1 = document.getElementById('bfPaidOpt1'), o2 = document.getElementById('bfPaidOpt2'), btn = document.getElementById('bfPaidConfirmBtn');
-    if (o1) { o1.style.borderColor = opt === 1 ? '#00c2b2' : '#2a2a2a'; o1.style.background = opt === 1 ? 'rgba(0,194,178,0.08)' : '#1c1c1c'; }
-    if (o2) { o2.style.borderColor = opt === 2 ? 'rgba(255,255,255,0.25)' : '#2a2a2a'; o2.style.background = opt === 2 ? 'rgba(255,255,255,0.05)' : '#1c1c1c'; }
+    if (o1) { o1.style.borderColor = opt === 1 ? '#00c2b2' : '#2a2a2a'; o1.style.background = opt === 1 ? 'rgba(0,194,178,0.07)' : '#1c1c1c'; }
+    if (o2) { o2.style.borderColor = opt === 2 ? 'rgba(255,255,255,0.2)' : '#2a2a2a'; o2.style.background = opt === 2 ? 'rgba(255,255,255,0.04)' : '#1c1c1c'; }
     if (btn) { var ok = opt === 1; btn.disabled = !ok; btn.style.background = ok ? '#fff' : '#222'; btn.style.color = ok ? '#0d0d0d' : 'rgba(255,255,255,0.22)'; btn.style.cursor = ok ? 'pointer' : 'not-allowed'; }
   };
 
   // ── Wire Events ───────────────────────────────────────────────────
   function wireEvents() {
-    // Screen 1
+    // Screen 1 — Buy
     document.getElementById('bfBuyBack').onclick = function() { bfClose(); };
-    document.getElementById('bfPayInput').oninput = bfUpdateCalc;
+    document.getElementById('bfCryptoTab').onclick = function() { bfSetTabMode(true); };
+    document.getElementById('bfFiatTab').onclick   = function() { bfSetTabMode(false); };
+    document.getElementById('bfPayInput').oninput  = bfUpdateCalc;
     document.getElementById('bfMaxBtn').onclick = function() {
-      if (_bfOffer) { document.getElementById('bfPayInput').value = _bfOffer.maxLimit; bfUpdateCalc(); }
+      if (!_bfOffer) return;
+      if (_bfCryptoMode) { var p = _bfOffer.price || 1; document.getElementById('bfPayInput').value = p > 0 ? (_bfOffer.maxLimit / p).toFixed(2) : 0; }
+      else { document.getElementById('bfPayInput').value = _bfOffer.maxLimit; }
+      bfUpdateCalc();
     };
     document.getElementById('bfBuyBtn').onclick = async function() {
       var btn = this, hint = document.getElementById('bfBuyHint');
       if (!_bfOffer) return;
-      var payAmt = Number(document.getElementById('bfPayInput').value || 0);
+      var inputAmt = Number(document.getElementById('bfPayInput').value || 0);
       var method = document.getElementById('bfPayMethod').value;
+      var payAmt = _bfCryptoMode ? inputAmt * (_bfOffer.price || 0) : inputAmt;
       var min = Number(_bfOffer.minLimit || 0), max = Number(_bfOffer.maxLimit || Infinity);
       if (!payAmt || payAmt < min || payAmt > max) {
-        if (hint) hint.textContent = 'Enter amount between ₹' + fmt(min) + ' and ₹' + fmt(max);
+        if (_bfCryptoMode) { var minU = _bfOffer.price > 0 ? (min/_bfOffer.price) : 0; var maxU = _bfOffer.price > 0 ? (max/_bfOffer.price) : 0; if (hint) hint.textContent = 'Enter amount between ' + minU.toFixed(2) + ' - ' + maxU.toFixed(2) + ' USDT'; }
+        else { if (hint) hint.textContent = 'Enter amount between ₹' + fmt(min) + ' and ₹' + fmt(max); }
         return;
       }
       if (hint) hint.textContent = '';
-      var blockedOrder = _getBuyerBlockedOrderForCreation();
-      if (blockedOrder) {
-        if (hint) hint.textContent = _getBuyerOrderCreationBlockMessage(blockedOrder);
-        return;
-      }
-      var hasActive = _ordAllOrders.some(function(o) {
-        return ['CREATED','PENDING','PAID','PAYMENT_SENT'].indexOf((o.status || '').toUpperCase()) !== -1;
-      });
-      if (hasActive) {
-        if (hint) hint.textContent = 'You already have an active order. Complete it first.';
-        return;
-      }
-      if (btn._creating) return; // prevent double-submit
-      btn._creating = true;
-      btn.disabled = true;
-      btn.style.transform = 'scale(0.95)';
-      btn.style.transition = 'transform 0.1s ease';
+      if (btn._creating) return;
+      btn._creating = true; btn.disabled = true;
       btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:ord-spin 0.7s linear infinite;display:inline-block;"></span>Placing order...</span>';
-      setTimeout(function() { btn.style.transform = ''; }, 150);
-      // Show loading toast
       var toast = document.createElement('div');
-      toast.id = 'bfToast';
       toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00c2b2;color:#000;padding:10px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,194,178,0.4);';
       toast.textContent = '⏳ Placing your order...';
       document.body.appendChild(toast);
       try {
         var data = await createOrder(_bfOffer.id, { amountInr: payAmt, paymentMethod: method, openAfterCreate: false });
         if (!data || !data.order) throw new Error('Order creation failed.');
-        toast.style.background = '#16a34a';
-        toast.textContent = '✓ Order placed!';
+        toast.style.background = '#16a34a'; toast.textContent = '✓ Order placed!';
         setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 2000);
-        openOrder(data.order);
-        var om = document.getElementById('orderModal');
-        if (om) { om.classList.add('hidden'); om.setAttribute('aria-hidden','true'); }
-        document.body.classList.remove('p2p-order-open');
+        openOrder(data.order, { suppressModal: true });
         bfFillOrder(data.order);
       } catch(e) {
         if (toast.parentNode) toast.parentNode.removeChild(toast);
         if (hint) hint.textContent = e.message || 'Failed to create order.';
       } finally {
-        btn._creating = false;
-        btn.disabled = false;
-        btn.style.opacity = '';
+        btn._creating = false; btn.disabled = false;
         btn.textContent = 'Buy USDT with 0 fees';
       }
     };
 
-    // Screen 2
-    document.getElementById('bfOrderBack').onclick = function() {
-      if (confirm('Go back? Your order will remain active.')) { bfClose(); bfShowOldOrderModal(); }
-    };
+    // Screen 2 — Order Generated
+    document.getElementById('bfOrderBack').onclick = function() { bfClose(); };
     document.getElementById('bfNextBtn').onclick = function() { bfFillPay(); };
-    document.getElementById('bfOrdCancelBtn').onclick = function() {
-      bfClose();
-      var om = document.getElementById('orderModal');
-      if (om) { om.classList.remove('hidden'); om.setAttribute('aria-hidden','false'); }
-      document.body.classList.add('p2p-order-open'); document.body.style.overflow = 'hidden';
-      if (typeof setCancelModalOpen === 'function') setTimeout(function() { setCancelModalOpen(true); }, 100);
+    document.getElementById('bfOrdCancelBtn').onclick = function() { bfShow('bfCancelWarnScreen'); };
+    document.getElementById('bfOrdAppealBtn').onclick = async function() {
+      if (typeof updateOrderStatus === 'function') {
+        try { await updateOrderStatus('dispute'); } catch(e) {}
+      } else if (typeof showToast === 'function') { showToast('Please contact support to raise an appeal.'); }
     };
 
-    // Screen 3 – delegate chat btn clicks (injected dynamically)
-    document.addEventListener('click', function(e) {
-      var btn = e.target.closest('[data-chat-prev]');
-      if (btn) { var prev = btn.getAttribute('data-chat-prev'); if (window.bfOpenChat) window.bfOpenChat(prev); }
-    });
-
+    // Screen 3 — Pay
     document.getElementById('bfPayBack').onclick = function() { bfShow('bfOrderScreen'); };
-    document.getElementById('bfPayCancelBtn').onclick = document.getElementById('bfOrdCancelBtn').onclick;
+    document.getElementById('bfPayCancelBtn').onclick = function() { bfShow('bfCancelWarnScreen'); };
     document.getElementById('bfPaidBtn').onclick = function() { bfShowPaidSheet(); };
 
     // Paid sheet
     document.getElementById('bfPaidSheet').addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
     document.getElementById('bfPaidConfirmBtn').onclick = async function() {
       if (_bfPaidSel !== 1) return;
-      var btn = this;
-      btn.disabled = true;
-      btn.style.transform = 'scale(0.95)';
-      btn.style.transition = 'transform 0.1s ease';
+      var btn = this; btn.disabled = true;
       btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:ord-spin 0.7s linear infinite;display:inline-block;"></span>Processing...</span>';
-      setTimeout(function() { btn.style.transform = ''; }, 150);
-      // Optimistic: close sheet immediately, show waiting state
-      var sheet = document.getElementById('bfPaidSheet'); if (sheet) sheet.style.display = 'none';
-      bfClose(); bfShowOldOrderModal();
-      try {
-        await updateOrderStatus('mark_paid');
-      } catch(e) {
-        console.error('[bfPaidConfirm] error:', e.message);
-        // Don't reopen — order may have been marked paid already
-      }
+      var sh = document.getElementById('bfPaidSheet'); if (sh) sh.style.display = 'none';
+      // Re-fill order screen with PAID state (stops timer, shows wait bar, hides buttons)
+      if (_bfOrder) { _bfOrder = Object.assign({}, _bfOrder, { status: 'PAID' }); bfFillOrder(_bfOrder); }
+      else bfShow('bfOrderScreen');
+      try { await updateOrderStatus('mark_paid'); } catch(e) { console.error('[bfPaidConfirm]', e.message); }
+    };
+
+    // Chat btn clicks (delegated — buttons injected dynamically)
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-chat-prev]');
+      if (btn && window.bfOpenChat) { window.bfOpenChat(btn.getAttribute('data-chat-prev')); }
+    });
+
+    // Cancel flow
+    var _bfCancelReason = '';
+    var CANCEL_REASONS = [
+      "I don't want to proceed with this order.",
+      "I don't meet the seller's requirements.",
+      "I don't know how to make the payment.",
+      "I agreed with the seller to cancel the order.",
+      "I could not reach the seller.",
+      "The seller's payment details are incorrect.",
+      "The seller was rude or unprofessional.",
+      "I believe the seller may be a scammer.",
+      "Other"
+    ];
+    (function buildReasonList() {
+      var list = document.getElementById('bfReasonList');
+      if (!list) return;
+      list.innerHTML = CANCEL_REASONS.map(function(r, i) {
+        return '<label style="display:flex;align-items:center;gap:0.75rem;padding:0.72rem 0;border-bottom:1px solid #1a1a1a;cursor:pointer;">'
+          + '<input type="radio" name="bfCancelReason" value="' + i + '" style="width:18px;height:18px;accent-color:#00c2b2;flex-shrink:0;">'
+          + '<span style="font-size:0.87rem;color:rgba(255,255,255,0.85);">' + r + '</span>'
+          + '</label>';
+      }).join('');
+      list.addEventListener('change', function() {
+        var sel = list.querySelector('input[name="bfCancelReason"]:checked');
+        _bfCancelReason = sel ? CANCEL_REASONS[parseInt(sel.value)] : '';
+        updateCancelConfirmBtn();
+      });
+    })();
+    function updateCancelConfirmBtn() {
+      var cb = document.getElementById('bfNotPaidCheck');
+      var btn = document.getElementById('bfConfirmCancelBtn');
+      if (!btn) return;
+      var ok = _bfCancelReason && cb && cb.checked;
+      btn.disabled = !ok;
+      btn.style.background = ok ? '#fff' : '#222';
+      btn.style.color = ok ? '#0d0d0d' : 'rgba(255,255,255,0.25)';
+      btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+    }
+    document.getElementById('bfNotPaidCheck').addEventListener('change', updateCancelConfirmBtn);
+    document.getElementById('bfCancelWarnBack').onclick = function() {
+      bfShow(_bfOrder ? 'bfPayScreen' : 'bfOrderScreen');
+    };
+    document.getElementById('bfProceedCancelBtn').onclick = function() { bfShow('bfCancelReasonScreen'); };
+    document.getElementById('bfCancelReasonBack').onclick = function() { bfShow('bfCancelWarnScreen'); };
+    document.getElementById('bfConfirmCancelBtn').onclick = async function() {
+      var btn = this;
+      if (btn.disabled) return;
+      // Optimistic: show cancelled screen immediately
+      var sellerName = _bfOrder ? (_bfOrder.sellerUsername || (_bfOffer && _bfOffer.advertiser) || '--') : '--';
+      var csr = document.getElementById('bfCancelledSellerRow');
+      if (csr) csr.innerHTML = sellerRowHtml(sellerName);
+      bfShow('bfCancelledScreen');
+      // API call in background
+      updateOrderStatus('cancel').catch(function() {});
+    };
+    document.getElementById('bfCancelledBack').onclick = function() { bfClose(); };
+    document.getElementById('bfPlaceNewOrderBtn').onclick = function() { bfClose(); };
+    document.getElementById('bfOrderInquiryBtn').onclick = function() {
+      if (typeof showToast === 'function') showToast('Contact support for order inquiries');
     };
   }
 
-  // ── Override fillDealModal ─────────────────────────────────────────
-  var _origFillDeal = window.fillDealModal;
+  // ── Expose internals needed by chat IIFE ─────────────────────────
+  window._bfFillPay = function() { if (typeof bfFillPay === 'function') bfFillPay(); };
+  window._bfBF_SCREENS = BF_SCREENS;
+  window._bfGetCurrentOrder = function() { return _bfOrder; };
+  window._bfFillOrder = function(order) { if (order && typeof bfFillOrder === 'function') bfFillOrder(order); };
+
+  // ── Override fillDealModal — go straight to new buy screen ──────────
   window.fillDealModal = function(offer) {
-    if (_origFillDeal) _origFillDeal(offer);
+    if (typeof activeDealOffer !== 'undefined') activeDealOffer = offer;
     var dm = document.getElementById('dealModal');
     if (dm) { dm.classList.add('hidden'); dm.setAttribute('aria-hidden','true'); }
     document.body.classList.remove('p2p-deal-open');
@@ -7691,301 +8459,214 @@ window.deleteMobAd = async function(offerId) {
   injectHTML();
   wireEvents();
 })();
-
 // ===================================================================
-// BINANCE-STYLE CHAT SCREEN  (opens when 💬 is tapped)
+// CHAT SCREEN  (Bitget-style, full rebuild)
 // ===================================================================
 (function initBfChatScreen() {
   // Old inline chat screen disabled with the inline order flow.
   return;
 
-  var _chatPrevScreen = 'bfOrderScreen';
+  var _chatPrev = 'bfOrderScreen';
   var _chatPollTimer = null;
-  var _chatRenderedIds = {};
+  var _chatRendered = {};
+  var _chatOrderId = null;
+  var _chatMyUser = null;
 
-  // ── helpers ──────────────────────────────────────────────────────
-  function esc2(s) {
-    return typeof escapeHtml === 'function' ? escapeHtml(s)
-      : String(s || '').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+  function esc2(s) { return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function getOrderId() { return typeof activeOrderId !== 'undefined' ? activeOrderId : null; }
+  function getMyUsername() { return (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.username||'') : ''; }
+
+  // ── Scroll to bottom ──────────────────────────────────────────────
+  function scrollBottom() {
+    var m = document.getElementById('bfChatMessages');
+    if (m) setTimeout(function() { m.scrollTop = m.scrollHeight; }, 60);
   }
 
-  function getOrderId() {
-    return typeof activeOrderId !== 'undefined' ? activeOrderId : null;
-  }
-
-  function getMyName() {
-    if (typeof currentUser !== 'undefined' && currentUser) return currentUser.username || currentUser.name || '';
-    return '';
-  }
-
-  // ── inject HTML ──────────────────────────────────────────────────
-  function injectChatHTML() {
-    var div = document.createElement('div');
-    div.innerHTML = [
-      '<div id="bfChatScreen" style="display:none;position:fixed;inset:0;z-index:650;background:#0a0a0a;flex-direction:column;font-family:Manrope,sans-serif;overflow:hidden;">',
-        // Header
-        '<div id="bfChatHeader" style="display:flex;align-items:center;padding:0.85rem 1rem;gap:0.75rem;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.07);background:#111;">',
-          '<button id="bfChatBackBtn" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0.2rem 0.4rem;line-height:1;">←</button>',
-          '<div id="bfChatAvatar" style="width:34px;height:34px;border-radius:50%;background:#00B4D8;color:#000;font-weight:800;font-size:0.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>',
-          '<div style="flex:1;min-width:0;">',
-            '<div id="bfChatName" style="font-weight:700;font-size:0.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>',
-            '<div style="font-size:0.72rem;color:rgba(255,255,255,0.4);">P2P Order Chat</div>',
-          '</div>',
-        '</div>',
-        // Messages area
-        '<div id="bfChatMsgs" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.9rem 1rem;display:flex;flex-direction:column;gap:0.55rem;"></div>',
-        // Footer
-        '<div style="flex-shrink:0;padding:0.7rem 1rem;padding-bottom:calc(0.7rem + env(safe-area-inset-bottom));background:#111;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:flex-end;gap:0.55rem;">',
-          '<label id="bfChatImgBtn" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:1.1rem;" title="Send image">',
-            '<span>📎</span>',
-            '<input id="bfChatImgInput" type="file" accept="image/*" style="display:none;">',
-          '</label>',
-          '<textarea id="bfChatInput" rows="1" placeholder="Type a message..." style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;color:#fff;font-size:0.9rem;font-family:Manrope,sans-serif;padding:0.6rem 1rem;outline:none;resize:none;max-height:100px;line-height:1.4;"></textarea>',
-          '<button id="bfChatSendBtn" style="width:42px;height:42px;border-radius:50%;background:#00c2b2;border:none;color:#000;font-size:1.1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;">→</button>',
-        '</div>',
-      '</div>'
-    ].join('');
-    document.body.appendChild(div);
-  }
-
-  // ── render messages ──────────────────────────────────────────────
+  // ── Render a single message ───────────────────────────────────────
   function renderMsg(msg) {
-    var myName = getMyName().toLowerCase();
-    var sender = String(msg.sender || '').toLowerCase();
-    var isMine = sender === myName;
-    var isSystem = msg.messageType === 'system' || (!msg.sender);
-
+    var isMine = msg.sender === getMyUsername();
+    var isSystem = msg.role === 'system' || msg.sender === 'System';
     if (isSystem) {
-      var sysEl = document.createElement('div');
-      sysEl.style.cssText = 'text-align:center;padding:0.35rem 0.75rem;margin:4px 0;';
-      sysEl.innerHTML = '<span style="display:inline-block;background:rgba(255,255,255,0.08);border-radius:20px;padding:4px 14px;font-size:0.75rem;font-weight:700;color:#fff;letter-spacing:0.01em;">' +
-        (msg.text ? msg.text.replace(/[&<>"]/g, function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c;}) : '') + '</span>';
-      return sysEl;
+      var sEl = document.createElement('div');
+      sEl.style.cssText = 'text-align:center;font-size:0.73rem;color:rgba(255,255,255,0.35);padding:0.2rem 0;';
+      sEl.textContent = msg.text || '';
+      return sEl;
     }
-
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:' + (isMine ? 'flex-end' : 'flex-start') + ';gap:2px;';
-
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:' + (isMine ? 'flex-end' : 'flex-start') + ';gap:3px;';
+    if (!isMine) {
+      var nameEl = document.createElement('div');
+      nameEl.style.cssText = 'font-size:0.72rem;color:rgba(255,255,255,0.4);padding-left:40px;';
+      nameEl.textContent = esc2(msg.sender || '');
+      wrap.appendChild(nameEl);
+    }
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-end;gap:8px;' + (isMine ? 'flex-direction:row-reverse;' : '');
+    if (!isMine) {
+      var av = document.createElement('div');
+      av.style.cssText = 'width:30px;height:30px;border-radius:50%;background:#2a2a2a;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.78rem;font-weight:700;color:#fff;';
+      av.textContent = (msg.sender||'?')[0].toUpperCase();
+      row.appendChild(av);
+    }
     var bubble = document.createElement('div');
-    bubble.style.cssText = 'max-width:75%;padding:0.55rem 0.85rem;border-radius:' +
+    bubble.style.cssText = 'max-width:72%;padding:0.55rem 0.9rem;border-radius:' +
       (isMine ? '16px 4px 16px 16px' : '4px 16px 16px 16px') +
-      ';font-size:0.87rem;line-height:1.45;word-break:break-word;' +
-      (isMine ? 'background:#00c2b2;color:#000;' : 'background:rgba(255,255,255,0.1);color:#fff;');
-
-    if (msg.messageType === 'image' && msg.imageUrl) {
+      ';font-size:0.87rem;line-height:1.48;word-break:break-word;' +
+      (isMine ? 'background:#2a2a2a;color:#fff;' : 'background:#1e1e1e;color:#fff;');
+    if (msg.imageBase64) {
       var img = document.createElement('img');
-      img.src = msg.imageUrl;
-      img.style.cssText = 'max-width:220px;border-radius:10px;display:block;';
-      img.onclick = function() { window.open(msg.imageUrl, '_blank'); };
+      img.src = msg.imageBase64; img.style.cssText = 'max-width:200px;border-radius:8px;display:block;';
       bubble.appendChild(img);
-      if (msg.text && msg.text !== 'Payment screenshot') {
-        var cap = document.createElement('div');
-        cap.style.cssText = 'margin-top:4px;font-size:0.78rem;';
-        cap.textContent = msg.text;
-        bubble.appendChild(cap);
-      }
     } else {
       bubble.textContent = msg.text || '';
     }
-
-    wrap.appendChild(bubble);
-
-    var ts = document.createElement('div');
+    row.appendChild(bubble);
+    var timeEl = document.createElement('div');
+    timeEl.style.cssText = 'font-size:0.67rem;color:rgba(255,255,255,0.28);white-space:nowrap;';
     var d = new Date(msg.createdAt || Date.now());
-    ts.style.cssText = 'font-size:0.65rem;color:rgba(255,255,255,0.28);padding:0 4px;';
-    ts.textContent = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-    wrap.appendChild(ts);
-
+    timeEl.textContent = (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+    row.appendChild(timeEl);
+    wrap.appendChild(row);
     return wrap;
   }
 
-  function appendMsg(msg, scroll) {
-    var container = document.getElementById('bfChatMsgs');
-    if (!container) return;
-    var id = msg.id || (msg.clientId || '');
-    if (id && _chatRenderedIds[id]) return; // deduplicate
-    if (id) _chatRenderedIds[id] = true;
-    container.appendChild(renderMsg(msg));
-    if (scroll !== false) container.scrollTop = container.scrollHeight;
-  }
-
-  function showEmpty() {
-    var container = document.getElementById('bfChatMsgs');
-    if (!container) return;
-    if (container.children.length === 0) {
-      var e = document.createElement('p');
-      e.id = 'bfChatEmpty';
-      e.style.cssText = 'text-align:center;color:rgba(255,255,255,0.3);font-size:0.82rem;margin-top:2rem;';
-      e.textContent = 'No messages yet. Say hello!';
-      container.appendChild(e);
-    }
-  }
-
-  function clearEmpty() {
-    var e = document.getElementById('bfChatEmpty');
-    if (e && e.parentNode) e.parentNode.removeChild(e);
-  }
-
-  // ── fetch & poll ──────────────────────────────────────────────────
-  async function fetchMessages() {
-    var orderId = getOrderId();
-    if (!orderId) return;
-    try {
-      var resp = await fetch('/api/p2p/orders/' + orderId + '/messages', { credentials: 'include' });
-      if (!resp.ok) return;
-      var data = await resp.json();
-      var msgs = data.messages || [];
-      var container = document.getElementById('bfChatMsgs');
-      if (!container) return;
-      clearEmpty();
-      msgs.forEach(function(m) { appendMsg(m, false); });
-      container.scrollTop = container.scrollHeight;
-      if (msgs.length === 0) showEmpty();
-    } catch(e) { /* silent */ }
+  // ── Poll messages ─────────────────────────────────────────────────
+  function pollMessages() {
+    var oid = _chatOrderId || getOrderId();
+    if (!oid) return;
+    fetch('/api/p2p/orders/' + oid + '/messages', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) {
+        if (!d || !d.messages) return;
+        var box = document.getElementById('bfChatMessages');
+        if (!box) return;
+        var atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+        var added = false;
+        d.messages.forEach(function(msg) {
+          if (_chatRendered[msg.id]) return;
+          _chatRendered[msg.id] = true;
+          box.appendChild(renderMsg(msg));
+          added = true;
+        });
+        if (added && atBottom) scrollBottom();
+      }).catch(function(){});
   }
 
   function startPolling() {
     stopPolling();
-    fetchMessages();
-    _chatPollTimer = setInterval(fetchMessages, 1000);
+    pollMessages();
+    _chatPollTimer = setInterval(pollMessages, 3000);
   }
-
   function stopPolling() {
     if (_chatPollTimer) { clearInterval(_chatPollTimer); _chatPollTimer = null; }
   }
 
-  // ── send message ──────────────────────────────────────────────────
-  async function sendMessage() {
-    var input = document.getElementById('bfChatInput');
-    var btn = document.getElementById('bfChatSendBtn');
-    var orderId = getOrderId();
-    if (!input || !orderId) return;
-    var text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-    input.style.height = '';
-    btn.disabled = true;
-    // Optimistic render
-    clearEmpty();
-    appendMsg({ id: 'opt_' + Date.now(), sender: getMyName(), text: text, createdAt: new Date().toISOString() });
+  // ── Send message ──────────────────────────────────────────────────
+  async function sendMsg(text) {
+    var oid = _chatOrderId || getOrderId();
+    if (!oid || !text.trim()) return;
     try {
-      await fetch('/api/p2p/orders/' + orderId + '/messages', {
-        method: 'POST',
+      await fetch('/api/p2p/orders/' + oid + '/messages', {
+        method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ text: text })
+        body: JSON.stringify({ text: text.trim() })
       });
-    } catch(e) { console.error('[bfChat] send error:', e); }
-    btn.disabled = false;
+      pollMessages();
+    } catch(e) {}
   }
 
-  // ── send image ─────────────────────────────────────────────────────
-  async function sendImage(file) {
-    var orderId = getOrderId();
-    if (!file || !orderId) return;
-    // Convert to base64
-    var reader = new FileReader();
-    reader.onload = async function(e) {
-      var dataUrl = e.target.result;
-      clearEmpty();
-      // Optimistic preview
-      appendMsg({ id: 'opt_img_' + Date.now(), sender: getMyName(), messageType: 'image', imageUrl: dataUrl, createdAt: new Date().toISOString() });
-      try {
-        // Try the existing image upload endpoint if available
-        var formData = new FormData();
-        formData.append('image', file);
-        var resp = await fetch('/api/p2p/orders/' + orderId + '/messages/image', { method: 'POST', credentials: 'include', body: formData });
-        if (!resp.ok) {
-          // Fallback: send as text message with note
-          await fetch('/api/p2p/orders/' + orderId + '/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ text: '[Image sent]' })
-          });
-        }
-      } catch(e) {
-        // fallback silent
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-
-  // ── wire events ───────────────────────────────────────────────────
+  // ── Wire chat events ──────────────────────────────────────────────
   function wireChatEvents() {
-    document.getElementById('bfChatBackBtn').onclick = function() {
+    document.getElementById('bfChatBack').onclick = function() {
       stopPolling();
-      document.getElementById('bfChatScreen').style.display = 'none';
-      var prev = document.getElementById(_chatPrevScreen);
-      if (prev) prev.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
+      var cs = document.getElementById('bfChatScreen'); if (cs) cs.style.display = 'none';
+      document.body.classList.add('bf-open');
+      // Return to previous bf screen or close entirely
+      if (_chatPrev === 'orders') {
+        document.body.classList.remove('bf-open');
+        document.body.style.overflow = '';
+        var nav = document.getElementById('p2pMobileNav'); if (nav) nav.style.display = '';
+        return;
+      }
+      // If returning to order screen, re-fill it with latest order data (prevents black/stale screen)
+      if (_chatPrev === 'bfOrderScreen' && typeof window._bfFillOrder === 'function') {
+        var latestOrd = typeof window._bfGetCurrentOrder === 'function' ? window._bfGetCurrentOrder() : null;
+        if (latestOrd) { window._bfFillOrder(latestOrd); return; }
+      }
+      var prev = document.getElementById(_chatPrev);
+      if (prev) { prev.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     };
-
-    document.getElementById('bfChatSendBtn').onclick = function() { sendMessage(); };
-
-    var input = document.getElementById('bfChatInput');
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-    });
-    input.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-    });
-
-    document.getElementById('bfChatImgInput').addEventListener('change', function() {
-      var f = this.files && this.files[0];
-      if (f) { sendImage(f); this.value = ''; }
+    document.getElementById('bfChatPayBtn').onclick = function() {
+      var cs = document.getElementById('bfChatScreen'); if (cs) cs.style.display = 'none';
+      if (window._bfFillPay) window._bfFillPay();
+    };
+    var inp = document.getElementById('bfChatInput');
+    var sendBtn = document.getElementById('bfChatSendBtn');
+    sendBtn.onclick = function() {
+      var v = inp.value.trim();
+      if (!v) return;
+      inp.value = '';
+      sendMsg(v);
+    };
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
     });
   }
 
-  // ── public API ────────────────────────────────────────────────────
+  // ── Public: open chat ──────────────────────────────────────────────
   window.bfOpenChat = function(prevScreenId) {
-    _chatPrevScreen = prevScreenId || 'bfOrderScreen';
-    // Hide other screens
-    ['bfBuyScreen','bfOrderScreen','bfPayScreen'].forEach(function(id) {
-      var el = document.getElementById(id); if (el) el.style.display = 'none';
-    });
+    _chatPrev = prevScreenId || 'bfOrderScreen';
+    _chatOrderId = getOrderId();
+    _chatRendered = {};
+    _chatMyUser = getMyUsername();
+    // Fill seller name + pay amount — use activeOrderSnapshot (always up-to-date via SSE)
+    var snap = typeof activeOrderSnapshot !== 'undefined' ? activeOrderSnapshot : null;
+    var ordForChat = (typeof window._bfGetCurrentOrder === 'function' ? window._bfGetCurrentOrder() : null) || snap;
+    var sellerName = ordForChat ? (ordForChat.sellerUsername || ordForChat.advertiser || 'Seller') : 'Seller';
+    var el = document.getElementById('bfChatSellerName'); if (el) el.textContent = sellerName;
+    var payAmt = ordForChat ? (ordForChat.amountInr || 0) : 0;
+    var pa = document.getElementById('bfChatPayAmt'); if (pa) pa.textContent = '₹ ' + (payAmt ? Number(payAmt).toLocaleString('en-IN', {minimumFractionDigits:2,maximumFractionDigits:2}) : '--');
 
-    // Fill counterparty info
-    var snapshot = typeof activeOrderSnapshot !== 'undefined' ? activeOrderSnapshot : null;
-    var myName = getMyName().toLowerCase();
-    var counterparty = '';
-    if (snapshot) {
-      var buyer = String(snapshot.buyerUsername || '').trim();
-      var seller = String(snapshot.sellerUsername || snapshot.advertiser || '').trim();
-      counterparty = buyer.toLowerCase() === myName ? seller : buyer;
-    }
-    if (!counterparty && typeof _bfOffer !== 'undefined' && _bfOffer) {
-      counterparty = _bfOffer.advertiser || '';
-    }
+    // Determine status — prefer activeOrderSnapshot (synced by SSE/polling) over _bfOrder
+    var st = String((snap && snap.status) || (ordForChat && ordForChat.status) || '').toUpperCase().replace('PAYMENT_SENT','PAID').replace('COMPLETED','RELEASED');
+    var isCreated = (st === 'CREATED' || st === 'PENDING' || st === '');
+    var isPaid    = (st === 'PAID');
 
-    var avatar = document.getElementById('bfChatAvatar');
-    var nameEl = document.getElementById('bfChatName');
-    if (avatar) avatar.textContent = String(counterparty || 'S').slice(0,1).toUpperCase();
-    if (nameEl) nameEl.textContent = (typeof maskEmail === 'function' ? maskEmail(counterparty) : counterparty) || 'Seller';
+    // Show/hide pay bar + wait bar + notice bar based on status
+    var payBar  = document.getElementById('bfChatPayBar');
+    var waitBar = document.getElementById('bfChatWaitBar');
+    var nb      = document.getElementById('bfChatNoticeBar');
+    if (payBar)  payBar.style.display  = isCreated ? '' : 'none';
+    if (waitBar) waitBar.style.display = isPaid    ? '' : 'none';
+    if (nb)      nb.style.display      = isCreated ? '' : 'none';
 
-    // Reset message list (keep cache for dedup)
-    var container = document.getElementById('bfChatMsgs');
-    if (container) { container.innerHTML = ''; }
-    _chatRenderedIds = {};
-
-    var screen = document.getElementById('bfChatScreen');
-    if (screen) screen.style.display = 'flex';
+    // Hide paid sheet in case it was open
+    var ps = document.getElementById('bfPaidSheet'); if (ps) ps.style.display = 'none';
+    // Hide all bf screens, show chat on top
+    (window._bfBF_SCREENS || []).forEach(function(sid) { var e = document.getElementById(sid); if (e) e.style.display = 'none'; });
+    var cs = document.getElementById('bfChatScreen');
+    if (cs) { cs.style.display = 'flex'; cs.style.flexDirection = 'column'; }
     document.body.style.overflow = 'hidden';
-
+    document.body.classList.add('bf-open');
+    var nav = document.getElementById('p2pMobileNav'); if (nav) nav.style.display = 'none';
+    // Clear messages and reload
+    var box = document.getElementById('bfChatMessages');
+    if (box) box.innerHTML = '';
+    // Seed remark as first seller message if no messages yet
+    var remark = snap ? (snap.notes || snap.remark || '') : '';
+    if (remark) {
+      var seed = { id: 'seed_remark', sender: sellerName, text: remark, createdAt: snap && snap.createdAt ? snap.createdAt : Date.now(), role: '' };
+      _chatRendered['seed_remark'] = true;
+      if (box) box.appendChild(renderMsg(seed));
+    }
     startPolling();
-
-    // Focus input
-    setTimeout(function() {
-      var inp = document.getElementById('bfChatInput');
-      if (inp) inp.focus();
-    }, 350);
+    scrollBottom();
+    setTimeout(function() { var i = document.getElementById('bfChatInput'); if (i) i.focus(); }, 400);
   };
 
-  // ── init ──────────────────────────────────────────────────────────
-  injectChatHTML();
   wireChatEvents();
 })();
+
 
 // ── Navigate to standalone order flow on Buy ──────────────────────
 (function() {
@@ -7994,24 +8675,18 @@ window.deleteMobAd = async function(offerId) {
   }
 
   function handleOrderOpen(target) {
-    if (!target) {
-      return;
-    }
+    if (!target) return;
     var orderId = String(target.getAttribute('data-order-id') || '').trim();
-    var openChat = target.getAttribute('data-open-chat') === '1';
+    if (!orderId) return;
+    _ordPrimeOrderOpen(orderId); // store order snapshot in localStorage for instant load
+    // Navigate directly via data-url (already built by _ordCard / _buildOrderFlowUrl)
     var url = orderOpenUrl(target);
-    if (!url) {
-      return;
+    if (url) {
+      window.location.href = url;
+    } else {
+      // Fallback: build URL manually
+      window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(orderId) + '&source=orders&v=' + Date.now();
     }
-    _ordPrimeOrderOpen(orderId);
-    if (typeof prefetchOrderFlowAssets === 'function') {
-      prefetchOrderFlowAssets();
-    }
-    if (typeof window._p2pNavSafe === 'function') {
-      window._p2pNavSafe(url, openChat ? 'Opening chat...' : 'Opening order...');
-      return;
-    }
-    window.location.href = url;
   }
 
   document.addEventListener('click', function(event) {
@@ -8029,9 +8704,6 @@ window.deleteMobAd = async function(offerId) {
       return;
     }
     _ordPrimeOrderOpen(target.getAttribute('data-order-id'));
-    if (typeof prefetchOrderFlowAssets === 'function') {
-      prefetchOrderFlowAssets();
-    }
   }, { passive: true });
 
   document.addEventListener('keydown', function(event) {
@@ -8047,6 +8719,7 @@ window.deleteMobAd = async function(offerId) {
   });
 })();
 
+// Redirect all P2P order actions to the standalone order flow page.
 (function() {
   var _navLockTs = 0;
   var _navOverlay = null;
@@ -8085,7 +8758,9 @@ window.deleteMobAd = async function(offerId) {
 
   function _navSafe(url, label) {
     var now = Date.now();
-    if (now - _navLockTs < 800) { console.log('[navSafe] blocked duplicate nav'); return; }
+    if (now - _navLockTs < 800) {
+      return;
+    }
     _navLockTs = now;
     var overlay = ensureNavOverlay();
     if (overlay) {
@@ -8122,37 +8797,46 @@ window.deleteMobAd = async function(offerId) {
       hideNavOverlay(true);
     }
   });
+
   window.fillDealModal = function(offer) {
     if (offer && offer.id) {
       cacheSelectedOffer(offer);
       _navSafe(_buildOrderFlowUrl({ adId: offer.id, source: 'ad' }), 'Opening buy flow...');
     }
   };
-  window._p2pNavSafe = _navSafe; // expose for openOrder override below
+  window._p2pNavSafe = _navSafe;
 })();
 
-// ── Redirect all order opens to new order flow page ──────────────
+// Redirect any existing order opens to the standalone order flow page.
 (function() {
   var _navSafe = window._p2pNavSafe || function(url) { window.location.href = url; };
 
   var _origOpenOrder = openOrder;
-  openOrder = function(order) {
+  openOrder = function(order, opts) {
     if (order && order.id) {
+      _ordPrimeOrderOpen(order.id);
       _navSafe(_buildOrderFlowUrl({ orderId: order.id, source: 'orders' }), 'Opening order...');
       return;
     }
-    _origOpenOrder.call(this, order);
+    return _origOpenOrder.call(this, order, opts);
   };
 
   var _origOpenOrderById = openOrderById;
-  openOrderById = async function(orderId) {
+  openOrderById = async function(orderId, opts) {
     if (orderId) {
-      _navSafe(_buildOrderFlowUrl({ orderId: orderId, source: 'orders' }), 'Opening order...');
+      _ordPrimeOrderOpen(orderId);
+      var params = { orderId: orderId, source: 'orders' };
+      if (opts && opts.openChat) {
+        params.openChat = '1';
+      }
+      _navSafe(_buildOrderFlowUrl(params), 'Opening order...');
       return;
     }
-    return _origOpenOrderById.call(this, orderId);
+    return _origOpenOrderById.call(this, orderId, opts);
   };
 })();
+
+// Buy/chat screens removed — rebuild pending
 
 // ── Real-time user SSE stream — instant new order notification ───
 (function() {
@@ -8190,6 +8874,21 @@ window.deleteMobAd = async function(offerId) {
         }
       } catch(_) {}
       fetchOrdersSafe(); // re-render orders list with fresh server data
+    });
+    _userStream.addEventListener('orders_refresh', function(e) {
+      try {
+        var payload = JSON.parse(e.data || '{}');
+        var evtStatus = String(payload.status || '').toUpperCase();
+        // Order completed → refresh My Ads (availableAmount updated) + wallet balance
+        if (evtStatus === 'COMPLETED' || evtStatus === 'RELEASED') {
+          if (typeof loadMyAds === 'function') loadMyAds();
+          if (typeof loadProfilePanel === 'function') loadProfilePanel({ refreshWallet: true });
+        }
+      } catch(_) {}
+      fetchOrdersSafe();
+      // Bust offers cache so order count & online status update immediately
+      _offersResponseCache && _offersResponseCache.clear();
+      if (typeof loadOffers === 'function') loadOffers();
     });
     _userStream.onerror = function() {
       // SSE dropped — start fallback poll so orders still refresh

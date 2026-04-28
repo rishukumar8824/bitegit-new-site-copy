@@ -13,7 +13,6 @@ const state = {
     depositStatus: '',
     withdrawalStatus: 'PENDING'
   },
-  pendingWithdrawalCount: 0,
   support: {
     activeTicketId: null,
     pollInterval: null
@@ -22,16 +21,17 @@ const state = {
 
 const dom = {
   sidebar: document.getElementById('adminSidebar'),
-  sidebarBackdrop: document.getElementById('sidebarBackdrop'),
-  sidebarOpenBtn: document.getElementById('sidebarOpenBtn'),
-  sidebarCloseBtn: document.getElementById('sidebarCloseBtn'),
+  sidebarOverlay: document.getElementById('sidebarOverlay'),
+  menuToggleBtn: document.getElementById('menuToggleBtn'),
+  logoutBtnSide: document.getElementById('logoutBtnSide'),
   sidebarNav: document.getElementById('sidebarNav'),
   panels: Array.from(document.querySelectorAll('[data-panel]')),
   pageTitle: document.getElementById('pageTitle'),
   adminIdentity: document.getElementById('adminIdentity'),
   globalMessage: document.getElementById('globalMessage'),
   refreshCurrentBtn: document.getElementById('refreshCurrentBtn'),
-  logoutBtn: document.getElementById('logoutBtn')
+  logoutBtn: document.getElementById('logoutBtn'),
+  liveTime: document.getElementById('liveTime')
 };
 
 const viewLoaders = {
@@ -52,7 +52,7 @@ const viewLoaders = {
   monitoring: loadMonitoring,
   audit: loadAudit,
   adminusers: loadAdminUsers,
-  'user-profile': loadUserProfilePanel
+  merchants: loadMerchants
 };
 
 const PAGE_TITLES = {
@@ -72,7 +72,8 @@ const PAGE_TITLES = {
   settings: 'Platform Settings',
   monitoring: 'Monitoring',
   audit: 'Audit Logs',
-  adminusers: 'Admin Users'
+  adminusers: 'Admin Users',
+  merchants: 'Merchant Applications'
 };
 
 function formatNumber(value, digits = 2) {
@@ -101,6 +102,15 @@ function formatDate(value) {
     hour: '2-digit',
     minute: '2-digit'
   });
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function statusBadge(status) {
@@ -174,58 +184,30 @@ async function apiRequest(path, options = {}) {
   return payload;
 }
 
-// Replaces window.prompt() with inline modal
-function askRemarks(title = 'Add Remarks', desc = 'Optional', defaultVal = '') {
-  return new Promise((resolve) => {
-    const modal = document.getElementById('remarksModal');
-    const input = document.getElementById('remarksModalInput');
-    document.getElementById('remarksModalTitle').textContent = title;
-    document.getElementById('remarksModalDesc').textContent = desc;
-    input.value = defaultVal;
-    modal.style.display = 'flex';
-
-    function close(val) {
-      modal.style.display = 'none';
-      okBtn.removeEventListener('click', onOk);
-      cancelBtn.removeEventListener('click', onCancel);
-      input.removeEventListener('keydown', onKey);
-      resolve(val);
-    }
-    const okBtn = document.getElementById('remarksModalOk');
-    const cancelBtn = document.getElementById('remarksModalCancel');
-    const onOk = () => close(input.value || '');
-    const onCancel = () => close(null);
-    const onKey = (e) => { if (e.key === 'Enter') close(input.value || ''); if (e.key === 'Escape') close(null); };
-    okBtn.addEventListener('click', onOk);
-    cancelBtn.addEventListener('click', onCancel);
-    input.addEventListener('keydown', onKey);
-    setTimeout(() => input.focus(), 50);
-  });
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-async function apiRequestOptional(path, fallback = {}, options = {}) {
-  try {
-    return await apiRequest(path, options);
-  } catch {
-    return fallback;
-  }
-}
-
 function setSidebarOpen(open) {
   if (window.innerWidth >= 1024) {
     return;
   }
   if (open) {
-    dom.sidebar.classList.remove('-translate-x-full');
-    dom.sidebarBackdrop.classList.remove('hidden');
+    dom.sidebar.classList.add('open');
+    if (dom.sidebarOverlay) dom.sidebarOverlay.classList.add('active');
   } else {
-    dom.sidebar.classList.add('-translate-x-full');
-    dom.sidebarBackdrop.classList.add('hidden');
+    dom.sidebar.classList.remove('open');
+    if (dom.sidebarOverlay) dom.sidebarOverlay.classList.remove('active');
   }
+}
+
+function startLiveClock() {
+  function tick() {
+    if (!dom.liveTime) return;
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    dom.liveTime.textContent = `${h}:${m}:${s}`;
+  }
+  tick();
+  setInterval(tick, 1000);
 }
 
 function setActiveNav(view) {
@@ -262,6 +244,8 @@ async function changeView(view) {
   if (!viewLoaders[view]) {
     return;
   }
+  // Always close user profile drawer when switching views
+  closeUserProfile();
   // Clear support polling when leaving support view
   if (state.currentView === 'support' && view !== 'support') {
     if (state.support.pollInterval) {
@@ -284,11 +268,14 @@ function renderCards(containerId, cards) {
   container.innerHTML = cards
     .map(
       (card) => `
-      <article class="card-item">
-        <p class="text-xs uppercase tracking-wide text-slate-400">${card.label}</p>
-        <p class="mt-2 stat-value">${card.value}</p>
-        ${card.meta ? `<p class="mt-1 text-xs text-slate-500">${card.meta}</p>` : ''}
-      </article>
+      <div class="stat-card">
+        <div class="stat-icon">${card.icon || '📊'}</div>
+        <div class="stat-info">
+          <div class="stat-label">${card.label}</div>
+          <div class="stat-value">${card.value}</div>
+          ${card.meta ? `<div class="stat-meta">${card.meta}</div>` : ''}
+        </div>
+      </div>
     `
     )
     .join('');
@@ -317,56 +304,53 @@ function drawChart(instanceKey, canvasId, labels, values, color = '#22c55e') {
         {
           data: values,
           borderColor: color,
-          backgroundColor: `${color}33`,
-          borderWidth: 2,
-          pointRadius: 2,
-          pointHoverRadius: 3,
+          backgroundColor: (ctx) => {
+            const c = ctx.chart.ctx;
+            const g = c.createLinearGradient(0, 0, 0, ctx.chart.height || 200);
+            g.addColorStop(0, color + '55');
+            g.addColorStop(1, color + '00');
+            return g;
+          },
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: color,
           fill: true,
-          tension: 0.32
+          tension: 0.8,
+          cubicInterpolationMode: 'default',
+          capBezierPoints: false
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: {
-          display: false
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a2030',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          titleColor: '#94a3b8',
+          bodyColor: '#eaecef',
+          padding: 10,
+          cornerRadius: 8
         }
       },
       scales: {
         x: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: '#1e293b' }
+          ticks: { color: '#94a3b8', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false }
         },
         y: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: '#1e293b' }
+          ticks: { color: '#94a3b8', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false }
         }
-      }
-    }
-  });
-}
-
-// Donut/Ring chart helper using Chart.js
-const _donutInstances = {};
-function drawDonut(canvasId, values, labels, colors) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  if (_donutInstances[canvasId]) { _donutInstances[canvasId].destroy(); }
-  const total = values.reduce((a,b)=>a+b,0);
-  const data = total === 0 ? values.map(()=>1) : values;
-  _donutInstances[canvasId] = new Chart(ctx, {
-    type: 'doughnut',
-    data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#0f172a', borderWidth: 3, hoverOffset: 6 }] },
-    options: {
-      responsive: false,
-      cutout: '72%',
-      plugins: { legend: { display: false }, tooltip: {
-        callbacks: { label: (i) => ` ${i.label}: ₹${(i.raw).toLocaleString('en-IN',{minimumFractionDigits:2})}` }
-      }}
+      },
+      animation: { duration: 600, easing: 'easeInOutQuart' }
     }
   });
 }
@@ -390,117 +374,119 @@ async function loadOverview() {
 
   renderCards('overviewCards', [
     {
+      icon: '💰',
       label: 'Revenue Today',
       value: `₹${formatNumber(revenue.totalRevenue?.today || 0, 2)}`,
       meta: `Week: ₹${formatNumber(revenue.totalRevenue?.week || 0, 2)}`
     },
     {
+      icon: '📅',
       label: 'Revenue Month',
       value: `₹${formatNumber(revenue.totalRevenue?.month || 0, 2)}`,
       meta: `Spot Fees: ₹${formatNumber(revenue.spotFeeEarnings || 0, 2)}`
     },
     {
+      icon: '📈',
       label: 'Trading Volume',
       value: `USDT ${formatNumber(revenue.totalTradingVolume || 0, 2)}`,
       meta: `Active users: ${Number(revenue.totalActiveUsers || 0)}`
     },
     {
+      icon: '🏦',
       label: 'Platform Wallet',
       value: `₹${formatNumber(wallet.totalBalance || 0, 2)}`,
       meta: `Locked: ₹${formatNumber(wallet.totalLockedBalance || 0, 2)}`
     }
   ]);
 
+  const trend = Array.isArray(revenue.trend) ? revenue.trend : [];
+  drawChart(
+    'overviewRevenue',
+    'overviewRevenueChart',
+    trend.map((row) => row.date),
+    trend.map((row) => Number(row.revenue || 0)),
+    '#22c55e'
+  );
+
+  // ── Donut chart: Revenue Breakdown ──
+  const p2p    = Number(revenue.p2pEarnings || 0);
+  const spot   = Number(revenue.spotFeeEarnings || 0);
+  const wdfee  = Number(revenue.withdrawalFeeEarnings || 0);
+  const other  = Math.max(0, Number(revenue.totalRevenue?.month || 0) - p2p - spot - wdfee);
+  const donutData  = [p2p, spot, wdfee, other];
+  const donutLabels = ['P2P', 'Spot Fees', 'Withdrawal', 'Other'];
+  const donutColors = ['#00e5ff', '#f0b90b', '#0ecb81', '#a78bfa'];
+  const donutTotal = p2p + spot + wdfee + other;
+
+  const dtEl = document.getElementById('donutTotal');
+  if (dtEl) dtEl.textContent = '₹' + formatNumber(donutTotal, 2);
+
+  const donutCanvas = document.getElementById('revenueDonutChart');
+  if (donutCanvas) {
+    if (state.charts['revenueDonut']) state.charts['revenueDonut'].destroy();
+    state.charts['revenueDonut'] = new Chart(donutCanvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: donutLabels,
+        datasets: [{
+          data: donutTotal > 0 ? donutData : [1, 1, 1, 1],
+          backgroundColor: donutColors,
+          borderWidth: 0,
+          borderRadius: 10,
+          spacing: 5,
+          hoverOffset: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: { legend: { display: false }, tooltip: {
+          backgroundColor: '#141821',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          callbacks: {
+            label: function(ctx) {
+              var pct = donutTotal > 0 ? ((ctx.parsed / donutTotal) * 100).toFixed(1) : '0.0';
+              return '  ₹' + formatNumber(ctx.parsed, 2) + '  (' + pct + '%)';
+            }
+          }
+        }}
+      }
+    });
+  }
+
+  const legend = document.getElementById('donutLegend');
+  if (legend) {
+    legend.innerHTML = donutLabels.map(function(lbl, i) {
+      var pct = donutTotal > 0 ? ((donutData[i] / donutTotal) * 100).toFixed(1) : '0.0';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+        + '<span style="display:flex;align-items:center;gap:8px;">'
+        + '<span style="width:12px;height:12px;border-radius:4px;background:' + donutColors[i] + ';flex-shrink:0;display:inline-block;box-shadow:0 0 6px ' + donutColors[i] + '80;"></span>'
+        + '<span style="font-size:12px;color:rgba(255,255,255,0.6);">' + lbl + '</span></span>'
+        + '<span style="font-size:12px;font-weight:700;color:#fff;">₹' + formatNumber(donutData[i], 2)
+        + ' <span style="font-size:10px;font-weight:500;color:' + donutColors[i] + ';">(' + pct + '%)</span></span>'
+        + '</div>';
+    }).join('');
+  }
+
   const health = document.getElementById('overviewHealth');
   health.innerHTML = [
-    ['DB', monitoring.dbConnected ? '🟢 Connected' : '🔴 Down'],
+    ['DB Connection', monitoring.dbConnected ? 'Connected' : 'Disconnected'],
     ['Active Users', Number(monitoring.activeUsers || 0)],
     ['Active Admins', Number(monitoring.activeAdmins || 0)],
-    ['Failed Logins (10m)', Number(monitoring.failedLoginAttemptsLast10Min || 0)],
-    ['API Req (10m)', Number(monitoring.apiRequestsLast10Min || 0)]
+    ['Failed Login (10m)', Number(monitoring.failedLoginAttemptsLast10Min || 0)],
+    ['API Requests (10m)', Number(monitoring.apiRequestsLast10Min || 0)]
   ]
-    .map(([key, value]) => `
-      <div class="rounded-xl bg-slate-950/60 px-3 py-2 flex flex-col gap-0.5">
-        <dt class="text-xs text-slate-400">${key}</dt>
-        <dd class="font-semibold text-slate-100">${value}</dd>
+    .map(
+      ([key, value]) => `
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <dt class="text-slate-400">${key}</dt>
+        <dd class="font-medium">${value}</dd>
       </div>
-    `).join('');
-
-  // ── Extra stats (parallel, non-blocking) ─────────────────────────────────
-  const [usersPayload, kycPayload, wdPayload, p2pPayload, ticketsPayload] = await Promise.all([
-    apiRequestOptional('/users?limit=200', { users: [] }),
-    apiRequestOptional('/users?limit=200&kycStatus=PENDING_REVIEW', { users: [] }),
-    apiRequestOptional('/wallet/withdrawals?status=PENDING&limit=100', { withdrawals: [] }),
-    apiRequestOptional('/p2p/disputes?limit=100', { disputes: [] }),
-    apiRequestOptional('/support/tickets?status=OPEN&limit=100', { tickets: [] })
-  ]);
-
-  const users = Array.isArray(usersPayload.users) ? usersPayload.users : [];
-  const totalUsers = users.length;
-  const activeUsers = users.filter(u => u.status === 'ACTIVE').length;
-  const frozenUsers = users.filter(u => u.status === 'FROZEN').length;
-  const bannedUsers = users.filter(u => u.status === 'BANNED').length;
-  const kycVerified = users.filter(u => u.kycStatus === 'VERIFIED' || u.kycStatus === 'APPROVED').length;
-  const kycPending = (kycPayload.users || []).length;
-
-  // Donut chart — user distribution
-  document.getElementById('donutTotalUsers').textContent = totalUsers;
-  const donutCtx = document.getElementById('userDonutChart').getContext('2d');
-  if (window._userDonutChart) window._userDonutChart.destroy();
-  window._userDonutChart = new Chart(donutCtx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Active', 'Frozen', 'Banned', 'Other'],
-      datasets: [{
-        data: [activeUsers, frozenUsers, bannedUsers, Math.max(0, totalUsers - activeUsers - frozenUsers - bannedUsers)],
-        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#475569'],
-        borderWidth: 0,
-        hoverOffset: 6
-      }]
-    },
-    options: {
-      cutout: '72%',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.raw}` } } },
-      animation: { animateRotate: true, duration: 900 }
-    }
-  });
-  document.getElementById('userDonutLegend').innerHTML = [
-    ['#22c55e', 'Active', activeUsers],
-    ['#f59e0b', 'Frozen', frozenUsers],
-    ['#ef4444', 'Banned', bannedUsers]
-  ].map(([color, label, val]) => `
-    <div class="flex justify-between items-center">
-      <span class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:${color}"></span>${label}</span>
-      <span class="font-semibold text-slate-200">${val}</span>
-    </div>
-  `).join('');
-
-  // Activity rings
-  const pendingWd = (wdPayload.withdrawals || []).length;
-  const openDisputes = (p2pPayload.disputes || []).length;
-  const openTickets = (ticketsPayload.tickets || []).length;
-
-  function setRing(id, value, max, circumference) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const pct = max > 0 ? Math.min(value / max, 1) : 0;
-    const dash = pct * circumference;
-    el.style.strokeDasharray = `${dash} ${circumference}`;
-  }
-  setRing('actRingKyc', kycVerified, Math.max(totalUsers, 1), 471);
-  setRing('actRingTrade', Number(revenue.totalActiveUsers || 0), Math.max(totalUsers, 1), 364);
-  setRing('actRingP2p', openDisputes + pendingWd, Math.max(totalUsers * 0.3, 1), 270);
-
-  document.getElementById('legKyc').textContent = kycVerified;
-  document.getElementById('legTrade').textContent = Number(revenue.totalActiveUsers || 0);
-  document.getElementById('legP2p').textContent = openDisputes + pendingWd;
-
-  // Quick stats
-  document.getElementById('qs-pendingKyc').textContent = kycPending;
-  document.getElementById('qs-pendingWd').textContent = pendingWd;
-  document.getElementById('qs-disputes').textContent = openDisputes;
-  document.getElementById('qs-tickets').textContent = openTickets;
-  document.getElementById('qs-totalRevenue').textContent = `₹${formatNumber((revenue.totalRevenue?.month || 0) + (revenue.totalRevenue?.week || 0), 2)}`;
+    `
+    )
+    .join('');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -555,13 +541,11 @@ async function loadKyc() {
 async function viewKycDocuments(userId) {
   const modal = document.getElementById('kycDocModal');
   const aadhaarContainer = document.getElementById('kycDocAadhaarContainer');
-  const aadhaarBackContainer = document.getElementById('kycDocAadhaarBackContainer');
   const selfieContainer = document.getElementById('kycDocSelfieContainer');
 
-  modal.style.display = 'flex';
-
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
   aadhaarContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
-  if (aadhaarBackContainer) aadhaarBackContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
   selfieContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
 
   try {
@@ -574,15 +558,7 @@ async function viewKycDocuments(userId) {
     if (data.aadhaarFront) {
       aadhaarContainer.innerHTML = `<img src="${data.aadhaarFront}" alt="Aadhaar Front" class="w-full h-auto object-contain max-h-80" />`;
     } else {
-      aadhaarContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No Aadhaar front available</p>';
-    }
-
-    if (aadhaarBackContainer) {
-      if (data.aadhaarBack) {
-        aadhaarBackContainer.innerHTML = `<img src="${data.aadhaarBack}" alt="Aadhaar Back" class="w-full h-auto object-contain max-h-80" />`;
-      } else {
-        aadhaarBackContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No Aadhaar back available</p>';
-      }
+      aadhaarContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No Aadhaar image available</p>';
     }
 
     if (data.selfie) {
@@ -597,7 +573,6 @@ async function viewKycDocuments(userId) {
     `;
   } catch (error) {
     aadhaarContainer.innerHTML = `<p class="text-sm text-rose-400 p-4">Error: ${error.message}</p>`;
-    if (aadhaarBackContainer) aadhaarBackContainer.innerHTML = '';
     selfieContainer.innerHTML = '';
     showMessage(error.message || 'Failed to load KYC documents.', 'error');
   }
@@ -624,24 +599,19 @@ async function loadUsers(options = {}) {
   body.innerHTML = state.users
     .map(
       (user) => `
-      <tr>
-        <td class="admin-td font-mono text-xs">${user.userId}</td>
-        <td class="admin-td">${user.email}</td>
+      <tr class="user-row" data-profile-id="${user.userId}" style="cursor:pointer;transition:background 0.15s;" title="Click to view full profile">
+        <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${user.userId}</td>
+        <td class="admin-td" style="font-weight:500;">${user.email}</td>
         <td class="admin-td">${statusBadge(user.role)}</td>
         <td class="admin-td">${statusBadge(user.status)}</td>
         <td class="admin-td">${statusBadge(user.kycStatus)}</td>
-        <td class="admin-td text-right">${formatNumber(user.balance, 4)}</td>
-        <td class="admin-td text-right">${formatNumber(user.lockedBalance, 4)}</td>
+        <td class="admin-td" style="text-align:right;color:var(--green);font-weight:600;">${formatNumber(user.balance, 4)}</td>
+        <td class="admin-td" style="text-align:right;color:var(--red);">${formatNumber(user.lockedBalance, 4)}</td>
         <td class="admin-td">
-          <div class="flex flex-wrap gap-1">
-            <button class="btn-secondary !text-xs !py-1" data-user-action="freeze" data-user-id="${user.userId}">Freeze</button>
-            <button class="btn-secondary !text-xs !py-1" data-user-action="unfreeze" data-user-id="${user.userId}">Unfreeze</button>
-            <button class="btn-danger !text-xs !py-1" data-user-action="ban" data-user-id="${user.userId}">Ban</button>
-            <button class="btn-secondary !text-xs !py-1" data-user-action="adjust" data-user-id="${user.userId}">Adjust</button>
-            <button class="btn-secondary !text-xs !py-1" data-user-action="reset" data-user-id="${user.userId}">Reset Pass</button>
-            <button class="btn-secondary !text-xs !py-1" data-user-action="kyc" data-user-id="${user.userId}">KYC</button>
-            <button class="btn-secondary !text-xs !py-1" data-user-action="view-docs" data-user-id="${user.userId}">Docs</button>
-            <button class="btn-primary !text-xs !py-1" data-user-action="profile" data-user-id="${user.userId}">👤 Profile</button>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            <button class="btn-primary btn-sm" data-user-action="profile" data-user-id="${user.userId}">👤 Profile</button>
+            <button class="btn-secondary btn-sm" data-user-action="freeze" data-user-id="${user.userId}">Freeze</button>
+            <button class="btn-danger btn-sm" data-user-action="ban" data-user-id="${user.userId}">Ban</button>
           </div>
         </td>
       </tr>
@@ -704,10 +674,10 @@ async function loadWallet() {
   const pendingDepositAmount = pendingDeposits.reduce((sum, row) => sum + Number(row.amount || 0), 0);
 
   renderCards('walletCards', [
-    { label: 'Total Balance', value: `₹${formatNumber(overview.totalBalance || 0, 2)}` },
-    { label: 'Locked Balance', value: `₹${formatNumber(overview.totalLockedBalance || 0, 2)}` },
-    { label: 'Pending Deposits', value: `${pendingDeposits.length}`, meta: `Amount: ${formatNumber(pendingDepositAmount || 0, 6)}` },
-    { label: 'Pending Withdrawal', value: `₹${formatNumber(overview.pendingWithdrawalAmount || 0, 2)}` }
+    { icon: '💎', label: 'Total Balance', value: `₹${formatNumber(overview.totalBalance || 0, 2)}` },
+    { icon: '🔒', label: 'Locked Balance', value: `₹${formatNumber(overview.totalLockedBalance || 0, 2)}` },
+    { icon: '⬇️', label: 'Pending Deposits', value: `${pendingDeposits.length}`, meta: `Amount: ${formatNumber(pendingDepositAmount || 0, 6)}` },
+    { icon: '⬆️', label: 'Pending Withdrawal', value: `₹${formatNumber(overview.pendingWithdrawalAmount || 0, 2)}` }
   ]);
 
   const depositsList = document.getElementById('depositsList');
@@ -750,14 +720,14 @@ async function loadWallet() {
       const disabledClass = canReview ? '' : ' opacity-60';
       const disabledAttr = canReview ? '' : ' disabled';
       const withdrawalId = String(row.requestId || row.id || '').trim();
-      const network = String(row.network || row.metadata?.network || '-').trim().toUpperCase() || '-';
+      const network = String(row.network || row.chain || '-').trim().toUpperCase() || '-';
       const address = String(row.address || row.toAddress || row.to || '-').trim();
       const userLabel = String(row.username || row.userId || '-').trim();
       return `
       <article class="list-item">
         <div class="flex items-start justify-between gap-2">
           <div>
-            <p class="text-sm font-semibold">${escapeHtml(row.currency || row.coin || 'USDT')} • ${formatNumber(row.amount || 0, 6)}</p>
+            <p class="text-sm font-semibold">${escapeHtml(row.coin || row.currency || 'USDT')} • ${formatNumber(row.amount || 0, 6)}</p>
             <p class="text-xs text-slate-400">Request: ${escapeHtml(withdrawalId || '-')}</p>
             <p class="text-xs text-slate-500">${formatDate(row.createdAt)}</p>
           </div>
@@ -767,7 +737,7 @@ async function loadWallet() {
           <div><span class="text-slate-500">User:</span> ${escapeHtml(userLabel)}</div>
           <div><span class="text-slate-500">User ID:</span> ${escapeHtml(row.userId || '-')}</div>
           <div><span class="text-slate-500">Network:</span> ${escapeHtml(network)}</div>
-          <div class="break-all"><span class="text-slate-500">Address:</span> ${escapeHtml(address)}</div>
+          <div style="word-break:break-all;"><span class="text-slate-500">Address:</span> ${escapeHtml(address)}</div>
           <div><span class="text-slate-500">Created:</span> ${escapeHtml(formatDate(row.createdAt))}</div>
         </div>
         <div class="mt-3 grid grid-cols-2 gap-2">
@@ -866,6 +836,256 @@ async function loadSpot() {
 // P2P
 // ─────────────────────────────────────────────────────────────────────────────
 
+function buildDisputeMsgBubble(msg, buyerLabel, sellerLabel) {
+  const rawSender = String(msg.senderRole || msg.role || msg.sender || '').toLowerCase();
+  const text = escapeHtml(msg.text || msg.message || '');
+  const isImage = msg.messageType === 'image' || (!msg.text && msg.imageUrl);
+  const imageUrl = msg.imageUrl || '';
+  const ts = msg.createdAt
+    ? new Date(Number.isFinite(msg.createdAt) ? Number(msg.createdAt) : msg.createdAt)
+        .toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
+    : '';
+  let roleLabel, roleColor, bubble;
+  if (rawSender.startsWith('admin') || rawSender === 'admin') {
+    roleLabel = '🛡️ Admin'; roleColor = '#f59e0b'; bubble = 'rgba(245,158,11,0.13)';
+  } else if (rawSender === 'buyer' || rawSender.includes('buyer')) {
+    roleLabel = '🟦 Buyer (' + escapeHtml(buyerLabel) + ')'; roleColor = '#3b82f6'; bubble = 'rgba(59,130,246,0.10)';
+  } else if (rawSender === 'seller' || rawSender.includes('seller')) {
+    roleLabel = '🟩 Seller (' + escapeHtml(sellerLabel) + ')'; roleColor = '#22c55e'; bubble = 'rgba(34,197,94,0.10)';
+  } else {
+    const snd = String(msg.sender || '').toLowerCase();
+    const byr = String(buyerLabel || '').toLowerCase();
+    const slr = String(sellerLabel || '').toLowerCase();
+    if (byr && snd === byr) {
+      roleLabel = '🟦 Buyer (' + escapeHtml(buyerLabel) + ')'; roleColor = '#3b82f6'; bubble = 'rgba(59,130,246,0.10)';
+    } else if (slr && snd === slr) {
+      roleLabel = '🟩 Seller (' + escapeHtml(sellerLabel) + ')'; roleColor = '#22c55e'; bubble = 'rgba(34,197,94,0.10)';
+    } else {
+      roleLabel = escapeHtml(msg.sender || 'System'); roleColor = '#94a3b8'; bubble = 'rgba(148,163,184,0.08)';
+    }
+  }
+  // Image content
+  const imgMarkup = isImage && imageUrl
+    ? '<a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener" style="display:block;margin-top:6px;">'
+      + '<img src="' + escapeHtml(imageUrl) + '" alt="Payment screenshot" '
+      + 'style="max-width:180px;max-height:160px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);cursor:pointer;" />'
+      + '</a>'
+    : '';
+  const textMarkup = text ? '<p style="font-size:12px;color:#e2e8f0;margin:4px 0 0;white-space:pre-wrap;">' + text + '</p>' : '';
+  return '<div style="margin-bottom:7px;padding:7px 10px;border-radius:8px;background:' + bubble + ';border-left:3px solid ' + roleColor + ';">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+    + '<span style="font-size:11px;font-weight:600;color:' + roleColor + ';">' + roleLabel + '</span>'
+    + '<span style="font-size:10px;color:#64748b;">' + ts + '</span>'
+    + '</div>'
+    + imgMarkup + textMarkup
+    + '</div>';
+}
+
+const ADMIN_QUICK_REPLIES = [
+  { label: '📋 Investigating', text: 'We have received your appeal and are investigating. Please allow 24-48 hours.' },
+  { label: '📸 Upload Proof', text: 'Please upload your payment proof (screenshot) to help us resolve this faster.' },
+  { label: '✅ Resolved — Buyer', text: 'This dispute has been resolved in your favor. Escrow will be released to the buyer shortly.' },
+  { label: '✅ Resolved — Seller', text: 'This dispute has been resolved in your favor. Escrow has been released to the seller.' },
+  { label: '🔒 Escalated', text: 'A policy violation has been found. This order has been escalated to compliance.' },
+  { label: '⛔ No Payments', text: 'Please do not make any further payments until this dispute is fully resolved.' },
+  { label: '🚫 No Chargeback', text: 'Both parties: please avoid chargeback requests while this case is under review.' },
+  { label: '🔓 Case Closed', text: 'Case closed. No policy violation found. Please proceed as mutually agreed.' },
+];
+
+function adminQuickReply(orderId, idx) {
+  var item = ADMIN_QUICK_REPLIES[idx];
+  if (!item) return;
+  var input = document.getElementById('disputeReplyInput_' + orderId);
+  if (input) { input.value = item.text; input.focus(); }
+  // Do NOT auto-send — admin clicks Send manually
+}
+
+function renderP2PDisputeCard(order = {}) {
+  const appeal = order.appealDetails && typeof order.appealDetails === 'object' ? order.appealDetails : {};
+  const attachments = Array.isArray(appeal.attachments) ? appeal.attachments : [];
+  const allMessages = Array.isArray(order.chatMessages)
+    ? order.chatMessages
+    : Array.isArray(order.messages)
+      ? order.messages
+      : [];
+
+  const appealType = appeal.type || order.disputeReason || 'Appeal';
+  const appealReason = appeal.reason || order.disputeReason || 'No appeal details submitted.';
+  const submittedBy = appeal.submittedBy?.username || appeal.submittedBy?.userId || order.disputedBy || '-';
+  const submittedAt = appeal.submittedAt || order.disputedAt || order.updatedAt;
+  const buyerLabel = order.buyerUsername || order.buyerUserId || '-';
+  const sellerLabel = order.sellerUsername || order.sellerUserId || '-';
+  const orderId = escapeHtml(order.id || '');
+
+  const attachmentMarkup = attachments.length
+    ? '<div class="mt-2 grid grid-cols-3 gap-2">'
+        + attachments.map((item) =>
+            '<a href="' + escapeHtml(item.dataUrl) + '" target="_blank" rel="noopener" class="block overflow-hidden rounded-lg border border-slate-700 bg-slate-950">'
+            + '<img src="' + escapeHtml(item.dataUrl) + '" alt="Appeal attachment" style="height:72px;width:100%;object-fit:cover;" /></a>'
+          ).join('')
+        + '</div>'
+    : '<p class="mt-2 text-xs text-slate-500">No screenshots attached.</p>';
+
+  // ALL messages, scrollable
+  const messageMarkup = allMessages.length
+    ? allMessages.map((msg) => buildDisputeMsgBubble(msg, buyerLabel, sellerLabel)).join('')
+    : '<p style="font-size:12px;color:#64748b;padding:6px 0;">No chat messages yet.</p>';
+
+  return `
+    <article class="list-item" style="border-color:rgba(245,158,11,.35);background:rgba(15,23,42,.72);">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <p class="text-sm font-semibold">${escapeHtml(order.reference || order.id || 'P2P order')}</p>
+          <p class="text-xs text-slate-400">${escapeHtml(order.id || '-')} • ${escapeHtml(order.asset || 'USDT')} • ₹${formatNumber(order.amountInr || 0, 2)}</p>
+        </div>
+        ${statusBadge(order.status || 'DISPUTED')}
+      </div>
+
+      <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
+        <div><span class="text-slate-500">Buyer:</span> <span style="color:#3b82f6;font-weight:600;">${escapeHtml(buyerLabel)}</span></div>
+        <div><span class="text-slate-500">Seller:</span> <span style="color:#22c55e;font-weight:600;">${escapeHtml(sellerLabel)}</span></div>
+        <div><span class="text-slate-500">Asset Amt:</span> <span class="text-white">${formatNumber(order.assetAmount || order.escrowAmount || 0, 6)}</span></div>
+        <div><span class="text-slate-500">Price:</span> <span class="text-white">₹${formatNumber(order.price || 0, 2)}</span></div>
+        <div><span class="text-slate-500">Payment:</span> ${escapeHtml(order.paymentMethod || 'UPI')}</div>
+        <div><span class="text-slate-500">Raised:</span> ${escapeHtml(formatDate(submittedAt))}</div>
+      </div>
+
+      <div class="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
+        <p class="text-xs font-semibold text-amber-300">Appeal by ${escapeHtml(submittedBy)}</p>
+        <p class="mt-1 text-xs text-slate-300"><span class="text-slate-500">Type:</span> ${escapeHtml(appealType)}</p>
+        <p class="mt-1 text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(appealReason)}</p>
+        ${attachmentMarkup}
+      </div>
+
+      <div class="mt-3 rounded-lg border border-slate-700 bg-slate-950/60 p-3">
+        <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 8px;">Full Chat (${allMessages.length} messages)</p>
+        <div id="disputeChat_${orderId}" style="max-height:220px;overflow-y:auto;padding-right:2px;">${messageMarkup}</div>
+
+        <p style="font-size:10px;color:#64748b;margin:10px 0 4px;font-weight:700;letter-spacing:.5px;">QUICK REPLY</p>
+        <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin-bottom:10px;padding-bottom:2px;">
+          ${ADMIN_QUICK_REPLIES.map((q, i) =>
+            '<button onclick="adminQuickReply(\'' + orderId + '\',' + i + ')" '
+            + 'style="flex-shrink:0;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);'
+            + 'color:#fbbf24;font-size:11px;border-radius:16px;padding:4px 12px;cursor:pointer;white-space:nowrap;font-weight:500;">'
+            + escapeHtml(q.label) + '</button>'
+          ).join('')}
+        </div>
+
+        <div id="disputeStatus_${orderId}" style="font-size:12px;min-height:18px;margin-bottom:6px;"></div>
+        <div style="display:flex;gap:8px;align-items:flex-end;">
+          <textarea id="disputeReplyInput_${orderId}" placeholder="Or type a custom reply…" rows="2"
+            style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 10px;
+            color:#e2e8f0;font-size:12px;resize:none;outline:none;"></textarea>
+          <button id="disputeSendBtn_${orderId}" onclick="adminSendDisputeReply('${orderId}')"
+            style="background:#f59e0b;color:#000;font-size:12px;font-weight:700;border:none;
+            border-radius:8px;padding:9px 16px;cursor:pointer;white-space:nowrap;min-width:64px;">
+            Send ↑
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button onclick="adminReleaseEscrow('${orderId}',this)"
+          style="background:#22c55e;color:#000;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;">
+          ✅ Release Escrow
+        </button>
+        <button onclick="adminFreezeEscrow('${orderId}',this)"
+          style="background:#ef4444;color:#fff;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;">
+          🔒 Freeze Escrow
+        </button>
+      </div>
+    </article>
+  `;
+}
+
+async function adminSendDisputeReply(orderId) {
+  var input = document.getElementById('disputeReplyInput_' + orderId);
+  var btn   = document.getElementById('disputeSendBtn_' + orderId);
+  var statusEl = document.getElementById('disputeStatus_' + orderId);
+  var message = input ? input.value.trim() : '';
+  if (!message) {
+    if (statusEl) { statusEl.style.color='#f87171'; statusEl.textContent='⚠ Enter a message first.'; }
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  if (statusEl) { statusEl.style.color='#94a3b8'; statusEl.textContent='Sending…'; }
+  try {
+    var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/admin-reply', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: message })
+    });
+    var data = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(data.message || 'HTTP ' + res.status);
+
+    if (input) input.value = '';
+    if (statusEl) { statusEl.style.color='#4ade80'; statusEl.textContent='✓ Sent successfully'; setTimeout(function(){ if(statusEl) statusEl.textContent=''; }, 3000); }
+
+    // Refresh all messages inline
+    var chatWrap = document.getElementById('disputeChat_' + orderId);
+    if (chatWrap) {
+      var rawOrder = data.order || {};
+      var allMsgs = Array.isArray(rawOrder.messages) ? rawOrder.messages : [];
+      var buyerL = rawOrder.buyerUsername || rawOrder.buyerUserId || '-';
+      var sellerL = rawOrder.sellerUsername || rawOrder.sellerUserId || '-';
+      chatWrap.innerHTML = allMsgs.length
+        ? allMsgs.map(function(m){ return buildDisputeMsgBubble(m, buyerL, sellerL); }).join('')
+        : '<p style="font-size:12px;color:#64748b;">No messages.</p>';
+      chatWrap.scrollTop = chatWrap.scrollHeight;
+    }
+  } catch (err) {
+    if (statusEl) { statusEl.style.color='#f87171'; statusEl.textContent='✗ ' + (err.message || 'Failed to send'); }
+    console.error('[AdminReply]', err);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send ↑'; }
+  }
+}
+
+async function adminReleaseEscrow(orderId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Releasing…'; btn.style.background = '#16a34a'; }
+  try {
+    var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/admin-release', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    var data = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(data.message || 'HTTP ' + res.status);
+    showMessage('✅ Escrow released. Dispute resolved.', 'success');
+    // Remove card from DOM immediately
+    var card = btn ? btn.closest('article') : null;
+    if (card) {
+      card.style.transition = 'opacity 0.3s';
+      card.style.opacity = '0';
+      setTimeout(function(){ card.remove(); }, 300);
+    }
+    // Also reload full list in background
+    setTimeout(function(){ loadP2P().catch(function(){}); }, 500);
+  } catch (err) {
+    showMessage('Release failed: ' + (err.message || 'Unknown error'), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Release Escrow'; btn.style.background = '#22c55e'; }
+  }
+}
+
+async function adminFreezeEscrow(orderId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/freeze', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    var data = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(data.message || 'HTTP ' + res.status);
+    showMessage('🔒 Escrow frozen.', 'success');
+    await loadP2P();
+  } catch (err) {
+    showMessage('Freeze failed: ' + (err.message || 'Unknown error'), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '🔒 Freeze Escrow'; }
+  }
+}
+
 async function loadP2P() {
   const [adsPayload, disputesPayload, settingsPayload] = await Promise.all([
     apiRequest('/p2p/ads?limit=30'),
@@ -902,56 +1122,18 @@ async function loadP2P() {
   }
 
   const disputesList = document.getElementById('p2pDisputesList');
-  const countBadge = document.getElementById('p2pDisputeCount');
   const disputes = Array.isArray(disputesPayload.disputes) ? disputesPayload.disputes : [];
-
-  // Cache for instant detail panel (no extra API call)
-  _disputesCache = {};
-  disputes.forEach(o => { _disputesCache[o.id] = o; });
-
-  if (countBadge) countBadge.textContent = disputes.length;
-
-  disputesList.innerHTML = disputes
-    .map((order) => {
-      const proofHtml = order.paymentProof
-        ? `<div class="mt-2">
-            <p class="text-xs text-slate-400 mb-1">Payment Proof:</p>
-            <img src="${order.paymentProof}" alt="Payment proof" class="rounded-lg border border-slate-700 max-h-40 w-auto cursor-pointer object-contain"
-              onclick="this.style.maxHeight=this.style.maxHeight==='none'?'160px':'none'" title="Click to expand" />
-          </div>`
-        : '<p class="text-xs text-slate-500 mt-1">No payment proof uploaded.</p>';
-      return `
-      <article class="list-item border-l-4 border-l-amber-500">
-        <div class="flex items-start justify-between gap-2 flex-wrap">
-          <div>
-            <p class="text-sm font-bold text-white">${order.reference || order.id}</p>
-            <p class="text-xs text-slate-400 mt-0.5">${order.asset || 'USDT'} ${order.assetAmount || ''} &bull; ₹${formatNumber(order.fiatAmount || order.amountInr || 0, 2)}</p>
-          </div>
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">DISPUTED</span>
-        </div>
-        <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-          <p class="text-slate-400">Buyer: <span class="text-white">${order.buyerUsername || order.buyerUserId || '-'}</span></p>
-          <p class="text-slate-400">Seller: <span class="text-white">${order.sellerUsername || order.sellerUserId || '-'}</span></p>
-          <p class="text-slate-400">Raised by: <span class="text-amber-400 font-semibold">${order.disputedBy || '-'}</span></p>
-          <p class="text-slate-400">Time: <span class="text-white">${formatDate(order.disputedAt || order.updatedAt)}</span></p>
-        </div>
-        ${order.disputeReason ? `<p class="mt-2 text-xs bg-slate-800 rounded-lg px-3 py-2 text-slate-200"><span class="text-slate-400">Reason:</span> ${order.disputeReason}</p>` : ''}
-        ${proofHtml}
-        <div class="mt-3 flex flex-wrap gap-2">
-          <button class="btn-primary" data-p2p-action="release-order" data-order-id="${order.id}">&#10003; Release to Buyer</button>
-          <button class="btn-danger" data-p2p-action="cancel-order" data-order-id="${order.id}">&#10005; Seller Wins</button>
-          <button class="btn-secondary" data-p2p-action="freeze-order" data-order-id="${order.id}">&#10052; Freeze</button>
-        </div>
-      </article>
-    `;
-    })
-    .join('');
-
-  const disputeCountEl = document.getElementById('disputeCount');
-  if (disputeCountEl) disputeCountEl.textContent = disputes.length ? `${disputes.length} open` : '';
+  disputesList.innerHTML = disputes.map((order) => renderP2PDisputeCard(order)).join('');
   if (disputes.length === 0) {
-    disputesList.innerHTML = '<p class="text-sm text-slate-500 col-span-full py-4 text-center">&#10003; No active disputes.</p>';
+    disputesList.innerHTML = '<p class="text-sm text-slate-500">No active disputes.</p>';
   }
+  // Scroll each chat box to bottom after render
+  setTimeout(function() {
+    disputes.forEach(function(order) {
+      var el = document.getElementById('disputeChat_' + (order.id || ''));
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+  }, 50);
 
   const settings = settingsPayload.settings || {};
   const form = document.getElementById('p2pSettingsForm');
@@ -961,327 +1143,231 @@ async function loadP2P() {
   form.autoExpiryMinutes.value = settings.autoExpiryMinutes ?? 15;
 }
 
-// ─── Dispute Detail Modal ──────────────────────────────────────────────────────
-
-let _ddCurrentOrderId = null;
-let _disputesCache = {};  // orderId → order object
-
-function renderAppealDetails(order) {
-  const appeal = order?.appealDetails && typeof order.appealDetails === 'object' ? order.appealDetails : {};
-  const typeEl = document.getElementById('ddAppealType');
-  const reasonEl = document.getElementById('ddAppealReason');
-  const metaEl = document.getElementById('ddAppealMeta');
-  const countEl = document.getElementById('ddAppealAttachmentCount');
-  const attachmentsEl = document.getElementById('ddAppealAttachments');
-
-  if (typeEl) {
-    typeEl.textContent = appeal.type || 'No type selected';
-  }
-  if (reasonEl) {
-    reasonEl.textContent = appeal.reason || 'No appeal reason submitted.';
-  }
-  if (metaEl) {
-    const submittedBy = appeal.submittedBy?.username || appeal.submittedBy?.userId || 'Unknown user';
-    const submittedAt = appeal.submittedAt ? formatDate(appeal.submittedAt) : '-';
-    metaEl.textContent = `Submitted by ${submittedBy} • ${submittedAt}`;
-  }
-
-  const attachments = Array.isArray(appeal.attachments) ? appeal.attachments : [];
-  if (countEl) {
-    countEl.textContent = `${attachments.length} attachment(s)`;
-  }
-  if (attachmentsEl) {
-    if (attachments.length === 0) {
-      attachmentsEl.innerHTML = '<p class="text-[11px] text-slate-500">No appeal attachments uploaded.</p>';
-    } else {
-      attachmentsEl.innerHTML = attachments.map((item) => `
-        <a href="${escapeHtml(item.dataUrl || '')}" target="_blank" rel="noreferrer" class="group overflow-hidden rounded-xl border border-slate-700 bg-slate-950/80 hover:border-slate-500">
-          <div class="flex h-28 w-full items-center justify-center bg-slate-950/90">
-            <img src="${escapeHtml(item.dataUrl || '')}" alt="${escapeHtml(item.name || 'Appeal attachment')}" class="h-full w-full object-contain transition duration-200 group-hover:scale-[1.02]" />
-          </div>
-          <div class="border-t border-slate-800 px-2 py-2">
-            <p class="truncate text-[11px] font-medium text-slate-200">${escapeHtml(item.name || 'Attachment')}</p>
-            <p class="mt-0.5 text-[10px] text-slate-500">Click to open full image</p>
-          </div>
-        </a>
-      `).join('');
-    }
-  }
-}
-
-function renderDisputeDetail(order) {
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '-'; };
-  set('ddOrderRef', order.reference || order.id);
-  set('ddBuyer', order.buyerEmail || order.buyerUsername || order.buyerUserId || order.buyerId || '-');
-  set('ddSeller', order.sellerEmail || order.sellerUsername || order.sellerUserId || order.sellerId || '-');
-  set('ddPayment', order.paymentMethod || order.paymentType || order.payment || '-');
-  set('ddAmount', `${formatNumber(order.cryptoAmount || 0, 4)} USDT / ₹${formatNumber(order.amountInr || order.fiatAmount || 0, 2)}`);
-  set('ddStatus', order.status || '-');
-  set('ddTime', order.disputedAt ? formatDate(order.disputedAt) : formatDate(order.updatedAt));
-  renderAppealDetails(order);
-
-  // Render chat history
-  const chatEl = document.getElementById('ddChatHistory');
-  const msgs = Array.isArray(order.messages) ? order.messages : (Array.isArray(order.chatMessages) ? order.chatMessages : []);
-  if (chatEl) {
-    if (msgs.length === 0) {
-      chatEl.innerHTML = '<p class="text-slate-500 text-xs text-center py-4">No chat messages.</p>';
-    } else {
-      chatEl.innerHTML = msgs.map(m => {
-        const who = m.isSystem
-          ? '🤖 System'
-          : m.senderRole === 'seller'
-            ? '🏪 Seller'
-            : (m.senderRole === 'support' || m.senderRole === 'admin')
-              ? '🛟 Support'
-              : m.senderRole === 'buyer'
-                ? '👤 Buyer'
-                : '👤 User';
-        const ts = m.timestamp ? formatDate(m.timestamp) : '';
-        const textColor = m.isSystem ? 'text-slate-400 italic' : 'text-slate-200';
-        return `<div class="py-1.5 border-b border-slate-800/40 last:border-0">
-          <span class="text-xs text-slate-500">${who} · ${ts}</span>
-          <p class="text-xs ${textColor} mt-0.5">${m.text || m.message || ''}</p>
-        </div>`;
-      }).join('');
-      setTimeout(() => { chatEl.scrollTop = chatEl.scrollHeight; }, 50);
-    }
-  }
-
-  // Clear note
-  const note = document.getElementById('ddAdminNote');
-  if (note) note.value = '';
-
-  // Wire action buttons
-  document.getElementById('ddReleaseBtn').onclick = () => _resolveDispute('release');
-  document.getElementById('ddCancelBtn').onclick = () => _resolveDispute('cancel');
-  document.getElementById('ddFreezeBtn').onclick = () => _resolveDispute('freeze');
-  document.getElementById('ddSendSupportBtn').onclick = () => _sendSupportMessage();
-}
-
-async function openDisputeDetail(orderId) {
-  _ddCurrentOrderId = orderId;
-  const modal = document.getElementById('p2pDisputeDetail');
-  modal.style.display = 'block';
-
-  let order = _disputesCache[orderId];
-  if (order) {
-    renderDisputeDetail(order);
-  }
-
-  try {
-    const payload = await apiRequest(`/p2p/orders/${encodeURIComponent(orderId)}`);
-    order = payload?.order || payload;
-    if (!order || !order.id) {
-      throw new Error('Order data not found');
-    }
-    _disputesCache[orderId] = order;
-    renderDisputeDetail(order);
-  } catch (error) {
-    if (!order) {
-      showMessage(error.message || 'Order data not found, try reloading.', 'error');
-    }
-  }
-}
-
-async function _resolveDispute(action) {
-  if (!_ddCurrentOrderId) return;
-  const note = document.getElementById('ddAdminNote')?.value?.trim() || '';
-  const labelMap = { release: 'Release to Buyer', cancel: 'Refund to Seller', freeze: 'Keep Frozen' };
-  if (!confirm(`${labelMap[action]}? This action will be logged.`)) return;
-
-  try {
-    await apiRequest(`/p2p/orders/${encodeURIComponent(_ddCurrentOrderId)}/${action}`, {
-      method: 'POST',
-      body: JSON.stringify({ note })
-    });
-    const msgMap = { release: 'Crypto released to buyer.', cancel: 'Order cancelled, crypto refunded to seller.', freeze: 'Escrow frozen.' };
-    showMessage(msgMap[action], 'success');
-    document.getElementById('p2pDisputeDetail').style.display = 'none';
-    _ddCurrentOrderId = null;
-    await loadP2P();
-  } catch (err) {
-    showMessage(err.message || 'Action failed.', 'error');
-  }
-}
-
-async function _sendSupportMessage() {
-  if (!_ddCurrentOrderId) return;
-  const noteField = document.getElementById('ddAdminNote');
-  const text = String(noteField?.value || '').trim();
-  if (!text) {
-    showMessage('Type a support message first.', 'error');
-    return;
-  }
-
-  try {
-    const payload = await apiRequest(`/p2p/orders/${encodeURIComponent(_ddCurrentOrderId)}/messages`, {
-      method: 'POST',
-      body: JSON.stringify({ text })
-    });
-    const order = payload?.order || payload;
-    if (order?.id) {
-      _disputesCache[order.id] = order;
-      renderDisputeDetail(order);
-    }
-    showMessage('Support message sent to user chat.', 'success');
-  } catch (error) {
-    showMessage(error.message || 'Unable to send support message.', 'error');
-  }
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Support Tickets — Full Chat Interface
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function loadSupport() {
   const statusFilter = document.getElementById('supportStatusFilter')?.value || '';
-  const query = new URLSearchParams({ limit: '30' });
-  if (statusFilter) {
-    query.set('status', statusFilter);
+  const query = new URLSearchParams({ limit: '50' });
+  if (statusFilter) query.set('status', statusFilter);
+
+  let payload;
+  try {
+    payload = await apiRequest(`/support/tickets?${query.toString()}`);
+  } catch (e) {
+    document.getElementById('supportTicketsList').innerHTML =
+      `<div style="padding:24px;color:var(--red);font-size:13px;text-align:center;">⚠️ Failed to load: ${e.message}</div>`;
+    return;
   }
-  const payload = await apiRequest(`/support/tickets?${query.toString()}`);
+
   const tickets = Array.isArray(payload.tickets) ? payload.tickets : [];
   const list = document.getElementById('supportTicketsList');
 
-  list.innerHTML = tickets
-    .map((ticket) => {
-      const messages = Array.isArray(ticket.messages) ? ticket.messages : [];
-      const lastMsg = messages[messages.length - 1];
-      const preview = lastMsg ? String(lastMsg.text || '').slice(0, 60) : 'No messages yet';
-      const isActive = ticket.id === state.support.activeTicketId;
-      return `
-      <div class="rounded-xl border ${isActive ? 'border-brand bg-slate-800/80' : 'border-slate-800/60 bg-slate-900/40'} p-3 cursor-pointer hover:border-slate-700 transition-colors"
-           data-support-ticket-id="${ticket.id}" onclick="openTicket('${ticket.id}')">
-        <div class="flex items-start justify-between gap-2">
-          <p class="text-sm font-semibold text-slate-100 truncate flex-1">${ticket.subject || 'No Subject'}</p>
-          ${statusBadge(ticket.status || 'OPEN')}
-        </div>
-        <p class="mt-0.5 text-xs text-slate-400 truncate">${ticket.email || ticket.userId || 'Unknown user'} • ${ticket.category || 'General'}</p>
-        <p class="mt-1 text-xs text-slate-500 line-clamp-2">${preview}</p>
-        <p class="mt-1 text-xs text-slate-600">${formatDate(ticket.updatedAt)}</p>
-      </div>
-    `;
-    })
-    .join('');
+  // Update sidebar badge
+  const openCount = tickets.filter(t => (t.status || '').toUpperCase() !== 'CLOSED').length;
+  const badge = document.getElementById('supportBadge');
+  if (badge) { badge.style.display = openCount > 0 ? '' : 'none'; badge.textContent = openCount; }
+  const countEl = document.getElementById('supportOpenCount');
+  if (countEl) countEl.textContent = openCount > 0 ? `${openCount} open` : '';
 
   if (tickets.length === 0) {
-    list.innerHTML = '<p class="p-4 text-sm text-slate-500 text-center">No support tickets found.</p>';
+    list.innerHTML = `<div style="padding:48px 16px;text-align:center;color:var(--text-2);">
+      <div style="font-size:40px;margin-bottom:10px;">🎉</div>
+      <p style="font-size:13px;font-weight:600;margin:0 0 4px;">All clear!</p>
+      <p style="font-size:11px;opacity:.6;margin:0;">No support tickets found</p>
+    </div>`;
+    return;
   }
+
+  list.innerHTML = tickets.map((ticket) => {
+    const messages = Array.isArray(ticket.messages) ? ticket.messages : [];
+    const lastMsg = messages[messages.length - 1];
+    const isActive = ticket.id === state.support.activeTicketId;
+    const statusStr = (ticket.status || '').toUpperCase();
+    const unread = statusStr === 'OPEN';
+    const priorityColor = ticket.priority === 'HIGH' ? 'var(--red)' : ticket.priority === 'MEDIUM' ? 'var(--accent)' : 'var(--text-2)';
+
+    // User label: use email if available, otherwise make userId readable
+    const userId = ticket.userId || '';
+    const userLabel = ticket.email || ticket.userEmail ||
+      (userId ? userId.replace('usr_', '').slice(0,16) : 'Unknown User');
+
+    // Last message preview
+    const lastSenderIsAdmin = lastMsg && lastMsg.sender !== 'user';
+    const preview = lastMsg
+      ? `${lastSenderIsAdmin ? '🛡 You: ' : '👤 '}${String(lastMsg.text || '').slice(0, 48)}${lastMsg.text?.length > 48 ? '…' : ''}`
+      : 'No messages yet…';
+
+    // User avatar (first letter of userId or email)
+    const avatarChar = (userLabel[0] || '?').toUpperCase();
+    const avatarColors = ['#00e5ff','#02c076','#4263eb','#f6465d','#a855f7'];
+    const avatarColor = avatarColors[avatarChar.charCodeAt(0) % avatarColors.length];
+
+    return `<div class="support-ticket-item${isActive ? ' active' : ''}"
+         data-support-ticket-id="${ticket.id}"
+         style="cursor:pointer;display:flex;gap:10px;align-items:flex-start;">
+      <!-- Avatar -->
+      <div style="width:34px;height:34px;border-radius:50%;background:${avatarColor}20;border:2px solid ${avatarColor}40;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:${avatarColor};flex-shrink:0;margin-top:1px;">${avatarChar}</div>
+      <!-- Content -->
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:2px;">
+          <span style="font-size:13px;font-weight:700;color:var(--text-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${userLabel}</span>
+          <span style="font-size:10px;color:var(--text-2);flex-shrink:0;">${formatDate(ticket.updatedAt)}</span>
+        </div>
+        <p style="font-size:11px;color:var(--text-2);margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ticket.subject || 'No Subject'}</p>
+        <p style="font-size:11px;color:var(--text-2);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.65;">${preview}</p>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+          ${statusBadge(ticket.status || 'OPEN')}
+          ${ticket.priority ? `<span style="font-size:10px;color:${priorityColor};font-weight:600;">${ticket.priority}</span>` : ''}
+        </div>
+      </div>
+      ${unread ? '<span style="position:absolute;top:11px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);"></span>' : ''}
+    </div>`;
+  }).join('');
 }
 
 async function openTicket(ticketId) {
   state.support.activeTicketId = ticketId;
 
-  // Highlight active ticket
+  // Highlight active ticket in list
   document.querySelectorAll('[data-support-ticket-id]').forEach((el) => {
-    const isActive = el.getAttribute('data-support-ticket-id') === ticketId;
-    el.classList.toggle('border-brand', isActive);
-    el.classList.toggle('bg-slate-800/80', isActive);
-    el.classList.toggle('border-slate-800/60', !isActive);
-    el.classList.toggle('bg-slate-900/40', !isActive);
+    el.classList.toggle('active', el.getAttribute('data-support-ticket-id') === ticketId);
   });
 
-  document.getElementById('supportChatEmpty').classList.add('hidden');
-  document.getElementById('supportChatActive').classList.remove('hidden');
-  document.getElementById('supportChatActive').classList.add('flex');
+  // Show chat, hide empty state
+  const emptyEl = document.getElementById('supportChatEmpty');
+  const activeEl = document.getElementById('supportChatActive');
+  if (emptyEl) { emptyEl.style.display = 'none'; emptyEl.classList.add('hidden'); }
+  if (activeEl) {
+    activeEl.classList.remove('hidden');
+    activeEl.style.removeProperty('display'); // let CSS class handle it
+    activeEl.style.display = 'flex';          // force show as flex
+  }
+
+  // Show loading in messages area
+  const chatMessages = document.getElementById('supportChatMessages');
+  if (chatMessages) chatMessages.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-2);">
+    <div class="spin" style="margin:auto;"></div><p style="margin-top:12px;font-size:13px;">Loading conversation…</p></div>`;
 
   await renderTicketChat(ticketId);
 
-  // Clear old polling and set new one
-  if (state.support.pollInterval) {
-    clearInterval(state.support.pollInterval);
-  }
+  // Poll every 10 seconds
+  if (state.support.pollInterval) clearInterval(state.support.pollInterval);
   state.support.pollInterval = setInterval(async () => {
     if (state.support.activeTicketId === ticketId && state.currentView === 'support') {
-      await renderTicketChat(ticketId);
+      await renderTicketChat(ticketId, true);
     }
-  }, 30000);
+  }, 10000);
 }
 
-async function renderTicketChat(ticketId) {
+async function renderTicketChat(ticketId, silent = false) {
   try {
     const ticket = await apiRequest(`/support/tickets/${encodeURIComponent(ticketId)}`);
 
-    document.getElementById('chatTicketSubject').textContent = ticket.subject || 'No Subject';
-    document.getElementById('chatTicketMeta').textContent =
-      `ID: ${ticket.id} • ${ticket.email || ticket.userId || 'Unknown'} • ${ticket.category || 'General'}`;
-    document.getElementById('chatTicketStatusBadge').innerHTML = statusBadge(ticket.status || 'OPEN');
+    // ─── Header ───
+    const nameEl = document.getElementById('chatUserName');
+    const subjectEl = document.getElementById('chatTicketSubject');
+    const metaEl = document.getElementById('chatTicketMeta');
+    const badgeEl = document.getElementById('chatTicketStatusBadge');
 
+    if (nameEl) {
+      // Try to get user email from ticket or fallback to userId
+      const userLabel = ticket.email || ticket.userEmail || ticket.userId || 'Unknown User';
+      nameEl.textContent = userLabel;
+      nameEl.title = userLabel;
+    }
+    if (subjectEl) subjectEl.textContent = ticket.subject || 'No Subject';
+    if (metaEl) metaEl.textContent = `ID: ${ticket.id} • Priority: ${ticket.priority || 'NORMAL'}`;
+    if (badgeEl) badgeEl.innerHTML = statusBadge(ticket.status || 'OPEN');
+
+    // ─── Messages ───
     const messages = Array.isArray(ticket.messages) ? ticket.messages : [];
     const chatMessages = document.getElementById('supportChatMessages');
+    const wasAtBottom = !chatMessages || (chatMessages.scrollHeight - chatMessages.clientHeight - chatMessages.scrollTop < 60);
 
-    chatMessages.innerHTML = messages
-      .map((msg) => {
-        const isAdmin = msg.sender !== 'user';
-        const bgClass = isAdmin ? 'bg-brand/10 border-brand/20' : 'bg-slate-800 border-slate-700';
-        const alignClass = isAdmin ? 'ml-auto' : 'mr-auto';
-        const senderLabel = isAdmin ? (msg.sender || 'Admin') : 'User';
-        return `
-        <div class="max-w-[80%] ${alignClass}">
-          <div class="rounded-2xl border ${bgClass} px-4 py-3">
-            <p class="text-xs font-semibold ${isAdmin ? 'text-brand' : 'text-slate-300'} mb-1">${senderLabel}</p>
-            <p class="text-sm text-slate-200 whitespace-pre-wrap">${String(msg.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
-          </div>
-          <p class="text-xs text-slate-600 mt-1 ${isAdmin ? 'text-right' : 'text-left'}">${formatDate(msg.createdAt)}</p>
-        </div>
-      `;
-      })
-      .join('');
+    if (chatMessages) {
+      chatMessages.innerHTML = messages.length === 0
+        ? `<div style="text-align:center;padding:48px 20px;color:var(--text-2);">
+            <div style="font-size:36px;margin-bottom:10px;">💬</div>
+            <p style="font-size:13px;font-weight:600;margin:0 0 4px;">No messages yet</p>
+            <p style="font-size:12px;opacity:.6;margin:0;">Start the conversation with the user</p>
+          </div>`
+        : messages.map((msg) => {
+            const isAdmin = msg.sender !== 'user';
+            const senderName = isAdmin
+              ? (msg.senderRole ? `${msg.sender || 'Admin'} (${msg.senderRole})` : (msg.sender || 'Admin'))
+              : '👤 User';
+            const text = String(msg.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return `<div style="display:flex;flex-direction:column;max-width:80%;
+                    ${isAdmin ? 'align-self:flex-end;align-items:flex-end;' : 'align-self:flex-start;align-items:flex-start;'}">
+              <div style="background:${isAdmin ? 'rgba(0,229,255,0.10)' : 'var(--bg-card2)'};
+                           border:1px solid ${isAdmin ? 'rgba(0,229,255,0.25)' : 'var(--border)'};
+                           border-radius:${isAdmin ? '14px 14px 2px 14px' : '14px 14px 14px 2px'};
+                           padding:9px 14px;">
+                <p style="font-size:11px;font-weight:700;margin:0 0 4px;color:${isAdmin ? 'var(--accent)' : 'var(--green)'};">${senderName}</p>
+                <p style="font-size:13px;color:var(--text-1);margin:0;white-space:pre-wrap;line-height:1.55;">${text}</p>
+              </div>
+              <span style="font-size:10px;color:var(--text-2);margin-top:4px;opacity:.55;">${formatDate(msg.createdAt)}</span>
+            </div>`;
+          }).join('');
 
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+      if (wasAtBottom || !silent) chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-    // Update action buttons
+    // ─── Button states ───
     const isClosed = String(ticket.status || '').toUpperCase() === 'CLOSED';
-    const closeBtn = document.getElementById('chatCloseTicketBtn');
+    const closeBtn  = document.getElementById('chatCloseTicketBtn');
     const resolveBtn = document.getElementById('chatResolveBtn');
-    const sendBtn = document.getElementById('sendReplyBtn');
-    const input = document.getElementById('supportChatInput');
+    const sendBtn   = document.getElementById('sendReplyBtn');
+    const input     = document.getElementById('supportChatInput');
+    const qbar      = document.getElementById('quickRepliesBar');
 
-    if (closeBtn) {
-      closeBtn.disabled = isClosed;
-      closeBtn.classList.toggle('opacity-50', isClosed);
-    }
-    if (resolveBtn) {
-      resolveBtn.disabled = isClosed;
-      resolveBtn.classList.toggle('opacity-50', isClosed);
-    }
-    if (sendBtn) {
-      sendBtn.disabled = isClosed;
-    }
+    if (closeBtn)   closeBtn.disabled   = isClosed;
+    if (resolveBtn) resolveBtn.disabled = isClosed;
+    if (sendBtn)    sendBtn.disabled    = isClosed;
+    if (qbar)       qbar.style.opacity  = isClosed ? '0.4' : '1';
     if (input) {
       input.disabled = isClosed;
-      input.placeholder = isClosed ? 'Ticket is closed' : 'Type a reply...';
+      input.placeholder = isClosed ? '🔒 Ticket is closed — cannot reply' : 'Type your reply… (Ctrl+Enter to send)';
     }
+
+    if (silent) loadSupport();
   } catch (error) {
-    showMessage(error.message || 'Failed to load ticket.', 'error');
+    if (!silent) {
+      const chatMessages = document.getElementById('supportChatMessages');
+      if (chatMessages) chatMessages.innerHTML = `<div style="color:var(--red);text-align:center;padding:40px;font-size:13px;">
+        ❌ ${error.message || 'Failed to load conversation'}</div>`;
+      showMessage(error.message || 'Failed to load ticket.', 'error');
+    }
   }
+}
+
+function useQuickReply(text) {
+  const input = document.getElementById('supportChatInput');
+  if (!input || input.disabled) return;
+  input.value = text;
+  input.focus();
+  input.setSelectionRange(text.length, text.length);
 }
 
 async function sendAdminReply() {
   const ticketId = state.support.activeTicketId;
-  if (!ticketId) {
-    return;
-  }
+  if (!ticketId) return;
 
   const input = document.getElementById('supportChatInput');
   const message = String(input?.value || '').trim();
-  if (!message) {
-    return;
-  }
+  if (!message) { input?.focus(); return; }
 
   const sendBtn = document.getElementById('sendReplyBtn');
-  setActionButtonLoading(sendBtn, true, 'Sending...');
+  setActionButtonLoading(sendBtn, true, 'Sending…');
 
   try {
     await apiRequest(`/support/tickets/${encodeURIComponent(ticketId)}/reply`, {
       method: 'POST',
       body: JSON.stringify({ message })
     });
-    if (input) {
-      input.value = '';
-    }
+    if (input) input.value = '';
     await renderTicketChat(ticketId);
     await loadSupport();
   } catch (error) {
@@ -1299,40 +1385,76 @@ async function loadRevenue() {
   const payload = await apiRequest('/revenue/summary');
 
   renderCards('revenueCards', [
-    { label: 'Total Revenue (Today)', value: `₹${formatNumber(payload.totalRevenue?.today || 0, 2)}` },
-    { label: 'Total Revenue (Week)', value: `₹${formatNumber(payload.totalRevenue?.week || 0, 2)}` },
-    { label: 'Total Revenue (Month)', value: `₹${formatNumber(payload.totalRevenue?.month || 0, 2)}` },
-    { label: 'Spot Fee Earnings', value: `₹${formatNumber(payload.spotFeeEarnings || 0, 2)}` },
-    { label: 'P2P Earnings', value: `₹${formatNumber(payload.p2pEarnings || 0, 2)}` },
-    { label: 'Withdrawal Fee Earnings', value: `₹${formatNumber(payload.withdrawalFeeEarnings || 0, 2)}` }
+    { icon: '📆', label: 'Total Revenue (Today)', value: `₹${formatNumber(payload.totalRevenue?.today || 0, 2)}` },
+    { icon: '📊', label: 'Total Revenue (Week)', value: `₹${formatNumber(payload.totalRevenue?.week || 0, 2)}` },
+    { icon: '💹', label: 'Total Revenue (Month)', value: `₹${formatNumber(payload.totalRevenue?.month || 0, 2)}` },
+    { icon: '🔁', label: 'Spot Fee Earnings', value: `₹${formatNumber(payload.spotFeeEarnings || 0, 2)}` },
+    { icon: '🤝', label: 'P2P Earnings', value: `₹${formatNumber(payload.p2pEarnings || 0, 2)}` },
+    { icon: '⚡', label: 'Withdrawal Fee Earnings', value: `₹${formatNumber(payload.withdrawalFeeEarnings || 0, 2)}` }
   ]);
 
-  // Revenue Breakdown Donut
-  const spotFee   = Number(payload.spotFeeEarnings || 0);
-  const p2pEarn   = Number(payload.p2pEarnings || 0);
-  const wdFee     = Number(payload.withdrawalFeeEarnings || 0);
-  const totalRev  = spotFee + p2pEarn + wdFee || 1;
+  const trend = Array.isArray(payload.trend) ? payload.trend : [];
+  drawChart(
+    'revenue',
+    'revenueChart',
+    trend.map((point) => point.date),
+    trend.map((point) => Number(point.revenue || 0)),
+    '#00e5ff'
+  );
 
-  drawDonut('revenueDonutChart', [spotFee, p2pEarn, wdFee],
-    ['Spot Fees', 'P2P', 'Withdrawal Fees'],
-    ['#00E5C4','#38bdf8','#f59e0b']);
-  document.getElementById('revDonutCenter').textContent = '₹' + formatNumber(spotFee+p2pEarn+wdFee, 2);
-  document.getElementById('revDonutLegend').innerHTML =
-    [['#00E5C4','Spot Fees',spotFee],['#38bdf8','P2P',p2pEarn],['#f59e0b','WD Fees',wdFee]]
-    .map(([c,l,v])=>`<span class="flex items-center gap-1"><span style="background:${c};width:10px;height:10px;border-radius:50%;display:inline-block"></span>${l}: ₹${formatNumber(v,2)}</span>`).join('');
+  // ── Revenue Donut Chart ──
+  const rp2p   = Number(payload.p2pEarnings || 0);
+  const rspot  = Number(payload.spotFeeEarnings || 0);
+  const rwdfee = Number(payload.withdrawalFeeEarnings || 0);
+  const rother = Math.max(0, Number(payload.totalRevenue?.month || 0) - rp2p - rspot - rwdfee);
+  const rdData   = [rp2p, rspot, rwdfee, rother];
+  const rdLabels = ['P2P', 'Spot Fees', 'Withdrawal', 'Other'];
+  const rdColors = ['#00e5ff', '#0099a8', '#38bdf8', '#0ea5e9'];
+  const rdTotal  = rp2p + rspot + rwdfee + rother;
 
-  // Fee Sources Ring (today / week / month)
-  const today = Number(payload.totalRevenue?.today || 0);
-  const week  = Number(payload.totalRevenue?.week  || 0);
-  const month = Number(payload.totalRevenue?.month || 0);
+  const rdTotalEl = document.getElementById('revDonutTotal');
+  if (rdTotalEl) rdTotalEl.textContent = '₹' + formatNumber(rdTotal, 2);
 
-  drawDonut('revFeeRingChart', [today, week, month],
-    ['Today','Week','Month'],
-    ['#00E5C4','#818cf8','#f472b6']);
-  document.getElementById('revRingCenter').textContent = '₹' + formatNumber(month, 2);
-  document.getElementById('revRingLegend').innerHTML =
-    [['#00E5C4','Today',today],['#818cf8','Week',week],['#f472b6','Month',month]]
-    .map(([c,l,v])=>`<span class="flex items-center gap-1"><span style="background:${c};width:10px;height:10px;border-radius:50%;display:inline-block"></span>${l}: ₹${formatNumber(v,2)}</span>`).join('');
+  const rdCanvas = document.getElementById('revDonutChart');
+  if (rdCanvas) {
+    if (state.charts['revDonut']) state.charts['revDonut'].destroy();
+    state.charts['revDonut'] = new Chart(rdCanvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: rdLabels,
+        datasets: [{
+          data: rdTotal > 0 ? rdData : [1,1,1,1],
+          backgroundColor: rdColors,
+          borderWidth: 0,
+          borderRadius: 8,
+          spacing: 4,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: { legend: { display: false }, tooltip: {
+          backgroundColor: '#141821',
+          borderColor: 'rgba(0,229,255,0.2)',
+          borderWidth: 1,
+          callbacks: { label: function(ctx) { return ' ₹' + formatNumber(ctx.parsed, 2); } }
+        }}
+      }
+    });
+  }
+
+  const rdLegend = document.getElementById('revDonutLegend');
+  if (rdLegend) {
+    rdLegend.innerHTML = rdLabels.map(function(lbl, i) {
+      var pct = rdTotal > 0 ? ((rdData[i] / rdTotal) * 100).toFixed(1) : '0.0';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;">'
+        + '<span style="display:flex;align-items:center;gap:6px;color:var(--text-2);">'
+        + '<span style="width:9px;height:9px;border-radius:3px;background:' + rdColors[i] + ';flex-shrink:0;display:inline-block;"></span>' + lbl + '</span>'
+        + '<span style="color:#fff;font-weight:700;">₹' + formatNumber(rdData[i], 2) + ' <span style="color:' + rdColors[i] + ';font-size:10px;">(' + pct + '%)</span></span></div>';
+    }).join('');
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1542,11 +1664,14 @@ async function loadBlockchain() {
       cards.innerHTML = '<p class="text-sm text-slate-500 col-span-3">No scanner status data.</p>';
     } else {
       cards.innerHTML = scanners.map((s) => `
-        <article class="card-item">
-          <p class="text-xs uppercase tracking-wide text-slate-400">${s.network || 'Scanner'}</p>
-          <p class="mt-2 stat-value text-base">${statusBadge(s.status || s.connected ? 'CONNECTED' : 'ERROR')}</p>
-          <p class="mt-1 text-xs text-slate-500">Block: ${s.latestBlock || s.blockHeight || '-'}</p>
-        </article>
+        <div class="stat-card">
+          <div class="stat-icon">⛓️</div>
+          <div class="stat-info">
+            <div class="stat-label">${s.network || 'Scanner'}</div>
+            <div class="stat-value" style="font-size:13px;">${statusBadge(s.status || s.connected ? 'CONNECTED' : 'ERROR')}</div>
+            <div class="stat-meta">Block: ${s.latestBlock || s.blockHeight || '-'}</div>
+          </div>
+        </div>
       `).join('');
     }
   }
@@ -1660,10 +1785,10 @@ async function loadMonitoring() {
   ]);
 
   renderCards('monitoringCards', [
-    { label: 'Active Users', value: Number(overview.activeUsers || 0) },
-    { label: 'Active Admins', value: Number(overview.activeAdmins || 0) },
-    { label: 'Failed Logins (10m)', value: Number(overview.failedLoginAttemptsLast10Min || 0) },
-    { label: 'API Requests (10m)', value: Number(overview.apiRequestsLast10Min || 0), meta: `DB: ${overview.dbConnected ? 'Connected' : 'Disconnected'}` }
+    { icon: '👥', label: 'Active Users', value: Number(overview.activeUsers || 0) },
+    { icon: '🛡️', label: 'Active Admins', value: Number(overview.activeAdmins || 0) },
+    { icon: '⚠️', label: 'Failed Logins (10m)', value: Number(overview.failedLoginAttemptsLast10Min || 0) },
+    { icon: '🌐', label: 'API Requests (10m)', value: Number(overview.apiRequestsLast10Min || 0), meta: `DB: ${overview.dbConnected ? 'Connected' : 'Disconnected'}` }
   ]);
 
   const body = document.getElementById('monitoringApiLogsBody');
@@ -1762,22 +1887,47 @@ async function createAdmin(email, username, password, role) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Merchant Applications
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function loadMerchants() {
+  // Delegate to the inline loadMerchantApplications function defined in admin-dashboard.html
+  if (typeof loadMerchantApplications === 'function') {
+    try { await loadMerchantApplications(); } catch(e) { /* ignore */ }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Event Handlers
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function handleUsersAction(event) {
+  // Row click — open profile drawer
+  const row = event.target.closest('tr.user-row');
   const button = event.target.closest('[data-user-action]');
+
+  // If clicked on a button, handle that; otherwise open profile from row click
   if (!button) {
+    if (row) {
+      const profileId = row.getAttribute('data-profile-id');
+      if (profileId) openUserProfile(profileId);
+    }
     return;
   }
 
   const userId = button.getAttribute('data-user-id');
   const action = button.getAttribute('data-user-action');
 
+  // Profile button
+  if (action === 'profile') {
+    openUserProfile(userId);
+    return;
+  }
+
   try {
     if (action === 'freeze' || action === 'unfreeze' || action === 'ban') {
       const status = action === 'freeze' ? 'FROZEN' : action === 'ban' ? 'BANNED' : 'ACTIVE';
-      const reason = await askRemarks(`Reason for ${status}`, 'Optional') || '';
+      const reason = window.prompt(`Reason for ${status} (optional):`, '') || '';
       await apiRequest(`/users/${encodeURIComponent(userId)}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status, reason })
@@ -1788,8 +1938,8 @@ async function handleUsersAction(event) {
     }
 
     if (action === 'adjust') {
-      const amount = await askRemarks('Adjust Balance', 'Enter amount (e.g. 100 or -50)', '0');
-      const reason = await askRemarks('Reason for adjustment', 'e.g. manual correction', 'manual correction') || 'manual correction';
+      const amount = window.prompt('Enter adjustment amount (e.g. 100 or -50):', '0');
+      const reason = window.prompt('Reason for adjustment:', 'manual correction');
       if (!amount || !reason) {
         return;
       }
@@ -1803,7 +1953,7 @@ async function handleUsersAction(event) {
     }
 
     if (action === 'reset') {
-      const newPassword = await askRemarks('Reset Password', 'Enter new password (min 8 chars)');
+      const newPassword = window.prompt('Enter new password (min 8 chars):');
       if (!newPassword) {
         return;
       }
@@ -1817,11 +1967,11 @@ async function handleUsersAction(event) {
 
     if (action === 'kyc') {
       const payload = await apiRequest(`/users/${encodeURIComponent(userId)}/kyc`);
-      const decision = await askRemarks('KYC Decision', 'Enter: APPROVED / REJECTED / PENDING', payload.kycStatus || 'PENDING');
+      const decision = window.prompt(`Current KYC: ${payload.kycStatus}. Enter decision (APPROVED/REJECTED/PENDING):`, payload.kycStatus || 'PENDING');
       if (!decision) {
         return;
       }
-      const remarks = await askRemarks('Remarks', 'Optional', payload.remarks || '') || '';
+      const remarks = window.prompt('Remarks:', payload.remarks || '') || '';
       await reviewKyc(userId, decision, remarks);
       showMessage('KYC review saved.', 'success');
       await loadUsers();
@@ -1851,7 +2001,7 @@ async function handleKycAction(event) {
     }
 
     if (action === 'approve') {
-      const remarks = await askRemarks('Approval Remarks', 'Optional') || '';
+      const remarks = window.prompt('Approval remarks (optional):', '') || '';
       await reviewKyc(userId, 'APPROVED', remarks);
       showMessage('KYC approved.', 'success');
       await loadKyc();
@@ -1859,7 +2009,7 @@ async function handleKycAction(event) {
     }
 
     if (action === 'reject') {
-      const reason = await askRemarks('Rejection Reason', 'Required for rejection') || '';
+      const reason = window.prompt('Rejection reason:', '') || '';
       if (!reason) {
         return;
       }
@@ -1883,23 +2033,23 @@ async function handleKycDocAction(event) {
 
   try {
     if (action === 'approve') {
-      const remarks = await askRemarks('Approval Remarks', 'Optional') || '';
+      const remarks = window.prompt('Approval remarks (optional):', '') || '';
       await reviewKyc(userId, 'APPROVED', remarks);
       showMessage('KYC approved.', 'success');
-      document.getElementById('kycDocModal').style.display='none';
-      
+      document.getElementById('kycDocModal').classList.add('hidden');
+      document.getElementById('kycDocModal').classList.remove('flex');
       if (state.currentView === 'kyc') {
         await loadKyc();
       }
     } else if (action === 'reject') {
-      const reason = await askRemarks('Rejection Reason', 'Required for rejection') || '';
+      const reason = window.prompt('Rejection reason:', '');
       if (!reason) {
         return;
       }
       await reviewKyc(userId, 'REJECTED', reason);
       showMessage('KYC rejected.', 'success');
-      document.getElementById('kycDocModal').style.display='none';
-      
+      document.getElementById('kycDocModal').classList.add('hidden');
+      document.getElementById('kycDocModal').classList.remove('flex');
       if (state.currentView === 'kyc') {
         await loadKyc();
       }
@@ -1918,7 +2068,7 @@ async function handleWithdrawalAction(event) {
   const withdrawalId = button.getAttribute('data-withdrawal-id');
   const decision = action === 'approve' ? 'APPROVED' : 'REJECTED';
   const reason =
-    await askRemarks(`Reason for ${decision}`, 'Optional', decision === 'APPROVED' ? 'manual review approved' : 'manual review rejected') || '';
+    window.prompt(`Reason for ${decision}:`, decision === 'APPROVED' ? 'manual review approved' : 'manual review rejected') || '';
 
   try {
     setActionButtonLoading(button, true, decision === 'APPROVED' ? 'Approving...' : 'Rejecting...');
@@ -1945,7 +2095,7 @@ async function handleDepositAction(event) {
   const depositId = button.getAttribute('data-deposit-id');
   const decision = action === 'approve' ? 'APPROVED' : 'REJECTED';
   const reason =
-    await askRemarks(`Reason for ${decision}`, 'Optional', decision === 'APPROVED' ? 'manual review approved' : 'deposit review rejected') || '';
+    window.prompt(`Reason for ${decision}:`, decision === 'APPROVED' ? 'manual review approved' : 'deposit review rejected') || '';
 
   try {
     setActionButtonLoading(button, true, decision === 'APPROVED' ? 'Approving...' : 'Rejecting...');
@@ -2014,15 +2164,10 @@ async function handleP2PActions(event) {
   const orderId = button.getAttribute('data-order-id');
 
   try {
-    if (action === 'view-dispute') {
-      await openDisputeDetail(orderId);
-      return;
-    }
-
     if (action === 'approve-ad' || action === 'suspend-ad' || action === 'reject-ad') {
       const decisionMap = { 'approve-ad': 'APPROVED', 'suspend-ad': 'SUSPENDED', 'reject-ad': 'REJECTED' };
       const decision = decisionMap[action];
-      const reason = await askRemarks(`Reason for ${decision}`, 'Optional') || '';
+      const reason = window.prompt(`Reason for ${decision}:`, '') || '';
       await apiRequest(`/p2p/ads/${encodeURIComponent(offerId)}/review`, {
         method: 'POST',
         body: JSON.stringify({ decision, reason })
@@ -2037,18 +2182,7 @@ async function handleP2PActions(event) {
         method: 'POST',
         body: JSON.stringify({})
       });
-      showMessage('Escrow released to buyer.', 'success');
-      await loadP2P();
-      return;
-    }
-
-    if (action === 'cancel-order') {
-      if (!confirm('Cancel this order? Crypto will be returned to the seller.')) return;
-      await apiRequest(`/p2p/orders/${encodeURIComponent(orderId)}/cancel`, {
-        method: 'POST',
-        body: JSON.stringify({})
-      });
-      showMessage('Order cancelled by admin. Crypto returned to seller.', 'success');
+      showMessage('Escrow released successfully.', 'success');
       await loadP2P();
       return;
     }
@@ -2133,19 +2267,498 @@ async function handleAdminUsersActions(event) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// User Profile Drawer
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _upUserId = null;
+
+function _showPanel(tabId) {
+  // Must toggle hidden class (not just style.display) because CSS has display:none !important
+  const ALL_TABS = ['overview','balance','kyc','logins','devices','actions'];
+  ALL_TABS.forEach(t => {
+    const panel = document.getElementById(`upTab-${t}`);
+    if (!panel) return;
+    if (t === tabId) {
+      panel.classList.remove('hidden');
+      panel.style.removeProperty('display');
+    } else {
+      panel.classList.add('hidden');
+    }
+  });
+}
+
+function openUserProfile(userId) {
+  _upUserId = userId;
+
+  // Set loading state in header
+  const emailEl = document.getElementById('upEmail');
+  const uidEl   = document.getElementById('upUserId');
+  const badgeEl = document.getElementById('upStatusBadge');
+  if (emailEl) emailEl.textContent = 'Loading…';
+  if (uidEl)   uidEl.textContent   = userId;
+  if (badgeEl) badgeEl.innerHTML   = '';
+
+  // Pre-fill email from already-loaded user list (instant display)
+  const knownUser = Array.isArray(state.users) ? state.users.find(u => u.userId === userId) : null;
+  if (knownUser?.email && emailEl) emailEl.textContent = knownUser.email;
+
+  // Reset all tab content to loading spinner
+  ['upOverviewContent','upBalanceContent','upKycContent','upLoginsContent','upDevicesContent'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-2);">
+      <div class="spin" style="margin:auto;"></div></div>`;
+  });
+
+  // Show overlay (only left of drawer) and slide drawer in
+  const overlay = document.getElementById('userProfileOverlay');
+  const drawer  = document.getElementById('userProfileDrawer');
+  if (overlay) {
+    const drawerW = Math.min(560, window.innerWidth);
+    overlay.style.right = drawerW + 'px'; // don't cover the drawer
+    overlay.style.display = 'block';
+    overlay.classList.remove('hidden');
+  }
+  if (drawer)  { drawer.style.right = '0'; }
+
+  // Show overview tab by default
+  document.querySelectorAll('.up-tab').forEach(b =>
+    b.classList.toggle('active', b.getAttribute('data-up-tab') === 'overview')
+  );
+  _showPanel('overview');
+  loadUpTab('overview');
+}
+
+function closeUserProfile() {
+  const overlay = document.getElementById('userProfileOverlay');
+  const drawer  = document.getElementById('userProfileDrawer');
+  if (overlay) { overlay.style.display = 'none'; overlay.classList.add('hidden'); }
+  if (drawer)  { drawer.style.right = '-580px'; }
+  _upUserId = null;
+}
+
+function switchUpTab(tab) {
+  // Switch tab button active state
+  document.querySelectorAll('.up-tab').forEach(b =>
+    b.classList.toggle('active', b.getAttribute('data-up-tab') === tab)
+  );
+  // Show/hide panels via style.display (bypasses any CSS class conflicts)
+  _showPanel(tab);
+  // Load content
+  if (_upUserId) loadUpTab(tab);
+}
+
+async function loadUpTab(tab) {
+  try {
+    if (tab === 'overview') await loadUpOverview();
+    else if (tab === 'balance')  await loadUpBalance();
+    else if (tab === 'kyc')      await loadUpKyc();
+    else if (tab === 'logins')   await loadUpLogins();
+    else if (tab === 'devices')  await loadUpDevices();
+  } catch (err) {
+    const capTab = tab.charAt(0).toUpperCase() + tab.slice(1);
+    const el = document.getElementById(`up${capTab}Content`);
+    if (el) el.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px;">${err.message || 'Failed to load'}</div>`;
+  }
+}
+
+async function loadUpOverview() {
+  const data = await apiRequest(`/users/${encodeURIComponent(_upUserId)}`);
+  const user = data.user || data;
+  // Handle both flat and nested wallet structure
+  const bal     = Number(user.wallet?.balance ?? user.balance ?? 0);
+  const locked  = Number(user.wallet?.lockedBalance ?? user.lockedBalance ?? 0);
+  const p2pCnt  = user.stats?.p2pOrderCount ?? '-';
+  const tradeCnt = user.stats?.tradeOrderCount ?? '-';
+
+  document.getElementById('upEmail').textContent = user.email || '-';
+  document.getElementById('upStatusBadge').innerHTML = statusBadge(user.status || 'UNKNOWN');
+  const el = document.getElementById('upOverviewContent');
+  el.innerHTML = `
+    <div style="background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;">
+      <div class="up-info-row"><span class="up-info-label">User ID</span><span class="up-info-value" style="font-family:monospace;color:var(--accent);font-size:11px;">${user.userId||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Email</span><span class="up-info-value">${user.email||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Role</span><span class="up-info-value">${statusBadge(user.role||'USER')}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Account Status</span><span class="up-info-value">${statusBadge(user.status||'ACTIVE')}</span></div>
+      <div class="up-info-row"><span class="up-info-label">KYC Status</span><span class="up-info-value">${statusBadge(user.kycStatus||'NOT_SUBMITTED')}</span></div>
+      <div class="up-info-row"><span class="up-info-label">KYC Remarks</span><span class="up-info-value" style="color:var(--text-2);font-size:12px;">${user.kycRemarks||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Flags</span><span class="up-info-value">${(user.flags||[]).length ? user.flags.map(f=>`<span class="badge badge-red" style="font-size:10px;">${f}</span>`).join(' ') : '<span style="color:var(--text-2);">None</span>'}</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div class="stat-card"><div class="stat-icon">💎</div><div class="stat-info"><div class="stat-label">Available</div><div class="stat-value" style="color:var(--green);font-size:15px;">${formatNumber(bal,4)}</div><div class="stat-meta">USDT</div></div></div>
+      <div class="stat-card"><div class="stat-icon">🔒</div><div class="stat-info"><div class="stat-label">Locked</div><div class="stat-value" style="color:var(--red);font-size:15px;">${formatNumber(locked,4)}</div><div class="stat-meta">USDT</div></div></div>
+      <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-info"><div class="stat-label">P2P Orders</div><div class="stat-value" style="font-size:18px;">${p2pCnt}</div></div></div>
+      <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-info"><div class="stat-label">Trade Orders</div><div class="stat-value" style="font-size:18px;">${tradeCnt}</div></div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-primary" style="flex:1;" data-up-tab="kyc">🪪 View KYC</button>
+      <button class="btn-secondary" style="flex:1;" data-up-tab="logins">🔐 Login History</button>
+      <button class="btn-danger" style="flex:1;" data-up-tab="actions">⚙️ Actions</button>
+    </div>`;
+}
+
+async function loadUpBalance() {
+  const data = await apiRequest(`/users/${encodeURIComponent(_upUserId)}`);
+  const user = data.user || data;
+  const bal    = Number(user.wallet?.balance ?? user.balance ?? 0);
+  const locked = Number(user.wallet?.lockedBalance ?? user.lockedBalance ?? 0);
+  const el = document.getElementById('upBalanceContent');
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="stat-card"><div class="stat-icon">💎</div><div class="stat-info"><div class="stat-label">Available</div><div class="stat-value" style="color:var(--green);font-size:17px;">${formatNumber(bal,4)}</div><div class="stat-meta">USDT</div></div></div>
+      <div class="stat-card"><div class="stat-icon">🔒</div><div class="stat-info"><div class="stat-label">Locked</div><div class="stat-value" style="color:var(--red);font-size:17px;">${formatNumber(locked,4)}</div><div class="stat-meta">USDT</div></div></div>
+    </div>
+    <div style="background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:14px 16px;">
+      <div class="up-info-row"><span class="up-info-label">Available Balance</span><span class="up-info-value" style="color:var(--green);font-weight:700;">${formatNumber(bal,6)} USDT</span></div>
+      <div class="up-info-row"><span class="up-info-label">Locked Balance</span><span class="up-info-value" style="color:var(--red);">${formatNumber(locked,6)} USDT</span></div>
+      <div class="up-info-row"><span class="up-info-label">Total Balance</span><span class="up-info-value" style="font-weight:700;">${formatNumber(bal+locked,6)} USDT</span></div>
+    </div>
+    <div style="margin-top:12px;padding:10px 14px;background:var(--bg-card2);border-radius:8px;border:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--text-2);margin-bottom:6px;">Quick Adjust Balance</div>
+      <div style="display:flex;gap:8px;">
+        <select id="upAdjustType2" class="input-dark" style="width:120px;height:34px;padding:4px 8px;font-size:12px;"><option value="ADD">➕ Add</option><option value="SUBTRACT">➖ Subtract</option></select>
+        <input id="upAdjustAmount2" class="input-dark" type="number" min="0" step="0.01" placeholder="Amount" style="flex:1;height:34px;" />
+        <button class="btn-primary" onclick="(function(){document.getElementById('upAdjustType').value=document.getElementById('upAdjustType2').value;document.getElementById('upAdjustAmount').value=document.getElementById('upAdjustAmount2').value;switchUpTab('actions');})()">Go →</button>
+      </div>
+    </div>`;
+}
+
+// Helper: ensure image src is a proper data URL
+function ensureDataUrl(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  if (!s) return null;
+  // Already a data URL
+  if (s.startsWith('data:')) return s;
+  // Already an http URL
+  if (s.startsWith('http')) return s;
+  // Assume it's raw base64 JPEG
+  return `data:image/jpeg;base64,${s}`;
+}
+
+function kycImageBox(title, src) {
+  // src can be a /api/admin URL or a data URL
+  const imgSrc = src || null;
+  return `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+    <div style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--bg-card2);">${title}</div>
+    <div style="min-height:160px;display:flex;align-items:center;justify-content:center;padding:10px;background:var(--bg-input);">
+      ${imgSrc
+        ? `<img src="${imgSrc}" style="max-width:100%;max-height:200px;border-radius:6px;object-fit:contain;cursor:zoom-in;"
+             onclick="window.open('${imgSrc}','_blank')"
+             onerror="this.parentElement.innerHTML='<div style=\\'color:var(--red);font-size:12px;text-align:center;padding:20px;\\'>⚠️ Image failed to load<br><small style=\\'opacity:.6;\\'>Decryption error or no data</small></div>'" />`
+        : '<div style="color:var(--text-2);font-size:12px;text-align:center;padding:24px;">📄 Not uploaded</div>'
+      }
+    </div>
+    ${imgSrc ? `<div style="padding:6px 10px;font-size:10px;color:var(--text-2);text-align:center;background:var(--bg-card2);">Click to open full size</div>` : ''}
+  </div>`;
+}
+
+async function loadUpKyc() {
+  const el = document.getElementById('upKycContent');
+  el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-2);"><div class="spin" style="margin:auto;"></div></div>`;
+  try {
+    const [kycData, docData] = await Promise.all([
+      apiRequest(`/users/${encodeURIComponent(_upUserId)}/kyc`),
+      apiRequest(`/users/${encodeURIComponent(_upUserId)}/kyc/documents`).catch(e => ({ _error: e.message }))
+    ]);
+
+    const kycStatus = kycData.kycStatus || kycData.status || 'NOT_SUBMITTED';
+    const remarks   = kycData.remarks   || kycData.kycRemarks || '';
+    const isPending = kycStatus === 'PENDING';
+    const isApproved = kycStatus === 'APPROVED';
+
+    const doc        = (docData && !docData._error) ? docData : {};
+    const docError   = docData?._error || null;
+    const aadhaarNum = doc.aadhaarMasked || '';
+    const submittedAt = doc.submittedAt || '';
+    // Use hasAadhaarFront/hasSelfie flags (new API) OR fall back to checking base64 blobs
+    const hasAadhaar = !!(doc.hasAadhaarFront || doc.aadhaarFront);
+    const hasSelfie  = !!(doc.hasSelfie || doc.selfie);
+    const hasAnyDoc  = hasAadhaar || hasSelfie;
+    // Use direct image URL endpoint (binary, no base64 size issues)
+    const aadhaarImgUrl = hasAadhaar ? `${API_BASE}/users/${encodeURIComponent(_upUserId)}/kyc/image/aadhaar` : null;
+    const selfieImgUrl  = hasSelfie  ? `${API_BASE}/users/${encodeURIComponent(_upUserId)}/kyc/image/selfie`  : null;
+
+    const statusColor = kycStatus === 'APPROVED' ? 'var(--green)' : kycStatus === 'REJECTED' ? 'var(--red)' : kycStatus === 'PENDING' ? 'var(--accent)' : 'var(--text-2)';
+
+    el.innerHTML = `
+      <!-- KYC Status Banner -->
+      <div style="background:${statusColor}14;border:1px solid ${statusColor}30;border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:26px;">${kycStatus==='APPROVED'?'✅':kycStatus==='REJECTED'?'❌':kycStatus==='PENDING'?'🕐':'📋'}</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:${statusColor};">${kycStatus}</div>
+          <div style="font-size:12px;color:var(--text-2);margin-top:2px;">${remarks || (kycStatus==='APPROVED'?'Identity verified':'KYC ' + kycStatus.toLowerCase())}</div>
+        </div>
+      </div>
+
+      <!-- KYC Info -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;">
+        <div class="up-info-row"><span class="up-info-label">KYC Status</span><span class="up-info-value">${statusBadge(kycStatus)}</span></div>
+        ${aadhaarNum ? `<div class="up-info-row"><span class="up-info-label">Aadhaar Number</span><span class="up-info-value" style="font-family:monospace;letter-spacing:1px;">${aadhaarNum}</span></div>` : ''}
+        ${submittedAt ? `<div class="up-info-row"><span class="up-info-label">Submitted At</span><span class="up-info-value">${formatDate(submittedAt)}</span></div>` : ''}
+        <div class="up-info-row"><span class="up-info-label">Remarks</span><span class="up-info-value" style="color:${remarks?'var(--text-1)':'var(--text-2)'};">${remarks||'—'}</span></div>
+        <div class="up-info-row"><span class="up-info-label">Aadhaar Doc</span><span class="up-info-value">${hasAadhaar?'<span style="color:var(--green);">✅ Uploaded</span>':'<span style="color:var(--text-2);">Not uploaded</span>'}</span></div>
+        <div class="up-info-row" style="border:none;"><span class="up-info-label">Selfie</span><span class="up-info-value">${hasSelfie?'<span style="color:var(--green);">✅ Uploaded</span>':'<span style="color:var(--text-2);">Not uploaded</span>'}</span></div>
+      </div>
+
+      ${docError ? `<div style="background:var(--red-dim);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--red);">⚠️ Document fetch error: ${docError}</div>` : ''}
+
+      <!-- Document Images -->
+      ${hasAnyDoc ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        ${kycImageBox('🪪 Aadhaar Front', aadhaarImgUrl)}
+        ${kycImageBox('🤳 Selfie with Doc', selfieImgUrl)}
+      </div>` : `
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;margin-bottom:12px;">
+        <div style="font-size:32px;margin-bottom:8px;">📋</div>
+        <p style="font-size:13px;color:var(--text-2);margin:0;">${docError ? '⚠️ Could not load documents — ' + docError : 'No KYC documents uploaded yet'}</p>
+      </div>`}
+
+      <!-- Action Buttons -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${hasAnyDoc ? `<button class="btn-secondary" style="flex:1;" onclick="viewKycDocuments('${_upUserId}')">🔍 Full Screen</button>` : ''}
+        ${isPending ? `
+          <button class="btn-secondary" style="flex:1;" onclick="upApproveKyc()">✅ Approve KYC</button>
+          <button class="btn-danger"    style="flex:1;" onclick="upRejectKyc()">❌ Reject KYC</button>
+        ` : isApproved ? `
+          <button class="btn-secondary" style="flex:1;" onclick="upRejectKyc()">🔄 Re-review KYC</button>
+        ` : `
+          <button class="btn-secondary" style="flex:1;" onclick="upApproveKyc()">✅ Approve KYC</button>
+          <button class="btn-danger"    style="flex:1;" onclick="upRejectKyc()">❌ Reject KYC</button>
+        `}
+      </div>`;
+  } catch(err) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;">
+      <div style="font-size:32px;margin-bottom:10px;">⚠️</div>
+      <p style="font-size:13px;color:var(--text-2);margin:0 0 4px;">KYC data unavailable</p>
+      <small style="color:var(--red);font-size:11px;">${err.message||'Unknown error'}</small>
+    </div>`;
+  }
+}
+
+async function upApproveKyc() {
+  try {
+    await reviewKyc(_upUserId, 'APPROVED', '');
+    showMessage('KYC Approved ✅', 'success');
+    await loadUpKyc();
+    await loadUpOverview();
+  } catch(err) { showMessage(err.message||'Failed','error'); }
+}
+
+async function upRejectKyc() {
+  const reason = window.prompt('Enter rejection reason:');
+  if (!reason || !reason.trim()) return;
+  try {
+    await reviewKyc(_upUserId, 'REJECTED', reason.trim());
+    showMessage('KYC Rejected', 'success');
+    await loadUpKyc();
+    await loadUpOverview();
+  } catch(err) { showMessage(err.message||'Failed','error'); }
+}
+
+async function loadUpLogins() {
+  const el = document.getElementById('upLoginsContent');
+  el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-2);"><div class="spin" style="margin:auto;"></div></div>`;
+  try {
+    const data = await apiRequest(`/users/${encodeURIComponent(_upUserId)}/login-history`);
+    // Handle both collection formats
+    const logs = Array.isArray(data.history)  ? data.history
+               : Array.isArray(data.logs)     ? data.logs
+               : Array.isArray(data.records)  ? data.records
+               : [];
+    const total = data.pagination?.total || logs.length;
+
+    if (!logs.length) {
+      el.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-2);">
+        <div style="font-size:38px;margin-bottom:10px;">🔐</div>
+        <p style="font-size:13px;font-weight:600;margin:0 0 4px;">No login history</p>
+        <p style="font-size:11px;opacity:.6;margin:0;">This user hasn't logged in yet</p>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = `
+      <div style="font-size:11px;color:var(--text-2);margin-bottom:10px;padding:0 2px;">
+        Showing ${Math.min(logs.length,50)} of ${total} logins
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${logs.slice(0,50).map(log => {
+          const isSuccess = log.success === true || log.action === 'login_success';
+          const isFailed  = log.success === false || log.action === 'login_failed';
+          const isSignup  = log.action === 'register_success';
+          const ip        = log.ip || '-';
+          const country   = log.country || '';
+          const city      = log.city    || '';
+          const region    = log.region  || '';
+          const timezone  = log.timezone || '';
+          const browser   = log.browser || '';
+          const device    = log.device  || '';
+          const ua        = log.userAgent || '';
+          const time      = log.createdAt;
+          const mapsUrl   = log.mapsUrl || '';
+
+          // Country flag emoji from code
+          const flag = country && country.length === 2
+            ? String.fromCodePoint(...[...country.toUpperCase()].map(c => 0x1F1E0 - 65 + c.charCodeAt(0)))
+            : '';
+
+          const locationParts = [city, region, country].filter(Boolean);
+          const locationStr   = locationParts.join(', ');
+
+          const icon  = isSignup ? '🆕' : isSuccess ? '✅' : isFailed ? '❌' : '🔵';
+          const color = isSignup ? '#a78bfa' : isSuccess ? 'var(--green)' : isFailed ? 'var(--red)' : 'var(--text-2)';
+          const label = isSignup ? 'Account Created' : isSuccess ? 'Login Success' : isFailed ? 'Login Failed' : (log.action || 'Activity');
+
+          const deviceStr = [device, browser].filter(Boolean).join(' • ');
+
+          return `<div class="up-login-row">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <span style="font-weight:700;font-size:12px;color:${color};">${icon} ${label}</span>
+              <span style="font-size:10px;color:var(--text-2);white-space:nowrap;">${formatDate(time)}</span>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:11px;color:var(--text-2);">🌐 <span style="color:#00e5ff;font-family:monospace;font-size:11px;">${ip}</span></span>
+              ${locationStr
+                ? `<span style="font-size:11px;color:var(--text-2);">${flag} <span style="color:var(--text-1);">${locationStr}</span></span>`
+                : '<span style="font-size:11px;color:rgba(255,255,255,0.2);">📍 Location unavailable</span>'}
+              ${timezone ? `<span style="font-size:10px;color:rgba(255,255,255,0.35);">🕐 ${timezone}</span>` : ''}
+            </div>
+            <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;align-items:center;">
+              ${deviceStr ? `<span style="font-size:10px;color:rgba(255,255,255,0.4);">📱 ${deviceStr}</span>` : ''}
+              ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="font-size:10px;color:#00e5ff;text-decoration:none;">🗺️ View on Map</a>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  } catch(err) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;">
+      <div style="font-size:32px;margin-bottom:10px;">⚠️</div>
+      <p style="color:var(--red);font-size:13px;margin:0 0 4px;">Failed to load history</p>
+      <small style="color:var(--text-2);">${err.message||'Unknown error'}</small>
+    </div>`;
+  }
+}
+
+async function loadUpDevices() {
+  const el = document.getElementById('upDevicesContent');
+  el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-2);"><div class="spin" style="margin:auto;"></div></div>`;
+  try {
+    const data = await apiRequest(`/users/${encodeURIComponent(_upUserId)}/devices`);
+    const devices = Array.isArray(data.devices) ? data.devices : Array.isArray(data) ? data : [];
+
+    if (!devices.length) {
+      el.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-2);">
+        <div style="font-size:38px;margin-bottom:10px;">📱</div>
+        <p style="font-size:13px;font-weight:600;margin:0 0 4px;">No devices found</p>
+        <p style="font-size:11px;opacity:.6;margin:0;">User hasn't logged in from any tracked device</p>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">` +
+      devices.map((d, i) => {
+        const osLower = (d.os || d.platform || '').toLowerCase();
+        const nameLower = (d.deviceName || d.name || '').toLowerCase();
+        const emoji = (osLower.includes('android') || nameLower.includes('android')) ? '🤖'
+                    : (osLower.includes('ios') || nameLower.includes('iphone') || nameLower.includes('ipad')) ? '🍎'
+                    : (osLower.includes('windows')) ? '🖥'
+                    : (osLower.includes('mac')) ? '🍎'
+                    : '💻';
+        const trusted = d.trusted || d.isTrusted || d.is_trusted;
+        const name    = d.deviceName || d.name || d.browser || `Device ${i + 1}`;
+        const ip      = d.ip || d.lastIp || d.ipAddress || '-';
+        const lastSeen = d.lastSeenAt || d.lastSeen || d.last_seen_at || d.updatedAt || d.createdAt;
+        return `<div class="up-device-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:22px;">${emoji}</span>
+              <div>
+                <div style="font-weight:700;color:var(--text-1);font-size:13px;">${name}</div>
+                <div style="font-size:10px;color:var(--text-2);">${d.os||d.platform||'Unknown OS'}</div>
+              </div>
+            </div>
+            <span class="badge ${trusted ? 'badge-green' : 'badge-gray'}">${trusted ? '✓ Trusted' : 'Untrusted'}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+            <div style="color:var(--text-2);">Browser: <span style="color:var(--text-1);">${d.browser || '-'}</span></div>
+            <div style="color:var(--text-2);">IP: <span style="color:var(--text-1);font-family:monospace;">${ip}</span></div>
+            <div style="color:var(--text-2);">Last seen: <span style="color:var(--text-1);">${formatDate(lastSeen)}</span></div>
+            <div style="color:var(--text-2);">Added: <span style="color:var(--text-1);">${formatDate(d.createdAt)}</span></div>
+          </div>
+          ${d.fingerprint ? `<div style="margin-top:8px;padding:5px 8px;background:var(--bg-input);border-radius:4px;font-size:10px;color:var(--text-2);font-family:monospace;overflow:hidden;text-overflow:ellipsis;">🔑 ${d.fingerprint}</div>` : ''}
+        </div>`;
+      }).join('') + `</div>`;
+  } catch(err) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;">
+      <div style="font-size:32px;margin-bottom:10px;">⚠️</div>
+      <p style="color:var(--red);font-size:13px;margin:0 0 4px;">Failed to load devices</p>
+      <small style="color:var(--text-2);">${err.message||'Unknown error'}</small>
+    </div>`;
+  }
+}
+
+async function upAction(action) {
+  if (!_upUserId) return;
+  try {
+    if (action === 'freeze') {
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/status`, { method:'PATCH', body:JSON.stringify({status:'FROZEN'}) });
+      showMessage('Account frozen.','success');
+      await loadUpOverview();
+    } else if (action === 'unfreeze') {
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/status`, { method:'PATCH', body:JSON.stringify({status:'ACTIVE'}) });
+      showMessage('Account unfrozen.','success');
+      await loadUpOverview();
+    } else if (action === 'ban') {
+      if (!confirm('Ban this user permanently?')) return;
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/status`, { method:'PATCH', body:JSON.stringify({status:'BANNED'}) });
+      showMessage('User banned.','success');
+      await loadUpOverview();
+    } else if (action === 'force-logout') {
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/force-logout`, { method:'POST', body:JSON.stringify({}) });
+      showMessage('User force logged out.','success');
+    } else if (action === 'adjust') {
+      const type   = document.getElementById('upAdjustType').value;
+      const amount = parseFloat(document.getElementById('upAdjustAmount').value);
+      const reason = document.getElementById('upAdjustReason').value.trim();
+      if (!amount || amount <= 0) return showMessage('Enter a valid amount.','error');
+      if (!reason) return showMessage('Reason is required.','error');
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/adjust-balance`, { method:'POST', body:JSON.stringify({type,amount,reason}) });
+      showMessage(`Balance ${type==='ADD'?'added':'subtracted'} successfully.`,'success');
+      document.getElementById('upAdjustAmount').value='';
+      document.getElementById('upAdjustReason').value='';
+      await loadUpOverview(); await loadUpBalance();
+    } else if (action === 'reset') {
+      const pwd = document.getElementById('upNewPassword').value.trim();
+      if (pwd.length < 8) return showMessage('Password must be at least 8 characters.','error');
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/reset-password`, { method:'POST', body:JSON.stringify({newPassword:pwd}) });
+      showMessage('Password reset successfully.','success');
+      document.getElementById('upNewPassword').value='';
+    }
+  } catch (err) {
+    showMessage(err.message || 'Action failed.','error');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Wire All Event Listeners
 // ─────────────────────────────────────────────────────────────────────────────
 
 function wireEventListeners() {
-  dom.sidebarOpenBtn.addEventListener('click', () => setSidebarOpen(true));
-  dom.sidebarCloseBtn.addEventListener('click', () => setSidebarOpen(false));
-  dom.sidebarBackdrop.addEventListener('click', () => setSidebarOpen(false));
+  if (dom.menuToggleBtn) {
+    dom.menuToggleBtn.addEventListener('click', () => {
+      const isOpen = dom.sidebar.classList.contains('open');
+      setSidebarOpen(!isOpen);
+    });
+  }
+  if (dom.sidebarOverlay) {
+    dom.sidebarOverlay.addEventListener('click', () => setSidebarOpen(false));
+  }
 
   dom.sidebarNav.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-view]');
     if (!button) {
       return;
     }
+    setSidebarOpen(false); // close on mobile after nav click
     await changeView(button.getAttribute('data-view'));
   });
 
@@ -2154,7 +2767,7 @@ function wireEventListeners() {
     showMessage('Section refreshed.', 'success');
   });
 
-  dom.logoutBtn.addEventListener('click', async () => {
+  const doLogout = async () => {
     try {
       await apiRequest('/auth/logout', { method: 'POST', body: JSON.stringify({}) });
     } catch (_error) {
@@ -2162,16 +2775,22 @@ function wireEventListeners() {
     } finally {
       window.location.href = '/admin/login';
     }
-  });
+  };
+
+  dom.logoutBtn.addEventListener('click', doLogout);
+  if (dom.logoutBtnSide) {
+    dom.logoutBtnSide.addEventListener('click', doLogout);
+  }
 
   // KYC modal close
   document.getElementById('kycDocModalClose').addEventListener('click', () => {
-    document.getElementById('kycDocModal').style.display='none';
-    
+    document.getElementById('kycDocModal').classList.add('hidden');
+    document.getElementById('kycDocModal').classList.remove('flex');
   });
   document.getElementById('kycDocModal').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) {
-      e.currentTarget.style.display = 'none';
+      e.currentTarget.classList.add('hidden');
+      e.currentTarget.classList.remove('flex');
     }
   });
 
@@ -2206,18 +2825,23 @@ function wireEventListeners() {
   document.getElementById('p2pAdsList').addEventListener('click', handleP2PActions);
   document.getElementById('p2pDisputesList').addEventListener('click', handleP2PActions);
   document.getElementById('p2pReloadBtn').addEventListener('click', async () => loadP2P());
-  document.getElementById('p2pForceCancelBtn').addEventListener('click', async () => {
-    if (!confirm('Force cancel all pending unpaid P2P orders?')) return;
-    try {
-      const result = await apiRequest('/p2p/orders/force-cancel-pending', {
-        method: 'POST',
-        body: JSON.stringify({})
-      });
-      showMessage(result.message || 'Pending orders force-cancelled.', 'success');
-      await loadP2P();
-    } catch (error) {
-      showMessage(error.message || 'Failed to force cancel pending orders.', 'error');
+
+  // User profile drawer - tab switching + close via event delegation
+  document.getElementById('userProfileDrawer').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-up-tab]');
+    if (btn) {
+      switchUpTab(btn.getAttribute('data-up-tab'));
+      return;
     }
+  });
+  document.getElementById('upCloseBtn').addEventListener('click', () => closeUserProfile());
+  document.getElementById('userProfileOverlay').addEventListener('click', () => closeUserProfile());
+
+  // Support ticket list - click delegation (ticket cards are rendered via innerHTML)
+  document.getElementById('supportTicketsList').addEventListener('click', (e) => {
+    const item = e.target.closest('[data-support-ticket-id]');
+    if (!item) return;
+    openTicket(item.getAttribute('data-support-ticket-id'));
   });
 
   // Support chat
@@ -2491,267 +3115,119 @@ function wireEventListeners() {
   document.getElementById('auditReloadBtn').addEventListener('click', async () => loadAudit());
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// User Profile Panel
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Support ticket live-notify via SSE ─────────────────────────────────────
+let _lastKnownOpenTicketCount = 0;
+let _supportSSE = null;
 
-let currentProfileUserId = null;
-
-async function openUserProfile(userId) {
-  currentProfileUserId = userId;
-  await changeView('user-profile');
+function connectSupportSSE() {
+  if (_supportSSE) { try { _supportSSE.close(); } catch(_) {} }
+  _supportSSE = new EventSource('/api/admin/support/live-notify');
+  _supportSSE.onmessage = (ev) => {
+    try {
+      const info = JSON.parse(ev.data);
+      // Update sidebar badge
+      _lastKnownOpenTicketCount++;
+      const badge = document.getElementById('supportBadge');
+      if (badge) { badge.style.display = ''; badge.textContent = _lastKnownOpenTicketCount; }
+      // Show popup with agent name
+      showSupportNotification(info);
+      // If on support view, refresh list
+      if (state.currentView === 'support' && !state.support.activeTicketId) {
+        loadSupport().catch(() => {});
+      }
+    } catch (_) {}
+  };
+  _supportSSE.onerror = () => {
+    // Reconnect after 5s on error
+    setTimeout(connectSupportSSE, 5000);
+  };
 }
 
-async function loadUserProfilePanel() {
-  if (!currentProfileUserId) return;
-  const uid = currentProfileUserId;
+async function pollSupportTickets() {
+  try {
+    const payload = await apiRequest('/support/tickets?limit=50');
+    const tickets = Array.isArray(payload.tickets) ? payload.tickets : [];
+    const openCount = tickets.filter(t => (t.status || '').toUpperCase() !== 'CLOSED').length;
 
-  // Fetch all data in parallel
-  const [userRes, kycRes, walletRes, tradesRes, depositsRes, withdrawalsRes, p2pRes] = await Promise.all([
-    apiRequest(`/users/${encodeURIComponent(uid)}`).catch(() => ({})),
-    apiRequest(`/users/${encodeURIComponent(uid)}/kyc`).catch(() => ({})),
-    apiRequestOptional(`/users/${encodeURIComponent(uid)}/wallet`, {}),
-    apiRequestOptional(`/users/${encodeURIComponent(uid)}/trades?limit=50`, { trades: [] }),
-    apiRequestOptional(`/users/${encodeURIComponent(uid)}/deposits?limit=50`, { deposits: [] }),
-    apiRequestOptional(`/users/${encodeURIComponent(uid)}/withdrawals?limit=50`, { withdrawals: [] }),
-    apiRequestOptional(`/users/${encodeURIComponent(uid)}/p2p-orders?limit=50`, { orders: [] })
-  ]);
+    // Update sidebar badge
+    const badge = document.getElementById('supportBadge');
+    if (badge) {
+      badge.style.display = openCount > 0 ? '' : 'none';
+      badge.textContent = openCount;
+    }
+    _lastKnownOpenTicketCount = openCount;
 
-  const user = userRes.user || {};
-  const kyc = kycRes.kyc || kycRes || {};
-  const walletData = walletRes.wallet || walletRes.balances || walletRes || {};
-
-  // Update title
-  document.getElementById('userProfileTitle').textContent = `Profile: ${user.email || uid}`;
-  document.getElementById('profileCurrentStatus').textContent = user.status || '-';
-
-  // Top stat cards
-  const balances = walletData.balances || [];
-  const totalUSDT = Array.isArray(balances)
-    ? balances.find(b => b.coin === 'USDT')?.available || user.balance || 0
-    : (walletData.USDT?.available || user.balance || 0);
-
-  renderCards('userProfileCards', [
-    { label: 'USDT Balance', value: `$${formatNumber(totalUSDT, 2)}`, meta: `Locked: $${formatNumber(user.lockedBalance || 0, 2)}` },
-    { label: 'KYC Status', value: user.kycStatus || 'NONE', meta: `Role: ${user.role || '-'}` },
-    { label: 'Account Status', value: user.status || '-', meta: `2FA: ${user.twoFactorEnabled ? 'ON' : 'OFF'}` },
-    { label: 'Joined', value: formatDate(user.createdAt), meta: `UID: ${String(uid).slice(0,12)}...` }
-  ]);
-
-  // Overview tab
-  function infoRow(label, val) {
-    return `<div class="profile-info-row"><dt>${label}</dt><dd>${val || '-'}</dd></div>`;
-  }
-  document.getElementById('profileAccountInfo').innerHTML = [
-    infoRow('User ID', `<span class="font-mono text-xs">${uid}</span>`),
-    infoRow('Email', user.email),
-    infoRow('Role', statusBadge(user.role)),
-    infoRow('Status', statusBadge(user.status)),
-    infoRow('KYC Status', statusBadge(user.kycStatus)),
-    infoRow('Phone', user.phone),
-    infoRow('Country', user.country),
-    infoRow('Registered', formatDate(user.createdAt)),
-    infoRow('Last Active', formatDate(user.lastActiveAt || user.updatedAt))
-  ].join('');
-
-  document.getElementById('profileSecurityInfo').innerHTML = [
-    infoRow('2FA Enabled', user.twoFactorEnabled ? '<span class="text-green-400">Yes</span>' : '<span class="text-red-400">No</span>'),
-    infoRow('Email Verified', user.emailVerified ? '<span class="text-green-400">Yes</span>' : '<span class="text-red-400">No</span>'),
-    infoRow('KYC Level', kyc.level || kyc.kycLevel || '-'),
-    infoRow('KYC Updated', formatDate(kyc.updatedAt || kyc.reviewedAt)),
-    infoRow('Review Note', kyc.reviewNote || '-'),
-    infoRow('IP Address', user.lastIp || '-'),
-    infoRow('Device', user.lastDevice || '-')
-  ].join('');
-
-  // Wallet tab
-  const walletRows = Array.isArray(balances) && balances.length > 0 ? balances : [
-    { coin: 'USDT', available: user.balance || 0, locked: user.lockedBalance || 0 },
-    { coin: 'BTC', available: walletData.BTC?.available || 0, locked: walletData.BTC?.locked || 0 },
-    { coin: 'ETH', available: walletData.ETH?.available || 0, locked: walletData.ETH?.locked || 0 },
-    { coin: 'BNB', available: walletData.BNB?.available || 0, locked: walletData.BNB?.locked || 0 },
-    { coin: 'SOL', available: walletData.SOL?.available || 0, locked: walletData.SOL?.locked || 0 }
-  ];
-  document.getElementById('profileWalletTable').innerHTML = walletRows.map(b => `
-    <tr>
-      <td class="admin-td font-semibold">${escapeHtml(String(b.coin || '-'))}</td>
-      <td class="admin-td text-right text-green-400">${formatNumber(b.available || 0, 6)}</td>
-      <td class="admin-td text-right text-yellow-400">${formatNumber(b.locked || 0, 6)}</td>
-      <td class="admin-td text-right">${formatNumber((b.available || 0) + (b.locked || 0), 6)}</td>
-    </tr>
-  `).join('') || '<tr><td class="admin-td text-slate-500" colspan="4">No wallet data</td></tr>';
-
-  // KYC tab
-  document.getElementById('profileKycInfo').innerHTML = [
-    infoRow('Full Name', kyc.fullName),
-    infoRow('Date of Birth', kyc.dob),
-    infoRow('ID Type', kyc.idType || kyc.documentType),
-    infoRow('ID Number', kyc.idNumber || kyc.documentNumber),
-    infoRow('Status', statusBadge(kyc.status || user.kycStatus)),
-    infoRow('Submitted', formatDate(kyc.submittedAt || kyc.createdAt)),
-    infoRow('Reviewed By', kyc.reviewedBy),
-    infoRow('Review Note', kyc.reviewNote)
-  ].join('');
-
-  // Trades tab
-  const trades = tradesRes.trades || tradesRes.orders || [];
-  document.getElementById('profileTradesTable').innerHTML = trades.length ? trades.map(t => `
-    <tr>
-      <td class="admin-td font-mono text-xs">${String(t.id || t._id || '-').slice(0,12)}...</td>
-      <td class="admin-td">${escapeHtml(String(t.symbol || t.pair || '-'))}</td>
-      <td class="admin-td">${t.side === 'BUY' ? '<span class="text-green-400">BUY</span>' : '<span class="text-red-400">SELL</span>'}</td>
-      <td class="admin-td">${escapeHtml(String(t.type || '-'))}</td>
-      <td class="admin-td text-right">${formatNumber(t.amount || t.quantity || 0, 6)}</td>
-      <td class="admin-td text-right">${formatNumber(t.price || 0, 4)}</td>
-      <td class="admin-td">${statusBadge(t.status)}</td>
-      <td class="admin-td">${formatDate(t.createdAt)}</td>
-    </tr>
-  `).join('') : '<tr><td class="admin-td text-slate-500" colspan="8">No trade history</td></tr>';
-
-  // Deposits tab
-  const deposits = depositsRes.deposits || [];
-  document.getElementById('profileDepositsTable').innerHTML = deposits.length ? deposits.map(d => `
-    <tr>
-      <td class="admin-td font-mono text-xs">${String(d.id || '-').slice(0,10)}...</td>
-      <td class="admin-td">${escapeHtml(String(d.coin || '-'))}</td>
-      <td class="admin-td">${escapeHtml(String(d.network || '-'))}</td>
-      <td class="admin-td text-right text-green-400">+${formatNumber(d.amount || 0, 4)}</td>
-      <td class="admin-td">${statusBadge(d.status)}</td>
-      <td class="admin-td font-mono text-xs">${d.txHash ? String(d.txHash).slice(0,16)+'...' : '-'}</td>
-      <td class="admin-td">${formatDate(d.createdAt)}</td>
-    </tr>
-  `).join('') : '<tr><td class="admin-td text-slate-500" colspan="7">No deposit history</td></tr>';
-
-  // Withdrawals tab
-  const withdrawals = withdrawalsRes.withdrawals || [];
-  document.getElementById('profileWithdrawalsTable').innerHTML = withdrawals.length ? withdrawals.map(w => `
-    <tr>
-      <td class="admin-td font-mono text-xs">${String(w.id || '-').slice(0,10)}...</td>
-      <td class="admin-td">${escapeHtml(String(w.coin || '-'))}</td>
-      <td class="admin-td">${escapeHtml(String(w.network || '-'))}</td>
-      <td class="admin-td text-right text-red-400">-${formatNumber(w.amount || 0, 4)}</td>
-      <td class="admin-td font-mono text-xs">${w.address ? String(w.address).slice(0,14)+'...' : '-'}</td>
-      <td class="admin-td">${statusBadge(w.status)}</td>
-      <td class="admin-td">${formatDate(w.createdAt)}</td>
-    </tr>
-  `).join('') : '<tr><td class="admin-td text-slate-500" colspan="7">No withdrawal history</td></tr>';
-
-  // P2P tab
-  const p2pOrders = p2pRes.orders || [];
-  document.getElementById('profileP2PTable').innerHTML = p2pOrders.length ? p2pOrders.map(o => `
-    <tr>
-      <td class="admin-td font-mono text-xs">${String(o.id || '-').slice(0,10)}...</td>
-      <td class="admin-td">${o.isBuyer ? '<span class="text-green-400">BUY</span>' : '<span class="text-red-400">SELL</span>'}</td>
-      <td class="admin-td">${escapeHtml(String(o.coin || o.asset || '-'))}</td>
-      <td class="admin-td text-right">${formatNumber(o.amount || o.qty || 0, 4)}</td>
-      <td class="admin-td text-right">${formatNumber(o.price || 0, 2)}</td>
-      <td class="admin-td">${statusBadge(o.status)}</td>
-      <td class="admin-td">${escapeHtml(String(o.counterpartyEmail || o.counterparty || '-'))}</td>
-      <td class="admin-td">${formatDate(o.createdAt)}</td>
-    </tr>
-  `).join('') : '<tr><td class="admin-td text-slate-500" colspan="8">No P2P orders</td></tr>';
+    // If currently on support view, refresh list
+    if (state.currentView === 'support' && !state.support.activeTicketId) {
+      await loadSupport();
+    }
+  } catch (e) { /* silent */ }
 }
 
-// Profile tab switching
-document.addEventListener('click', function(e) {
-  const tab = e.target.closest('.profile-tab');
-  if (!tab) return;
-  const tabName = tab.getAttribute('data-tab');
-  document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
-  tab.classList.add('active');
-  document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.add('hidden'));
-  const content = document.querySelector(`.profile-tab-content[data-content="${tabName}"]`);
-  if (content) content.classList.remove('hidden');
-});
+function showSupportNotification(info) {
+  // info can be string (legacy) or object { ticketId, subject, agentName, email }
+  const isObj = info && typeof info === 'object';
+  const agentName = isObj ? (info.agentName || 'Support Agent') : '';
+  const subject   = isObj ? (info.subject || 'New support request') : String(info);
+  const ticketId  = isObj ? info.ticketId : null;
+  const userLabel = isObj ? (info.email || 'User') : '';
 
-// Profile action buttons
-document.addEventListener('click', async function(e) {
-  // Back button
-  if (e.target.closest('#userProfileBackBtn')) {
-    currentProfileUserId = null;
-    await changeView('users');
-    return;
-  }
+  const n = document.createElement('div');
+  n.style.cssText = `position:fixed;top:18px;right:18px;z-index:9999;
+    background:var(--bg-card);border:1px solid var(--accent);border-radius:14px;
+    padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:320px;`;
 
-  // Profile button in users table
-  const profileBtn = e.target.closest('[data-user-action="profile"]');
-  if (profileBtn) {
-    const uid = profileBtn.getAttribute('data-user-id');
-    await openUserProfile(uid);
-    return;
-  }
+  const avatarColor = '#00e5ff';
+  n.innerHTML = `
+    <div style="width:38px;height:38px;border-radius:50%;background:${avatarColor}20;border:2px solid ${avatarColor}40;
+                display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎧</div>
+    <div style="flex:1;min-width:0;">
+      <p style="margin:0 0 2px;font-size:12px;font-weight:700;color:var(--accent);">New Live Support Request</p>
+      ${agentName ? `<p style="margin:0 0 2px;font-size:13px;font-weight:600;color:var(--text-1);">Agent: ${agentName}</p>` : ''}
+      <p style="margin:0;font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${subject}</p>
+      ${userLabel ? `<p style="margin:2px 0 0;font-size:10px;color:var(--text-2);opacity:.7;">${userLabel}</p>` : ''}
+      <p style="margin:4px 0 0;font-size:11px;color:var(--accent);font-weight:600;">👆 Click to respond</p>
+    </div>
+    <button onclick="event.stopPropagation();this.closest('[style]').remove();"
+      style="background:none;border:none;color:var(--text-2);cursor:pointer;font-size:16px;padding:0;flex-shrink:0;">✕</button>`;
 
-  // Freeze/Unfreeze/Ban
-  if (e.target.id === 'profileFreezeBtn' || e.target.id === 'profileUnfreezeBtn' || e.target.id === 'profileBanBtn') {
-    if (!currentProfileUserId) return;
-    const action = e.target.id === 'profileFreezeBtn' ? 'FROZEN' : e.target.id === 'profileBanBtn' ? 'BANNED' : 'ACTIVE';
-    const reason = document.getElementById('profileStatusReason').value.trim();
-    try {
-      await apiRequest(`/users/${encodeURIComponent(currentProfileUserId)}/status`, {
-        method: 'PATCH', body: JSON.stringify({ status: action, reason })
-      });
-      showMessage(`User ${action.toLowerCase()} successfully.`, 'success');
-      await loadUserProfilePanel();
-    } catch (err) { showMessage(err.message, 'error'); }
-    return;
-  }
+  n.addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON') return;
+    n.remove();
+    changeView('support').then(() => {
+      if (ticketId) setTimeout(() => openTicket(ticketId), 400);
+    });
+  });
 
-  // KYC review
-  if (e.target.id === 'profileKycSubmit') {
-    if (!currentProfileUserId) return;
-    const status = document.getElementById('profileKycAction').value;
-    const note = document.getElementById('profileKycNote').value.trim();
-    try {
-      await apiRequest(`/users/${encodeURIComponent(currentProfileUserId)}/kyc/review`, {
-        method: 'POST', body: JSON.stringify({ status, reviewNote: note })
-      });
-      showMessage('KYC review submitted.', 'success');
-      await loadUserProfilePanel();
-    } catch (err) { showMessage(err.message, 'error'); }
-  }
-});
-
-// Adjust balance form
-document.addEventListener('submit', async function(e) {
-  if (e.target.id === 'profileAdjustForm') {
-    e.preventDefault();
-    if (!currentProfileUserId) return;
-    const form = e.target;
-    try {
-      await apiRequest(`/users/${encodeURIComponent(currentProfileUserId)}/adjust-balance`, {
-        method: 'POST',
-        body: JSON.stringify({ coin: form.coin.value, amount: Number(form.amount.value), reason: form.reason.value })
-      });
-      showMessage('Balance adjusted.', 'success');
-      form.reset();
-      await loadUserProfilePanel();
-    } catch (err) { showMessage(err.message, 'error'); }
-  }
-
-  if (e.target.id === 'profileResetPassForm') {
-    e.preventDefault();
-    if (!currentProfileUserId) return;
-    const form = e.target;
-    try {
-      await apiRequest(`/users/${encodeURIComponent(currentProfileUserId)}/reset-password`, {
-        method: 'POST', body: JSON.stringify({ newPassword: form.newPassword.value })
-      });
-      showMessage('Password reset done.', 'success');
-      form.reset();
-    } catch (err) { showMessage(err.message, 'error'); }
-  }
-});
+  document.body.appendChild(n);
+  // Pulse the sidebar badge
+  const badge = document.getElementById('supportBadge');
+  if (badge) { badge.style.animation = 'none'; badge.style.transform = 'scale(1.4)'; setTimeout(() => { badge.style.transform = ''; }, 300); }
+  setTimeout(() => { if (n.isConnected) n.remove(); }, 10000);
+}
 
 async function init() {
   try {
+    startLiveClock();
     await ensureAdminSession();
     wireEventListeners();
     await changeView('overview');
+
+    // Refresh current view every 30s
     setInterval(async () => {
       await loadCurrentView({ silent: true });
     }, 30000);
+
+    // SSE for instant new-ticket alerts
+    connectSupportSSE();
+    connectWithdrawalSSE();
+    // Poll support tickets every 15s for badge count sync
+    await pollSupportTickets();
     await refreshWithdrawalNotifications({ silent: true });
-    setInterval(() => refreshWithdrawalNotifications({ silent: false }), 15000);
+    setInterval(pollSupportTickets, 15000);
+    setInterval(() => refreshWithdrawalNotifications({ silent: true }), 15000);
+
     showMessage('Admin dashboard loaded.', 'success');
   } catch (error) {
     showMessage(error.message || 'Unable to load admin dashboard.', 'error');
@@ -2760,17 +3236,262 @@ async function init() {
 
 init();
 
+// ─── Withdrawal Notifications ─────────────────────────────────────────────────
+let _wdSSE = null;
+let _wdPendingCount = 0;
+let _wdPendingList = [];
+
+function connectWithdrawalSSE() {
+  if (_wdSSE) { try { _wdSSE.close(); } catch(_) {} }
+  _wdSSE = new EventSource('/api/admin/withdrawal/live-notify');
+  _wdSSE.onmessage = (ev) => {
+    try {
+      const info = JSON.parse(ev.data);
+      if (info.type === 'new_withdrawal') {
+        _wdPendingList.unshift(info);
+        _wdPendingCount++;
+        updateWithdrawalBadge();
+        addNotif('withdrawal', 'New Withdrawal Request', `${info.amount || ''} ${info.currency || 'USDT'} from ${info.username || info.userId || 'User'}`);
+        showWithdrawalNotification(info);
+        if (state.currentView === 'wallet') {
+          loadWallet().catch(() => {});
+        }
+      }
+    } catch(_) {}
+  };
+  _wdSSE.onerror = () => setTimeout(connectWithdrawalSSE, 5000);
+}
+
 async function refreshWithdrawalNotifications({ silent = false } = {}) {
-  const payload = await apiRequestOptional('/wallet/withdrawals?status=PENDING&limit=50', { withdrawals: [] });
-  const rows = Array.isArray(payload.withdrawals) ? payload.withdrawals : [];
-  const nextCount = rows.length;
+  try {
+    const data = await apiRequest('/wallet/withdrawals?status=PENDING&limit=50');
+    const rows = Array.isArray(data.withdrawals) ? data.withdrawals : [];
+    _wdPendingList = rows;
+    _wdPendingCount = rows.length;
+    updateWithdrawalBadge();
+    if (rows.length > 0) {
+      addNotif('withdrawal', 'Pending Withdrawals', `${rows.length} withdrawal request(s) awaiting approval`);
+    }
+    if (!silent && state.currentView === 'wallet') {
+      await loadWallet();
+    }
+  } catch (_) {}
+}
 
-  if (!silent && nextCount > state.pendingWithdrawalCount) {
-    showMessage(`${nextCount - state.pendingWithdrawalCount} new withdrawal request(s) pending admin review.`, 'success');
+// ── Notification Bell ──────────────────────────────────────────
+var _notifs = [];
+
+function toggleNotifPanel() {
+  var panel = document.getElementById('notifPanel');
+  if (!panel) return;
+  var open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (!open) renderNotifPanel();
+}
+
+// Close panel on outside click
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('notifBellWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    var panel = document.getElementById('notifPanel');
+    if (panel) panel.style.display = 'none';
   }
+});
 
-  state.pendingWithdrawalCount = nextCount;
-  if (nextCount > 0 && state.currentView === 'wallet') {
-    await loadWallet();
+function addNotif(type, title, body, time) {
+  // avoid duplicates by title+type
+  if (_notifs.find(function(n){ return n.title === title && n.type === type; })) return;
+  _notifs.unshift({ type: type, title: title, body: body, time: time || new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) });
+  if (_notifs.length > 50) _notifs.length = 50;
+  updateNotifBadge();
+}
+
+function updateNotifBadge() {
+  var badge = document.getElementById('notifBellBadge');
+  if (!badge) return;
+  if (_notifs.length > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = _notifs.length > 99 ? '99+' : _notifs.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function clearAllNotifs() {
+  _notifs = [];
+  updateNotifBadge();
+  renderNotifPanel();
+}
+
+function renderNotifPanel() {
+  var list = document.getElementById('notifList');
+  var empty = document.getElementById('notifEmpty');
+  if (!list) return;
+  if (_notifs.length === 0) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  var icons = { withdrawal:'💸', deposit:'⬇️', kyc:'🪪', support:'💬', system:'⚙️' };
+  var colors = { withdrawal:'#f6465d', deposit:'#0ecb81', kyc:'#f0b90b', support:'#00e5ff', system:'#a78bfa' };
+  list.innerHTML = _notifs.map(function(n, i) {
+    var ic = icons[n.type] || '🔔';
+    var cl = colors[n.type] || '#fff';
+    return '<div onclick="handleNotifClick(\''+n.type+'\')" style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.1s;" onmouseenter="this.style.background=\'rgba(255,255,255,0.04)\'" onmouseleave="this.style.background=\'\'">'
+      + '<div style="width:32px;height:32px;border-radius:50%;background:'+cl+'18;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;">'+ic+'</div>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+n.title+'</div>'
+      + '<div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;line-height:1.4;">'+n.body+'</div>'
+      + '</div>'
+      + '<div style="font-size:10px;color:rgba(255,255,255,0.25);flex-shrink:0;margin-top:1px;">'+n.time+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function handleNotifClick(type) {
+  document.getElementById('notifPanel').style.display = 'none';
+  if (type === 'withdrawal') openWithdrawalPanel();
+  else if (type === 'kyc') showPanel('kyc');
+  else if (type === 'support') showPanel('notifications');
+  else if (type === 'deposit') showPanel('wallet');
+}
+
+// Poll for new alerts every 30s
+function pollNotifAlerts() {
+  apiRequest('/wallet/overview').then(function(data) {
+    if (!data) return;
+    if ((data.pendingWithdrawals || 0) > 0) addNotif('withdrawal', 'Pending Withdrawals', (data.pendingWithdrawals||0)+' withdrawal request(s) awaiting approval');
+  }).catch(function(){});
+  apiRequest('/wallet/withdrawals?status=PENDING&limit=50').then(function(data) {
+    var arr = data && (data.withdrawals || data.rows || []);
+    if (arr && arr.length > 0) addNotif('withdrawal', 'Pending Withdrawals', arr.length+' withdrawal request(s) awaiting approval');
+  }).catch(function(){});
+  apiRequest('/wallet/deposits?status=pending&limit=1').then(function(data) {
+    var arr = data && (data.deposits || data.rows || []);
+    if (arr && arr.length > 0) addNotif('deposit', 'Pending Deposits', arr.length+' deposit(s) need review');
+  }).catch(function(){});
+}
+setTimeout(pollNotifAlerts, 2000);
+setInterval(pollNotifAlerts, 30000);
+
+function updateWithdrawalBadge() {
+  const badge = document.getElementById('withdrawalBadge');
+  if (!badge) return;
+  if (_wdPendingCount > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = _wdPendingCount;
+    addNotif('withdrawal', 'Pending Withdrawals', _wdPendingCount + ' withdrawal request(s) awaiting approval');
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function showWithdrawalNotification(info) {
+  const n = document.createElement('div');
+  n.style.cssText = `position:fixed;top:18px;right:18px;z-index:10000;
+    background:#141821;border:1px solid rgba(0,229,255,0.3);border-radius:14px;
+    padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:340px;`;
+  n.innerHTML = `
+    <div style="width:38px;height:38px;border-radius:50%;background:rgba(0,229,255,0.1);border:2px solid rgba(0,229,255,0.3);
+                display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💸</div>
+    <div style="flex:1;min-width:0;">
+      <p style="margin:0 0 2px;font-size:12px;font-weight:700;color:#00e5ff;">New Withdrawal Request</p>
+      <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#eaecef;">${info.username || 'User'}</p>
+      <p style="margin:0 0 2px;font-size:13px;color:#eaecef;font-weight:700;">${info.amount} ${info.currency || 'USDT'} <span style="font-size:11px;color:#848e9c;">(${info.network || ''})</span></p>
+      <p style="margin:2px 0 0;font-size:10px;color:#848e9c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${info.address || ''}</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#00e5ff;font-weight:600;">👆 Click to review</p>
+    </div>
+    <button onclick="event.stopPropagation();this.closest('[style]').remove();"
+      style="background:none;border:none;color:#848e9c;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;">✕</button>`;
+  n.addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') return; n.remove(); openWithdrawalPanel(); });
+  document.body.appendChild(n);
+  setTimeout(() => { if (n.isConnected) n.remove(); }, 12000);
+}
+
+async function openWithdrawalPanel() {
+  _wdPendingCount = 0;
+  updateWithdrawalBadge();
+  // Load pending withdrawals from server
+  let withdrawals = [];
+  try {
+    const data = await apiRequest('/wallet/withdrawals?status=pending&limit=50');
+    withdrawals = data.withdrawals || [];
+  } catch(e) {}
+
+  // Remove existing panel
+  const existing = document.getElementById('wdPanel');
+  if (existing) { existing.remove(); return; }
+
+  const panel = document.createElement('div');
+  panel.id = 'wdPanel';
+  panel.style.cssText = `position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;
+    background:#0d1117;border-left:1px solid rgba(255,255,255,0.07);z-index:9998;
+    display:flex;flex-direction:column;animation:slideInRight 0.3s ease;overflow:hidden;`;
+
+  const rows = withdrawals.length === 0
+    ? `<div style="padding:2rem;text-align:center;color:#848e9c;">No pending withdrawals 🎉</div>`
+    : withdrawals.map(w => {
+      const id = String(w.requestId || w.id || '').trim();
+      const address = String(w.address || w.toAddress || w.to || '-').trim();
+      return `
+      <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:17px;font-weight:800;color:#eaecef;">${escapeHtml(w.amount)} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
+            <div style="font-size:11px;color:#848e9c;margin-top:3px;">Request: ${escapeHtml(id || '-')}</div>
+          </div>
+          ${statusBadge(w.status || 'PENDING')}
+        </div>
+        <div style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.03);display:grid;gap:8px;font-size:12px;color:#c9d1d9;">
+          <div><span style="color:#848e9c;">User:</span> ${escapeHtml(w.username || w.userId || 'User')}</div>
+          <div><span style="color:#848e9c;">User ID:</span> ${escapeHtml(w.userId || '-')}</div>
+          <div><span style="color:#848e9c;">Network:</span> ${escapeHtml(w.network || '-')}</div>
+          <div style="word-break:break-all;"><span style="color:#848e9c;">Address:</span> ${escapeHtml(address)}</div>
+          <div><span style="color:#848e9c;">Created:</span> ${escapeHtml(formatDate(w.createdAt))}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+          <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
+            style="background:#02c076;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Approve</button>
+          <button onclick="wdAction('${escapeHtml(id)}','REJECTED',this)"
+            style="background:#f6465d;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Reject</button>
+        </div>
+      </div>`;
+    }).join('');
+
+  panel.innerHTML = `
+    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#eaecef;">💸 Withdrawal Requests</div>
+        <div style="font-size:12px;color:#848e9c;">${withdrawals.length} pending</div>
+      </div>
+      <button onclick="document.getElementById('wdPanel').remove();"
+        style="background:none;border:none;color:#848e9c;cursor:pointer;font-size:20px;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;">${rows}</div>`;
+
+  document.body.appendChild(panel);
+}
+
+async function wdAction(withdrawalId, decision, btn) {
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    await apiRequest(`/wallet/withdrawals/${encodeURIComponent(withdrawalId)}/review`, {
+      method: 'POST',
+      body: JSON.stringify({ decision, reason: decision === 'APPROVED' ? 'Approved by admin' : 'Rejected by admin' })
+    });
+    const row = btn.closest('div[style*="border-bottom"]');
+    if (row) {
+      row.style.opacity = '0.4';
+      row.innerHTML = `<div style="padding:8px 0;font-size:12px;color:${decision==='APPROVED'?'#02c076':'#f6465d'};font-weight:700;">
+        ${decision==='APPROVED'?'✓ Approved — balance deducted':'✕ Rejected — funds returned'}</div>`;
+    }
+    showMessage(decision === 'APPROVED' ? 'Withdrawal approved. Balance deducted.' : 'Withdrawal rejected. Funds returned to user.', decision === 'APPROVED' ? 'success' : 'error');
+  } catch(e) {
+    showMessage(e.message || 'Action failed', 'error');
+    btn.disabled = false;
+    btn.textContent = decision === 'APPROVED' ? '✓ Approve' : '✕ Reject';
   }
 }

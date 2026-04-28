@@ -15,7 +15,7 @@
     "mobile:icons": "npx @capacitor/assets generate --android"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=18"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",

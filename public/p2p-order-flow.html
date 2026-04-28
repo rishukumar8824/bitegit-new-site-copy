@@ -594,8 +594,8 @@
       <div class="stat-row"><span class="slabel">Account signup time</span><span class="sval" id="stat-signup">—</span></div>
     </div>
 
-    <div class="bottom-fixed">
-      <button class="btn-primary teal" id="buyBtn">Buy USDT with 0 fees</button>
+    <div class="bottom-fixed" style="position:sticky;bottom:0;z-index:50;left:unset;transform:none;width:100%;max-width:100%;">
+      <button class="btn-primary teal" id="buyBtn" style="touch-action:manipulation;-webkit-tap-highlight-color:transparent;">Buy USDT with 0 fees</button>
     </div>
   </div>
 
@@ -1149,7 +1149,7 @@
   </div>
 
   <!-- Loading overlay -->
-  <div id="loadingOverlay" style="position:fixed;inset:0;background:#000;z-index:999;display:flex;align-items:center;justify-content:center;transition:opacity 0.15s;">
+  <div id="loadingOverlay" style="position:fixed;inset:0;background:#000;z-index:999;display:flex;align-items:center;justify-content:center;transition:opacity 0.15s;pointer-events:none;">
     <div style="width:32px;height:32px;border:2px solid #222;border-top-color:#00d4d4;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
   </div>
   <style>@keyframes spin{to{transform:rotate(360deg)}} @keyframes _spin{to{transform:rotate(360deg)}}</style>
@@ -1433,8 +1433,10 @@
   function _syncOrderIntoOrdersCache(order) {
     if (!order || !order.id) return;
     try {
-      var raw = JSON.parse(localStorage.getItem(ORDERS_CACHE_KEY) || '[]');
-      var list = Array.isArray(raw) ? raw : [];
+      var raw = JSON.parse(localStorage.getItem(ORDERS_CACHE_KEY) || 'null');
+      // p2p.js stores cache as { ts, userId, orders } — preserve that format
+      var wrapper = (raw && !Array.isArray(raw) && raw.orders) ? raw : { ts: Date.now(), userId: '', orders: [] };
+      var list = Array.isArray(wrapper.orders) ? wrapper.orders : [];
       var found = false;
       list = list.map(function(item) {
         if (item && item.id === order.id) {
@@ -1450,24 +1452,10 @@
           status: String(order.status || '').toUpperCase()
         }));
       }
-      localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(list.slice(0, 80)));
+      wrapper.orders = list.slice(0, 80);
+      wrapper.ts = wrapper.ts || Date.now();
+      localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(wrapper));
     } catch (_) {}
-  }
-
-  function _readOrderFromOrdersCache(orderId) {
-    var normalizedOrderId = String(orderId || '').trim();
-    if (!normalizedOrderId) return null;
-    try {
-      var raw = JSON.parse(localStorage.getItem(ORDERS_CACHE_KEY) || '[]');
-      var list = Array.isArray(raw) ? raw : [];
-      for (var i = 0; i < list.length; i += 1) {
-        var item = list[i];
-        if (item && String(item.id || '').trim() === normalizedOrderId) {
-          return item;
-        }
-      }
-    } catch (_) {}
-    return null;
   }
 
   function _warmChatMessages(orderId) {
@@ -1773,29 +1761,21 @@
     var requestedScreen = String(params.get('screen') || '').trim();
     _entrySource = String(params.get('source') || (orderId ? 'orders' : 'ad')).trim().toLowerCase() || 'ad';
 
-    if (orderId) {
-      loadExistingOrder(orderId, openChat, requestedScreen);
-    } else {
-      showScreen('screen-buy');
-      loadAd();
-      hideLoading();
-    }
-
+    // Always resolve auth FIRST so isSeller is determined correctly on the very first
+    // call to applyOrderAndShow — prevents seller seeing buyer's transfer screen briefly.
     checkAuth().then(function() {
-      if (!currentUser) {
-        return;
-      }
       if (orderId) {
         if (currentOrder) {
+          // Order already loaded (rare fast-path)
           applyOrderAndShow(currentOrder, openChat, requestedScreen);
           hideLoading();
         } else {
           loadExistingOrder(orderId, openChat, requestedScreen);
         }
-        return;
-      }
-      if (!orderId && !currentAd) {
+      } else {
+        showScreen('screen-buy');
         loadAd();
+        hideLoading();
       }
     });
   });
@@ -2117,7 +2097,73 @@
 
     if (s === 'RELEASED' || s === 'COMPLETED') {
       if (primaryBtn) primaryBtn.style.display = 'none';
+      // Show wallet balance row on the completion screen
+      _showCompletionWalletRow(s);
     }
+  }
+
+  function _showCompletionWalletRow(status) {
+    var walletRowId = 'cn-wallet-credit-row';
+    // Remove old row if exists
+    var old = document.getElementById(walletRowId);
+    if (old) old.remove();
+
+    // Build row
+    var row = document.createElement('div');
+    row.id = walletRowId;
+    row.className = 'detail-row';
+    row.style.cssText = 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.07);';
+
+    var labelEl = document.createElement('span');
+    labelEl.className = 'label';
+    var valueEl = document.createElement('span');
+    valueEl.className = 'value';
+    valueEl.style.color = '#00c896';
+
+    var s = String(status || '').toUpperCase();
+    var cryptoAmt = Number(currentOrder && (currentOrder.cryptoAmount || currentOrder.assetAmount || currentOrder.escrowAmount) || 0);
+    var asset = String((currentOrder && currentOrder.asset) || 'USDT').toUpperCase();
+
+    if (isSeller) {
+      labelEl.textContent = 'Amount released';
+      valueEl.textContent = '- ' + cryptoAmt.toFixed(4) + ' ' + asset;
+      valueEl.style.color = '#ef4444';
+    } else {
+      labelEl.textContent = 'Wallet credited';
+      valueEl.textContent = '+ ' + cryptoAmt.toFixed(4) + ' ' + asset;
+    }
+
+    row.appendChild(labelEl);
+    row.appendChild(valueEl);
+
+    // Insert before the divider or at end of detail rows
+    var divider = document.querySelector('#screen-canceled .divider');
+    if (divider) {
+      divider.parentNode.insertBefore(row, divider);
+    }
+
+    // Fetch live wallet balance and append to same row
+    fetch('/api/p2p/wallet', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.wallet) return;
+        var bal = Number(data.wallet.availableBalance || data.wallet.balance || 0);
+        var balRow = document.createElement('div');
+        balRow.className = 'detail-row';
+        balRow.style.cssText = 'margin-top:2px;';
+        var lbl = document.createElement('span');
+        lbl.className = 'label';
+        lbl.textContent = 'Wallet balance';
+        var val = document.createElement('span');
+        val.className = 'value';
+        val.style.cssText = 'font-size:13px;color:rgba(255,255,255,0.7);';
+        val.textContent = bal.toFixed(4) + ' ' + asset;
+        balRow.appendChild(lbl);
+        balRow.appendChild(val);
+        if (divider) {
+          divider.parentNode.insertBefore(balRow, divider);
+        }
+      }).catch(function(){});
   }
 
   function applyOrderAndShow(order, forceOpenChat, requestedScreen) {
@@ -2125,7 +2171,15 @@
     _cacheOrderMessagesFromOrder(order);
     _syncOrderIntoOrdersCache(order);
     syncOrderUrl(requestedScreen);
-    isSeller = resolveCurrentUserRole(order) === 'seller';
+    // Prefer server-set myRole (100% reliable) over client-side guessing
+    if (order.myRole === 'seller' || order.myRole === 'buyer') {
+      isSeller = order.myRole === 'seller';
+    } else {
+      isSeller = resolveCurrentUserRole(order) === 'seller';
+      // Persist computed role so next load from cache uses it directly
+      currentOrder.myRole = isSeller ? 'seller' : 'buyer';
+      try { localStorage.setItem('p2p_order_' + order.id, JSON.stringify(currentOrder)); } catch(_) {}
+    }
     renderOrderDetails();
     startTimerFromOrder(order);
     _warmChatMessages(order && order.id);
@@ -2191,54 +2245,49 @@
 
   // Load existing order by ID (from pending orders list)
   async function loadExistingOrder(orderId, forceOpenChat, requestedScreen) {
-    // Show cached order instantly, then refresh quietly in background.
-    var cachedOrder = null;
+    // Show from localStorage cache instantly
     try {
       var cached = localStorage.getItem('p2p_order_' + orderId);
       if (cached) {
-        cachedOrder = JSON.parse(cached);
-      }
-    } catch (_) {}
-    if (!cachedOrder) {
-      cachedOrder = _readOrderFromOrdersCache(orderId);
-    }
-    if (cachedOrder) {
-      applyOrderAndShow(cachedOrder, forceOpenChat, requestedScreen);
-      cacheCurrentOrder();
-      hideLoading();
-      _warmChatMessages(orderId);
+        var cachedOrder = JSON.parse(cached);
+        applyOrderAndShow(cachedOrder, forceOpenChat, requestedScreen);
+        hideLoading();
+        _warmChatMessages(orderId);
+        // Verify & refresh from API in background (silent)
       fetchJsonWithTimeout('/api/p2p/orders/' + encodeURIComponent(orderId), { credentials: 'include' }, 7000)
-        .then(function(result){
-          if (!result || !result.response || !result.response.ok) return null;
-          return result.payload || null;
-        })
-        .then(function(data){
-          if (!data) return;
-          var fresh = data.order || data;
-          if (_isPaidLikeStatus(fresh.status)) {
-            _clearPaidPending(orderId);
-          }
-          if (_shouldKeepLocalPaidState(cachedOrder, fresh)) {
-            currentOrder = cachedOrder;
-            cacheCurrentOrder();
-            _retryPendingPaidSync(orderId, forceOpenChat, requestedScreen);
-            return;
-          }
-          if (fresh.status !== cachedOrder.status) {
-            try { localStorage.setItem('p2p_order_' + orderId, JSON.stringify(fresh)); } catch(e){}
-            applyOrderAndShow(fresh, forceOpenChat, requestedScreen);
-          } else {
-            currentOrder = Object.assign({}, cachedOrder, fresh);
-            if (Array.isArray(fresh.messages) && fresh.messages.length) {
-              currentOrder.messages = _mergeMessages(cachedOrder.messages, fresh.messages);
+          .then(function(result){
+            if (!result || !result.response || !result.response.ok) return null;
+            return result.payload || null;
+          })
+          .then(function(data){
+            if (!data) return;
+            var fresh = data.order || data;
+            if (_isPaidLikeStatus(fresh.status)) {
+              _clearPaidPending(orderId);
             }
-            cacheCurrentOrder();
-            syncOrderUrl(requestedScreen);
-            startTimerFromOrder(fresh);
-          }
-        }).catch(function(){});
-      return;
-    }
+            if (_shouldKeepLocalPaidState(cachedOrder, fresh)) {
+              currentOrder = cachedOrder;
+              cacheCurrentOrder();
+              _retryPendingPaidSync(orderId, forceOpenChat, requestedScreen);
+              return;
+            }
+            if (fresh.status !== cachedOrder.status) {
+              // status changed — re-apply
+              try { localStorage.setItem('p2p_order_' + orderId, JSON.stringify(fresh)); } catch(e){}
+              applyOrderAndShow(fresh, forceOpenChat, requestedScreen);
+            } else {
+              currentOrder = Object.assign({}, cachedOrder, fresh);
+              if (Array.isArray(fresh.messages) && fresh.messages.length) {
+                currentOrder.messages = _mergeMessages(cachedOrder.messages, fresh.messages);
+              }
+              cacheCurrentOrder();
+              syncOrderUrl(requestedScreen);
+              startTimerFromOrder(fresh);
+            }
+          }).catch(function(){});
+        return;
+      }
+    } catch(e) {}
 
     try {
       var orderResult = await fetchJsonWithTimeout('/api/p2p/orders/' + encodeURIComponent(orderId), { credentials: 'include' }, 8000);
@@ -2318,9 +2367,7 @@
         calcEquiv();
       }
     });
-    var _doBuy = mkDebounce(withLock(doCreateOrder));
-    document.getElementById('buyBtn').addEventListener('click', _doBuy);
-    document.getElementById('buyBtn').addEventListener('touchend', function(e) { e.preventDefault(); _doBuy(); });
+    document.getElementById('buyBtn').onclick = function() { doCreateOrder(); };
 
     // Screen 2: Order Generated
     document.getElementById('ogBackBtn').addEventListener('click', function() {
@@ -2713,7 +2760,7 @@
     setText('buy-price', '₹' + price.toFixed(2));
     var sellerName = ad.createdByUsername || ad.advertiser || 'SELLER';
     setText('buy-seller-name', sellerName);
-    setText('buy-terms', ad.terms || ad.remarks || '3rd party payment not allowed');
+    setText('buy-terms', ad.remark || ad.terms || ad.remarks || '');
     setText('stat-pay-within', (ad.payWindow || 15) + ' minute(s)');
     setText('stat-historical', 'Buy ' + (ad.completedBuyOrders || 0) + '   Sell ' + (ad.completedSellOrders || 0));
     setText('stat-avg-release', (ad.avgReleaseTime || '< 5') + ' min');
@@ -2726,11 +2773,45 @@
     // Avatar
     var avatarEl = document.getElementById('buySellerAvatar');
     if (avatarEl) avatarEl.innerHTML = sellerName.charAt(0).toUpperCase() + '<div class="dot"></div>';
-    // Payment method
+    // Payment method — show all options as clickable chips if multiple
     if (ad.payments && ad.payments.length > 0) {
       setText('selectedPayment', ad.payments[0]);
+      var psEl = document.getElementById('paymentSelect');
+      if (psEl && ad.payments.length > 1) {
+        var chipsHtml = ad.payments.map(function(pm, i) {
+          return '<span data-pm="'+escHtml(pm)+'" style="cursor:pointer;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid '+(i===0?'#00c2b2':'rgba(255,255,255,0.15)')+';color:'+(i===0?'#00c2b2':'#aaa')+';background:'+(i===0?'rgba(0,194,178,0.08)':'transparent')+';transition:all 0.15s;">'+escHtml(pm)+'</span>';
+        }).join('');
+        psEl.innerHTML = '<div id="pmChips" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0;">'+chipsHtml+'</div>';
+        psEl.addEventListener('click', function(e) {
+          var chip = e.target.closest('[data-pm]');
+          if (!chip) return;
+          var selected = chip.getAttribute('data-pm');
+          setText('selectedPayment', selected);
+          psEl.querySelectorAll('[data-pm]').forEach(function(c) {
+            var active = c.getAttribute('data-pm') === selected;
+            c.style.borderColor = active ? '#00c2b2' : 'rgba(255,255,255,0.15)';
+            c.style.color = active ? '#00c2b2' : '#aaa';
+            c.style.background = active ? 'rgba(0,194,178,0.08)' : 'transparent';
+          });
+        });
+      }
     }
     calcEquiv();
+    // Hide buy button if current user is the ad owner (seller shouldn't buy own ad)
+    var buyBtn = document.getElementById('buyBtn');
+    if (buyBtn && currentUser && currentAd) {
+      var adOwnerId = String(currentAd.createdByUserId || '').trim();
+      var adOwnerName = String(currentAd.createdByUsername || currentAd.advertiser || '').trim().toLowerCase();
+      var myId = String(currentUser.id || currentUser.userId || '').trim();
+      var myName = String(currentUser.username || '').trim().toLowerCase();
+      var isOwner = (adOwnerId && adOwnerId === myId) || (adOwnerName && adOwnerName === myName);
+      if (isOwner) {
+        buyBtn.disabled = true;
+        buyBtn.textContent = 'This is your ad';
+        buyBtn.style.opacity = '0.45';
+        buyBtn.style.cursor = 'not-allowed';
+      }
+    }
   }
 
   // ============================================================
@@ -2777,9 +2858,7 @@
     if (!currentUser && PREVIEW_MODE) {
       currentUser = normalizeCurrentUserPayload(PREVIEW_USER);
     }
-    if (!currentUser) { showLoginModal(true); return; }
     var btn = document.getElementById('buyBtn');
-    if (btn && btn._creating) return;
 
     var val = parseFloat(document.getElementById('buyAmount').value) || 0;
     if (val <= 0) { showToast('Enter a valid amount'); return; }
@@ -2789,34 +2868,23 @@
     var fiatAmt = isFiat ? val : Math.round(val * price);
     var cryptoAmt = isFiat ? (val / price) : val;
 
-    // Validate min/max
     if (currentAd) {
       var minF = Number(currentAd.minLimit || 0);
       var maxF = Number(currentAd.maxLimit || Infinity);
-      var checkFiat = isFiat ? fiatAmt : fiatAmt;
-      if (checkFiat < minF || checkFiat > maxF) {
+      if (fiatAmt < minF || fiatAmt > maxF) {
         showToast('Amount must be between ₹' + minF + ' - ₹' + maxF);
         return;
       }
     }
 
-    var payment = document.getElementById('selectedPayment').textContent || 'UPI';
+    var payment = (document.getElementById('selectedPayment') || {}).textContent || 'UPI';
 
-    // Button feedback
     if (btn) {
-      btn._creating = true;
-      if (navigator.vibrate) {
-        try { navigator.vibrate(12); } catch (_) {}
-      }
-      btn.style.transform = 'scale(0.95)';
-      btn.style.transition = 'transform 0.12s ease';
-      btn.style.opacity = '0.85';
-      btn.style.boxShadow = '0 24px 44px rgba(16,213,207,0.22)';
       btn.textContent = 'Creating order...';
-      setTimeout(function() { btn.style.transform = ''; }, 150);
+      btn.style.opacity = '0.7';
     }
 
-    if (currentAd && currentAd.id) {
+    try {
       if (PREVIEW_MODE) {
         currentOrder = buildPreviewOrder(fiatAmt, cryptoAmt, payment);
         try { localStorage.setItem('p2p_order_' + currentOrder.id, JSON.stringify(currentOrder)); } catch(_) {}
@@ -2824,58 +2892,31 @@
         applyOrderAndShow(currentOrder, false, '');
         hideLoading();
         showToast('Preview order opened');
-        if (btn) {
-          btn._creating = false;
-          btn.style.opacity = '';
-          btn.style.boxShadow = '';
-          btn.textContent = 'Buy USDT with 0 fees';
-        }
         return;
       }
-      try {
-        var body = { adId: currentAd.id, paymentMethod: payment };
-        if (isFiat) body.fiatAmount = fiatAmt; else body.cryptoAmount = cryptoAmt;
-        var createResult = await fetchJsonWithTimeout('/api/p2p/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(body)
-        }, 12000);
-        var res = createResult.response;
-        var data = createResult.payload || {};
-        if (res.ok) {
-          currentOrder = data.order || data;
-          if (data && data.existingOrder) {
-            showToast(data.message || 'You already have an active order. Opening it now.');
-          }
-          applyOrderAndShow(currentOrder, false, '');
-          return;
-        }
-        showToast(data.message || 'Order failed');
-      } catch (e) {
-        if (e && e.name === 'AbortError') {
-          showToast('Request took too long. Please check Orders once.');
-        } else {
-          showToast('Network error');
-        }
+      if (!currentAd || !currentAd.id) { showToast('Ad not loaded. Please go back and try again.'); return; }
+      var body = { adId: currentAd.id, paymentMethod: payment };
+      if (isFiat) body.fiatAmount = fiatAmt; else body.cryptoAmount = cryptoAmt;
+      var createResult = await fetchJsonWithTimeout('/api/p2p/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body)
+      }, 12000);
+      var res = createResult.response;
+      var data = createResult.payload || {};
+      if (res.ok) {
+        currentOrder = data.order || data;
+        applyOrderAndShow(currentOrder, false, '');
+        cacheCurrentOrder();
+        return;
       }
-      finally {
-        if (btn) {
-          btn._creating = false;
-          btn.style.opacity = '';
-          btn.style.boxShadow = '';
-          btn.textContent = 'Buy USDT with 0 fees';
-        }
-      }
-      return;
+      showToast(data.message || 'Order failed ('+res.status+')');
+    } catch (e) {
+      showToast(e && e.name === 'AbortError' ? 'Request timed out. Try again.' : 'Error: ' + (e && e.message || 'unknown'));
+    } finally {
+      if (btn) { btn.textContent = 'Buy USDT with 0 fees'; btn.style.opacity = ''; }
     }
-    if (btn) {
-      btn._creating = false;
-      btn.style.opacity = '';
-      btn.style.boxShadow = '';
-      btn.textContent = 'Buy USDT with 0 fees';
-    }
-    showToast('No ad loaded');
   }
 
   // ============================================================
@@ -2915,6 +2956,49 @@
       setText('tf-vpa', o.sellerPaymentDetails.vpa || o.sellerPaymentDetails.accountNumber || 'ask in chat');
       setText('tf-vpa-label', payment + ' VPA / Account');
     }
+    // QR button — use sellerQrCode stored directly on order
+    (function() {
+      var qrUrl = o.sellerQrCode || '';
+      var qrBtn = document.getElementById('tf-qr-btn');
+      if (qrBtn) qrBtn.remove();
+      if (qrUrl) {
+        var pmSpan = document.getElementById('tf-payment-method');
+        if (pmSpan && pmSpan.parentNode) {
+          var btn = document.createElement('span');
+          btn.id = 'tf-qr-btn';
+          btn.title = 'View Payment QR';
+          btn.style.cssText = 'cursor:pointer;margin-left:8px;display:inline-flex;align-items:center;vertical-align:middle;opacity:0.75;';
+          btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>';
+          btn.addEventListener('click', function() {
+            var ov = document.createElement('div');
+            ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;';
+            ov.innerHTML = '<img src="'+qrUrl+'" style="max-width:280px;max-height:280px;border-radius:12px;border:2px solid #00c2b2;"/>'
+              +'<p style="color:#fff;font-size:14px;margin:0;font-weight:600;">Scan to pay</p>'
+              +'<button style="background:#00c2b2;color:#000;border:none;border-radius:8px;padding:10px 28px;font-weight:700;cursor:pointer;font-size:14px;">Close</button>';
+            ov.querySelector('button').addEventListener('click', function(){ ov.remove(); });
+            ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+            document.body.appendChild(ov);
+          });
+          pmSpan.parentNode.appendChild(btn);
+        }
+      }
+    })();
+    // Show seller terms in transfer screen
+    (function() {
+      var terms = o.sellerTerms || '';
+      var el = document.getElementById('tf-seller-terms');
+      if (!el && terms) {
+        var note = document.getElementById('tf-account-note');
+        if (note) {
+          el = document.createElement('p');
+          el.id = 'tf-seller-terms';
+          el.style.cssText = 'margin:10px 20px 0;font-size:13px;color:#f6a623;background:rgba(246,166,35,0.08);border-radius:8px;padding:8px 12px;';
+          note.parentNode.insertBefore(el, note.nextSibling);
+        }
+      }
+      if (el) el.textContent = terms ? '📋 ' + terms : '';
+    })();
+
     if (currentUser && currentUser.username) {
       setText('tf-account-note',
         'Please use an account under your name (' + currentUser.username + ') to make the transfer. If the paying account and your personal information do not match, the seller may request a refund or cancel the order.');
@@ -2981,6 +3065,7 @@
       return String(existing && existing.id || '') === String(msg.id || '');
     });
     if (!exists) {
+      msg._local = true;
       msgs.push(msg);
       _saveCachedChatMessages(currentOrder.id, msgs);
     }
@@ -3227,7 +3312,7 @@
         var fiatAmt = Number(currentOrder.fiatAmount || currentOrder.amountInr || 0);
         amtEl.textContent = '₹ ' + fmtInr(fiatAmt) + ' · ' + Number(currentOrder.cryptoAmount || 0).toFixed(4) + ' USDT';
       }
-      if (inputBar) inputBar.style.display = 'none';
+      if (inputBar) inputBar.style.display = '';
       // Show rating modal 1.5s after completion (non-blocking UX)
       setTimeout(openRatingModal, 1500);
     } else if (isDisputed) {
@@ -3501,6 +3586,35 @@
     }
   }
 
+  // ── Wallet credit banner — shown to buyer after seller releases ──────────
+  function showWalletCreditBanner(creditAmt, asset) {
+    // 1. Toast notification
+    showToast('+ ' + Number(creditAmt).toFixed(4) + ' ' + asset + ' credited to your wallet!');
+    // 2. Update chatCompletedAmount to show credit prominently
+    var amtEl = document.getElementById('chatCompletedAmount');
+    if (amtEl) {
+      amtEl.textContent = '+ ' + Number(creditAmt).toFixed(4) + ' ' + asset + ' credited to your wallet';
+      amtEl.style.color = '#00c896';
+    }
+    // 3. Fetch live wallet balance and show below completed bar
+    fetch('/api/p2p/wallet', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.wallet) return;
+        var bal = Number(data.wallet.availableBalance || data.wallet.balance || 0);
+        var balEl = document.getElementById('chatWalletBalAfterRelease');
+        if (!balEl) {
+          balEl = document.createElement('div');
+          balEl.id = 'chatWalletBalAfterRelease';
+          balEl.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px;';
+          var completedBar = document.getElementById('chatCompletedBar');
+          var inner = completedBar && completedBar.querySelector('div');
+          if (inner) inner.appendChild(balEl);
+        }
+        balEl.textContent = 'Wallet balance: ' + bal.toFixed(4) + ' ' + asset;
+      }).catch(function(){});
+  }
+
   function loadChatMessages() {
     if (!currentOrder || !currentOrder.id) return;
     startOrderSSE();
@@ -3551,6 +3665,14 @@
           cacheCurrentOrder();
           startTimerFromOrder(order);
           setupChatForRole(order.status);
+          // When seller releases — buyer side: show wallet credit + fetch fresh balance
+          var st = String(order.status || '').toUpperCase();
+          if (st === 'COMPLETED' || st === 'RELEASED') {
+            var creditAmt = Number(order.cryptoAmount || order.assetAmount || order.escrowAmount || 0);
+            if (!isSeller && creditAmt > 0) {
+              showWalletCreditBanner(creditAmt, String(order.asset || 'USDT'));
+            }
+          }
         }
       } catch(err) {}
     });
@@ -3781,10 +3903,20 @@
       .then(function(data) {
         _polling = false;
         if (!data) return;
-        var msgs = data.messages || data;
-        if (Array.isArray(msgs)) {
-          _saveCachedChatMessages(currentOrder.id, msgs);
-          _renderChatMessagesList(msgs);
+        var serverMsgs = data.messages || data;
+        if (Array.isArray(serverMsgs)) {
+          // Preserve locally-injected messages (5-min warning, expiry, etc.)
+          var cachedMsgs = _loadCachedChatMessages(currentOrder.id);
+          var localOnly = cachedMsgs.filter(function(m) {
+            return m._local && !serverMsgs.some(function(s) { return s.id === m.id; });
+          });
+          var merged = serverMsgs.concat(localOnly).sort(function(a, b) {
+            var ta = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt || 0).getTime();
+            var tb = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt || 0).getTime();
+            return ta - tb;
+          });
+          _saveCachedChatMessages(currentOrder.id, merged);
+          _renderChatMessagesList(merged);
         }
       }).catch(function() { _polling = false; });
   }
@@ -3814,7 +3946,9 @@
 
   function closeRatingModal() {
     document.getElementById('rating-overlay').classList.remove('active');
-    _ratingShown = true; // don't re-open this session
+    _ratingShown = true;
+    // Save skip to localStorage so rating never re-appears for this order
+    try { if (currentOrder) localStorage.setItem('p2p_rated_' + currentOrder.id, 'skipped'); } catch(_) {}
   }
 
   function selectStar(n) {

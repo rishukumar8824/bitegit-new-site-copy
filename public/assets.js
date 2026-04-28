@@ -16,7 +16,6 @@ const panels = Array.from(document.querySelectorAll('[data-assets-panel]'));
 const depositBtn = document.getElementById('assetsDepositBtn');
 const withdrawBtn = document.getElementById('assetsWithdrawBtn');
 const transferBtn = document.getElementById('assetsTransferBtn');
-const historyBtn = document.getElementById('assetsHistoryBtn');
 
 const depositModal = document.getElementById('depositModal');
 const withdrawModal = document.getElementById('withdrawModal');
@@ -40,10 +39,18 @@ const withdrawScannerCloseBtn = document.getElementById('assetsWithdrawScannerCl
 const withdrawAmountInput = document.getElementById('assetsWithdrawAmount');
 const withdrawResultEl = document.getElementById('assetsWithdrawResult');
 const withdrawSubmitBtn = document.getElementById('assetsWithdrawSubmitBtn');
-const historySectionEl = document.getElementById('assetsHistorySection');
-const withdrawHistoryListEl = document.getElementById('assetsWithdrawHistoryList');
-const withdrawHistoryRefreshBtn = document.getElementById('assetsWithdrawHistoryRefreshBtn');
-const historyTabButtons = Array.from(document.querySelectorAll('[data-history-tab]'));
+const historyScreen = document.getElementById('historyScreen');
+const historyBackBtn = document.getElementById('historyBackBtn');
+const histDepositPanel = document.getElementById('histDepositPanel');
+const histWithdrawalPanel = document.getElementById('histWithdrawalPanel');
+const histDepositList = document.getElementById('histDepositList');
+const histDepositEmpty = document.getElementById('histDepositEmpty');
+const histWithdrawalList = document.getElementById('histWithdrawalList');
+const histWithdrawalEmpty = document.getElementById('histWithdrawalEmpty');
+const histDepositRefreshBtn = document.getElementById('histDepositRefreshBtn');
+const histWithdrawalRefreshBtn = document.getElementById('histWithdrawalRefreshBtn');
+const assetsHistoryBtn = document.getElementById('assetsHistoryBtn');
+const histTabs = Array.from(document.querySelectorAll('[data-hist-tab]'));
 
 const WALLET_ENDPOINTS = ['/api/wallet/summary', '/api/wallet', '/api/p2p/wallet'];
 const WITHDRAW_ENDPOINTS = [
@@ -114,9 +121,9 @@ const state = {
     USDT: 0
   },
   depositWallets: [],
-  deposits: [],
   withdrawals: [],
-  activeHistoryTab: 'withdrawal',
+  deposits: [],
+  histTab: 'deposit',
   scanner: {
     active: false,
     stream: null,
@@ -351,7 +358,7 @@ function shortenValue(value, start = 8, end = 6) {
 
 function getWithdrawalStatusView(rawStatus) {
   const normalized = String(rawStatus || 'pending').trim().toLowerCase();
-  if (['approved', 'sent', 'completed', 'complete', 'success', 'confirmed', 'credited'].includes(normalized)) {
+  if (['approved', 'sent', 'completed', 'complete', 'success'].includes(normalized)) {
     return { label: 'Approved', tone: 'approved' };
   }
   if (['rejected', 'cancelled', 'canceled', 'failed'].includes(normalized)) {
@@ -646,18 +653,26 @@ function renderAssetList(container, panelKey) {
     return;
   }
 
-  container.innerHTML = rows.map((item) => {
+  // Only show coins with balance > 0 (or deposit configured)
+  const visibleRows = rows.filter((item) => {
     const balance = panelKey === 'funding' && item.symbol === 'USDT'
       ? toNumber(state.balances.funding)
       : item.balance;
-    const badgeLabel = item.hasDeposit ? 'Live' : balance > 0 ? 'Held' : 'Watch';
-    const badgeTone = item.hasDeposit ? 'live' : balance > 0 ? 'held' : 'watch';
-    const subtitle =
-      item.hasDeposit
-        ? 'Admin deposit ready'
-        : panelKey === 'funding'
-          ? 'Funding wallet preview'
-          : 'Market asset';
+    return balance > 0 || item.hasDeposit;
+  });
+
+  if (!visibleRows.length) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = visibleRows.map((item) => {
+    const balance = panelKey === 'funding' && item.symbol === 'USDT'
+      ? toNumber(state.balances.funding)
+      : item.balance;
+    const badgeLabel = balance > 0 ? 'Held' : '';
+    const badgeTone = balance > 0 ? 'held' : '';
+    const subtitle = panelKey === 'funding' ? 'Funding' : item.name;
 
     return `
       <div class="asset-row">
@@ -845,134 +860,136 @@ async function loadWalletSummary() {
   }
 }
 
-function renderWithdrawalHistory() {
-  if (!withdrawHistoryListEl) {
-    return;
-  }
+const SVG_DEP = `<svg viewBox="0 0 24 24" fill="none" stroke="#1bd67d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 19h14"/></svg>`;
+const SVG_WD  = `<svg viewBox="0 0 24 24" fill="none" stroke="#ffd87a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="m17 14-5-5-5 5"/><path d="M5 5h14"/></svg>`;
 
-  historyTabButtons.forEach((button) => {
-    const tab = String(button.getAttribute('data-history-tab') || '').trim();
-    const isActive = tab === state.activeHistoryTab;
-    button.classList.toggle('active', isActive);
-    button.setAttribute('aria-selected', isActive ? 'true' : 'false');
-  });
-
-  const isDepositHistory = state.activeHistoryTab === 'deposit';
-  const rows = isDepositHistory
-    ? (Array.isArray(state.deposits) ? state.deposits : [])
-    : (Array.isArray(state.withdrawals) ? state.withdrawals : []);
-
-  if (!rows.length) {
-    withdrawHistoryListEl.innerHTML = `<p class="withdraw-history-empty">No ${isDepositHistory ? 'deposit' : 'withdrawal'} history yet.</p>`;
-    return;
-  }
-
-  withdrawHistoryListEl.innerHTML = rows
-    .map((row) => {
-      const status = getWithdrawalStatusView(row.status);
-      const requestId = String(row.requestId || row.id || '').trim();
-      const address = String(row.address || row.toAddress || row.to || row.depositAddress || '').trim();
-      const network = normalizeNetwork(row.network || row.chain || row.metadata?.network) || 'USDT';
-      const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
-      const createdAt = formatAssetDate(row.createdAt || row.created_at);
-      const title = isDepositHistory ? 'Deposit' : 'Withdrawal';
-      const txHash = String(row.txHash || row.txid || '').trim();
-      const bottomRight = isDepositHistory
-        ? (txHash ? shortenValue(txHash, 10, 8) : 'Tx pending')
-        : shortenValue(address || 'Address pending', 10, 8);
-
-      return `
-        <article class="withdraw-history-row">
-          <div class="withdraw-history-main">
-            <div class="withdraw-history-coin">
-              <span class="history-coin-icon">
-                <img src="${getAssetIconUrl(currency.toLowerCase())}" alt="${escapeHtml(currency)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
-                <span class="history-coin-fallback">${escapeHtml(currency.slice(0, 4))}</span>
-              </span>
-              <div>
-                <p class="withdraw-history-amount">${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</p>
-                <p class="withdraw-history-id">${escapeHtml(title)} #${escapeHtml(shortenValue(requestId || title.toLowerCase(), 12, 6))}</p>
-              </div>
-            </div>
-            <span class="withdraw-status ${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>
-          </div>
-          <div class="withdraw-history-meta">
-            <p class="withdraw-history-date">${escapeHtml(network)}${createdAt ? ` - ${escapeHtml(createdAt)}` : ''}</p>
-            <p class="withdraw-history-address">${escapeHtml(bottomRight)}</p>
-          </div>
-        </article>
-      `;
-    })
-    .join('');
+function getDepositStatusTone(raw) {
+  const s = String(raw || '').toLowerCase();
+  if (['pending','processing','confirming'].includes(s)) return { label:'Pending', tone:'pending' };
+  if (['failed','rejected','cancelled'].includes(s)) return { label:'Rejected', tone:'rejected' };
+  return { label:'Completed', tone:'completed' };
 }
 
-async function loadDepositHistory() {
-  const { response, payload } = await requestJson('/api/deposits?limit=25', { method: 'GET' });
-  if (response.status === 404 || response.status === 503) {
-    state.deposits = [];
+function renderWithdrawalHistory() {
+  if (!histWithdrawalList) return;
+  const rows = Array.isArray(state.withdrawals) ? state.withdrawals : [];
+  if (!rows.length) {
+    histWithdrawalEmpty?.classList.remove('hidden');
+    histWithdrawalList.innerHTML = '';
     return;
   }
-  if (response.status === 401 || response.status === 403) {
-    throw new Error('Please login to view deposit history.');
+  histWithdrawalEmpty?.classList.add('hidden');
+  histWithdrawalList.innerHTML = rows.map((row) => {
+    const status = getWithdrawalStatusView(row.status);
+    const address = String(row.address || row.toAddress || row.to || '').trim();
+    const network = normalizeNetwork(row.network || row.chain || row.metadata?.network) || 'USDT';
+    const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
+    const createdAt = formatAssetDate(row.createdAt || row.created_at);
+    return `<div class="hist-row">
+      <span class="hist-icon wd">${SVG_WD}</span>
+      <div class="hist-body">
+        <div class="hist-type">Withdrawal</div>
+        <div class="hist-meta">${escapeHtml(network)}${address ? ' · ' + escapeHtml(shortenValue(address,6,4)) : ''}${createdAt ? ' · ' + escapeHtml(createdAt) : ''}</div>
+      </div>
+      <div class="hist-right">
+        <div class="hist-amount">-${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</div>
+        <span class="hist-badge ${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDepositHistory() {
+  if (!histDepositList) return;
+  const rows = Array.isArray(state.deposits) ? state.deposits : [];
+  if (!rows.length) {
+    histDepositEmpty?.classList.remove('hidden');
+    histDepositList.innerHTML = '';
+    return;
   }
-  if (!response.ok) {
-    throw new Error(String(payload?.message || 'Unable to load deposit history.'));
-  }
-  const deposits = Array.isArray(payload?.deposits)
-    ? payload.deposits
-    : Array.isArray(payload?.data?.deposits)
-      ? payload.data.deposits
-      : Array.isArray(payload)
-        ? payload
-        : [];
-  state.deposits = deposits.filter((row) => {
-    const type = String(row?.type || '').trim().toUpperCase();
-    const source = String(row?.source || row?.metadata?.source || '').trim().toLowerCase();
-    if (['MANUAL_ADJUSTMENT', 'ADMIN_ADJUSTMENT', 'BALANCE_ADJUSTMENT'].includes(type)) {
-      return false;
-    }
-    return (
-      ['ONCHAIN', 'CRYPTO', 'CRYPTO_DEPOSIT', 'USER_DEPOSIT'].includes(type) ||
-      ['api.deposits', 'assets_deposit', 'user_deposit'].includes(source) ||
-      Boolean(String(row?.txHash || row?.txid || row?.proofUrl || '').trim())
-    );
-  });
+  histDepositEmpty?.classList.add('hidden');
+  histDepositList.innerHTML = rows.map((row) => {
+    const status = getDepositStatusTone(row.status);
+    const network = normalizeNetwork(row.network || row.chain) || 'USDT';
+    const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
+    const createdAt = formatAssetDate(row.createdAt || row.created_at);
+    return `<div class="hist-row">
+      <span class="hist-icon dep">${SVG_DEP}</span>
+      <div class="hist-body">
+        <div class="hist-type">Deposit</div>
+        <div class="hist-meta">${escapeHtml(network)}${createdAt ? ' · ' + escapeHtml(createdAt) : ''}</div>
+      </div>
+      <div class="hist-right">
+        <div class="hist-amount">+${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</div>
+        <span class="hist-badge ${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function loadWithdrawalHistory() {
-  const { response, payload } = await requestJson('/api/withdrawals?limit=25', { method: 'GET' });
-  if (response.status === 404) {
-    state.withdrawals = [];
-    return;
-  }
-  if (response.status === 401 || response.status === 403) {
-    throw new Error('Please login to view withdrawal history.');
-  }
-  if (!response.ok) {
-    throw new Error(String(payload?.message || 'Unable to load withdrawal history.'));
-  }
-  state.withdrawals = Array.isArray(payload?.withdrawals)
-    ? payload.withdrawals
-    : Array.isArray(payload?.data?.withdrawals)
-      ? payload.data.withdrawals
-      : Array.isArray(payload)
-        ? payload
-        : [];
-}
-
-async function loadHistory() {
-  if (!withdrawHistoryListEl) {
-    return;
-  }
-
+  if (!histWithdrawalList) return;
+  histWithdrawalEmpty?.classList.add('hidden');
+  histWithdrawalList.innerHTML = '<div class="history-empty-wrap"><span>Loading...</span></div>';
   try {
-    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">Loading history...</p>';
-    await Promise.all([loadDepositHistory(), loadWithdrawalHistory()]);
+    const { response, payload } = await requestJson('/api/withdrawals?limit=25', { method: 'GET' });
+    if (response.status === 404) { state.withdrawals = []; renderWithdrawalHistory(); return; }
+    if (response.status === 401 || response.status === 403) {
+      histWithdrawalList.innerHTML = '<div class="history-empty-wrap"><span>Login to view history.</span></div>';
+      return;
+    }
+    if (!response.ok) throw new Error(String(payload?.message || 'Unable to load.'));
+    state.withdrawals = Array.isArray(payload?.withdrawals) ? payload.withdrawals
+      : Array.isArray(payload?.data?.withdrawals) ? payload.data.withdrawals
+      : Array.isArray(payload) ? payload : [];
     renderWithdrawalHistory();
   } catch (error) {
     console.error(error);
-    withdrawHistoryListEl.innerHTML = '<p class="withdraw-history-empty">History is unavailable right now.</p>';
+    histWithdrawalList.innerHTML = '<div class="history-empty-wrap"><span>Unavailable right now.</span></div>';
   }
+}
+
+async function loadDepositHistory() {
+  if (!histDepositList) return;
+  histDepositEmpty?.classList.add('hidden');
+  histDepositList.innerHTML = '<div class="history-empty-wrap"><span>Loading...</span></div>';
+  try {
+    const { response, payload } = await requestJson('/api/deposits?limit=25', { method: 'GET' });
+    if (response.status === 404) { state.deposits = []; renderDepositHistory(); return; }
+    if (response.status === 401 || response.status === 403) {
+      histDepositList.innerHTML = '<div class="history-empty-wrap"><span>Login to view history.</span></div>';
+      return;
+    }
+    if (!response.ok) throw new Error(String(payload?.message || 'Unable to load.'));
+    state.deposits = Array.isArray(payload?.deposits) ? payload.deposits
+      : Array.isArray(payload?.data?.deposits) ? payload.data.deposits
+      : Array.isArray(payload) ? payload : [];
+    renderDepositHistory();
+  } catch (error) {
+    console.error(error);
+    histDepositList.innerHTML = '<div class="history-empty-wrap"><span>Unavailable right now.</span></div>';
+  }
+}
+
+function setHistTab(tab) {
+  state.histTab = tab;
+  histTabs.forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-hist-tab') === tab));
+  histDepositPanel?.classList.toggle('hidden', tab !== 'deposit');
+  histWithdrawalPanel?.classList.toggle('hidden', tab !== 'withdrawal');
+}
+
+function openHistoryScreen() {
+  if (!historyScreen) return;
+  historyScreen.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  setHistTab('deposit');
+  loadDepositHistory();
+  loadWithdrawalHistory();
+}
+
+function closeHistoryScreen() {
+  historyScreen?.classList.add('hidden');
+  document.body.style.overflow = 'auto';
 }
 
 async function requestWithdrawal(amount, address, network) {
@@ -1041,10 +1058,7 @@ async function handleWithdrawSubmit(event) {
     if (withdrawForm) {
       withdrawForm.reset();
     }
-    await Promise.all([
-      loadWalletSummary(),
-      historySectionEl?.classList.contains('hidden') ? Promise.resolve() : loadHistory()
-    ]);
+    await loadWalletSummary();
   } catch (error) {
     console.error(error);
     setWithdrawResult(String(error?.message || 'Withdrawal request failed.'), 'error');
@@ -1197,11 +1211,12 @@ function bindEvents() {
   transferBtn?.addEventListener('click', () => {
     setActionMessage('Transfer flow will be enabled in next release.');
   });
-  historyBtn?.addEventListener('click', async () => {
-    historySectionEl?.classList.remove('hidden');
-    await loadHistory();
-    historySectionEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+
+  assetsHistoryBtn?.addEventListener('click', openHistoryScreen);
+  historyBackBtn?.addEventListener('click', closeHistoryScreen);
+  histTabs.forEach(btn => btn.addEventListener('click', () => setHistTab(btn.getAttribute('data-hist-tab'))));
+  histDepositRefreshBtn?.addEventListener('click', loadDepositHistory);
+  histWithdrawalRefreshBtn?.addEventListener('click', loadWithdrawalHistory);
 
   document.querySelectorAll('[data-modal-close]').forEach((node) => {
     node.addEventListener('click', () => {
@@ -1247,21 +1262,6 @@ function bindEvents() {
     stopWithdrawScanner();
   });
 
-  withdrawHistoryRefreshBtn?.addEventListener('click', () => {
-    loadHistory();
-  });
-
-  historyTabButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      const tab = String(button.getAttribute('data-history-tab') || '').trim();
-      if (!['deposit', 'withdrawal'].includes(tab)) {
-        return;
-      }
-      state.activeHistoryTab = tab;
-      renderWithdrawalHistory();
-    });
-  });
-
   withdrawForm?.addEventListener('submit', handleWithdrawSubmit);
 
   window.addEventListener('keydown', (event) => {
@@ -1283,7 +1283,6 @@ function bindEvents() {
   renderDepositAddress();
   renderBalances();
   renderWithdrawNetworkUi();
-  renderWithdrawalHistory();
   bindEvents();
   loadWalletSummary();
 })();
