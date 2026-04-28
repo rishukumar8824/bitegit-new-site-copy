@@ -1433,8 +1433,10 @@
   function _syncOrderIntoOrdersCache(order) {
     if (!order || !order.id) return;
     try {
-      var raw = JSON.parse(localStorage.getItem(ORDERS_CACHE_KEY) || '[]');
-      var list = Array.isArray(raw) ? raw : [];
+      var raw = JSON.parse(localStorage.getItem(ORDERS_CACHE_KEY) || 'null');
+      // p2p.js stores cache as { ts, userId, orders } — preserve that format
+      var wrapper = (raw && !Array.isArray(raw) && raw.orders) ? raw : { ts: Date.now(), userId: '', orders: [] };
+      var list = Array.isArray(wrapper.orders) ? wrapper.orders : [];
       var found = false;
       list = list.map(function(item) {
         if (item && item.id === order.id) {
@@ -1450,7 +1452,9 @@
           status: String(order.status || '').toUpperCase()
         }));
       }
-      localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(list.slice(0, 80)));
+      wrapper.orders = list.slice(0, 80);
+      wrapper.ts = wrapper.ts || Date.now();
+      localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(wrapper));
     } catch (_) {}
   }
 
@@ -2167,7 +2171,12 @@
     _cacheOrderMessagesFromOrder(order);
     _syncOrderIntoOrdersCache(order);
     syncOrderUrl(requestedScreen);
-    isSeller = resolveCurrentUserRole(order) === 'seller';
+    // Prefer server-set myRole (100% reliable) over client-side guessing
+    if (order.myRole === 'seller' || order.myRole === 'buyer') {
+      isSeller = order.myRole === 'seller';
+    } else {
+      isSeller = resolveCurrentUserRole(order) === 'seller';
+    }
     renderOrderDetails();
     startTimerFromOrder(order);
     _warmChatMessages(order && order.id);

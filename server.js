@@ -1411,6 +1411,19 @@ function isParticipant(order, userId) {
   return [order.sellerUserId, order.buyerUserId].includes(userId);
 }
 
+function resolveMyRole(order, p2pUser) {
+  const myId = String(p2pUser?.id || '').trim();
+  const myName = String(p2pUser?.username || '').trim().toLowerCase();
+  const sellerMatches =
+    order.sellerUserId === myId ||
+    order.sellerId === myId ||
+    String(order.sellerUsername || '').trim().toLowerCase() === myName ||
+    (Array.isArray(order.participants) && order.participants.some(
+      (p) => p.role === 'seller' && (p.id === myId || String(p.username || '').trim().toLowerCase() === myName)
+    ));
+  return sellerMatches ? 'seller' : 'buyer';
+}
+
 function addSystemMessage(order, text) {
   const now = Date.now();
   order.messages.push({
@@ -3454,7 +3467,7 @@ app.get('/api/p2p/orders/my-active', requiresP2PUser, async (req, res) => {
         (['RELEASED', 'COMPLETED'].includes(o.status) && Number(o.updatedAt || 0) > recentCutoff))
       .map((order) => {
         const normalized = normalizeOrderState(order);
-        return { ...normalized, isParticipant: true, paymentMethod: order.paymentMethod };
+        return { ...normalized, isParticipant: true, paymentMethod: order.paymentMethod, myRole: resolveMyRole(order, req.p2pUser) };
       });
     console.log(`[my-active] active_orders=${activeOrders.length}`);
     return res.json({ orders: activeOrders });
@@ -3500,7 +3513,7 @@ app.get('/api/p2p/orders/history', requiresP2PUser, async (req, res) => {
   const offset = Math.max(Number(req.query.offset || 0), 0);
   try {
     const result = await repos.listP2POrderHistory(req.p2pUser.id, { limit, offset });
-    const orders = result.orders.map((o) => normalizeOrderState(o));
+    const orders = result.orders.map((o) => ({ ...normalizeOrderState(o), myRole: resolveMyRole(o, req.p2pUser) }));
     return res.json({ total: result.total, hasMore: result.hasMore, offset, limit, orders });
   } catch (error) {
     return res.status(500).json({ message: 'Server error.' });
@@ -3561,9 +3574,21 @@ app.get('/api/p2p/orders/:orderId', requiresP2PUser, async (req, res) => {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
+    const myUserId = req.p2pUser.id;
+    const myUsername = String(req.p2pUser.username || '').trim().toLowerCase();
+    const sellerMatches =
+      order.sellerUserId === myUserId ||
+      order.sellerId === myUserId ||
+      String(order.sellerUsername || '').trim().toLowerCase() === myUsername ||
+      (Array.isArray(order.participants) && order.participants.some(
+        (p) => p.role === 'seller' && (p.id === myUserId || String(p.username || '').trim().toLowerCase() === myUsername)
+      ));
+    const myRole = sellerMatches ? 'seller' : 'buyer';
+
     return res.json({
       order: {
         ...normalizeOrderState(order),
+        myRole,
         messages: toClientMessages(order.messages || [])
       }
     });
