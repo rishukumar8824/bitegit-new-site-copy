@@ -4237,6 +4237,9 @@ app.get('/p2p', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p.html'));
 });
 
+app.get('/p2p-order-flow', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'p2p-order-flow.html'));
+});
 app.get('/p2p-buy', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p-buy.html'));
 });

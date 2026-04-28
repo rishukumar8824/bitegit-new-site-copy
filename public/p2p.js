@@ -2890,7 +2890,7 @@ async function logoutUser() {
 }
 
 function requireLoginNotice() {
-  window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.hash);
+  window.location.href = '/auth?redirect=' + encodeURIComponent(window.location.pathname + window.location.hash);
 }
 
 async function loadExchangeTicker() {
@@ -3139,7 +3139,7 @@ function _applyOrdersFocusState() {
 function _buildOrderFlowUrl(params) {
   var qs = new URLSearchParams(params || {});
   qs.set('v', _ORDER_FLOW_VERSION);
-  return '/p2p-order-flow.html?' + qs.toString();
+  return '/p2p-order-flow?' + qs.toString();
 }
 
 function _getKnownCurrentUserOrders() {
@@ -3412,7 +3412,7 @@ async function createOrder(offerId, options = {}) {
 
     if (openAfterCreate) {
       // Navigate to standalone order flow page
-      window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(data.order.id) + '&source=buy&v=' + Date.now();
+      window.location.href = '/p2p-order-flow?orderId=' + encodeURIComponent(data.order.id) + '&source=buy&v=' + Date.now();
     }
 
     // ── Immediately inject new order into cache + orders screen ──
@@ -3487,7 +3487,7 @@ async function submitDealOrder() {
     setDealHint('Order created! Ref: ' + data.order.reference, 'success');
     closeDealModal();
     // Navigate to the standalone order flow page — works for buyer immediately
-    window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(data.order.id) + '&source=buy&v=' + Date.now();
+    window.location.href = '/p2p-order-flow?orderId=' + encodeURIComponent(data.order.id) + '&source=buy&v=' + Date.now();
   } catch (error) {
     console.warn('[submitDealOrder] FAILED:', error.message, 'code=' + (error.code || 'none'));
     if (error.code === 'EMAIL_NOT_VERIFIED') {
@@ -4270,7 +4270,7 @@ async function openOrderById(orderId, opts) {
 
   // Navigate directly — order data will be loaded from localStorage cache or server on the standalone page
   var openChat = opts && opts.openChat;
-  var url = '/p2p-order-flow.html?orderId=' + encodeURIComponent(orderId) + '&source=orders&v=' + Date.now();
+  var url = '/p2p-order-flow?orderId=' + encodeURIComponent(orderId) + '&source=orders&v=' + Date.now();
   if (openChat) url += '&openChat=1';
   window.location.href = url;
 }
@@ -5195,7 +5195,7 @@ function _ordShowLogin() {
     '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">' +
     '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>' +
     '<p style="color:rgba(255,255,255,0.45);font-size:14px;margin:0;text-align:center;">Login to view your orders</p>' +
-    '<button onclick="window.location.href=\'/auth.html?redirect=/p2p.html\'" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
+    '<button onclick="window.location.href=\'/auth?redirect=/p2p\'" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
     '</div>';
 }
 
@@ -8703,7 +8703,7 @@ window.deleteMobAd = async function(offerId) {
       window.location.href = url;
     } else {
       // Fallback: build URL manually
-      window.location.href = '/p2p-order-flow.html?orderId=' + encodeURIComponent(orderId) + '&source=orders&v=' + Date.now();
+      window.location.href = '/p2p-order-flow?orderId=' + encodeURIComponent(orderId) + '&source=orders&v=' + Date.now();
     }
   }
 
