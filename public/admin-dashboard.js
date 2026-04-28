@@ -589,6 +589,9 @@ async function reviewKyc(userId, decision, reason) {
 // User Management
 // ─────────────────────────────────────────────────────────────────────────────
 
+const BADGE_COLORS = { 1: '#1a6ff4', 2: '#f7931a', 3: '#f5a623' };
+const BADGE_ICONS  = { 1: '◆ Blue V', 2: '♛ Crown', 3: '❖ Shield' };
+
 async function loadUsers(options = {}) {
   const search = options?.search ?? document.getElementById('userSearchInput').value.trim();
   const query = search ? `?email=${encodeURIComponent(search)}` : '';
@@ -596,51 +599,54 @@ async function loadUsers(options = {}) {
 
   state.users = Array.isArray(payload.users) ? payload.users : [];
 
-  // Fetch merchant badge status for all users in parallel
-  const merchantMap = {};
-  await Promise.all(state.users.map(async (user) => {
+  // Render table immediately — merchant badges load async after
+  renderUsersTable(state.users, {});
+
+  // Then fetch merchant badges in background and update cells
+  state.users.forEach(async (user) => {
     try {
       const r = await fetch(`/api/admin/users/${encodeURIComponent(user.userId)}/merchant-badge`, { credentials: 'include' });
       const d = await r.json();
-      merchantMap[user.userId] = (d.status === 'approved' && d.badge) ? d.badge : null;
-    } catch (_) { merchantMap[user.userId] = null; }
-  }));
-
-  const BADGE_COLORS = { 1: '#1a6ff4', 2: '#f7931a', 3: '#f5a623' };
-  const BADGE_ICONS  = { 1: '◆ Blue V', 2: '♛ Crown', 3: '❖ Shield' };
-
-  const body = document.getElementById('usersTableBody');
-  body.innerHTML = state.users
-    .map(
-      (user) => {
-        const mb = merchantMap[user.userId];
-        const merchantCell = mb
-          ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${BADGE_COLORS[mb]}22;color:${BADGE_COLORS[mb]};border:1px solid ${BADGE_COLORS[mb]}55;white-space:nowrap;">${BADGE_ICONS[mb]}</span>`
+      const badge = (d.status === 'approved' && d.badge) ? d.badge : null;
+      const cell = document.getElementById(`mbadge-${user.userId}`);
+      if (cell) {
+        cell.innerHTML = badge
+          ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${BADGE_COLORS[badge]}22;color:${BADGE_COLORS[badge]};border:1px solid ${BADGE_COLORS[badge]}55;white-space:nowrap;">${BADGE_ICONS[badge]}</span>`
           : `<span style="font-size:11px;color:var(--text-2);">—</span>`;
-        return `
-        <tr class="user-row" data-profile-id="${user.userId}" style="cursor:pointer;transition:background 0.15s;" title="Click to view full profile">
-          <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${user.userId}</td>
-          <td class="admin-td" style="font-weight:500;">${user.email}</td>
-          <td class="admin-td">${statusBadge(user.role)}</td>
-          <td class="admin-td">${statusBadge(user.status)}</td>
-          <td class="admin-td">${statusBadge(user.kycStatus)}</td>
-          <td class="admin-td">${merchantCell}</td>
-          <td class="admin-td" style="text-align:right;color:var(--green);font-weight:600;">${formatNumber(user.balance, 4)}</td>
-          <td class="admin-td">
-            <div style="display:flex;flex-wrap:wrap;gap:4px;">
-              <button class="btn-primary btn-sm" data-user-action="profile" data-user-id="${user.userId}">👤 Profile</button>
-              <button class="btn-secondary btn-sm" data-user-action="freeze" data-user-id="${user.userId}">Freeze</button>
-              <button class="btn-danger btn-sm" data-user-action="ban" data-user-id="${user.userId}">Ban</button>
-            </div>
-          </td>
-        </tr>`;
       }
-    )
-    .join('');
+    } catch (_) {}
+  });
+}
 
-  if (state.users.length === 0) {
+function renderUsersTable(users, merchantMap) {
+  const body = document.getElementById('usersTableBody');
+  if (users.length === 0) {
     body.innerHTML = '<tr><td class="admin-td text-slate-500" colspan="9">No users found.</td></tr>';
+    return;
   }
+  body.innerHTML = users.map((user) => {
+    const mb = merchantMap[user.userId];
+    const merchantCell = mb
+      ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${BADGE_COLORS[mb]}22;color:${BADGE_COLORS[mb]};border:1px solid ${BADGE_COLORS[mb]}55;white-space:nowrap;">${BADGE_ICONS[mb]}</span>`
+      : `<span style="font-size:11px;color:var(--text-2);">—</span>`;
+    return `
+    <tr class="user-row" data-profile-id="${user.userId}" style="cursor:pointer;transition:background 0.15s;" title="Click to view full profile">
+      <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${user.userId}</td>
+      <td class="admin-td" style="font-weight:500;">${user.email}</td>
+      <td class="admin-td">${statusBadge(user.role)}</td>
+      <td class="admin-td">${statusBadge(user.status)}</td>
+      <td class="admin-td">${statusBadge(user.kycStatus)}</td>
+      <td class="admin-td" id="mbadge-${user.userId}">${merchantCell}</td>
+      <td class="admin-td" style="text-align:right;color:var(--green);font-weight:600;">${formatNumber(user.balance, 4)}</td>
+      <td class="admin-td">
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">
+          <button class="btn-primary btn-sm" data-user-action="profile" data-user-id="${user.userId}">👤 Profile</button>
+          <button class="btn-secondary btn-sm" data-user-action="freeze" data-user-id="${user.userId}">Freeze</button>
+          <button class="btn-danger btn-sm" data-user-action="ban" data-user-id="${user.userId}">Ban</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
