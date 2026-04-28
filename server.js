@@ -3072,6 +3072,9 @@ async function createP2PAdController(req, res) {
       payload: req.body || {}
     });
 
+    // Mark seller as online immediately so buyers see Online status right away
+    try { await repos.updateLastActive(userId); } catch (_) {}
+
     // If this merchant already has an approved badge, stamp it on the new offer immediately
     try {
       const cols = getCollections();
