@@ -246,9 +246,10 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
       _broadcast(String(seller.id || ''), 'new_order', orderPayload);
       _broadcast(String(buyer.id || ''), 'new_order', orderPayload);
 
+      const myRole = String(req.p2pUser.id || '') === String(buyer.id || '') ? 'buyer' : 'seller';
       return res.status(201).json({
         ...toOrderResponse(savedOrder),
-        order: savedOrder
+        order: { ...savedOrder, myRole }
       });
     } catch (error) {
       const knownStatus = Number(error?.status || 0);

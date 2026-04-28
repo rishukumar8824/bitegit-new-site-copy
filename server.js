@@ -4689,7 +4689,7 @@ async function boot() {
           const activeCount = await cols.p2pOrders.countDocuments({
             buyerUserId: userId,
             status: { $in: ['CREATED', 'PAYMENT_SENT', 'PAID'] },
-            $or: [{ expiresAt: { $gt: now } }, { expiresAt: { $exists: false } }]
+            expiresAt: { $gt: now }
           });
           if (activeCount >= 1) {
             return res.status(400).json({ success: false, message: 'You already have an active order. Complete or cancel it first.' });

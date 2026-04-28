@@ -2176,6 +2176,9 @@
       isSeller = order.myRole === 'seller';
     } else {
       isSeller = resolveCurrentUserRole(order) === 'seller';
+      // Persist computed role so next load from cache uses it directly
+      currentOrder.myRole = isSeller ? 'seller' : 'buyer';
+      try { localStorage.setItem('p2p_order_' + order.id, JSON.stringify(currentOrder)); } catch(_) {}
     }
     renderOrderDetails();
     startTimerFromOrder(order);
@@ -2794,6 +2797,21 @@
       }
     }
     calcEquiv();
+    // Hide buy button if current user is the ad owner (seller shouldn't buy own ad)
+    var buyBtn = document.getElementById('buyBtn');
+    if (buyBtn && currentUser && currentAd) {
+      var adOwnerId = String(currentAd.createdByUserId || '').trim();
+      var adOwnerName = String(currentAd.createdByUsername || currentAd.advertiser || '').trim().toLowerCase();
+      var myId = String(currentUser.id || currentUser.userId || '').trim();
+      var myName = String(currentUser.username || '').trim().toLowerCase();
+      var isOwner = (adOwnerId && adOwnerId === myId) || (adOwnerName && adOwnerName === myName);
+      if (isOwner) {
+        buyBtn.disabled = true;
+        buyBtn.textContent = 'This is your ad';
+        buyBtn.style.opacity = '0.45';
+        buyBtn.style.cursor = 'not-allowed';
+      }
+    }
   }
 
   // ============================================================
