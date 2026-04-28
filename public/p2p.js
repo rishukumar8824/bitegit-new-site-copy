@@ -1704,13 +1704,34 @@ async function loadProfilePanel(options = {}) {
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
         if (data && data.wallet) {
+          var secDep = Number(data.wallet.securityDeposit || 0);
           profileWalletBalance = Number(data.wallet.availableBalance || data.wallet.balance || 0);
-          profileWalletLocked = Number(data.wallet.lockedBalance || data.wallet.p2pLocked || 0);
+          profileWalletLocked = Math.max(0, Number(data.wallet.lockedBalance || data.wallet.p2pLocked || 0) - secDep);
           profileWalletSyncedAt = Date.now();
-          // Re-render wallet line after balance loads
-          const walletLbl = '₹' + formatNumber(profileWalletBalance + profileWalletLocked);
-          setNodeText(profileDeposit, walletLbl);
-          setNodeText(profileDepositMobile, walletLbl);
+
+          // Security deposit row (frozen — cannot be used)
+          var secDepEl = document.getElementById('profileDepositMobile');
+          if (secDepEl) secDepEl.textContent = formatNumber(secDep) + ' USDT';
+          var secDepStatus = document.getElementById('profileSecDepStatus');
+          if (secDepStatus) {
+            if (secDep >= 500) {
+              secDepStatus.textContent = 'Badge Eligible';
+              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(247,147,26,0.15);color:#f7931a;margin-left:4px;vertical-align:middle;';
+            } else if (secDep >= 200) {
+              secDepStatus.textContent = 'Active';
+              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(22,199,132,0.15);color:#16c784;margin-left:4px;vertical-align:middle;';
+            } else {
+              secDepStatus.textContent = 'None';
+              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(246,70,93,0.15);color:#f6465d;margin-left:4px;vertical-align:middle;';
+            }
+          }
+
+          // Regular assets (available balance only — security deposit excluded)
+          var assetsEl = document.getElementById('profileAssetsMobile');
+          if (assetsEl) assetsEl.textContent = formatNumber(profileWalletBalance) + ' USDT';
+
+          // Legacy deposit label (desktop)
+          setNodeText(profileDeposit, formatNumber(profileWalletBalance) + ' USDT');
           syncMobProfile();
         }
       }).catch(function() {});

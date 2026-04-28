@@ -2439,6 +2439,18 @@ async function loadUpMerchantBadge() {
     const BADGE_INFO = { 1: { label: 'Blue V (Verified)', color: '#1a6ff4', icon: '◆' }, 2: { label: 'Crown (Pro)', color: '#f7931a', icon: '♛' }, 3: { label: 'Shield (Elite)', color: '#f5a623', icon: '❖' } };
     const currentBadge = (data.status === 'approved' && data.badge) ? data.badge : null;
     const bi = currentBadge ? BADGE_INFO[currentBadge] : null;
+    const stats = data.stats || {};
+    const secDep = Number(stats.securityDeposit || 0);
+    const compRate = Number(stats.completionRate || 0);
+    const totalOrders = Number(stats.totalOrders || 0);
+    const badgeEligible = stats.badgeEligible || secDep >= 500;
+
+    // Security deposit status chip
+    let secDepChip = '';
+    if (secDep >= 500) secDepChip = `<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(247,147,26,0.15);color:#f7931a;border:1px solid rgba(247,147,26,0.3);">Badge Eligible</span>`;
+    else if (secDep >= 200) secDepChip = `<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(22,199,132,0.12);color:#16c784;border:1px solid rgba(22,199,132,0.3);">Can Post Ads</span>`;
+    else secDepChip = `<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(246,70,93,0.12);color:#f6465d;border:1px solid rgba(246,70,93,0.3);">No Deposit</span>`;
+
     card.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <span style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;">🏪 Merchant Badge</span>
@@ -2447,7 +2459,24 @@ async function loadUpMerchantBadge() {
           : `<span style="font-size:12px;color:var(--text-2);">No badge assigned</span>`
         }
       </div>
-      <div style="font-size:11px;color:var(--text-2);margin-bottom:10px;">Assign a badge to grant merchant privileges. Merchants can post P2P ads.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+        <div style="background:var(--bg-card2);border-radius:8px;padding:8px 10px;text-align:center;border:1px solid var(--border);">
+          <div style="font-size:10px;color:var(--text-2);margin-bottom:2px;">Security Deposit</div>
+          <div style="font-size:14px;font-weight:700;color:${secDep>=500?'#f7931a':secDep>=200?'#16c784':'#f6465d'};">${formatNumber(secDep,0)} USDT</div>
+          <div style="margin-top:3px;">${secDepChip}</div>
+        </div>
+        <div style="background:var(--bg-card2);border-radius:8px;padding:8px 10px;text-align:center;border:1px solid var(--border);">
+          <div style="font-size:10px;color:var(--text-2);margin-bottom:2px;">Completion Rate</div>
+          <div style="font-size:14px;font-weight:700;color:${compRate>=80?'#16c784':compRate>=50?'#f7931a':'#f6465d'};">${compRate}%</div>
+          <div style="font-size:10px;color:var(--text-2);margin-top:2px;">${totalOrders} orders</div>
+        </div>
+        <div style="background:var(--bg-card2);border-radius:8px;padding:8px 10px;text-align:center;border:1px solid var(--border);">
+          <div style="font-size:10px;color:var(--text-2);margin-bottom:2px;">Badge Criteria</div>
+          <div style="font-size:12px;font-weight:600;color:${badgeEligible?'#16c784':'var(--text-2)'};">${badgeEligible?'✓ Eligible':'✗ Not Yet'}</div>
+          <div style="font-size:10px;color:var(--text-2);margin-top:2px;">≥500 USDT + good rate</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-2);margin-bottom:8px;">200 USDT deposit → can post ads. 500 USDT + good completion → badge eligible. Admin assigns badge manually.</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button onclick="adminAssignMerchantBadge('${userId}',1)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(26,111,244,0.12);color:#1a6ff4;border:1px solid rgba(26,111,244,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===1?'outline:2px solid #1a6ff4;':''}" title="High-quality verified merchant">◆ Blue V</button>
         <button onclick="adminAssignMerchantBadge('${userId}',2)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(247,147,26,0.12);color:#f7931a;border:1px solid rgba(247,147,26,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===2?'outline:2px solid #f7931a;':''}" title="Top-level certified merchant">♛ Crown</button>

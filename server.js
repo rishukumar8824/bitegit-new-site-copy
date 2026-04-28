@@ -70,7 +70,8 @@ const P2P_ACCESS_COOKIE_NAME = 'p2p_access_token';
 const P2P_REFRESH_COOKIE_NAME = 'p2p_refresh_token';
 const P2P_ORDER_TTL_MS = 1000 * 60 * 15;
 const P2P_EXPIRY_SWEEP_INTERVAL_MS = 30 * 1000;
-const MERCHANT_ACTIVATION_DEPOSIT = 500;
+const MERCHANT_ACTIVATION_DEPOSIT = 200; // Minimum security deposit to post ads
+const MERCHANT_BADGE_MIN_DEPOSIT = 500;  // Minimum security deposit for badge eligibility
 
 // In-memory merchant applications store (backed by MongoDB)
 const merchantApplications = new Map(); // id -> application
@@ -2109,9 +2110,22 @@ app.get('/api/p2p/wallet', requiresP2PUser, async (req, res) => {
         : {
             USDT: Number(ensured.availableBalance || ensured.balance || 0)
           };
+
+    // Read security deposit from p2pCredentials
+    let securityDeposit = 0;
+    try {
+      const cols = getCollections();
+      const cred = await cols.p2pCredentials.findOne({ email: req.p2pUser.email });
+      if (cred) {
+        const depositLocked = Number(cred?.merchant?.depositLocked || 0);
+        securityDeposit = Number.isFinite(depositLocked) ? depositLocked : 0;
+      }
+    } catch (_) {}
+
     return res.json({
       wallet: {
         ...ensured,
+        securityDeposit,
         depositAddress: depositConfig.depositAddress,
         depositNetwork: depositConfig.activeNetwork?.network || depositConfig.defaultNetwork,
         depositNetworks: depositConfig.networks,
@@ -3096,17 +3110,20 @@ async function createP2PAdController(req, res) {
     const userId = String(req.p2pUser.id || '').trim();
     const username = String(req.p2pUser.username || '').trim();
 
-    // Only approved merchants can post ads
-    let isMerchant = false;
-    for (const [, app] of merchantApplications) {
-      if (app.status === 'approved' && app.assignedBadge) {
-        if ((userId && String(app.userId) === userId) || (username && app.username === username)) {
-          isMerchant = true; break;
-        }
-      }
-    }
-    if (!isMerchant) {
-      return res.status(403).json({ message: 'Only approved merchants can post ads. Apply to become a merchant first.' });
+    // Security deposit gate: must have >= 200 USDT locked as security deposit
+    let securityDepositAmt = 0;
+    try {
+      const cols = getCollections();
+      const cred = await cols.p2pCredentials.findOne({ email: req.p2pUser.email });
+      if (cred) securityDepositAmt = Number(cred?.merchant?.depositLocked || 0) || 0;
+    } catch (_) {}
+    if (securityDepositAmt < MERCHANT_ACTIVATION_DEPOSIT) {
+      return res.status(403).json({
+        message: `You need to lock at least ${MERCHANT_ACTIVATION_DEPOSIT} USDT as security deposit to post ads.`,
+        code: 'SECURITY_DEPOSIT_REQUIRED',
+        required: MERCHANT_ACTIVATION_DEPOSIT,
+        current: securityDepositAmt
+      });
     }
 
     // Balance check: user must have USDT balance > 0
@@ -3263,6 +3280,50 @@ app.delete('/api/p2p/offers/:offerId', requiresP2PUser, async (req, res) => {
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+// ── Security Deposit: lock USDT as security deposit (200 USDT min to post ads, 500 for badge) ──
+app.post('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
+  try {
+    const { amount } = req.body || {};
+    const lockAmount = Number(amount) || MERCHANT_ACTIVATION_DEPOSIT;
+    if (lockAmount < MERCHANT_ACTIVATION_DEPOSIT) {
+      return res.status(400).json({ success: false, message: `Minimum security deposit is ${MERCHANT_ACTIVATION_DEPOSIT} USDT.` });
+    }
+    const activation = await walletService.activateMerchant({
+      actor: req.p2pUser,
+      depositAmount: lockAmount
+    });
+    return res.json({
+      success: true,
+      message: `${lockAmount} USDT locked as security deposit.`,
+      securityDeposit: activation.merchant?.depositLocked || lockAmount,
+      wallet: activation.wallet
+    });
+  } catch (error) {
+    const knownStatus = Number(error?.status || 0);
+    if (knownStatus >= 400 && knownStatus < 500) {
+      return res.status(knownStatus).json({ success: false, message: String(error.message || 'Failed.'), code: String(error.code || '') });
+    }
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// ── Security Deposit: get current deposit status ──
+app.get('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
+  try {
+    const cols = getCollections();
+    const cred = await cols.p2pCredentials.findOne({ email: req.p2pUser.email });
+    const depositLocked = Number(cred?.merchant?.depositLocked || 0);
+    return res.json({
+      success: true,
+      securityDeposit: depositLocked,
+      canPostAds: depositLocked >= MERCHANT_ACTIVATION_DEPOSIT,
+      badgeEligible: depositLocked >= MERCHANT_BADGE_MIN_DEPOSIT
+    });
+  } catch (_) {
+    return res.json({ success: true, securityDeposit: 0, canPostAds: false, badgeEligible: false });
   }
 });
 
@@ -3564,8 +3625,8 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
   }
 });
 
-// ── Admin: Get merchant badge status for a specific user ──
-app.get('/api/admin/users/:userId/merchant-badge', requiresAdminSession, (req, res) => {
+// ── Admin: Get merchant badge status + P2P stats for a specific user ──
+app.get('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async (req, res) => {
   const targetUserId = String(req.params.userId || '').trim();
   let best = null;
   for (const [, app] of merchantApplications) {
@@ -3577,8 +3638,24 @@ app.get('/api/admin/users/:userId/merchant-badge', requiresAdminSession, (req, r
     const t2 = best.reviewedAt ? new Date(best.reviewedAt).getTime() : new Date(best.submittedAt || 0).getTime();
     if (t1 > t2) best = app;
   }
-  if (best) return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || null, applicationId: best.id });
-  return res.json({ success: true, found: false, status: null, badge: null });
+
+  // Fetch P2P stats + security deposit for admin context
+  let securityDeposit = 0, totalOrders = 0, completedOrders = 0, completionRate = 0;
+  try {
+    const cols = getCollections();
+    // Security deposit from p2pCredentials
+    const cred = await cols.p2pCredentials.findOne({ $or: [{ userId: targetUserId }, { id: targetUserId }] });
+    if (cred) securityDeposit = Number(cred?.merchant?.depositLocked || 0) || 0;
+    // Order stats
+    const orders = await cols.p2pOrders.find({ $or: [{ sellerUserId: targetUserId }, { buyerUserId: targetUserId }] }).toArray();
+    totalOrders = orders.length;
+    completedOrders = orders.filter(o => ['RELEASED', 'COMPLETED'].includes(String(o.status || '').toUpperCase())).length;
+    completionRate = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0;
+  } catch (_) {}
+
+  const stats = { securityDeposit, totalOrders, completedOrders, completionRate, badgeEligible: securityDeposit >= MERCHANT_BADGE_MIN_DEPOSIT };
+  if (best) return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || null, applicationId: best.id, stats });
+  return res.json({ success: true, found: false, status: null, badge: null, stats });
 });
 
 // ── Merchant Application: User checks their status ──
