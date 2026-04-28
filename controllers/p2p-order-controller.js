@@ -203,7 +203,9 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
       } catch(_) {}
 
       const now = Date.now();
-      const payWindowMinutes = Math.max(1, Math.round(orderTtlMs / 60000));
+      const offerReleaseMinutes = Math.max(1, Math.min(120, Number(offer.releaseTime) || 0));
+      const effectiveTtlMs = offerReleaseMinutes > 0 ? offerReleaseMinutes * 60 * 1000 : orderTtlMs;
+      const payWindowMinutes = Math.max(1, Math.round(effectiveTtlMs / 60000));
       const orderDoc = buildP2POrderDocument({
         id: createOrderId(),
         reference: createOrderReference(),
@@ -219,7 +221,7 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
         price,
         cryptoAmount,
         fiatAmount,
-        expiresAt: now + orderTtlMs,
+        expiresAt: now + effectiveTtlMs,
         participants: buildOrderParticipants({
           buyerId: buyer.id,
           buyerUsername: buyer.username || buyer.id,

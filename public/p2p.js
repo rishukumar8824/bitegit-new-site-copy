@@ -8134,7 +8134,7 @@ window.deleteMobAd = async function(offerId) {
     el = document.getElementById('bfCompletedOrds'); if (el) el.textContent = offer.orders || 0;
     el = document.getElementById('bfAvgRelease'); if (el) el.textContent = (offer.avgReleaseTime || '1') + ' min';
     el = document.getElementById('bfSignupDate'); if (el) el.textContent = offer.signupDate || '--';
-    el = document.getElementById('bfDuration'); if (el) el.textContent = (offer.duration || 15) + ' minute(s)';
+    el = document.getElementById('bfDuration'); if (el) el.textContent = (offer.releaseTime || offer.duration || 15) + ' minute(s)';
     var pm = document.getElementById('bfPayMethod');
     if (pm) pm.innerHTML = getOfferPayments(offer).map(function(m) { return '<option value="' + esc(m) + '">' + esc(m) + '</option>'; }).join('');
     el = document.getElementById('bfBuyHint'); if (el) el.textContent = '';
