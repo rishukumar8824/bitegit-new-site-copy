@@ -512,9 +512,9 @@ async function getDepositWalletCatalogForUser() {
 
 function normalizeKycStatus(rawStatus) {
   const normalized = String(rawStatus || '').trim().toUpperCase();
-  if (['NOT_SUBMITTED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED'].includes(normalized)) {
-    return normalized;
-  }
+  if (normalized === 'APPROVED') return 'VERIFIED'; // admin uses APPROVED
+  if (normalized === 'PENDING') return 'PENDING_REVIEW';
+  if (['NOT_SUBMITTED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED'].includes(normalized)) return normalized;
   return 'NOT_SUBMITTED';
 }
 
