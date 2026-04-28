@@ -7558,7 +7558,7 @@ window.deleteMobAd = async function(offerId) {
   // Restore screen on refresh from hash
   (function restoreFromHash() {
     var hash = window.location.hash.replace('#','');
-    if (hash === 'profile') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); loadMerchantBadge && loadMerchantBadge(); }, 300); }
+    if (hash === 'profile') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); loadMerchantBadge && loadMerchantBadge(); refreshCurrentUserKyc && refreshCurrentUserKyc(); }, 300); }
     else if (hash === 'profile-payment') { openPaymentMethodsScreen(); }
     else if (hash === 'profile-payment-add') { openPaymentMethodPickerScreen(); }
     else if (hash === 'orders') { showMobScreen('mobOrdersScreen'); }
@@ -7578,7 +7578,7 @@ window.deleteMobAd = async function(offerId) {
       var mob = tab.getAttribute('data-mob');
       document.querySelectorAll('.mob-tab').forEach(function(t){ t.classList.remove('active'); });
       tab.classList.add('active');
-      if (mob === 'profile') showMobScreen('mobProfileScreen');
+      if (mob === 'profile') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); refreshCurrentUserKyc && refreshCurrentUserKyc(); }, 200); }
       else if (mob === 'orders') showMobScreen('mobOrdersScreen');
       else if (mob === 'post') { handlePostAdTabClick(); }
       else hideMobScreens();
