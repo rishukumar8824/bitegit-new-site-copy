@@ -5336,6 +5336,7 @@ function _stopFallbackPoll() {
 }
 
 // ── KEPT for call-site compatibility (showMobScreen calls startOrdPolling) ─
+var _ordScreenPollTimer = null;
 function startOrdPolling()   {
   if (!_ordLoaded) {
     var snapshots = _ordLoadSavedSnapshots({ activeOnly: false });
@@ -5344,8 +5345,16 @@ function startOrdPolling()   {
     }
   }
   fetchOrdersSafe();
+  // Also start a 10s screen-visible poll so seller sees new orders even if SSE event is missed
+  if (!_ordScreenPollTimer) {
+    _ordScreenPollTimer = setInterval(function() {
+      if (currentUser && !_ordFetching) fetchOrdersSafe();
+    }, 10000);
+  }
 }
-function stopOrdPolling()    { /* no-op — SSE handles real-time */ }
+function stopOrdPolling()    {
+  if (_ordScreenPollTimer) { clearInterval(_ordScreenPollTimer); _ordScreenPollTimer = null; }
+}
 function startBgOrdPolling() { _startFallbackPoll(); }
 function stopBgOrdPolling()  { _stopFallbackPoll(); }
 
@@ -8855,6 +8864,10 @@ window.deleteMobAd = async function(offerId) {
     });
     _userStream.addEventListener('new_order', function(e) {
       loadLiveOrders(); // refresh the marketplace listings too
+      // Force a fresh fetch — abort any in-flight request so the new order shows immediately
+      if (_ordAbort) { try { _ordAbort.abort(); } catch(_) {} _ordAbort = null; }
+      _ordFetching = false;
+      _ordRefreshQueued = false;
       fetchOrdersSafe();
       // Auto-switch orders screen to pending tab if it's open
       var ordScreen = document.getElementById('mobOrdersScreen');

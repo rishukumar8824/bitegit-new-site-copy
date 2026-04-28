@@ -17,9 +17,11 @@ function normalizeOfferAvailableAmount(offer = {}) {
 function resolveOfferOwner(offer = {}) {
   const ownerId = String(offer.createdByUserId || '').trim() || makeSeedUserId(offer.advertiser);
   const ownerUsername = String(offer.createdByUsername || offer.advertiser || ownerId).trim();
+  const ownerEmail = String(offer.createdByEmail || '').trim().toLowerCase();
   return {
     id: ownerId,
-    username: ownerUsername
+    username: ownerUsername,
+    email: ownerEmail
   };
 }
 
