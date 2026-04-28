@@ -8853,6 +8853,15 @@ window.deleteMobAd = async function(offerId) {
       fetchOrdersSafe(); // re-render orders list with fresh server data
     });
     _userStream.addEventListener('orders_refresh', function(e) {
+      try {
+        var payload = JSON.parse(e.data || '{}');
+        var evtStatus = String(payload.status || '').toUpperCase();
+        // Order completed → refresh My Ads (availableAmount updated) + wallet balance
+        if (evtStatus === 'COMPLETED' || evtStatus === 'RELEASED') {
+          if (typeof loadMyAds === 'function') loadMyAds();
+          if (typeof loadProfilePanel === 'function') loadProfilePanel({ refreshWallet: true });
+        }
+      } catch(_) {}
       fetchOrdersSafe();
       // Bust offers cache so order count & online status update immediately
       _offersResponseCache && _offersResponseCache.clear();

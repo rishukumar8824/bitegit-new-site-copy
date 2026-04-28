@@ -2093,7 +2093,73 @@
 
     if (s === 'RELEASED' || s === 'COMPLETED') {
       if (primaryBtn) primaryBtn.style.display = 'none';
+      // Show wallet balance row on the completion screen
+      _showCompletionWalletRow(s);
     }
+  }
+
+  function _showCompletionWalletRow(status) {
+    var walletRowId = 'cn-wallet-credit-row';
+    // Remove old row if exists
+    var old = document.getElementById(walletRowId);
+    if (old) old.remove();
+
+    // Build row
+    var row = document.createElement('div');
+    row.id = walletRowId;
+    row.className = 'detail-row';
+    row.style.cssText = 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.07);';
+
+    var labelEl = document.createElement('span');
+    labelEl.className = 'label';
+    var valueEl = document.createElement('span');
+    valueEl.className = 'value';
+    valueEl.style.color = '#00c896';
+
+    var s = String(status || '').toUpperCase();
+    var cryptoAmt = Number(currentOrder && (currentOrder.cryptoAmount || currentOrder.assetAmount || currentOrder.escrowAmount) || 0);
+    var asset = String((currentOrder && currentOrder.asset) || 'USDT').toUpperCase();
+
+    if (isSeller) {
+      labelEl.textContent = 'Amount released';
+      valueEl.textContent = '- ' + cryptoAmt.toFixed(4) + ' ' + asset;
+      valueEl.style.color = '#ef4444';
+    } else {
+      labelEl.textContent = 'Wallet credited';
+      valueEl.textContent = '+ ' + cryptoAmt.toFixed(4) + ' ' + asset;
+    }
+
+    row.appendChild(labelEl);
+    row.appendChild(valueEl);
+
+    // Insert before the divider or at end of detail rows
+    var divider = document.querySelector('#screen-canceled .divider');
+    if (divider) {
+      divider.parentNode.insertBefore(row, divider);
+    }
+
+    // Fetch live wallet balance and append to same row
+    fetch('/api/p2p/wallet', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.wallet) return;
+        var bal = Number(data.wallet.availableBalance || data.wallet.balance || 0);
+        var balRow = document.createElement('div');
+        balRow.className = 'detail-row';
+        balRow.style.cssText = 'margin-top:2px;';
+        var lbl = document.createElement('span');
+        lbl.className = 'label';
+        lbl.textContent = 'Wallet balance';
+        var val = document.createElement('span');
+        val.className = 'value';
+        val.style.cssText = 'font-size:13px;color:rgba(255,255,255,0.7);';
+        val.textContent = bal.toFixed(4) + ' ' + asset;
+        balRow.appendChild(lbl);
+        balRow.appendChild(val);
+        if (divider) {
+          divider.parentNode.insertBefore(balRow, divider);
+        }
+      }).catch(function(){});
   }
 
   function applyOrderAndShow(order, forceOpenChat, requestedScreen) {
@@ -3493,6 +3559,35 @@
     }
   }
 
+  // ── Wallet credit banner — shown to buyer after seller releases ──────────
+  function showWalletCreditBanner(creditAmt, asset) {
+    // 1. Toast notification
+    showToast('+ ' + Number(creditAmt).toFixed(4) + ' ' + asset + ' credited to your wallet!');
+    // 2. Update chatCompletedAmount to show credit prominently
+    var amtEl = document.getElementById('chatCompletedAmount');
+    if (amtEl) {
+      amtEl.textContent = '+ ' + Number(creditAmt).toFixed(4) + ' ' + asset + ' credited to your wallet';
+      amtEl.style.color = '#00c896';
+    }
+    // 3. Fetch live wallet balance and show below completed bar
+    fetch('/api/p2p/wallet', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.wallet) return;
+        var bal = Number(data.wallet.availableBalance || data.wallet.balance || 0);
+        var balEl = document.getElementById('chatWalletBalAfterRelease');
+        if (!balEl) {
+          balEl = document.createElement('div');
+          balEl.id = 'chatWalletBalAfterRelease';
+          balEl.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px;';
+          var completedBar = document.getElementById('chatCompletedBar');
+          var inner = completedBar && completedBar.querySelector('div');
+          if (inner) inner.appendChild(balEl);
+        }
+        balEl.textContent = 'Wallet balance: ' + bal.toFixed(4) + ' ' + asset;
+      }).catch(function(){});
+  }
+
   function loadChatMessages() {
     if (!currentOrder || !currentOrder.id) return;
     startOrderSSE();
@@ -3543,6 +3638,14 @@
           cacheCurrentOrder();
           startTimerFromOrder(order);
           setupChatForRole(order.status);
+          // When seller releases — buyer side: show wallet credit + fetch fresh balance
+          var st = String(order.status || '').toUpperCase();
+          if (st === 'COMPLETED' || st === 'RELEASED') {
+            var creditAmt = Number(order.cryptoAmount || order.assetAmount || order.escrowAmount || 0);
+            if (!isSeller && creditAmt > 0) {
+              showWalletCreditBanner(creditAmt, String(order.asset || 'USDT'));
+            }
+          }
         }
       } catch(err) {}
     });
