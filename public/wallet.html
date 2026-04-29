@@ -1121,6 +1121,7 @@
     if(current && current !== id) screenHistory.push(current);
     screens.forEach(function(s){ s.classList.add('hidden'); });
     document.getElementById(id).classList.remove('hidden');
+    if(id === 'screenWithdrawHistory') loadWithdrawHistory();
   }
 
   var balVisible = true;
@@ -1480,10 +1481,16 @@
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ address:p.addr, amount:p.amt, network:p.netKey, currency:'USDT' })
     })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d.success || d.id) { showToast('Withdrawal submitted successfully'); showScreen('screenWithdrawHistory'); }
-      else showToast(d.message || 'Withdrawal failed');
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res){
+      var d = res.d;
+      if(res.ok && (d.withdrawal || d.requestId || d.id)) {
+        showToast('Withdrawal submitted successfully');
+        loadWithdrawHistory();
+        showScreen('screenWithdrawHistory');
+      } else {
+        showToast(d.message || 'Withdrawal failed');
+      }
     })
     .catch(function(){ showToast('Network error. Please try again.'); });
     _pendingWithdraw = null;
@@ -1518,6 +1525,46 @@
       .catch(function(){});
   }
   loadDepositHistory();
+
+  // Load withdrawal history from API
+  function loadWithdrawHistory() {
+    fetch('/api/withdrawals', { credentials:'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var list = (data && data.withdrawals) ? data.withdrawals : [];
+        var el = document.getElementById('wdHistList');
+        var empty = document.getElementById('wdHistEmpty');
+        el.innerHTML = '';
+        if(!list.length) {
+          el.appendChild(empty);
+          empty.classList.remove('hidden');
+          return;
+        }
+        var usdtSvg = '<svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658s2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658s-2.895 1.485-6.775 1.657zm0-3.59v-2.366h5.414V8H8.664v3.427h5.414v2.365c-4.4.202-7.708 1.074-7.708 2.128s3.308 1.926 7.708 2.129v7.617h3.844v-7.619c4.393-.202 7.694-1.073 7.694-2.127s-3.301-1.926-7.694-2.127z" fill="#fff"/></svg>';
+        list.forEach(function(w) {
+          var status = String(w.status || 'pending').toLowerCase();
+          var dt = new Date(w.createdAt || Date.now());
+          var dateStr = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+          var statusColor = status === 'approved' || status === 'sent' ? '#0ecb81' : status === 'rejected' ? '#f6465d' : '#f5a623';
+          var statusLabel = status === 'sent' ? 'Approved' : status.charAt(0).toUpperCase()+status.slice(1);
+          var row = document.createElement('div');
+          row.className = 'dep-hist-row';
+          row.style.cssText = 'display:flex;align-items:center;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);gap:.75rem';
+          row.innerHTML = usdtSvg +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="display:flex;align-items:center;justify-content:space-between">' +
+                '<div style="font-size:.92rem;font-weight:700;color:#fff">-'+(w.amount||0)+' USDT</div>' +
+                '<div style="font-size:.78rem;font-weight:700;color:'+statusColor+';display:flex;align-items:center;gap:.25rem"><span style="font-size:.9rem">•</span>'+statusLabel+'</div>' +
+              '</div>' +
+              '<div style="font-size:.75rem;color:#8a9bb5;margin-top:.2rem">'+(w.metadata&&w.metadata.network?w.metadata.network:(w.network||'TRC20'))+'</div>' +
+              '<div style="font-size:.72rem;color:#8a9bb5;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+dateStr+'</div>' +
+            '</div>';
+          el.appendChild(row);
+        });
+      })
+      .catch(function(){});
+  }
+  loadWithdrawHistory();
 
   // Load wallet balances from P2P wallet API
   (function loadWalletBalances() {
