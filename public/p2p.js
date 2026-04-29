@@ -2891,6 +2891,11 @@ function _clearOrdersCache(options) {
   if (typeof _ordReqId    !== 'undefined') _ordReqId    = (_ordReqId || 0) + 1; // invalidate pending requests
 }
 
+function doP2PLogout() {
+  if (!confirm('Are you sure you want to logout?')) return;
+  logoutUser();
+}
+
 async function logoutUser() {
   try {
     await fetch('/api/p2p/logout', { method: 'POST' });
