@@ -2139,6 +2139,16 @@ app.get('/api/p2p/wallet', requiresP2PUser, async (req, res) => {
   }
 });
 
+// ── /api/wallet/balance — quick available balance for withdraw form ──
+app.get('/api/wallet/balance', requiresP2PUser, async (req, res) => {
+  try {
+    const wallet = await walletService.ensureWallet(req.p2pUser.id, { username: req.p2pUser.username });
+    return res.json({ balance: Number(wallet.availableBalance || wallet.balance || 0), currency: 'USDT' });
+  } catch (_) {
+    return res.json({ balance: 0, currency: 'USDT' });
+  }
+});
+
 app.get('/api/wallet/summary', requiresP2PUser, async (req, res) => {
   try {
     const wallet = await walletService.ensureWallet(req.p2pUser.id, {
