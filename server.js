@@ -3543,17 +3543,16 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
 
     // Ensure security deposit reflects badge eligibility (min 500 USDT)
     try {
-      if (app.userId) {
+      const userEmail = app.email || '';
+      if (userEmail) {
         const cols = getCollections();
-        const cred = await cols.p2pCredentials.findOne({ $or: [{ userId: String(app.userId) }, { id: String(app.userId) }] });
-        if (cred) {
-          const currentDep = Number(cred?.merchant?.depositLocked || 0);
-          if (currentDep < MERCHANT_BADGE_MIN_DEPOSIT) {
-            await cols.p2pCredentials.updateOne(
-              { $or: [{ userId: String(app.userId) }, { id: String(app.userId) }] },
-              { $set: { 'merchant.depositLocked': MERCHANT_BADGE_MIN_DEPOSIT, 'merchant.activatedAt': new Date() } }
-            );
-          }
+        const cred = await cols.p2pCredentials.findOne({ email: userEmail });
+        const currentDep = Number(cred?.merchant?.depositLocked || 0);
+        if (currentDep < MERCHANT_BADGE_MIN_DEPOSIT) {
+          await cols.p2pCredentials.updateOne(
+            { email: userEmail },
+            { $set: { 'merchant.depositLocked': MERCHANT_BADGE_MIN_DEPOSIT, 'merchant.activatedAt': new Date() } }
+          );
         }
       }
     } catch (_) {}
@@ -3650,12 +3649,18 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
     // Also ensure security deposit reflects badge eligibility (min 500 USDT)
     try {
       const cols = getCollections();
-      const cred = await cols.p2pCredentials.findOne({ $or: [{ userId: targetUserId }, { id: targetUserId }] });
-      if (cred) {
+      // Look up user email from adminUserProfiles (keyed by userId)
+      let userEmailForDep = email || '';
+      if (!userEmailForDep) {
+        const profile = await cols.adminUserProfiles.findOne({ userId: targetUserId });
+        userEmailForDep = profile?.email || '';
+      }
+      if (userEmailForDep) {
+        const cred = await cols.p2pCredentials.findOne({ email: userEmailForDep });
         const currentDep = Number(cred?.merchant?.depositLocked || 0);
         if (currentDep < MERCHANT_BADGE_MIN_DEPOSIT) {
           await cols.p2pCredentials.updateOne(
-            { $or: [{ userId: targetUserId }, { id: targetUserId }] },
+            { email: userEmailForDep },
             { $set: { 'merchant.depositLocked': MERCHANT_BADGE_MIN_DEPOSIT, 'merchant.activatedAt': new Date() } }
           );
         }
