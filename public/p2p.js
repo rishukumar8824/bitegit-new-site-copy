@@ -1592,6 +1592,8 @@ async function loadProfilePanel(options = {}) {
   if (!profileSection && !document.getElementById('mobProfileScreen')) {
     return;
   }
+  // Apply merchant badge immediately from cache (no API wait)
+  if (_myMerchantBadge) applyBadgeToProfileUI(_myMerchantBadge);
 
   const setIdentityTag = (label, verified = false) => {
     [profileIdentityTag, profileIdentityTagMobile].forEach((node) => {
@@ -1714,16 +1716,15 @@ async function loadProfilePanel(options = {}) {
           if (secDepEl) secDepEl.textContent = formatNumber(secDep) + ' USDT';
           var secDepStatus = document.getElementById('profileSecDepStatus');
           if (secDepStatus) {
-            if (secDep >= 500) {
-              secDepStatus.textContent = 'Badge Eligible';
-              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(247,147,26,0.15);color:#f7931a;margin-left:4px;vertical-align:middle;';
-            } else if (secDep >= 200) {
+            if (secDep >= 200) {
               secDepStatus.textContent = 'Active';
-              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(22,199,132,0.15);color:#16c784;margin-left:4px;vertical-align:middle;';
+              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(22,199,132,0.15);color:#16c784;margin-left:4px;vertical-align:middle;display:inline;';
             } else {
               secDepStatus.textContent = 'None';
-              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(246,70,93,0.15);color:#f6465d;margin-left:4px;vertical-align:middle;';
+              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(246,70,93,0.15);color:#f6465d;margin-left:4px;vertical-align:middle;display:inline;';
             }
+            // If user has merchant badge, hide the status tag
+            if (_myMerchantBadge) secDepStatus.style.display = 'none';
           }
 
           // Regular assets (available balance only — security deposit excluded)
@@ -6888,21 +6889,20 @@ function applyBadgeToProfileUI(badgeNum) {
   }
   // Update security deposit display — badge holders have >= 500 USDT locked
   var secDepEl = document.getElementById('profileDepositMobile');
-  var secDepStatus = document.getElementById('profileSecDepStatus');
-  if (secDepEl && secDepEl.textContent === '0 USDT') {
+  if (secDepEl && (secDepEl.textContent === '0 USDT' || secDepEl.textContent === '')) {
     secDepEl.textContent = '500 USDT';
   }
-  if (secDepStatus && secDepStatus.textContent === 'None') {
-    secDepStatus.textContent = 'Badge Eligible';
-    secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(247,147,26,0.15);color:#f7931a;margin-left:4px;vertical-align:middle;';
-  }
+  // Hide the status tag (Badge Eligible / None / Active) — merchant badge itself shows status
+  var secDepStatus = document.getElementById('profileSecDepStatus');
+  if (secDepStatus) secDepStatus.style.display = 'none';
 }
 
-// Apply from localStorage seed immediately on load
+// Apply from localStorage seed immediately — no delay needed
 if (_myMerchantBadge) {
+  // Try immediately (if DOM is ready)
+  applyBadgeToProfileUI(_myMerchantBadge);
+  // Also on DOMContentLoaded in case DOM isn't ready yet
   document.addEventListener('DOMContentLoaded', function() { applyBadgeToProfileUI(_myMerchantBadge); });
-  // Also apply after short delay in case DOM already ready
-  setTimeout(function() { applyBadgeToProfileUI(_myMerchantBadge); }, 300);
 }
 
 async function loadMerchantBadge() {
