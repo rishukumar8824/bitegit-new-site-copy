@@ -687,8 +687,8 @@
       const methods = Array.isArray(ad.paymentMethods) ? ad.paymentMethods : (ad.payMethod ? [ad.payMethod] : []);
       return methods.some((m) => m && m.toLowerCase() === pmFilter.toLowerCase());
     };
-    const sellAds = liveState.publicSellAds.filter((ad) => ad.status !== "paused" && Number(ad.availableUsdt || ad.totalUsdt || 0) > 0 && matchesPayFilter(ad));
-    const buyAds = liveState.publicBuyAds.filter((ad) => ad.status !== "paused" && Number(ad.availableUsdt || ad.totalUsdt || 0) > 0 && matchesPayFilter(ad));
+    const sellAds = liveState.publicSellAds.filter((ad) => ad.status !== "paused" && Number(ad.availableUsdt || ad.totalUsdt || 0) > 0 && matchesPayFilter(ad)).sort((a, b) => Number(a.price) - Number(b.price));
+    const buyAds = liveState.publicBuyAds.filter((ad) => ad.status !== "paused" && Number(ad.availableUsdt || ad.totalUsdt || 0) > 0 && matchesPayFilter(ad)).sort((a, b) => Number(b.price) - Number(a.price));
 
     bitcovexP2PState.hasLiveAds = Boolean(sellAds.length || buyAds.length);
 
