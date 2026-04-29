@@ -3540,24 +3540,37 @@ function showWithdrawalNotification(info) {
 }
 
 async function openWithdrawalPanel() {
-  _wdPendingCount = 0;
-  updateWithdrawalBadge();
-  // Load pending withdrawals from server
-  let withdrawals = [];
-  try {
-    const data = await apiRequest('/wallet/withdrawals?status=pending&limit=50');
-    withdrawals = data.withdrawals || [];
-  } catch(e) {}
-
-  // Remove existing panel
+  // Toggle: close if already open
   const existing = document.getElementById('wdPanel');
   if (existing) { existing.remove(); return; }
 
+  _wdPendingCount = 0;
+  updateWithdrawalBadge();
+
+  // Show panel immediately with loading state
   const panel = document.createElement('div');
   panel.id = 'wdPanel';
-  panel.style.cssText = `position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;
-    background:#0d1117;border-left:1px solid rgba(255,255,255,0.07);z-index:9998;
-    display:flex;flex-direction:column;animation:slideInRight 0.3s ease;overflow:hidden;`;
+  panel.style.cssText = 'position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;background:#0d1117;border-left:1px solid rgba(255,255,255,0.07);z-index:99999;display:flex;flex-direction:column;overflow:hidden;box-shadow:-4px 0 24px rgba(0,0,0,0.5);';
+  panel.innerHTML = `
+    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;">
+      <div><div style="font-size:15px;font-weight:700;color:#eaecef;">💸 Withdrawal Requests</div><div style="font-size:12px;color:#848e9c;" id="wdPanelSub">Loading...</div></div>
+      <button onclick="document.getElementById('wdPanel').remove();" style="background:none;border:none;color:#848e9c;cursor:pointer;font-size:20px;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;" id="wdPanelBody"><div style="padding:2rem;text-align:center;color:#848e9c;">Loading...</div></div>`;
+  document.body.appendChild(panel);
+
+  // Load pending withdrawals from server
+  let withdrawals = [];
+  try {
+    const data = await apiRequest('/wallet/withdrawals?status=PENDING&limit=50');
+    withdrawals = (data.withdrawals || []);
+  } catch(e) {}
+
+  const panelBody = document.getElementById('wdPanelBody');
+  const panelSub = document.getElementById('wdPanelSub');
+  if (!panelBody) return;
+
+  if (panelSub) panelSub.textContent = withdrawals.length + ' pending';
 
   const rows = withdrawals.length === 0
     ? `<div style="padding:2rem;text-align:center;color:#848e9c;">No pending withdrawals 🎉</div>`
@@ -3568,7 +3581,7 @@ async function openWithdrawalPanel() {
       <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:17px;font-weight:800;color:#eaecef;">${escapeHtml(w.amount)} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
+            <div style="font-size:17px;font-weight:800;color:#eaecef;">${escapeHtml(String(w.amount))} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
             <div style="font-size:11px;color:#848e9c;margin-top:3px;">Request: ${escapeHtml(id || '-')}</div>
           </div>
           ${statusBadge(w.status || 'PENDING')}
@@ -3589,18 +3602,7 @@ async function openWithdrawalPanel() {
       </div>`;
     }).join('');
 
-  panel.innerHTML = `
-    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <div style="font-size:15px;font-weight:700;color:#eaecef;">💸 Withdrawal Requests</div>
-        <div style="font-size:12px;color:#848e9c;">${withdrawals.length} pending</div>
-      </div>
-      <button onclick="document.getElementById('wdPanel').remove();"
-        style="background:none;border:none;color:#848e9c;cursor:pointer;font-size:20px;">✕</button>
-    </div>
-    <div style="flex:1;overflow-y:auto;">${rows}</div>`;
-
-  document.body.appendChild(panel);
+  panelBody.innerHTML = rows;
 }
 
 async function wdAction(withdrawalId, decision, btn) {
