@@ -1702,7 +1702,7 @@ async function loadProfilePanel(options = {}) {
     Boolean(options.refreshWallet) || Date.now() - profileWalletSyncedAt > 30 * 1000;
 
   if (shouldRefreshWallet) {
-    fetch('/api/p2p/wallet')
+    fetch('/api/p2p/wallet', { credentials: 'include' })
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
         if (data && data.wallet) {
