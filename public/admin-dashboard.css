@@ -47,7 +47,7 @@ html,body{margin:0;padding:0;background:var(--bg-base);color:var(--text-1);font-
 .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px;min-width:18px;text-align:center;line-height:16px;}
 .sidebar-footer{padding:12px 8px;border-top:1px solid var(--border);flex-shrink:0;}
 .admin-main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
-.admin-topbar{position:sticky;top:0;z-index:40;height:56px;background:rgba(13,17,23,0.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;gap:14px;flex-shrink:0;}
+.admin-topbar{position:sticky;top:0;z-index:10002;height:56px;background:rgba(13,17,23,0.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;gap:14px;flex-shrink:0;}
 .topbar-left{display:flex;align-items:center;gap:12px;}
 .topbar-right{display:flex;align-items:center;gap:8px;}
 .topbar-title{font-size:15px;font-weight:800;color:var(--text-1);}
