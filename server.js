@@ -2432,6 +2432,10 @@ app.post(
       if (error.status) {
         return res.status(error.status).json({ message: error.message });
       }
+      // MongoDB duplicate key — another pending withdrawal exists
+      if (error.code === 11000 || (error.message && error.message.includes('E11000'))) {
+        return res.status(409).json({ message: 'You already have a pending withdrawal. Please wait for it to be processed.' });
+      }
       return res.status(500).json({ message: 'Server error while creating withdrawal request.', _debug: String(error.message || error.code || error) });
     }
   }
