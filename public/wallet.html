@@ -680,7 +680,8 @@
     <button class="tab-btn" id="recWdTab" onclick="switchRecTab('wd')">Withdraw</button>
   </div>
   <div id="recDepContent">
-    <div class="empty-state">
+    <div id="recDepList"></div>
+    <div class="empty-state" id="recDepEmpty">
       <svg class="empty-icon" viewBox="0 0 80 80" fill="none"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/></svg>
       <div class="empty-txt">No Data yet</div>
     </div>
@@ -690,7 +691,8 @@
       <button class="sub-tab-btn active" id="recOnChainTab" onclick="switchWdSubTab('onchain')">On-chain transfer</button>
       <button class="sub-tab-btn" id="recInternalTab" onclick="switchWdSubTab('internal')">Internal transfer</button>
     </div>
-    <div class="empty-state">
+    <div id="recWdList"></div>
+    <div class="empty-state" id="recWdEmpty">
       <svg class="empty-icon" viewBox="0 0 80 80" fill="none"><rect x="10" y="5" width="50" height="60" rx="4" fill="#2a2a2a"/><rect x="20" y="25" width="30" height="5" rx="2" fill="#444"/><rect x="20" y="35" width="22" height="5" rx="2" fill="#3a3a3a"/></svg>
       <div class="empty-txt">No Data yet</div>
     </div>
@@ -1122,6 +1124,7 @@
     screens.forEach(function(s){ s.classList.add('hidden'); });
     document.getElementById(id).classList.remove('hidden');
     if(id === 'screenWithdrawHistory') loadWithdrawHistory();
+    if(id === 'screenRecord') loadRecordData();
   }
 
   var balVisible = true;
@@ -1363,6 +1366,64 @@
     showToast('Transfer submitted successfully');
     document.getElementById('tfQtyInput').value = '';
   }
+  var usdtSvgSm = '<svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658s2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658s-2.895 1.485-6.775 1.657zm0-3.59v-2.366h5.414V8H8.664v3.427h5.414v2.365c-4.4.202-7.708 1.074-7.708 2.128s3.308 1.926 7.708 2.129v7.617h3.844v-7.619c4.393-.202 7.694-1.073 7.694-2.127s-3.301-1.926-7.694-2.127z" fill="#fff"/></svg>';
+
+  function fmtDate(ts) {
+    var dt = new Date(ts || Date.now());
+    return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+  }
+
+  function buildRecRow(sign, amount, network, dateStr, statusColor, statusLabel) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);gap:.75rem';
+    row.innerHTML = usdtSvgSm +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between">' +
+          '<div style="font-size:.92rem;font-weight:700;color:#fff">'+sign+(amount||0)+' USDT</div>' +
+          '<div style="font-size:.78rem;font-weight:700;color:'+statusColor+';display:flex;align-items:center;gap:.2rem"><span>•</span>'+statusLabel+'</div>' +
+        '</div>' +
+        '<div style="font-size:.75rem;color:#8a9bb5;margin-top:.2rem">'+(network||'USDT')+'</div>' +
+        '<div style="font-size:.72rem;color:#8a9bb5;margin-top:.1rem">'+dateStr+'</div>' +
+      '</div>';
+    return row;
+  }
+
+  function loadRecordData() {
+    // Load withdrawals
+    fetch('/api/withdrawals', { credentials:'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var list = (data && data.withdrawals) ? data.withdrawals : [];
+        var el = document.getElementById('recWdList');
+        var empty = document.getElementById('recWdEmpty');
+        el.innerHTML = '';
+        if(!list.length) { empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        list.forEach(function(w) {
+          var status = String(w.status || 'pending').toLowerCase();
+          var statusColor = (status==='approved'||status==='sent') ? '#0ecb81' : status==='rejected' ? '#f6465d' : '#f5a623';
+          var statusLabel = status==='sent' ? 'Approved' : status.charAt(0).toUpperCase()+status.slice(1);
+          var net = (w.metadata&&w.metadata.network) ? w.metadata.network : (w.network||'TRC20');
+          el.appendChild(buildRecRow('-', w.amount, net, fmtDate(w.createdAt), statusColor, statusLabel));
+        });
+      }).catch(function(){});
+
+    // Load deposits
+    fetch('/api/deposits', { credentials:'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var list = (data && data.deposits) ? data.deposits : [];
+        var el = document.getElementById('recDepList');
+        var empty = document.getElementById('recDepEmpty');
+        el.innerHTML = '';
+        if(!list.length) { empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        list.forEach(function(d) {
+          el.appendChild(buildRecRow('+', d.amount, d.coin||'USDT', fmtDate(d.createdAt||d.date), '#0ecb81', 'Successful'));
+        });
+      }).catch(function(){});
+  }
+
   function switchRecTab(tab) {
     var isDep = tab === 'dep';
     document.getElementById('recDepTab').classList.toggle('active', isDep);
