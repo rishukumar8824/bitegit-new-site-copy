@@ -1594,6 +1594,8 @@ async function loadProfilePanel(options = {}) {
   }
   // Apply merchant badge immediately from cache (no API wait)
   if (_myMerchantBadge) applyBadgeToProfileUI(_myMerchantBadge);
+  // Apply security deposit immediately from cache (no API wait)
+  if (_mySecDep) applySecDepToProfileUI(_mySecDep);
 
   const setIdentityTag = (label, verified = false) => {
     [profileIdentityTag, profileIdentityTagMobile].forEach((node) => {
@@ -1713,7 +1715,10 @@ async function loadProfilePanel(options = {}) {
 
           // Security deposit row (frozen — cannot be used)
           var secDepEl = document.getElementById('profileDepositMobile');
-          if (secDepEl) secDepEl.textContent = formatNumber(secDep) + ' USDT';
+          var _secDepStr = formatNumber(secDep) + ' USDT';
+          if (secDepEl) secDepEl.textContent = _secDepStr;
+          // Cache for instant display on next page load
+          try { localStorage.setItem('_p2p_sec_dep', _secDepStr); _mySecDep = _secDepStr; } catch(_) {}
           var secDepStatus = document.getElementById('profileSecDepStatus');
           if (secDepStatus) {
             if (secDep >= 200) {
@@ -2753,6 +2758,7 @@ async function loadCurrentUser() {
     } else {
       currentUser = null;
       try { localStorage.removeItem('_p2p_hint'); } catch(_) {}
+      try { localStorage.removeItem('_p2p_sec_dep'); _mySecDep = null; } catch(_) {}
       _clearOrdersCache({ preserveSnapshots: true });
       fetchOrdersSafe(); // session expired — replace stuck skeleton with login prompt
     }
@@ -2902,6 +2908,7 @@ async function logoutUser() {
   } finally {
     currentUser = null;
     try { localStorage.removeItem('_p2p_hint'); } catch(_) {}
+    try { localStorage.removeItem('_p2p_sec_dep'); _mySecDep = null; } catch(_) {}
     _clearOrdersCache(); // cancels any in-flight request, wipes state + cache
     _stopFallbackPoll();
     mobileOrdersCache.clear();
@@ -6873,6 +6880,36 @@ var MERCHANT_BADGES = {
 // Global: current user's own merchant badge number (1/2/3), set after loadMerchantBadge()
 // Seed from localStorage so cards render badge on first load without waiting for API
 var _myMerchantBadge = (function() { try { return JSON.parse(localStorage.getItem('_p2p_badge') || 'null'); } catch(_) { return null; } })();
+
+// Seed security deposit from cache for INSTANT display — no API wait
+var _mySecDep = (function() { try { return localStorage.getItem('_p2p_sec_dep') || null; } catch(_) { return null; } })();
+
+function applySecDepToProfileUI(secDepStr) {
+  if (!secDepStr) return;
+  var secDepEl = document.getElementById('profileDepositMobile');
+  if (secDepEl && (secDepEl.textContent === '0 USDT' || secDepEl.textContent === '' || secDepEl.textContent === '₹0')) {
+    secDepEl.textContent = secDepStr;
+  }
+  // If merchant badge active, status tag stays hidden (applyBadgeToProfileUI handles that)
+  if (_myMerchantBadge) return;
+  var secDepStatus = document.getElementById('profileSecDepStatus');
+  if (secDepStatus) {
+    var num = parseFloat(secDepStr) || 0;
+    if (num >= 200) {
+      secDepStatus.textContent = 'Active';
+      secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(22,199,132,0.15);color:#16c784;margin-left:4px;vertical-align:middle;display:inline;';
+    } else {
+      secDepStatus.textContent = 'None';
+      secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(246,70,93,0.15);color:#f6465d;margin-left:4px;vertical-align:middle;display:inline;';
+    }
+  }
+}
+
+// Apply cached security deposit immediately — no delay
+if (_mySecDep) {
+  applySecDepToProfileUI(_mySecDep);
+  document.addEventListener('DOMContentLoaded', function() { applySecDepToProfileUI(_mySecDep); });
+}
 
 // Apply badge to profile UI immediately (called both from localStorage seed and API result)
 function applyBadgeToProfileUI(badgeNum) {
