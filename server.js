@@ -2442,7 +2442,7 @@ app.post(
       if (error.status) {
         return res.status(error.status).json({ message: error.message });
       }
-      return res.status(500).json({ message: 'Server error while creating withdrawal request.' });
+      return res.status(500).json({ message: 'Server error while creating withdrawal request.', _debug: String(error.message || error.code || error) });
     }
   }
 );
