@@ -1555,7 +1555,7 @@
         loadWalletBalances && loadWalletBalances();
         showScreen('screenOverview');
       } else {
-        showToast(d.message || 'Withdrawal failed');
+        showToast((d._debug ? d._debug : (d.message || 'Withdrawal failed')));
       }
     })
     .catch(function(){ showToast('Network error. Please try again.'); });
