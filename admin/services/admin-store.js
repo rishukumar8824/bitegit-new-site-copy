@@ -1289,6 +1289,28 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
 
     const rows = await adminWithdrawals.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray();
     const total = await adminWithdrawals.countDocuments(query);
+
+    // Enrich rows with real username + email from p2pCredentials
+    if (p2pCredentials && rows.length) {
+      const uniqueUserIds = [...new Set(rows.map(r => r.userId).filter(Boolean))];
+      const creds = await p2pCredentials
+        .find({ $or: [{ userId: { $in: uniqueUserIds } }, { id: { $in: uniqueUserIds } }] },
+              { projection: { userId: 1, id: 1, email: 1, username: 1 } })
+        .toArray();
+      const credMap = {};
+      for (const c of creds) {
+        const key = c.userId || c.id;
+        if (key) credMap[key] = c;
+      }
+      for (const row of rows) {
+        const cred = credMap[row.userId];
+        if (cred) {
+          if (cred.username) row.username = cred.username;
+          if (cred.email) row.email = cred.email;
+        }
+      }
+    }
+
     return { page, limit, total, withdrawals: rows };
   }
 
