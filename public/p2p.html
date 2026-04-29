@@ -1826,7 +1826,7 @@
               <div style="font-size:.75rem;color:#848e9c;margin-top:2px;">TOTP-based 2FA</div>
             </div>
           </div>
-          <button onclick="showToast('Google Authenticator coming soon')" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#00e5ff;font-weight:600;cursor:pointer;">Enable</button>
+          <button onclick="(function(b){var t=document.createElement('div');t.textContent='Google Authenticator coming soon';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap;';document.body.appendChild(t);setTimeout(function(){t.remove();},2000);})(this)" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#00e5ff;font-weight:600;cursor:pointer;">Enable</button>
         </div>
 
         <!-- Security tips -->
