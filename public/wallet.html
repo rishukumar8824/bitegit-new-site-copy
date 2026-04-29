@@ -1543,7 +1543,7 @@
     fetch('/api/withdrawals', {
       method:'POST', credentials:'include',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ address:p.addr, amount:p.amt, network:p.netKey, currency:'USDT' })
+      body: JSON.stringify({ address:p.addr, amount:p.amt, network:p.netKey, currency:'USDT', fee:p.net.fee })
     })
     .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
     .then(function(res){
@@ -1616,7 +1616,8 @@
           var statusLabel = status === 'sent' ? 'Approved' : status.charAt(0).toUpperCase()+status.slice(1);
           var network = (w.metadata&&w.metadata.network) ? w.metadata.network : (w.network||'TRC20');
           var address = w.address || w.toAddress || '-';
-          var fee = w.fee != null ? w.fee : (w.metadata&&w.metadata.fee!=null ? w.metadata.fee : '-');
+          var WD_FEE_MAP = { TRC20:1, BEP20:1, ERC20:5, MORPH:1 };
+          var fee = w.fee != null ? w.fee : (w.metadata&&w.metadata.fee!=null ? w.metadata.fee : (WD_FEE_MAP[network]!=null ? WD_FEE_MAP[network] : 1));
           var detId = 'wdDet_'+idx;
           var row = document.createElement('div');
           row.style.cssText = 'border-bottom:1px solid rgba(255,255,255,.06);';
@@ -1638,8 +1639,8 @@
             '<div id="'+detId+'" style="display:none;padding:.5rem 1rem .9rem;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.05)">' +
               '<table style="width:100%;font-size:.78rem;border-collapse:collapse">' +
                 '<tr><td style="color:#8a9bb5;padding:.25rem 0;width:42%">Network</td><td style="color:#eaecef;font-weight:600">'+network+'</td></tr>' +
-                '<tr><td style="color:#8a9bb5;padding:.25rem 0">Fee</td><td style="color:#eaecef;font-weight:600">'+(fee!=='-'?fee+' USDT':'-')+'</td></tr>' +
-                '<tr><td style="color:#8a9bb5;padding:.25rem 0">You receive</td><td style="color:#0ecb81;font-weight:700">'+(fee!=='-'?((Number(w.amount||0)-Number(fee)).toFixed(2))+' USDT':'-')+'</td></tr>' +
+                '<tr><td style="color:#8a9bb5;padding:.25rem 0">Fee</td><td style="color:#eaecef;font-weight:600">'+fee+' USDT</td></tr>' +
+                '<tr><td style="color:#8a9bb5;padding:.25rem 0">You receive</td><td style="color:#0ecb81;font-weight:700">'+((Number(w.amount||0)-Number(fee)).toFixed(2))+' USDT</td></tr>' +
                 '<tr><td style="color:#8a9bb5;padding:.25rem 0;vertical-align:top">Address</td><td style="color:#eaecef;font-size:.72rem;word-break:break-all">'+address+'</td></tr>' +
                 '<tr><td style="color:#8a9bb5;padding:.25rem 0">Status</td><td style="color:'+statusColor+';font-weight:700">'+statusLabel+'</td></tr>' +
                 '<tr><td style="color:#8a9bb5;padding:.25rem 0">Submitted</td><td style="color:#eaecef">'+dateStr+'</td></tr>' +

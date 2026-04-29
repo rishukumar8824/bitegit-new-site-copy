@@ -2342,6 +2342,8 @@ app.post(
     const requestedNetwork = String(req.body.network || req.body.chain || req.body.blockchain || '').trim();
     const network = normalizeUsdtNetwork(requestedNetwork || 'TRC20');
     const requestIp = getRequestIp(req);
+    const networkFeeMap = { TRC20: 1, BEP20: 1, ERC20: 5, MORPH: 1 };
+    const fee = req.body.fee != null ? Number(req.body.fee) : (networkFeeMap[network] || 1);
 
     if (currency === 'USDT' && !isValidAddressForNetwork(address, network)) {
       return res.status(400).json({
@@ -2358,6 +2360,7 @@ app.post(
         metadata: {
           source: 'api_withdrawals',
           network,
+          fee,
           ipAddress: requestIp,
           userAgent: String(req.headers['user-agent'] || '').trim()
         }
