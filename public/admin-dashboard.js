@@ -3574,35 +3574,58 @@ async function openWithdrawalPanel() {
 
   const rows = withdrawals.length === 0
     ? `<div style="padding:2rem;text-align:center;color:#848e9c;">No pending withdrawals 🎉</div>`
-    : withdrawals.map(w => {
+    : withdrawals.map((w, idx) => {
       const id = String(w.requestId || w.id || '').trim();
       const address = String(w.address || w.toAddress || w.to || '-').trim();
+      const detailId = 'wdDetail_' + idx;
+      const fee = w.fee != null ? String(w.fee) : '0';
+      const createdAt = w.createdAt ? formatDate(w.createdAt) : '-';
+      const processedAt = w.processedAt ? formatDate(w.processedAt) : '-';
+      const userName = escapeHtml(w.username || w.userId || 'User');
+      const userEmail = escapeHtml(w.email || '-');
       return `
-      <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+      <div style="border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div onclick="wdToggleDetail('${detailId}')" style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:17px;font-weight:800;color:#eaecef;">${escapeHtml(String(w.amount))} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
-            <div style="font-size:11px;color:#848e9c;margin-top:3px;">Request: ${escapeHtml(id || '-')}</div>
+            <div style="font-size:16px;font-weight:800;color:#eaecef;">${escapeHtml(String(w.amount))} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
+            <div style="font-size:11px;color:#848e9c;margin-top:2px;">${userName} &nbsp;·&nbsp; ${escapeHtml(createdAt)}</div>
           </div>
-          ${statusBadge(w.status || 'PENDING')}
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${statusBadge(w.status || 'PENDING')}
+            <span style="color:#848e9c;font-size:16px;" id="${detailId}_arr">▸</span>
+          </div>
         </div>
-        <div style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.03);display:grid;gap:8px;font-size:12px;color:#c9d1d9;">
-          <div><span style="color:#848e9c;">User:</span> ${escapeHtml(w.username || w.userId || 'User')}</div>
-          <div><span style="color:#848e9c;">User ID:</span> ${escapeHtml(w.userId || '-')}</div>
-          <div><span style="color:#848e9c;">Network:</span> ${escapeHtml(w.network || '-')}</div>
-          <div style="word-break:break-all;"><span style="color:#848e9c;">Address:</span> ${escapeHtml(address)}</div>
-          <div><span style="color:#848e9c;">Created:</span> ${escapeHtml(formatDate(w.createdAt))}</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
-          <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
-            style="background:#02c076;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Approve</button>
-          <button onclick="wdAction('${escapeHtml(id)}','REJECTED',this)"
-            style="background:#f6465d;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Reject</button>
+        <div id="${detailId}" style="display:none;padding:0 16px 14px;">
+          <div style="padding:12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.03);display:grid;gap:7px;font-size:12px;color:#c9d1d9;margin-bottom:10px;">
+            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Username:</span> <b style="color:#eaecef;">${userName}</b></div>
+            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Email:</span> ${userEmail}</div>
+            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Network:</span> ${escapeHtml(w.network || '-')}</div>
+            <div style="word-break:break-all;"><span style="color:#848e9c;min-width:90px;display:inline-block;">Address:</span> ${escapeHtml(address)}</div>
+            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Fee:</span> ${escapeHtml(fee)} USDT</div>
+            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Request ID:</span> <span style="font-size:10px;word-break:break-all;">${escapeHtml(id || '-')}</span></div>
+            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Submitted:</span> ${escapeHtml(createdAt)}</div>
+            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Processed:</span> ${escapeHtml(processedAt)}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
+              style="background:#02c076;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Approve</button>
+            <button onclick="wdAction('${escapeHtml(id)}','REJECTED',this)"
+              style="background:#f6465d;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Reject</button>
+          </div>
         </div>
       </div>`;
     }).join('');
 
   panelBody.innerHTML = rows;
+}
+
+function wdToggleDetail(detailId) {
+  const el = document.getElementById(detailId);
+  const arr = document.getElementById(detailId + '_arr');
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (arr) arr.textContent = open ? '▸' : '▾';
 }
 
 async function wdAction(withdrawalId, decision, btn) {
