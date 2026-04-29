@@ -1490,7 +1490,9 @@
       if(res.ok && (d.withdrawal || d.requestId || d.id)) {
         showToast('Withdrawal submitted successfully');
         loadWithdrawHistory();
-        showScreen('screenWithdrawHistory');
+        // Refresh wallet balance then go to main assets screen
+        loadWalletBalances && loadWalletBalances();
+        showScreen('screenOverview');
       } else {
         showToast(d.message || 'Withdrawal failed');
       }
@@ -1570,7 +1572,7 @@
   loadWithdrawHistory();
 
   // Load wallet balances from P2P wallet API
-  (function loadWalletBalances() {
+  function loadWalletBalances() {
     fetch('/api/p2p/wallet', { credentials: 'include' })
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
@@ -1595,7 +1597,8 @@
         if (balSubEl) balSubEl.textContent = '≈' + (total * (OV_RATES['BTC'] || 0.0000154)).toFixed(8) + ' BTC';
       })
       .catch(function() {});
-  })();
+  }
+  loadWalletBalances();
 
   // Route from URL params
   var params = new URLSearchParams(location.search);
