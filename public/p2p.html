@@ -1537,9 +1537,12 @@
               <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#00e5ff">%</text>
             </svg>
           </div>
-          <h1 style="font-size:1.6rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;line-height:1.25;">Apply to be a merchant</h1>
-          <p style="font-size:0.84rem;color:rgba(255,255,255,0.45);text-align:center;margin:0 0 1.5rem;line-height:1.6;">Become a BITEGIT merchant and post ads for zero fees.</p>
-          <button onclick="openP2PScreen('merchantApplyScreen')" style="width:100%;max-width:340px;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;">Apply now</button>
+          <h1 style="font-size:1.6rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;line-height:1.25;">Become a Merchant</h1>
+          <p style="font-size:0.84rem;color:rgba(255,255,255,0.45);text-align:center;margin:0 0 1.2rem;line-height:1.6;">Lock a security deposit to post ads. Apply for merchant badge for zero fees &amp; priority listing.</p>
+          <!-- Dynamic status box — populated by refreshMerchantStatus() -->
+          <div id="merchantStatusBox" style="width:100%;max-width:360px;">
+            <div style="text-align:center;color:#848e9c;font-size:.85rem;padding:.5rem">Loading…</div>
+          </div>
         </div>
 
         <!-- Merchant perks comparison -->
