@@ -6868,6 +6868,43 @@ var MERCHANT_BADGES = {
 // Seed from localStorage so cards render badge on first load without waiting for API
 var _myMerchantBadge = (function() { try { return JSON.parse(localStorage.getItem('_p2p_badge') || 'null'); } catch(_) { return null; } })();
 
+// Apply badge to profile UI immediately (called both from localStorage seed and API result)
+function applyBadgeToProfileUI(badgeNum) {
+  if (!badgeNum || !MERCHANT_BADGES) return;
+  var b = MERCHANT_BADGES[badgeNum];
+  if (!b) return;
+  var badgeEl = document.getElementById('mobMerchantBadge');
+  if (badgeEl) {
+    badgeEl.textContent = b.icon + ' ' + b.name + ' Merchant';
+    badgeEl.style.display = 'inline-flex';
+    badgeEl.style.background = b.color + '22';
+    badgeEl.style.color = b.color;
+    badgeEl.style.border = '1px solid ' + b.color + '55';
+  }
+  var applyItem = document.getElementById('mobMerchantApplyItem');
+  if (applyItem) {
+    var label = applyItem.querySelector('.bg-menu-label');
+    if (label) label.textContent = b.name + ' Merchant ✓';
+  }
+  // Update security deposit display — badge holders have >= 500 USDT locked
+  var secDepEl = document.getElementById('profileDepositMobile');
+  var secDepStatus = document.getElementById('profileSecDepStatus');
+  if (secDepEl && secDepEl.textContent === '0 USDT') {
+    secDepEl.textContent = '500 USDT';
+  }
+  if (secDepStatus && secDepStatus.textContent === 'None') {
+    secDepStatus.textContent = 'Badge Eligible';
+    secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(247,147,26,0.15);color:#f7931a;margin-left:4px;vertical-align:middle;';
+  }
+}
+
+// Apply from localStorage seed immediately on load
+if (_myMerchantBadge) {
+  document.addEventListener('DOMContentLoaded', function() { applyBadgeToProfileUI(_myMerchantBadge); });
+  // Also apply after short delay in case DOM already ready
+  setTimeout(function() { applyBadgeToProfileUI(_myMerchantBadge); }, 300);
+}
+
 async function loadMerchantBadge() {
   try {
     var res = await fetch('/api/merchant/application-status', { credentials: 'include' });
@@ -6887,18 +6924,8 @@ async function loadMerchantBadge() {
       } else if (_lastOffersData) {
         renderOffers(_lastOffersData, false);
       }
-      // Show badge in profile
-      var badgeEl = document.getElementById('mobMerchantBadge');
-      if (badgeEl) {
-        badgeEl.textContent = b.icon + ' ' + b.name + ' Merchant';
-        badgeEl.style.display = 'inline-flex';
-        badgeEl.style.background = b.color + '22';
-        badgeEl.style.color = b.color;
-        badgeEl.style.border = '1px solid ' + b.color + '55';
-      }
-      // Change "Apply to Become Merchant" text
-      var applyItem = document.getElementById('mobMerchantApplyItem');
-      if (applyItem) applyItem.querySelector('span') && (applyItem.querySelector('.bg-menu-label').textContent = b.name + ' Merchant ✓');
+      // Show badge in profile UI
+      applyBadgeToProfileUI(data.badge);
     } else {
       _myMerchantBadge = null;
       try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
