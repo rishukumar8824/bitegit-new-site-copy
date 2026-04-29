@@ -1555,7 +1555,8 @@
         loadWalletBalances && loadWalletBalances();
         showScreen('screenOverview');
       } else {
-        showToast((d._debug ? d._debug : (d.message || 'Withdrawal failed')));
+        var msg = d.message || (d._debug ? d._debug : 'Withdrawal failed');
+        showToast(msg);
       }
     })
     .catch(function(){ showToast('Network error. Please try again.'); });
@@ -1607,23 +1608,42 @@
           return;
         }
         var usdtSvg = '<svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658s2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658s-2.895 1.485-6.775 1.657zm0-3.59v-2.366h5.414V8H8.664v3.427h5.414v2.365c-4.4.202-7.708 1.074-7.708 2.128s3.308 1.926 7.708 2.129v7.617h3.844v-7.619c4.393-.202 7.694-1.073 7.694-2.127s-3.301-1.926-7.694-2.127z" fill="#fff"/></svg>';
-        list.forEach(function(w) {
+        list.forEach(function(w, idx) {
           var status = String(w.status || 'pending').toLowerCase();
           var dt = new Date(w.createdAt || Date.now());
           var dateStr = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
           var statusColor = status === 'approved' || status === 'sent' ? '#0ecb81' : status === 'rejected' ? '#f6465d' : '#f5a623';
           var statusLabel = status === 'sent' ? 'Approved' : status.charAt(0).toUpperCase()+status.slice(1);
+          var network = (w.metadata&&w.metadata.network) ? w.metadata.network : (w.network||'TRC20');
+          var address = w.address || w.toAddress || '-';
+          var fee = w.fee != null ? w.fee : (w.metadata&&w.metadata.fee!=null ? w.metadata.fee : '-');
+          var detId = 'wdDet_'+idx;
           var row = document.createElement('div');
-          row.className = 'dep-hist-row';
-          row.style.cssText = 'display:flex;align-items:center;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);gap:.75rem';
-          row.innerHTML = usdtSvg +
-            '<div style="flex:1;min-width:0">' +
-              '<div style="display:flex;align-items:center;justify-content:space-between">' +
-                '<div style="font-size:.92rem;font-weight:700;color:#fff">-'+(w.amount||0)+' USDT</div>' +
-                '<div style="font-size:.78rem;font-weight:700;color:'+statusColor+';display:flex;align-items:center;gap:.25rem"><span style="font-size:.9rem">•</span>'+statusLabel+'</div>' +
+          row.style.cssText = 'border-bottom:1px solid rgba(255,255,255,.06);';
+          row.innerHTML =
+            '<div onclick="(function(el,arrEl){var d=document.getElementById(\''+detId+'\');var open=d.style.display!==\'none\';d.style.display=open?\'none\':\'block\';arrEl.textContent=open?\'›\':\'‹\';})(this,document.getElementById(\''+detId+'_arr\'))" style="display:flex;align-items:center;padding:.75rem 1rem;gap:.75rem;cursor:pointer">' +
+              usdtSvg +
+              '<div style="flex:1;min-width:0">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between">' +
+                  '<div style="font-size:.92rem;font-weight:700;color:#fff">-'+(w.amount||0)+' USDT</div>' +
+                  '<div style="display:flex;align-items:center;gap:.5rem">' +
+                    '<div style="font-size:.78rem;font-weight:700;color:'+statusColor+';display:flex;align-items:center;gap:.2rem"><span>•</span>'+statusLabel+'</div>' +
+                    '<span id="'+detId+'_arr" style="color:#848e9c;font-size:1.1rem">›</span>' +
+                  '</div>' +
+                '</div>' +
+                '<div style="font-size:.75rem;color:#8a9bb5;margin-top:.2rem">'+network+'</div>' +
+                '<div style="font-size:.72rem;color:#8a9bb5;margin-top:.1rem">'+dateStr+'</div>' +
               '</div>' +
-              '<div style="font-size:.75rem;color:#8a9bb5;margin-top:.2rem">'+(w.metadata&&w.metadata.network?w.metadata.network:(w.network||'TRC20'))+'</div>' +
-              '<div style="font-size:.72rem;color:#8a9bb5;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+dateStr+'</div>' +
+            '</div>' +
+            '<div id="'+detId+'" style="display:none;padding:.5rem 1rem .9rem;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.05)">' +
+              '<table style="width:100%;font-size:.78rem;border-collapse:collapse">' +
+                '<tr><td style="color:#8a9bb5;padding:.25rem 0;width:42%">Network</td><td style="color:#eaecef;font-weight:600">'+network+'</td></tr>' +
+                '<tr><td style="color:#8a9bb5;padding:.25rem 0">Fee</td><td style="color:#eaecef;font-weight:600">'+(fee!=='-'?fee+' USDT':'-')+'</td></tr>' +
+                '<tr><td style="color:#8a9bb5;padding:.25rem 0">You receive</td><td style="color:#0ecb81;font-weight:700">'+(fee!=='-'?((Number(w.amount||0)-Number(fee)).toFixed(2))+' USDT':'-')+'</td></tr>' +
+                '<tr><td style="color:#8a9bb5;padding:.25rem 0;vertical-align:top">Address</td><td style="color:#eaecef;font-size:.72rem;word-break:break-all">'+address+'</td></tr>' +
+                '<tr><td style="color:#8a9bb5;padding:.25rem 0">Status</td><td style="color:'+statusColor+';font-weight:700">'+statusLabel+'</td></tr>' +
+                '<tr><td style="color:#8a9bb5;padding:.25rem 0">Submitted</td><td style="color:#eaecef">'+dateStr+'</td></tr>' +
+              '</table>' +
             '</div>';
           el.appendChild(row);
         });
