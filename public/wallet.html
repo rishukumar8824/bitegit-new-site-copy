@@ -1444,9 +1444,12 @@
   }
 
   function loadWdBalance() {
-    fetch('/api/wallet/balance', { credentials:'include' })
+    fetch('/api/wallet/summary', { credentials:'include' })
       .then(function(r){ return r.json(); })
-      .then(function(d){ if(d && d.balance != null) document.getElementById('wdAvailBal').textContent = parseFloat(d.balance).toFixed(2); })
+      .then(function(d){
+        var bal = d && d.summary ? (d.summary.available_balance || 0) : (d && d.wallet ? (d.wallet.availableBalance || d.wallet.balance || 0) : 0);
+        document.getElementById('wdAvailBal').textContent = parseFloat(bal).toFixed(2);
+      })
       .catch(function(){});
   }
 

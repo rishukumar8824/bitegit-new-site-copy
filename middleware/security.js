@@ -105,7 +105,7 @@ function createRateLimiters() {
     }),
     withdrawal: buildRateLimiter({
       windowMs: 15 * 60 * 1000,
-      max: 3,
+      max: 20,
       message: 'Too many withdrawal attempts. Please try again later.'
     })
   };
