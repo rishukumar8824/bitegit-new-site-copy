@@ -1540,7 +1540,7 @@
     if(!_pendingWithdraw) return;
     var p = _pendingWithdraw;
     document.getElementById('modalWdConfirm').classList.add('hidden');
-    fetch('/api/withdrawals', {
+    fetch('/api/withdraw', {
       method:'POST', credentials:'include',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ address:p.addr, amount:p.amt, network:p.netKey, currency:'USDT', fee:p.net.fee })
@@ -1681,6 +1681,18 @@
       .catch(function() {});
   }
   loadWalletBalances();
+
+  // Socket.io real-time listeners
+  if(window.socket) {
+    window.socket.on('wallet:balance_updated', function(data) {
+      loadWalletBalances();
+    });
+    window.socket.on('wallet:withdrawal_approved', function(data) {
+      showToast('Withdrawal approved!');
+      loadWithdrawHistory();
+      loadWalletBalances();
+    });
+  }
 
   // Route from URL params
   var params = new URLSearchParams(location.search);
