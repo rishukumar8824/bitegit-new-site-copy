@@ -1474,7 +1474,7 @@
     if(!qty || qty <= 0) { showToast('Please enter transfer quantity'); return; }
     var btn = document.querySelector('#screenTransfer .w-btn-full') || document.querySelector('#screenTransfer button[onclick="doTransferNow()"]');
     if(btn) { btn.disabled = true; btn.textContent = 'Transferring...'; }
-    bcvFetch('/api/wallet/transfer', {
+    bcvFetch('/wallet/transfer', {
       method: 'POST',
       body: JSON.stringify({ amount: qty, currency: 'USDT', wallet_type: 'spot', to_wallet_type: 'funding' })
     })
@@ -1519,7 +1519,7 @@
 
   function loadRecordData() {
     // Load withdrawals
-    bcvFetch('/api/withdraw/history')
+    bcvFetch('/withdraw/history')
       .then(function(r){ return r.json(); })
       .then(function(data) {
         var list = (data && data.data && data.data.withdrawals && data.data.withdrawals.data) ? data.data.withdrawals.data : [];
@@ -1538,7 +1538,7 @@
       }).catch(function(){});
 
     // Load deposits
-    bcvFetch('/api/deposit/history')
+    bcvFetch('/deposit/history')
       .then(function(r){ return r.json(); })
       .then(function(data) {
         var list = (data && data.data && data.data.deposits && data.data.deposits.data) ? data.data.deposits.data : [];
@@ -1635,7 +1635,7 @@
   }
 
   function loadWdBalance() {
-    bcvFetch('/api/dashboard')
+    bcvFetch('/dashboard')
       .then(function(r){ return r.json(); })
       .then(function(d){
         var bal = (d && d.status === 'success') ? Number(d.data.estimated_balance || 0) : 0;
@@ -1670,7 +1670,7 @@
     if(!_pendingWithdraw) return;
     var p = _pendingWithdraw;
     document.getElementById('modalWdConfirm').classList.add('hidden');
-    bcvFetch('/api/withdraw-request', {
+    bcvFetch('/withdraw-request', {
       method:'POST',
       body: JSON.stringify({ method_code: p.netKey, amount: p.amt, currency: 'USDT', wallet_type: 'spot', trx: p.addr })
     })
@@ -1701,7 +1701,7 @@
 
   // Load deposit history from API
   function loadDepositHistory() {
-    bcvFetch('/api/deposit/history')
+    bcvFetch('/deposit/history')
       .then(function(r){ return r.json(); })
       .then(function(data) {
         var list = (data && data.data && data.data.deposits && data.data.deposits.data) ? data.data.deposits.data : [];
@@ -1724,7 +1724,7 @@
 
   // Load withdrawal history from API
   function loadWithdrawHistory() {
-    bcvFetch('/api/withdraw/history')
+    bcvFetch('/withdraw/history')
       .then(function(r){ return r.json(); })
       .then(function(data) {
         var list = (data && data.data && data.data.withdrawals && data.data.withdrawals.data) ? data.data.withdrawals.data : [];
@@ -1783,7 +1783,7 @@
 
   // Load wallet balances from P2P wallet API
   function loadWalletBalances() {
-    bcvFetch('/api/dashboard')
+    bcvFetch('/dashboard')
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
         if (!data || data.status !== 'success') return;
@@ -1878,7 +1878,7 @@
     if(!amt || amt <= 0) { showToast('Please enter amount'); return; }
     var btn = document.querySelector('#screenConvert button[onclick="doConvert()"]');
     if(btn) { btn.disabled = true; btn.textContent = 'Converting...'; }
-    bcvFetch('/api/wallet/convert', {
+    bcvFetch('/wallet/convert', {
       method: 'POST',
       body: JSON.stringify({ from_currency: cvFrom, to_currency: cvTo, amount: amt })
     })
