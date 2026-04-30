@@ -1198,6 +1198,19 @@
 </div>
 
 <script>
+  // ── Bitcovex auth helper ──
+  function bcvHeaders(extra) {
+    var tok = localStorage.getItem('bitcovex_token') || '';
+    var h = { 'Content-Type': 'application/json' };
+    if (tok) h['Authorization'] = 'Bearer ' + tok;
+    return Object.assign(h, extra || {});
+  }
+  function bcvFetch(url, opts) {
+    opts = opts || {};
+    opts.headers = bcvHeaders(opts.headers);
+    return fetch(url, opts);
+  }
+
   var screenHistory = [];
   var switchAccountContext = '';
   var _pendingWithdraw = null;
@@ -1459,10 +1472,9 @@
     if(!qty || qty <= 0) { showToast('Please enter transfer quantity'); return; }
     var btn = document.querySelector('#screenTransfer .w-btn-full') || document.querySelector('#screenTransfer button[onclick="doTransferNow()"]');
     if(btn) { btn.disabled = true; btn.textContent = 'Transferring...'; }
-    fetch('/api/wallet/transfer', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: qty, currency: 'USDT', fromAccount: 'spot', toAccount: 'funding' })
+    bcvFetch('/api/wallet/transfer', {
+      method: 'POST',
+      body: JSON.stringify({ amount: qty, currency: 'USDT', wallet_type: 'spot', to_wallet_type: 'funding' })
     })
     .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
     .then(function(res){
@@ -1505,36 +1517,37 @@
 
   function loadRecordData() {
     // Load withdrawals
-    fetch('/api/withdrawals', { credentials:'include' })
+    bcvFetch('/api/withdraw/history')
       .then(function(r){ return r.json(); })
       .then(function(data) {
-        var list = (data && data.withdrawals) ? data.withdrawals : [];
+        var list = (data && data.data && data.data.withdrawals && data.data.withdrawals.data) ? data.data.withdrawals.data : [];
         var el = document.getElementById('recWdList');
         var empty = document.getElementById('recWdEmpty');
         el.innerHTML = '';
         if(!list.length) { empty.classList.remove('hidden'); return; }
         empty.classList.add('hidden');
         list.forEach(function(w) {
-          var status = String(w.status || 'pending').toLowerCase();
-          var statusColor = (status==='approved'||status==='sent') ? '#0ecb81' : status==='rejected' ? '#f6465d' : '#f5a623';
-          var statusLabel = status==='sent' ? 'Approved' : status.charAt(0).toUpperCase()+status.slice(1);
-          var net = (w.metadata&&w.metadata.network) ? w.metadata.network : (w.network||'TRC20');
-          el.appendChild(buildRecRow('-', w.amount, net, fmtDate(w.createdAt), statusColor, statusLabel));
+          var status = String(w.status || '0');
+          var statusColor = status==='1' ? '#0ecb81' : status==='3' ? '#f6465d' : '#f5a623';
+          var statusLabel = status==='1' ? 'Approved' : status==='3' ? 'Rejected' : status==='2' ? 'Processing' : 'Pending';
+          var net = (w.method && w.method.name) ? w.method.name : 'TRC20';
+          el.appendChild(buildRecRow('-', w.amount, net, fmtDate(w.created_at), statusColor, statusLabel));
         });
       }).catch(function(){});
 
     // Load deposits
-    fetch('/api/deposits', { credentials:'include' })
+    bcvFetch('/api/deposit/history')
       .then(function(r){ return r.json(); })
       .then(function(data) {
-        var list = (data && data.deposits) ? data.deposits : [];
+        var list = (data && data.data && data.data.deposits && data.data.deposits.data) ? data.data.deposits.data : [];
         var el = document.getElementById('recDepList');
         var empty = document.getElementById('recDepEmpty');
         el.innerHTML = '';
         if(!list.length) { empty.classList.remove('hidden'); return; }
         empty.classList.add('hidden');
         list.forEach(function(d) {
-          el.appendChild(buildRecRow('+', d.amount, d.coin||'USDT', fmtDate(d.createdAt||d.date), '#0ecb81', 'Successful'));
+          var coin = (d.wallet && d.wallet.currency) ? d.wallet.currency.symbol : 'USDT';
+          el.appendChild(buildRecRow('+', d.amount, coin, fmtDate(d.created_at||d.date), '#0ecb81', 'Successful'));
         });
       }).catch(function(){});
   }
@@ -1620,11 +1633,11 @@
   }
 
   function loadWdBalance() {
-    fetch('/api/wallet/summary', { credentials:'include' })
+    bcvFetch('/api/dashboard')
       .then(function(r){ return r.json(); })
       .then(function(d){
-        var bal = d && d.summary ? (d.summary.available_balance || 0) : (d && d.wallet ? (d.wallet.availableBalance || d.wallet.balance || 0) : 0);
-        document.getElementById('wdAvailBal').textContent = parseFloat(bal).toFixed(2);
+        var bal = (d && d.status === 'success') ? Number(d.data.estimated_balance || 0) : 0;
+        document.getElementById('wdAvailBal').textContent = bal.toFixed(2);
       })
       .catch(function(){});
   }
@@ -1655,22 +1668,20 @@
     if(!_pendingWithdraw) return;
     var p = _pendingWithdraw;
     document.getElementById('modalWdConfirm').classList.add('hidden');
-    fetch('/api/withdraw', {
-      method:'POST', credentials:'include',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ address:p.addr, amount:p.amt, network:p.netKey, currency:'USDT', fee:p.net.fee })
+    bcvFetch('/api/withdraw-request', {
+      method:'POST',
+      body: JSON.stringify({ method_code: p.netKey, amount: p.amt, currency: 'USDT', wallet_type: 'spot', trx: p.addr })
     })
     .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
     .then(function(res){
       var d = res.d;
-      if(res.ok && (d.withdrawal || d.requestId || d.id)) {
+      if(d.status === 'success') {
         showToast('Withdrawal submitted successfully');
         loadWithdrawHistory();
-        // Refresh wallet balance then go to main assets screen
         loadWalletBalances && loadWalletBalances();
         showScreen('screenOverview');
       } else {
-        var msg = d.message || (d._debug ? d._debug : 'Withdrawal failed');
+        var msg = (d.message && d.message.error) ? d.message.error[0] : 'Withdrawal failed';
         showToast(msg);
       }
     })
@@ -1688,19 +1699,20 @@
 
   // Load deposit history from API
   function loadDepositHistory() {
-    fetch('/api/deposits', { credentials:'include' })
+    bcvFetch('/api/deposit/history')
       .then(function(r){ return r.json(); })
       .then(function(data) {
-        var list = (data && data.deposits) ? data.deposits : [];
+        var list = (data && data.data && data.data.deposits && data.data.deposits.data) ? data.data.deposits.data : [];
         var el = document.getElementById('depHistList');
         if(!list.length) return;
         document.getElementById('depHistEmpty').classList.add('hidden');
         list.forEach(function(d) {
           var row = document.createElement('div');
           row.className = 'dep-hist-row';
-          var dt = new Date(d.createdAt || d.date || Date.now());
-          var dateStr = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0')+':'+String(dt.getSeconds()).padStart(2,'0');
-          row.innerHTML = '<div class="dep-hist-left"><div class="dep-hist-coin-name">'+(d.coin||'USDT')+'</div><div class="dep-hist-time">'+dateStr+'</div></div><div class="dep-hist-right"><div class="dep-hist-amount">+'+(d.amount||0)+'</div><div class="dep-hist-status">Successful</div></div>';
+          var dt = new Date(d.created_at || d.date || Date.now());
+          var dateStr = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+          var coin = (d.wallet && d.wallet.currency) ? d.wallet.currency.symbol : 'USDT';
+          row.innerHTML = '<div class="dep-hist-left"><div class="dep-hist-coin-name">'+coin+'</div><div class="dep-hist-time">'+dateStr+'</div></div><div class="dep-hist-right"><div class="dep-hist-amount">+'+(d.amount||0)+'</div><div class="dep-hist-status">Successful</div></div>';
           el.appendChild(row);
         });
       })
@@ -1710,10 +1722,10 @@
 
   // Load withdrawal history from API
   function loadWithdrawHistory() {
-    fetch('/api/withdrawals', { credentials:'include' })
+    bcvFetch('/api/withdraw/history')
       .then(function(r){ return r.json(); })
       .then(function(data) {
-        var list = (data && data.withdrawals) ? data.withdrawals : [];
+        var list = (data && data.data && data.data.withdrawals && data.data.withdrawals.data) ? data.data.withdrawals.data : [];
         var el = document.getElementById('wdHistList');
         var empty = document.getElementById('wdHistEmpty');
         el.innerHTML = '';
@@ -1725,14 +1737,13 @@
         var usdtSvg = '<svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658s2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658s-2.895 1.485-6.775 1.657zm0-3.59v-2.366h5.414V8H8.664v3.427h5.414v2.365c-4.4.202-7.708 1.074-7.708 2.128s3.308 1.926 7.708 2.129v7.617h3.844v-7.619c4.393-.202 7.694-1.073 7.694-2.127s-3.301-1.926-7.694-2.127z" fill="#fff"/></svg>';
         list.forEach(function(w, idx) {
           var status = String(w.status || 'pending').toLowerCase();
-          var dt = new Date(w.createdAt || Date.now());
+          var dt = new Date(w.created_at || Date.now());
           var dateStr = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
-          var statusColor = status === 'approved' || status === 'sent' ? '#0ecb81' : status === 'rejected' ? '#f6465d' : '#f5a623';
-          var statusLabel = status === 'sent' ? 'Approved' : status.charAt(0).toUpperCase()+status.slice(1);
-          var network = (w.metadata&&w.metadata.network) ? w.metadata.network : (w.network||'TRC20');
-          var address = w.address || w.toAddress || '-';
-          var WD_FEE_MAP = { TRC20:1, BEP20:1, ERC20:5, MORPH:1 };
-          var fee = w.fee != null ? w.fee : (w.metadata&&w.metadata.fee!=null ? w.metadata.fee : (WD_FEE_MAP[network]!=null ? WD_FEE_MAP[network] : 1));
+          var statusColor = status === 'approved' || status === '1' ? '#0ecb81' : status === 'rejected' || status === '3' ? '#f6465d' : '#f5a623';
+          var statusLabel = status === '1' ? 'Approved' : status === '3' ? 'Rejected' : status === '2' ? 'Processing' : 'Pending';
+          var network = (w.method && w.method.name) ? w.method.name : 'TRC20';
+          var address = w.withdraw_information ? (JSON.parse(w.withdraw_information||'{}').trx || '-') : '-';
+          var fee = Number(w.charge || 0);
           var detId = 'wdDet_'+idx;
           var row = document.createElement('div');
           row.style.cssText = 'border-bottom:1px solid rgba(255,255,255,.06);';
@@ -1770,22 +1781,18 @@
 
   // Load wallet balances from P2P wallet API
   function loadWalletBalances() {
-    fetch('/api/p2p/wallet', { credentials: 'include' })
+    bcvFetch('/api/dashboard')
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
-        if (!data || !data.wallet) return;
-        var w = data.wallet;
-        var secDep = Number(w.securityDeposit || 0);
-        var avail  = Number(w.availableBalance || w.balance || 0);
-        var locked = Math.max(0, Number(w.lockedBalance || w.p2pLocked || 0) - secDep);
-        var total  = avail + locked + secDep;
+        if (!data || data.status !== 'success') return;
+        var total = Number(data.data.estimated_balance || 0);
 
         // Update USDT balance row and total
         ovTotalUsdt = total;
         var usdtBal = document.getElementById('ovBal_USDT');
         var usdtSub = document.getElementById('ovSub_USDT');
-        if (usdtBal) usdtBal.textContent = avail.toFixed(2);
-        if (usdtSub) usdtSub.textContent = '≈' + avail.toFixed(2) + ' USDT';
+        if (usdtBal) usdtBal.textContent = total.toFixed(2);
+        if (usdtSub) usdtSub.textContent = '≈' + total.toFixed(2) + ' USDT';
 
         // Top balance display
         var balValEl = document.getElementById('balVal');
@@ -1869,10 +1876,9 @@
     if(!amt || amt <= 0) { showToast('Please enter amount'); return; }
     var btn = document.querySelector('#screenConvert button[onclick="doConvert()"]');
     if(btn) { btn.disabled = true; btn.textContent = 'Converting...'; }
-    fetch('/api/wallet/convert', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fromCurrency: cvFrom, toCurrency: cvTo, amount: amt })
+    bcvFetch('/api/wallet/convert', {
+      method: 'POST',
+      body: JSON.stringify({ from_currency: cvFrom, to_currency: cvTo, amount: amt })
     })
     .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
     .then(function(res){
