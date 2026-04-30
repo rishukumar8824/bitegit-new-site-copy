@@ -262,7 +262,7 @@
       </div>
       <span class="ov-action-label">Transfer</span>
     </button>
-    <button class="ov-action-btn">
+    <button class="ov-action-btn" onclick="showScreen('screenConvert')">
       <div class="ov-action-circle">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><line x1="5" y1="17" x2="19" y2="7"/></svg>
       </div>
@@ -271,7 +271,7 @@
   </div>
 
   <!-- Convert Small Balance row -->
-  <div class="ov-convert-bar">
+  <div class="ov-convert-bar" onclick="showScreen('screenConvert')">
     <div class="ov-convert-left">
       <div class="ov-convert-icon">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b9bd5" stroke-width="2"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><line x1="5" y1="17" x2="19" y2="7"/><polyline points="17 1 21 5 17 9"/></svg>
@@ -1103,6 +1103,100 @@
   </div>
 </div>
 
+<!-- ══ CONVERT SCREEN ══ -->
+<div class="screen hidden" id="screenConvert">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title">Convert</span>
+    <button class="s-action" onclick="showScreen('screenConvertHistory')" style="font-size:.78rem;color:#8a9bb5">History</button>
+  </div>
+
+  <div style="padding:1rem">
+    <!-- From -->
+    <div style="background:#111;border-radius:14px;padding:1rem;margin-bottom:.5rem">
+      <div style="font-size:.75rem;color:#8a9bb5;margin-bottom:.5rem">From</div>
+      <div style="display:flex;align-items:center;gap:.7rem">
+        <div id="cvFromIcon" style="width:36px;height:36px;border-radius:50%;background:#26a17b;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0">T</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:.3rem;cursor:pointer" onclick="openCvCoinPicker('from')">
+            <span id="cvFromSym" style="font-size:1rem;font-weight:700">USDT</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8a9bb5" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style="font-size:.75rem;color:#8a9bb5;margin-top:.15rem">Avail: <span id="cvFromBal">0.00</span></div>
+        </div>
+        <input id="cvFromAmt" type="number" placeholder="0.00" inputmode="decimal"
+          style="background:none;border:none;outline:none;color:#fff;font-size:1.3rem;font-weight:700;font-family:inherit;text-align:right;width:120px"
+          oninput="cvEstimate()"/>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:.5rem;gap:.5rem">
+        <button onclick="cvSetPct(25)" style="background:#1e1e1e;border:none;border-radius:20px;color:#8a9bb5;font-size:.72rem;font-weight:700;padding:.2rem .55rem;cursor:pointer">25%</button>
+        <button onclick="cvSetPct(50)" style="background:#1e1e1e;border:none;border-radius:20px;color:#8a9bb5;font-size:.72rem;font-weight:700;padding:.2rem .55rem;cursor:pointer">50%</button>
+        <button onclick="cvSetPct(100)" style="background:#1e1e1e;border:none;border-radius:20px;color:#98e14d;font-size:.72rem;font-weight:700;padding:.2rem .55rem;cursor:pointer">All</button>
+      </div>
+    </div>
+
+    <!-- Swap arrow -->
+    <div style="display:flex;justify-content:center;margin:.2rem 0">
+      <button onclick="cvSwapCoins()" style="background:#1a1a1a;border:none;border-radius:50%;width:36px;height:36px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      </button>
+    </div>
+
+    <!-- To -->
+    <div style="background:#111;border-radius:14px;padding:1rem;margin-bottom:1rem">
+      <div style="font-size:.75rem;color:#8a9bb5;margin-bottom:.5rem">To</div>
+      <div style="display:flex;align-items:center;gap:.7rem">
+        <div id="cvToIcon" style="width:36px;height:36px;border-radius:50%;background:#f7931a;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0">B</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:.3rem;cursor:pointer" onclick="openCvCoinPicker('to')">
+            <span id="cvToSym" style="font-size:1rem;font-weight:700">BTC</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8a9bb5" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style="font-size:.75rem;color:#8a9bb5;margin-top:.15rem">You receive</div>
+        </div>
+        <span id="cvToAmt" style="font-size:1.3rem;font-weight:700;color:#98e14d">≈0.00</span>
+      </div>
+    </div>
+
+    <!-- Rate info -->
+    <div style="background:#111;border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.35rem">
+        <span style="color:#8a9bb5">Rate</span>
+        <span id="cvRate" style="color:#fff;font-weight:600">1 USDT ≈ 0.0000154 BTC</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.82rem">
+        <span style="color:#8a9bb5">Fee</span>
+        <span style="color:#fff;font-weight:600">Free</span>
+      </div>
+    </div>
+
+    <button onclick="doConvert()" style="width:100%;padding:.95rem;background:#98e14d;border:none;border-radius:50px;font-size:1rem;font-weight:700;color:#000;cursor:pointer;font-family:inherit">Convert</button>
+  </div>
+</div>
+
+<!-- ══ CONVERT HISTORY SCREEN ══ -->
+<div class="screen hidden" id="screenConvertHistory">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title">Convert History</span>
+    <span></span>
+  </div>
+  <div id="cvHistList" style="padding:.5rem 0"></div>
+  <div id="cvHistEmpty" style="display:flex;flex-direction:column;align-items:center;padding:4rem 1rem;gap:.7rem">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><line x1="5" y1="17" x2="19" y2="7"/></svg>
+    <div style="font-size:.88rem;color:#8a9bb5">No convert records</div>
+  </div>
+</div>
+
+<!-- ══ COIN PICKER MODAL (Convert) ══ -->
+<div id="modalCvCoinPicker" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-sheet" style="max-height:70vh">
+    <div class="modal-drag"></div>
+    <div class="modal-title-row">Select Coin</div>
+    <div id="cvCoinPickerList" style="padding:0 1rem 1rem"></div>
+  </div>
+</div>
+
 <script>
   var screenHistory = [];
   var switchAccountContext = '';
@@ -1702,6 +1796,109 @@
       .catch(function() {});
   }
   loadWalletBalances();
+
+  // ── CONVERT ──
+  var CV_COINS = {
+    USDT: { bg:'#26a17b', letter:'T', rate:1 },
+    BTC:  { bg:'#f7931a', letter:'B', rate:0.0000154 },
+    ETH:  { bg:'#627eea', letter:'E', rate:0.000268 },
+    BNB:  { bg:'#f3ba2f', letter:'N', rate:0.00316 },
+    XRP:  { bg:'#346aa9', letter:'X', rate:1.72 }
+  };
+  var cvFrom = 'USDT', cvTo = 'BTC', cvPickerTarget = 'from';
+
+  function cvRefreshUI() {
+    var fc = CV_COINS[cvFrom], tc = CV_COINS[cvTo];
+    document.getElementById('cvFromSym').textContent = cvFrom;
+    document.getElementById('cvToSym').textContent   = cvTo;
+    document.getElementById('cvFromIcon').style.background = fc.bg;
+    document.getElementById('cvFromIcon').textContent = fc.letter;
+    document.getElementById('cvToIcon').style.background   = tc.bg;
+    document.getElementById('cvToIcon').textContent   = tc.letter;
+    var rate = tc.rate / fc.rate;
+    document.getElementById('cvRate').textContent = '1 ' + cvFrom + ' ≈ ' + rate.toFixed(8).replace(/\.?0+$/, '') + ' ' + cvTo;
+    cvEstimate();
+  }
+
+  function cvEstimate() {
+    var amt = parseFloat(document.getElementById('cvFromAmt').value) || 0;
+    var rate = CV_COINS[cvTo].rate / CV_COINS[cvFrom].rate;
+    var result = (amt * rate).toFixed(8).replace(/\.?0+$/, '') || '0';
+    document.getElementById('cvToAmt').textContent = '≈' + result;
+  }
+
+  function cvSetPct(pct) {
+    var bal = parseFloat(document.getElementById('cvFromBal').textContent) || 0;
+    document.getElementById('cvFromAmt').value = ((bal * pct) / 100).toFixed(6).replace(/\.?0+$/, '');
+    cvEstimate();
+  }
+
+  function cvSwapCoins() {
+    var tmp = cvFrom; cvFrom = cvTo; cvTo = tmp;
+    document.getElementById('cvFromAmt').value = '';
+    cvRefreshUI();
+  }
+
+  function openCvCoinPicker(target) {
+    cvPickerTarget = target;
+    var list = document.getElementById('cvCoinPickerList');
+    list.innerHTML = '';
+    Object.keys(CV_COINS).forEach(function(sym) {
+      if(sym === (target === 'from' ? cvTo : cvFrom)) return;
+      var c = CV_COINS[sym];
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:.75rem;padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer';
+      row.innerHTML = '<div style="width:36px;height:36px;border-radius:50%;background:'+c.bg+';display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;flex-shrink:0">'+c.letter+'</div>'
+        + '<span style="font-size:.95rem;font-weight:700;color:#fff">'+sym+'</span>';
+      row.onclick = function() {
+        if(cvPickerTarget === 'from') cvFrom = sym; else cvTo = sym;
+        document.getElementById('modalCvCoinPicker').classList.add('hidden');
+        cvRefreshUI();
+      };
+      list.appendChild(row);
+    });
+    document.getElementById('modalCvCoinPicker').classList.remove('hidden');
+  }
+
+  function doConvert() {
+    var amt = parseFloat(document.getElementById('cvFromAmt').value);
+    if(!amt || amt <= 0) { showToast('Please enter amount'); return; }
+    var btn = document.querySelector('#screenConvert button[onclick="doConvert()"]');
+    if(btn) { btn.disabled = true; btn.textContent = 'Converting...'; }
+    fetch('/api/wallet/convert', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fromCurrency: cvFrom, toCurrency: cvTo, amount: amt })
+    })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res){
+      if(btn) { btn.disabled = false; btn.textContent = 'Convert'; }
+      if(res.ok && res.d.success !== false) {
+        showToast('Converted successfully!');
+        document.getElementById('cvFromAmt').value = '';
+        document.getElementById('cvToAmt').textContent = '≈0.00';
+        loadWalletBalances && loadWalletBalances();
+        setTimeout(function(){ goBack(); }, 800);
+      } else {
+        showToast(res.d.message || 'Convert failed');
+      }
+    })
+    .catch(function(){
+      if(btn) { btn.disabled = false; btn.textContent = 'Convert'; }
+      showToast('Network error. Please try again.');
+    });
+  }
+
+  // init convert UI when screen opens
+  var _origShowScreen = showScreen;
+  showScreen = function(id) {
+    _origShowScreen(id);
+    if(id === 'screenConvert') {
+      var bal = parseFloat((document.getElementById('ovBal_USDT') || {}).textContent) || 0;
+      document.getElementById('cvFromBal').textContent = bal.toFixed(2);
+      cvRefreshUI();
+    }
+  };
 
   // Socket.io real-time listeners
   if(window.socket) {
