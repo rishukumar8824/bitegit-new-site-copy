@@ -1199,15 +1199,17 @@
 
 <script>
   // ── Bitcovex auth helper ──
+  var BCV_API = (window.location.protocol === 'https:' ? 'https:' : 'http:') + '//admin.bitcovex.com/api';
   function bcvHeaders(extra) {
     var tok = localStorage.getItem('bitcovex_token') || '';
     var h = { 'Content-Type': 'application/json' };
     if (tok) h['Authorization'] = 'Bearer ' + tok;
     return Object.assign(h, extra || {});
   }
-  function bcvFetch(url, opts) {
+  function bcvFetch(path, opts) {
     opts = opts || {};
     opts.headers = bcvHeaders(opts.headers);
+    var url = path.startsWith('http') ? path : BCV_API + path;
     return fetch(url, opts);
   }
 
