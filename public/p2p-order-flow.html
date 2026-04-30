@@ -3367,6 +3367,21 @@
     if (_orderSSE) { _orderSSE.close(); _orderSSE = null; }
     var chatEl = document.getElementById('screen-chat');
     if (chatEl) chatEl.style.display = 'none';
+    // If order is now ended, go to correct ended screen regardless of _chatPrevScreen
+    var liveStatus = String((currentOrder && currentOrder.status) || '').toUpperCase();
+    if (liveStatus === 'RELEASED' || liveStatus === 'COMPLETED') {
+      setStatusSummaryScreen(liveStatus);
+      document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+      var cn = document.getElementById('screen-canceled');
+      if (cn) { cn.classList.add('active'); syncOrderUrl('screen-canceled'); }
+      return;
+    }
+    if (liveStatus === 'CANCELLED' || liveStatus === 'EXPIRED') {
+      document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+      var cn2 = document.getElementById('screen-canceled');
+      if (cn2) { cn2.classList.add('active'); syncOrderUrl('screen-canceled'); }
+      return;
+    }
     // Return to previous screen
     var prev = _chatPrevScreen || 'screen-order-generated';
     if (prev === 'screen-chat') prev = 'screen-order-generated';
