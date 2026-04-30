@@ -487,6 +487,20 @@
     if (activeScreen === "screen-pay") updatePayScreen();
     if (activeScreen === "screen-receipt") updateReceiptScreen();
     if (activeScreen === "screen-waiting") {
+      if (activeOrder.status === "released") {
+        goToScreen("screen-orders");
+        switchOrderTab("ended");
+        switchEndedTab("completed");
+        showToast("Order Complete! Crypto released to your wallet.", "✓");
+        return;
+      }
+      if (activeOrder.status === "cancelled") {
+        goToScreen("screen-orders");
+        switchOrderTab("ended");
+        switchEndedTab("cancelled");
+        showToast("Order has been cancelled.", "!");
+        return;
+      }
       updateWaitingScreen();
       if (activeOrder.status === "disputed") applyDisputedWaitingScreen(activeOrder);
     }
@@ -678,6 +692,7 @@
 
   window._p2pLiveReady = true;
   renderPublicBitcovexAds = window.renderPublicBitcovexAds = function () {
+    applyLiveAdOverrides();
     const buyWrap = document.getElementById("buy-list-wrap");
     const sellWrap = document.getElementById("sell-list-wrap");
     const actorKey = getCurrentBitcovexActorKey();
@@ -832,6 +847,7 @@
   };
 
   renderStoredAds = window.renderStoredAds = function () {
+    applyLiveAdOverrides();
     const wrap = document.getElementById("ads-list-wrap");
     if (!wrap) return;
 
