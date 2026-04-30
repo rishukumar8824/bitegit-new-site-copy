@@ -1116,7 +1116,7 @@
     <div style="background:#111;border-radius:14px;padding:1rem;margin-bottom:.5rem">
       <div style="font-size:.75rem;color:#8a9bb5;margin-bottom:.5rem">From</div>
       <div style="display:flex;align-items:center;gap:.7rem">
-        <div id="cvFromIcon" style="width:36px;height:36px;border-radius:50%;background:#26a17b;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0">T</div>
+        <div id="cvFromIcon" style="flex-shrink:0;display:flex;align-items:center"></div>
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:.3rem;cursor:pointer" onclick="openCvCoinPicker('from')">
             <span id="cvFromSym" style="font-size:1rem;font-weight:700">USDT</span>
@@ -1146,7 +1146,7 @@
     <div style="background:#111;border-radius:14px;padding:1rem;margin-bottom:1rem">
       <div style="font-size:.75rem;color:#8a9bb5;margin-bottom:.5rem">To</div>
       <div style="display:flex;align-items:center;gap:.7rem">
-        <div id="cvToIcon" style="width:36px;height:36px;border-radius:50%;background:#f7931a;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0">B</div>
+        <div id="cvToIcon" style="flex-shrink:0;display:flex;align-items:center"></div>
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:.3rem;cursor:pointer" onclick="openCvCoinPicker('to')">
             <span id="cvToSym" style="font-size:1rem;font-weight:700">BTC</span>
@@ -1798,24 +1798,28 @@
   loadWalletBalances();
 
   // ── CONVERT ──
+  var CV_SVGS = {
+    USDT: '<svg width="36" height="36" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658s2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658s-2.895 1.485-6.775 1.657zm0-3.59v-2.366h5.414V8H8.664v3.427h5.414v2.365c-4.4.202-7.708 1.074-7.708 2.128s3.308 1.926 7.708 2.129v7.617h3.844v-7.619c4.393-.202 7.694-1.073 7.694-2.127s-3.301-1.926-7.694-2.127z" fill="#fff"/></svg>',
+    BTC:  '<svg width="36" height="36" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#f7931a"/><path d="M22.633 14.277c.295-1.977-1.21-3.04-3.268-3.75l.668-2.676-1.63-.406-.65 2.607c-.428-.107-.868-.207-1.305-.308l.654-2.623-1.629-.406-.667 2.675c-.355-.081-.703-.161-1.04-.244l.002-.009-2.248-.561-.433 1.74s1.21.277 1.184.295c.66.165.78.6.76.946l-.761 3.052c.045.012.104.028.169.054l-.172-.043-1.068 4.282c-.08.2-.285.5-.746.386.017.024-1.184-.296-1.184-.296l-.809 1.864 2.12.529c.395.099.781.202 1.162.299l-.674 2.705 1.628.406.668-2.676c.445.12.876.232 1.299.337l-.666 2.666 1.63.407.673-2.7c2.776.526 4.865.314 5.742-2.198.708-2.02-.035-3.185-1.494-3.946 1.063-.245 1.863-.944 2.076-2.388zm-3.716 5.21c-.503 2.02-3.91.928-5.015.654l.895-3.586c1.104.276 4.647.822 4.12 2.931zm.503-5.24c-.459 1.84-3.294.905-4.214.676l.811-3.252c.92.23 3.882.657 3.403 2.576z" fill="#fff"/></svg>',
+    ETH:  '<svg width="36" height="36" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#627eea"/><path d="M16.498 4v8.87l7.497 3.35z" fill="#fff" opacity=".6"/><path d="M16.498 4L9 16.22l7.498-3.35z" fill="#fff"/><path d="M16.498 21.968v6.027L24 17.616z" fill="#fff" opacity=".6"/><path d="M16.498 27.995v-6.028L9 17.616z" fill="#fff"/><path d="M16.498 20.573l7.497-4.353-7.497-3.348z" fill="#fff" opacity=".2"/><path d="M9 16.22l7.498 4.353v-7.701z" fill="#fff" opacity=".6"/></svg>',
+    BNB:  '<svg width="36" height="36" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#f3ba2f"/><path d="M12.116 13.884L16 10l3.886 3.886 2.263-2.263L16 5.474l-6.149 6.147zM5.474 16l2.263-2.263 2.263 2.263-2.263 2.263zM12.116 18.116L16 22l3.886-3.886 2.264 2.262-.001.002L16 26.526l-6.149-6.148-.003-.003zM22 16l2.263-2.263 2.263 2.263-2.263 2.263zM18.354 15.998h.002L16 13.645l-1.769 1.77-.204.204-.428.428.001.001-.001.001 2.4 2.4 2.354-2.353.001-.098z" fill="#fff"/></svg>',
+    XRP:  '<svg width="36" height="36" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#346aa9"/><path d="M21.333 8h2.381l-5.19 5.19a3.69 3.69 0 01-5.048 0L8.286 8h2.381l3.999 3.999a2.07 2.07 0 002.668 0L21.333 8zM10.667 24H8.286l5.19-5.19a3.69 3.69 0 015.048 0L23.714 24h-2.381l-3.999-3.999a2.07 2.07 0 00-2.668 0L10.667 24z" fill="#fff"/></svg>'
+  };
   var CV_COINS = {
-    USDT: { bg:'#26a17b', letter:'T', rate:1 },
-    BTC:  { bg:'#f7931a', letter:'B', rate:0.0000154 },
-    ETH:  { bg:'#627eea', letter:'E', rate:0.000268 },
-    BNB:  { bg:'#f3ba2f', letter:'N', rate:0.00316 },
-    XRP:  { bg:'#346aa9', letter:'X', rate:1.72 }
+    USDT: { rate:1 },
+    BTC:  { rate:0.0000154 },
+    ETH:  { rate:0.000268 },
+    BNB:  { rate:0.00316 },
+    XRP:  { rate:1.72 }
   };
   var cvFrom = 'USDT', cvTo = 'BTC', cvPickerTarget = 'from';
 
   function cvRefreshUI() {
-    var fc = CV_COINS[cvFrom], tc = CV_COINS[cvTo];
     document.getElementById('cvFromSym').textContent = cvFrom;
     document.getElementById('cvToSym').textContent   = cvTo;
-    document.getElementById('cvFromIcon').style.background = fc.bg;
-    document.getElementById('cvFromIcon').textContent = fc.letter;
-    document.getElementById('cvToIcon').style.background   = tc.bg;
-    document.getElementById('cvToIcon').textContent   = tc.letter;
-    var rate = tc.rate / fc.rate;
+    document.getElementById('cvFromIcon').innerHTML  = CV_SVGS[cvFrom];
+    document.getElementById('cvToIcon').innerHTML    = CV_SVGS[cvTo];
+    var rate = CV_COINS[cvTo].rate / CV_COINS[cvFrom].rate;
     document.getElementById('cvRate').textContent = '1 ' + cvFrom + ' ≈ ' + rate.toFixed(8).replace(/\.?0+$/, '') + ' ' + cvTo;
     cvEstimate();
   }
@@ -1848,7 +1852,7 @@
       var c = CV_COINS[sym];
       var row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:.75rem;padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer';
-      row.innerHTML = '<div style="width:36px;height:36px;border-radius:50%;background:'+c.bg+';display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;flex-shrink:0">'+c.letter+'</div>'
+      row.innerHTML = '<div style="flex-shrink:0">'+CV_SVGS[sym]+'</div>'
         + '<span style="font-size:.95rem;font-weight:700;color:#fff">'+sym+'</span>';
       row.onclick = function() {
         if(cvPickerTarget === 'from') cvFrom = sym; else cvTo = sym;
