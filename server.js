@@ -1396,6 +1396,8 @@ function normalizeOrderState(order) {
     disputeReason: order.disputeReason || null,
     disputeStatus: order.disputeStatus || null,
     appealDetails: order.appealDetails || null,
+    appealedByRole: order.appealedByRole || null,
+    preDisputeStatus: order.preDisputeStatus || null,
     isParticipant: true,
     createdAt: new Date(order.createdAt).toISOString(),
     expiresAt: new Date(order.expiresAt).toISOString(),
@@ -2856,6 +2858,34 @@ app.get('/api/p2p/ping', async (req, res) => {
   return res.json({ ok: true });
 });
 
+// ── /api/p2p/notifications — save & load notification preferences ──
+app.get('/api/p2p/notifications', requiresP2PUser, async (req, res) => {
+  try {
+    const userId = String(req.p2pUser.id || req.p2pUser.userId || req.p2pUser._id || '').trim();
+    const cols = await getCollections();
+    const doc = await cols.adminUserProfiles.findOne({ userId });
+    const prefs = doc?.notifPrefs || {};
+    return res.json(prefs);
+  } catch (e) { return res.json({}); }
+});
+
+app.put('/api/p2p/notifications', requiresP2PUser, async (req, res) => {
+  try {
+    const userId = String(req.p2pUser.id || req.p2pUser.userId || req.p2pUser._id || '').trim();
+    if (!userId) return res.status(400).json({ ok: false });
+    const allowed = ['newOrders','orderUpdates','chat','priceAlerts','email','security'];
+    const update = {};
+    for (const k of allowed) {
+      if (req.body[k] !== undefined) update['notifPrefs.' + k] = !!req.body[k];
+    }
+    if (Object.keys(update).length) {
+      const cols = await getCollections();
+      await cols.adminUserProfiles.updateOne({ userId }, { $set: update }, { upsert: true });
+    }
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ ok: false }); }
+});
+
 // ── /api/p2p/public — used by p2p-live.js to load buy/sell ads ──
 app.get('/api/p2p/public', async (req, res) => {
   try {
@@ -3978,6 +4008,45 @@ app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) =>
     return res.status(error.status || 500).json({
       message: error.message || 'Failed to submit appeal.'
     });
+  }
+});
+
+app.post('/api/p2p/orders/:orderId/cancel-appeal', requiresP2PUser, async (req, res) => {
+  try {
+    const { p2pOrders } = getCollections();
+    const order = await p2pOrders.findOne({ id: req.params.orderId });
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    if (order.status !== 'DISPUTED') return res.status(400).json({ message: 'Order is not under appeal.' });
+    if (order.appealedByUserId !== req.p2pUser.id) {
+      return res.status(403).json({ message: 'Only the user who raised the appeal can cancel it.' });
+    }
+    const revertStatus = order.preDisputeStatus || 'PAYMENT_SENT';
+    const now = Date.now();
+    await p2pOrders.updateOne(
+      { id: req.params.orderId, status: 'DISPUTED' },
+      {
+        $set: { status: revertStatus, updatedAt: now, disputeStatus: 'CANCELLED' },
+        $push: {
+          messages: {
+            id: `msg_${now}_cancel_appeal`,
+            sender: 'system',
+            senderRole: 'system',
+            text: 'Appeal cancelled by ' + (order.appealedByRole || 'user') + '. Order has resumed.',
+            createdAt: now
+          }
+        }
+      }
+    );
+    const updatedOrder = await p2pOrders.findOne({ id: req.params.orderId });
+    const normalizedOrder = normalizeOrderState(updatedOrder);
+    const normalizedMessages = toClientMessages(updatedOrder.messages || []);
+    broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
+    broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
+    broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', { order: normalizedOrder, status: normalizedOrder.status });
+    return res.json({ message: 'Appeal cancelled. Order resumed.', order: normalizedOrder });
+  } catch (err) {
+    console.error('[cancel-appeal]', err);
+    return res.status(500).json({ message: err.message || 'Failed to cancel appeal.' });
   }
 });
 

@@ -2109,7 +2109,16 @@
       heading.innerHTML = 'Order is under appeal.<br>Wait for support review.';
       timerRow.innerHTML = '<span style="color:#ef4444;">Appeal submitted. Keep chat open if support asks for proof.</span>';
       _applyUnderAppealButton(nextBtn, 'Appealing');
-      _applyUnderAppealButton(cancelBtn, 'Under Appeal');
+      var sellerRaisedAppeal = currentOrder && currentOrder.appealedByRole === 'seller';
+      if (sellerRaisedAppeal) {
+        _resetPaidLockButton(cancelBtn, 'Cancel Appeal');
+        cancelBtn.style.background = 'rgba(239,68,68,0.12)';
+        cancelBtn.style.color = '#ef4444';
+        cancelBtn.style.border = '1px solid rgba(239,68,68,0.35)';
+        cancelBtn.onclick = _doCancelAppeal;
+      } else {
+        _applyUnderAppealButton(cancelBtn, 'Under Appeal');
+      }
       return;
     }
 
@@ -2155,7 +2164,16 @@
       _applyUnderAppealButton(nextBtn, 'Appealing');
       if (cancelBtn) {
         cancelBtn.style.display = '';
-        _applyUnderAppealButton(cancelBtn, 'Under Appeal');
+        var buyerRaisedAppeal = currentOrder && currentOrder.appealedByRole === 'buyer';
+        if (buyerRaisedAppeal) {
+          _resetPaidLockButton(cancelBtn, 'Cancel Appeal');
+          cancelBtn.style.background = 'rgba(239,68,68,0.12)';
+          cancelBtn.style.color = '#ef4444';
+          cancelBtn.style.border = '1px solid rgba(239,68,68,0.35)';
+          cancelBtn.onclick = _doCancelAppeal;
+        } else {
+          _applyUnderAppealButton(cancelBtn, 'Under Appeal');
+        }
       }
       return;
     }
@@ -2587,6 +2605,26 @@
     });
     document.getElementById('chatCancelOrAppealBtn').addEventListener('click', _doCancelOrAppeal);
     document.getElementById('chatCancelOrAppealBtn').addEventListener('touchend', function(e) { e.preventDefault(); _doCancelOrAppeal(); });
+
+    var _doCancelAppeal = mkDebounce(async function() {
+      if (!currentOrder || !currentOrder.id) return;
+      if (!confirm('Cancel your appeal? Order will resume from its previous status.')) return;
+      try {
+        var resp = await fetch('/api/p2p/orders/' + currentOrder.id + '/cancel-appeal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        var data = await resp.json();
+        if (!resp.ok) { showToast(data.message || 'Failed to cancel appeal.'); return; }
+        showToast('Appeal cancelled. Order resumed.');
+        if (data.order) {
+          currentOrder = Object.assign({}, currentOrder, data.order);
+          applyOrderAndShow(currentOrder, false, null);
+        }
+      } catch (e) {
+        showToast('Error cancelling appeal. Try again.');
+      }
+    });
 
     // "File an appeal" link in 5-min appeal banner
     document.getElementById('chatFileAppealBtn').addEventListener('click', function() { _doFileAppeal(); });
