@@ -410,11 +410,24 @@ function buildMessageMarkup(message) {
   const pendingTag = message.pending ? '<span class="chat-meta-flag">Sending...</span>' : '';
   const failedTag = message.failed ? '<span class="chat-meta-flag failed">Failed</span>' : '';
 
+  const isAdminMsg = cls === 'chat-system' && (
+    String(message.senderRole || '').toLowerCase() === 'admin' ||
+    String(message.sender || '').toLowerCase().startsWith('admin:') ||
+    String(message.sender || '').toLowerCase() === 'admin' ||
+    String(message.sender || '') === 'Support'
+  );
+  const senderDisplay = isAdminMsg
+    ? `<span style="display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#00e5ff;">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#00e5ff;color:#000;font-size:10px;font-weight:900;flex-shrink:0;">BX</span>
+        Support
+       </span>`
+    : escapeHtml(message.sender);
+
   return `
     <article class="chat-item ${cls}${message.pending ? ' pending' : ''}${message.failed ? ' failed' : ''}" data-message-key="${escapeHtml(
       messageKeyFromMessage(message)
     )}">
-      <p class="chat-sender">${escapeHtml(message.sender)}</p>
+      <p class="chat-sender">${senderDisplay}</p>
       ${imageMarkup}
       ${safeText ? `<p class="chat-text">${safeText}</p>` : ''}
       <p class="chat-time">${new Date(message.createdAt).toLocaleTimeString()} ${pendingTag} ${failedTag}</p>

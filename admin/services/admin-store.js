@@ -1787,7 +1787,8 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     const now = Date.now();
     const msg = {
       id: `msg_${now}_admin`,
-      sender: `admin:${actor.email}`,
+      sender: 'Support',
+      senderName: 'BX Support',
       senderRole: 'admin',
       text: String(message || '').trim(),
       createdAt: now
@@ -1815,7 +1816,9 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
         $push: {
           messages: {
             id: `msg_${now}_admin_freeze`,
-            sender: `admin:${actor.email}`,
+            sender: 'Support',
+            senderName: 'BX Support',
+            senderRole: 'admin',
             text: 'Escrow frozen by admin for compliance review.',
             createdAt: now
           }
