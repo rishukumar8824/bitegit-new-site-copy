@@ -469,6 +469,47 @@ function updateCurrentUserKyc(kyc) {
     statusLabel: getKycStatusLabel(status),
     canBuy: true
   };
+  syncP2PHintCache();
+}
+
+function buildP2PHintPayload() {
+  if (!currentUser) {
+    return null;
+  }
+  return {
+    id: getCurrentUserId(),
+    username: currentUser.username,
+    email: currentUser.email,
+    role: currentUser.role,
+    avatar: currentUser.avatar || '',
+    createdAt: currentUser.createdAt || null,
+    emailVerified: Boolean(currentUser.emailVerified),
+    kyc: currentUser.kyc && typeof currentUser.kyc === 'object' ? { ...currentUser.kyc } : {}
+  };
+}
+
+function syncP2PHintCache() {
+  try {
+    var payload = buildP2PHintPayload();
+    if (!payload) {
+      localStorage.removeItem('_p2p_hint');
+      return;
+    }
+    localStorage.setItem('_p2p_hint', JSON.stringify(payload));
+  } catch (_) {}
+}
+
+function getStoredP2PAccessToken() {
+  try {
+    return String(localStorage.getItem('bitegit_token') || '').trim();
+  } catch (_) {
+    return '';
+  }
+}
+
+function buildP2PAuthHeaders() {
+  var token = getStoredP2PAccessToken();
+  return token ? { Authorization: 'Bearer ' + token } : {};
 }
 
 function isKycVerifiedForBuy() {
@@ -1971,16 +2012,7 @@ async function submitProfileEdit() {
       createdAt: nextProfile.createdAt || currentUser?.createdAt || null
     });
 
-    try {
-      localStorage.setItem('_p2p_hint', JSON.stringify({
-        id: getCurrentUserId(),
-        username: currentUser.username,
-        email: currentUser.email,
-        role: currentUser.role,
-        avatar: currentUser.avatar || '',
-        createdAt: currentUser.createdAt || null
-      }));
-    } catch (_) {}
+    syncP2PHintCache();
 
     updateUserUi();
     closeProfileEditModal();
@@ -2083,16 +2115,7 @@ function saveProfileNickname() {
       // Update currentUser everywhere
       if (currentUser) { currentUser.username = nickname; currentUser.nickname = nickname; }
       // Persist to localStorage so name survives refresh
-      try {
-        localStorage.setItem('_p2p_hint', JSON.stringify({
-          id: getCurrentUserId(),
-          username: nickname,
-          email: currentUser ? currentUser.email : '',
-          role: currentUser ? currentUser.role : '',
-          avatar: currentUser ? (currentUser.avatar || '') : '',
-          createdAt: currentUser ? (currentUser.createdAt || null) : null
-        }));
-      } catch(_) {}
+      syncP2PHintCache();
       var el;
       if ((el = document.getElementById('profileNameMobile'))) el.textContent = nickname;
       if ((el = document.getElementById('profileName'))) el.textContent = nickname;
@@ -2388,7 +2411,10 @@ async function refreshCurrentUserKyc() {
   }
 
   try {
-    const response = await fetch('/api/p2p/kyc/status');
+    const response = await fetch('/api/p2p/kyc/status', {
+      credentials: 'include',
+      headers: buildP2PAuthHeaders()
+    });
     const data = await response.json();
     if (!response.ok || !data?.kyc) {
       return;
@@ -2739,7 +2765,7 @@ async function loadCurrentUser() {
 
   let _networkErr = false; // true only on real network/parse failure
   try {
-    var _jwtTok = (typeof localStorage !== 'undefined' && localStorage.getItem('bitegit_token')) || '';
+    var _jwtTok = getStoredP2PAccessToken();
     var _meHeaders = _jwtTok ? { 'Authorization': 'Bearer ' + _jwtTok } : {};
     const response = await fetch('/api/p2p/me', { credentials: 'include', headers: _meHeaders });
     // Treat 5xx as network error — don't log out on server hiccups
@@ -2755,7 +2781,7 @@ async function loadCurrentUser() {
       }
       currentUser = Object.assign({}, currentUser || {}, normalizedUser);
       updateCurrentUserKyc(currentUser.kyc || {});
-      try { localStorage.setItem('_p2p_hint', JSON.stringify({ id: getCurrentUserId(), username: currentUser.username, email: currentUser.email, role: currentUser.role, avatar: currentUser.avatar || '', createdAt: currentUser.createdAt || null })); } catch(_) {}
+      syncP2PHintCache();
       // Load merchant badge on login so ad cards show it immediately
       loadMerchantBadge && loadMerchantBadge();
       // Poll badge every 30s so admin badge changes appear without page refresh
@@ -2898,7 +2924,7 @@ async function loginUser() {
     }
     updateCurrentUserKyc(currentUser?.kyc || {});
     // Persist a session hint so refresh shows logged-in UI instantly (no flicker)
-    try { localStorage.setItem('_p2p_hint', JSON.stringify({ id: getCurrentUserId(), username: currentUser.username, email: currentUser.email, role: currentUser.role, avatar: currentUser.avatar || '', createdAt: currentUser.createdAt || null })); } catch(_) {}
+    syncP2PHintCache();
     updateUserUi();
     setAuthModalOpen(false);
     setP2PNavOpen(false);
@@ -2971,11 +2997,18 @@ function doP2PLogout() {
 
 async function logoutUser() {
   try {
-    await fetch('/api/p2p/logout', { method: 'POST' });
+    await fetch('/api/p2p/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: buildP2PAuthHeaders()
+    });
   } finally {
     currentUser = null;
     try { localStorage.removeItem('_p2p_hint'); } catch(_) {}
     try { localStorage.removeItem('_p2p_sec_dep'); _mySecDep = null; } catch(_) {}
+    try { localStorage.removeItem('bitegit_token'); } catch(_) {}
+    try { localStorage.removeItem('bitegit_refresh_token'); } catch(_) {}
+    try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
     _clearOrdersCache(); // cancels any in-flight request, wipes state + cache
     _stopFallbackPoll();
     mobileOrdersCache.clear();
