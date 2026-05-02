@@ -7465,6 +7465,10 @@ function _kycHint(id, msg, type) {
 }
 
 function submitKycBasicAndNext() {
+  if (window.__p2pKycStepBusy && Date.now() - window.__p2pKycStepBusy < 700) {
+    return;
+  }
+  window.__p2pKycStepBusy = Date.now();
   var name  = ((document.getElementById('kycFullName')||{}).value||'').trim();
   var dob   = ((document.getElementById('kycDob')||{}).value||'').trim();
   var phone = ((document.getElementById('kycPhone')||{}).value||'').trim();
@@ -7481,6 +7485,9 @@ function submitKycBasicAndNext() {
 }
 
 function submitKycAdvance() {
+  if (window.__p2pKycSubmitInFlight) {
+    return;
+  }
   var aadhaarNum = ((document.getElementById('kycAadhaarNumber')||{}).value||'').replace(/\s/g,'');
   var front   = (document.getElementById('kycAadhaarFront')||{}).files;
   var back    = (document.getElementById('kycAadhaarBack')||{}).files;
@@ -7494,6 +7501,7 @@ function submitKycAdvance() {
 
   // Disable button while submitting
   var btn = document.querySelector('#kycAdvanceScreen [data-kyc-submit]');
+  window.__p2pKycSubmitInFlight = true;
   if(btn){ btn.disabled=true; btn.textContent='Uploading…'; }
   _kycHint('kycAdvHint','Uploading documents, please wait…','');
 
@@ -7574,6 +7582,8 @@ function submitKycAdvance() {
   }).catch(function(err) {
     _kycHint('kycAdvHint','Network error. Please check connection and retry.','error');
     if(btn){ btn.disabled=false; btn.textContent='Submit for Verification'; }
+  }).finally(function() {
+    window.__p2pKycSubmitInFlight = false;
   });
 }
 
