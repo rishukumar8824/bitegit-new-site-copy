@@ -77,6 +77,58 @@ const MERCHANT_BADGE_MIN_DEPOSIT = 500;  // Minimum security deposit for badge e
 const merchantApplications = new Map(); // id -> application
 let merchantAppCounter = 1;
 
+function keepLatestMerchantBadge(targetMap, key, badge, reviewedAtMs) {
+  const normalizedKey = String(key || '').trim().toLowerCase();
+  if (!normalizedKey || !badge) {
+    return;
+  }
+
+  const existing = targetMap.get(normalizedKey);
+  if (!existing || reviewedAtMs >= existing.reviewedAtMs) {
+    targetMap.set(normalizedKey, {
+      badge,
+      reviewedAtMs
+    });
+  }
+}
+
+function buildApprovedMerchantBadgeLookup() {
+  const byUserId = new Map();
+  const byUsername = new Map();
+
+  for (const [, app] of merchantApplications) {
+    if (app.status !== 'approved' || !app.assignedBadge) {
+      continue;
+    }
+
+    const reviewedAtMs = app.reviewedAt ? new Date(app.reviewedAt).getTime() || 0 : 0;
+    keepLatestMerchantBadge(byUserId, app.userId, app.assignedBadge, reviewedAtMs);
+    keepLatestMerchantBadge(byUsername, app.username, app.assignedBadge, reviewedAtMs);
+  }
+
+  return {
+    byUserId,
+    byUsername
+  };
+}
+
+function resolveApprovedMerchantBadge(lookup, userId, username, fallbackBadge = null) {
+  if (!lookup) {
+    return fallbackBadge;
+  }
+
+  const normalizedUserId = String(userId || '').trim().toLowerCase();
+  const normalizedUsername = String(username || '').trim().toLowerCase();
+
+  if (normalizedUserId && lookup.byUserId.has(normalizedUserId)) {
+    return lookup.byUserId.get(normalizedUserId).badge;
+  }
+  if (normalizedUsername && lookup.byUsername.has(normalizedUsername)) {
+    return lookup.byUsername.get(normalizedUsername).badge;
+  }
+  return fallbackBadge;
+}
+
 async function saveMerchantApp(app) {
   try {
     const collections = getCollections();
@@ -2942,6 +2994,7 @@ app.get('/api/p2p/offers', async (req, res) => {
       escrowBackedOnly: true,
       merchantOwnedOnly: true
     });
+    const merchantBadgeLookup = buildApprovedMerchantBadgeLookup();
 
     // Get blocked user IDs for the logged-in user (if authenticated)
     let blockedSet = new Set();
@@ -2982,35 +3035,28 @@ app.get('/api/p2p/offers', async (req, res) => {
     const totalCount = filtered.length;
     const paginated = filtered.slice(pageOffset, pageOffset + pageSize);
 
-    // Enrich each offer with advertiser reputation + merchant badge
-    const enriched = await Promise.all(paginated.map(async (offer) => {
-      try {
-        const userId = offer.createdByUserId;
-        const advertiserName = offer.advertiser || '';
+    // Keep list responses light. Offer cards already fall back to offer-level metrics,
+    // so avoid per-card reputation DB lookups here to reduce mobile card load time.
+    const enriched = paginated.map((offer) => {
+      const userId = String(offer.createdByUserId || '').trim();
+      const advertiserName = String(offer.advertiser || '').trim();
+      const merchantBadge = resolveApprovedMerchantBadge(
+        merchantBadgeLookup,
+        userId,
+        advertiserName,
+        offer.merchantBadge || null
+      );
+      const onlineStatus =
+        offer.lastActiveAt && (Date.now() - new Date(offer.lastActiveAt).getTime()) < 300000
+          ? 'online'
+          : 'offline';
 
-        // Always look up merchant badge — pick the MOST RECENTLY approved application
-        let merchantBadge = null;
-        let latestReviewedAt = null;
-        for (const [, app] of merchantApplications) {
-          if (app.status === 'approved' && app.assignedBadge) {
-            const userIdMatch = userId && String(app.userId) === String(userId);
-            const usernameMatch = advertiserName && app.username === advertiserName;
-            if (userIdMatch || usernameMatch) {
-              const reviewedAt = app.reviewedAt ? new Date(app.reviewedAt).getTime() : 0;
-              if (!latestReviewedAt || reviewedAt > latestReviewedAt) {
-                merchantBadge = app.assignedBadge;
-                latestReviewedAt = reviewedAt;
-              }
-            }
-          }
-        }
-
-        const onlineStatus = (offer.lastActiveAt && (Date.now() - new Date(offer.lastActiveAt).getTime()) < 300000) ? 'online' : 'offline';
-        if (!userId) return { ...offer, merchantBadge, onlineStatus };
-        const rep = await repos.getUserReputation(userId);
-        return { ...offer, reputation: rep || undefined, merchantBadge, onlineStatus };
-      } catch (_) { return offer; }
-    }));
+      return {
+        ...offer,
+        merchantBadge,
+        onlineStatus
+      };
+    });
 
     return res.json({
       side: normalizedSide,

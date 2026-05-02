@@ -2781,16 +2781,64 @@ async function loadCurrentUser() {
           currentUser = retryUser;
           updateCurrentUserKyc(currentUser.kyc || {});
           updateUserUi();
-          // Re-run user-specific loads now that we have a valid session
-          loadMyAds();
-          loadProfilePanel({ refreshWallet: true });
-          fetchOrdersSafe();
-          // Re-render offers so "Buy" buttons appear (not "Login")
-          loadOffers();
+          // Re-render offers first so buy cards recover quickly after a cold-start retry.
+          await loadOffers();
+          queueP2PNonCriticalLoads({
+            includeTicker: true,
+            includeOrders: true,
+            includeMyAds: true,
+            includeFetchOrders: true,
+            delayMs: 180
+          });
         }
       } catch (_) {}
     }, 2500);
   }
+}
+
+function queueP2PNonCriticalLoads(options) {
+  var opts = options && typeof options === 'object' ? options : {};
+  var delayMs = Math.max(Number(opts.delayMs || 0), 0);
+  var tasks = [];
+
+  if (opts.includeTicker !== false && typeof loadExchangeTicker === 'function') {
+    tasks.push(function() { return loadExchangeTicker(); });
+  }
+
+  if (currentUser) {
+    if (opts.includeOrders && typeof loadLiveOrders === 'function') {
+      tasks.push(function() { return loadLiveOrders(); });
+    }
+    if (opts.includeMyAds && typeof loadMyAds === 'function') {
+      tasks.push(function() { return loadMyAds(); });
+    }
+    if (opts.includeFetchOrders && typeof fetchOrdersSafe === 'function') {
+      tasks.push(function() { return fetchOrdersSafe(); });
+    }
+  }
+
+  if (!tasks.length) {
+    return;
+  }
+
+  var run = function() {
+    Promise.allSettled(tasks.map(function(task) {
+      return Promise.resolve().then(task);
+    })).catch(function() {});
+  };
+
+  if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(function() {
+      if (delayMs > 0) {
+        setTimeout(run, delayMs);
+      } else {
+        run();
+      }
+    }, { timeout: Math.max(800, delayMs + 500) });
+    return;
+  }
+
+  setTimeout(run, delayMs);
 }
 
 async function loginUser() {
@@ -2842,17 +2890,23 @@ async function loginUser() {
     updateUserUi();
     setAuthModalOpen(false);
     setP2PNavOpen(false);
-    // run all post-login loads in parallel — much faster
-    Promise.all([loadOffers(), loadLiveOrders(), loadMyAds(), loadProfilePanel({ refreshWallet: true })]);
-    // Single entry point — shows cache or skeleton, then fetches fresh
-    fetchOrdersSafe();
-    _startFallbackPoll(); // 15s fallback (SSE handles real-time; this is backup only)
 
     const redirectPath = getPostLoginRedirectPath();
     if (redirectPath) {
       window.location.href = redirectPath;
       return;
     }
+
+    // Prioritize offer cards first; queue heavier user-specific panels just after first paint.
+    await loadOffers();
+    queueP2PNonCriticalLoads({
+      includeTicker: true,
+      includeOrders: true,
+      includeMyAds: true,
+      includeFetchOrders: true,
+      delayMs: 160
+    });
+    _startFallbackPoll(); // 15s fallback (SSE handles real-time; this is backup only)
   } catch (error) {
     console.warn('[loginUser] error:', error.message);
     setUserStatus(error.name === 'AbortError' ? 'Request timed out. Try again.' : (error.message || 'Login failed.'), 'user-error');
@@ -6013,18 +6067,14 @@ window.addEventListener('pagehide', () => {
   await loadCurrentUser();
   console.log('[init] loadCurrentUser done, currentUser:', currentUser ? currentUser.email : 'null');
 
-  // Run all data loads in PARALLEL — sequential await caused one hanging call
-  // to block all subsequent loads (including the orders prefetch setTimeout below)
-  Promise.allSettled([
-    loadOffers(),
-    loadLiveOrders(),
-    loadMyAds(),
-    loadProfilePanel({ refreshWallet: true }),
-    loadExchangeTicker()
-  ]).then(function(results) {
-    results.forEach(function(r, i) {
-      if (r.status === 'rejected') console.warn('[init] parallel load #' + i + ' failed:', r.reason);
-    });
+  // Prioritize offer cards first. Defer heavier secondary panels until after the first visible list paints.
+  await loadOffers();
+  queueP2PNonCriticalLoads({
+    includeTicker: true,
+    includeOrders: true,
+    includeMyAds: true,
+    includeFetchOrders: false,
+    delayMs: 180
   });
 
   syncMobileTabFromHash();
