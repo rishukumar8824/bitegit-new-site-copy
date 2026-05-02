@@ -840,10 +840,14 @@
       <button id="kycDocModalClose" class="btn-secondary btn-sm">✕ Close</button>
     </div>
     <div class="modal-body">
-      <div style="display:grid;gap:16px;grid-template-columns:1fr 1fr;">
+      <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
         <div>
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:8px;">Aadhaar Front</div>
           <div id="kycDocAadhaarContainer" style="border-radius:10px;border:1px solid var(--border);background:var(--bg-input);min-height:220px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:8px;">Aadhaar Back</div>
+          <div id="kycDocAadhaarBackContainer" style="border-radius:10px;border:1px solid var(--border);background:var(--bg-input);min-height:220px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
         </div>
         <div>
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:8px;">Selfie with Document</div>

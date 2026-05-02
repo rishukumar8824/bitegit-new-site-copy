@@ -541,11 +541,13 @@ async function loadKyc() {
 async function viewKycDocuments(userId) {
   const modal = document.getElementById('kycDocModal');
   const aadhaarContainer = document.getElementById('kycDocAadhaarContainer');
+  const aadhaarBackContainer = document.getElementById('kycDocAadhaarBackContainer');
   const selfieContainer = document.getElementById('kycDocSelfieContainer');
 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
   aadhaarContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
+  aadhaarBackContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
   selfieContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
 
   try {
@@ -561,6 +563,12 @@ async function viewKycDocuments(userId) {
       aadhaarContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No Aadhaar image available</p>';
     }
 
+    if (data.aadhaarBack) {
+      aadhaarBackContainer.innerHTML = `<img src="${data.aadhaarBack}" alt="Aadhaar Back" class="w-full h-auto object-contain max-h-80" />`;
+    } else {
+      aadhaarBackContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No Aadhaar back image available</p>';
+    }
+
     if (data.selfie) {
       selfieContainer.innerHTML = `<img src="${data.selfie}" alt="Selfie" class="w-full h-auto object-contain max-h-80" />`;
     } else {
@@ -573,6 +581,7 @@ async function viewKycDocuments(userId) {
     `;
   } catch (error) {
     aadhaarContainer.innerHTML = `<p class="text-sm text-rose-400 p-4">Error: ${error.message}</p>`;
+    aadhaarBackContainer.innerHTML = '';
     selfieContainer.innerHTML = '';
     showMessage(error.message || 'Failed to load KYC documents.', 'error');
   }
@@ -2601,10 +2610,12 @@ async function loadUpKyc() {
     const submittedAt = doc.submittedAt || '';
     // Use hasAadhaarFront/hasSelfie flags (new API) OR fall back to checking base64 blobs
     const hasAadhaar = !!(doc.hasAadhaarFront || doc.aadhaarFront);
+    const hasAadhaarBack = !!(doc.hasAadhaarBack || doc.aadhaarBack);
     const hasSelfie  = !!(doc.hasSelfie || doc.selfie);
-    const hasAnyDoc  = hasAadhaar || hasSelfie;
+    const hasAnyDoc  = hasAadhaar || hasAadhaarBack || hasSelfie;
     // Use direct image URL endpoint (binary, no base64 size issues)
     const aadhaarImgUrl = hasAadhaar ? `${API_BASE}/users/${encodeURIComponent(_upUserId)}/kyc/image/aadhaar` : null;
+    const aadhaarBackImgUrl = hasAadhaarBack ? `${API_BASE}/users/${encodeURIComponent(_upUserId)}/kyc/image/aadhaar-back` : null;
     const selfieImgUrl  = hasSelfie  ? `${API_BASE}/users/${encodeURIComponent(_upUserId)}/kyc/image/selfie`  : null;
 
     const statusColor = kycStatus === 'APPROVED' ? 'var(--green)' : kycStatus === 'REJECTED' ? 'var(--red)' : kycStatus === 'PENDING' ? 'var(--accent)' : 'var(--text-2)';
@@ -2626,6 +2637,7 @@ async function loadUpKyc() {
         ${submittedAt ? `<div class="up-info-row"><span class="up-info-label">Submitted At</span><span class="up-info-value">${formatDate(submittedAt)}</span></div>` : ''}
         <div class="up-info-row"><span class="up-info-label">Remarks</span><span class="up-info-value" style="color:${remarks?'var(--text-1)':'var(--text-2)'};">${remarks||'—'}</span></div>
         <div class="up-info-row"><span class="up-info-label">Aadhaar Doc</span><span class="up-info-value">${hasAadhaar?'<span style="color:var(--green);">✅ Uploaded</span>':'<span style="color:var(--text-2);">Not uploaded</span>'}</span></div>
+        <div class="up-info-row"><span class="up-info-label">Aadhaar Back</span><span class="up-info-value">${hasAadhaarBack?'<span style="color:var(--green);">✅ Uploaded</span>':'<span style="color:var(--text-2);">Not uploaded</span>'}</span></div>
         <div class="up-info-row" style="border:none;"><span class="up-info-label">Selfie</span><span class="up-info-value">${hasSelfie?'<span style="color:var(--green);">✅ Uploaded</span>':'<span style="color:var(--text-2);">Not uploaded</span>'}</span></div>
       </div>
 
@@ -2633,8 +2645,9 @@ async function loadUpKyc() {
 
       <!-- Document Images -->
       ${hasAnyDoc ? `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px;">
         ${kycImageBox('🪪 Aadhaar Front', aadhaarImgUrl)}
+        ${kycImageBox('🪪 Aadhaar Back', aadhaarBackImgUrl)}
         ${kycImageBox('🤳 Selfie with Doc', selfieImgUrl)}
       </div>` : `
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;margin-bottom:12px;">

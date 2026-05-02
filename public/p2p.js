@@ -7503,43 +7503,18 @@ function submitKycAdvance() {
   var btn = document.querySelector('#kycAdvanceScreen [data-kyc-submit]');
   window.__p2pKycSubmitInFlight = true;
   if(btn){ btn.disabled=true; btn.textContent='Uploading…'; }
-  _kycHint('kycAdvHint','Uploading documents, please wait…','');
-
-  // Compress + convert image to base64 JPEG (max 1200px, quality 0.75)
-  function compressImage(file) {
-    return new Promise(function(resolve, reject) {
-      var reader = new FileReader();
-      reader.onerror = reject;
-      reader.onload = function(e) {
-        var img = new Image();
-        img.onerror = reject;
-        img.onload = function() {
-          var MAX = 1200;
-          var w = img.width, h = img.height;
-          if (w > MAX || h > MAX) {
-            if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-            else       { w = Math.round(w * MAX / h); h = MAX; }
-          }
-          var canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', 0.75));
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  }
+  _kycHint('kycAdvHint','Optimizing document images, please wait…','');
 
   Promise.all([
-    compressImage(front[0]),
-    compressImage(back[0]),
-    compressImage(selfie[0])
+    compressImageForKyc(front[0]),
+    compressImageForKyc(back[0]),
+    compressImageForKyc(selfie[0])
   ]).then(function(results) {
     var aadhaarFrontDataUrl = results[0];
     var aadhaarBackDataUrl  = results[1];
     var selfieDataUrl       = results[2];
 
+    _kycHint('kycAdvHint','Submitting documents for verification…','');
     return fetch('/api/p2p/kyc/submit', {
       method: 'POST',
       credentials: 'include',

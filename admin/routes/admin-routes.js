@@ -271,9 +271,11 @@ function registerAdminRoutes(app, deps) {
         aadhaarMasked: data.aadhaarMasked,
         submittedAt: data.submittedAt,
         hasAadhaarFront: !!data.aadhaarFront,
+        hasAadhaarBack: !!data.aadhaarBack,
         hasSelfie: !!data.selfie,
         // Include actual data for backward-compat (admin may use it)
         aadhaarFront: data.aadhaarFront || null,
+        aadhaarBack: data.aadhaarBack || null,
         selfie: data.selfie || null
       });
     })
@@ -285,13 +287,17 @@ function registerAdminRoutes(app, deps) {
     protect(ROLE_GROUPS.COMPLIANCE),
     async (req, res) => {
       const userId = safeString(req.params.userId);
-      const type   = safeString(req.params.type); // 'aadhaar' | 'selfie'
-      if (!userId || !['aadhaar','selfie'].includes(type)) {
+      const type   = safeString(req.params.type); // 'aadhaar' | 'aadhaar-back' | 'selfie'
+      if (!userId || !['aadhaar', 'aadhaar-back', 'selfie'].includes(type)) {
         return res.status(400).json({ message: 'Invalid request' });
       }
       try {
         const data = await adminStore.getKycDocuments(userId);
-        const raw = type === 'aadhaar' ? data.aadhaarFront : data.selfie;
+        const raw = type === 'aadhaar'
+          ? data.aadhaarFront
+          : type === 'aadhaar-back'
+            ? data.aadhaarBack
+            : data.selfie;
         if (!raw) return res.status(404).json({ message: 'Image not found' });
 
         // raw is a data URL: "data:image/jpeg;base64,..."

@@ -1035,6 +1035,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
         userId: normalizedUserId,
         status: String(profile?.kycStatus || 'PENDING').toUpperCase(),
         aadhaarFront: null,
+        aadhaarBack: null,
         selfie: null,
         aadhaarLast4: '',
         aadhaarMasked: '',
@@ -1043,6 +1044,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     }
 
     let aadhaarFront = null;
+    let aadhaarBack = null;
     let selfie = null;
 
     if (kycRequest.aadhaarFrontImage) {
@@ -1061,6 +1063,14 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       }
     }
 
+    if (kycRequest.aadhaarBackImage) {
+      try {
+        aadhaarBack = decryptText(kycRequest.aadhaarBackImage);
+      } catch (_err) {
+        aadhaarBack = null;
+      }
+    }
+
     const aadhaarMasked = String(kycRequest.aadhaarMasked || '');
     const aadhaarLast4 = aadhaarMasked.length >= 4 ? aadhaarMasked.slice(-4) : aadhaarMasked;
 
@@ -1068,6 +1078,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       userId: normalizedUserId,
       status: String(profile?.kycStatus || kycRequest.status || 'PENDING').toUpperCase(),
       aadhaarFront,
+      aadhaarBack,
       selfie,
       aadhaarLast4,
       aadhaarMasked,
