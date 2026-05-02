@@ -378,54 +378,59 @@
     return escapeHtml(terms).replace(/\n/g, "<br>");
   }
 
-  async function loadPublicState() {
-    const response = await p2pRequest("/p2p/public");
-    if (!response.ok || response.status !== "success") {
-      throw new Error(firstMessage(response, "Could not load public P2P ads."));
-    }
+  function _mapBitegitAd(o, side) {
+    return {
+      id: o.id,
+      price: o.price,
+      minLimit: o.minLimit,
+      maxLimit: o.maxLimit,
+      availableUsdt: o.available,
+      totalUsdt: o.available,
+      paymentMethods: Array.isArray(o.payments) ? o.payments : (o.payments ? [o.payments] : ['UPI']),
+      paymentWindow: o.releaseTime || 30,
+      payment_window: o.releaseTime || 30,
+      type: side || o.side || o.type || 'sell',
+      status: o.status || 'active',
+      totalOrders: o.orders || 0,
+      completionRate: o.completionRate || 98,
+      advertiser: o.advertiser,
+      createdByUserId: o.createdByUserId,
+      onlineStatus: o.onlineStatus || 'online',
+      terms: o.remark || '',
+      autoReply: o.autoReply || '',
+      createdAtLabel: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'just now',
+    };
+  }
 
-    liveState.publicSellAds = Array.isArray(response.data && response.data.sell_ads) ? response.data.sell_ads : [];
-    liveState.publicBuyAds = Array.isArray(response.data && response.data.buy_ads) ? response.data.buy_ads : [];
-    if (Array.isArray(response.data && response.data.payment_methods)) {
-      liveState.paymentCatalog = response.data.payment_methods;
+  async function loadPublicState() {
+    try {
+      const [buyRes, sellRes] = await Promise.all([
+        fetch('/api/p2p/offers?side=buy&asset=USDT&limit=20', { credentials: 'include' }),
+        fetch('/api/p2p/offers?side=sell&asset=USDT&limit=20', { credentials: 'include' })
+      ]);
+      const buyData = buyRes.ok ? await buyRes.json() : { offers: [] };
+      const sellData = sellRes.ok ? await sellRes.json() : { offers: [] };
+      liveState.publicBuyAds = Array.isArray(buyData.offers) ? buyData.offers.map(o => _mapBitegitAd(o, 'buy')) : [];
+      liveState.publicSellAds = Array.isArray(sellData.offers) ? sellData.offers.map(o => _mapBitegitAd(o, 'sell')) : [];
+      applyLiveAdOverrides();
+    } catch(e) {
+      throw new Error('Could not load public P2P ads.');
     }
-    applyLiveAdOverrides();
   }
 
   async function loadPrivateState() {
-    if (!liveToken()) {
-      liveState.myAds = [];
-      liveState.orders = [];
-      liveState.linkedPaymentMethods = [];
-      liveState.wallet = null;
-      return;
-    }
-
-    const response = await p2pRequest("/p2p/dashboard");
-    if (!response.ok || response.status !== "success") {
-      if (response.statusCode === 401) {
+    try {
+      const res = await fetch('/api/p2p/my-ads', { credentials: 'include' });
+      if (!res.ok) {
         liveState.myAds = [];
-        liveState.orders = [];
-        liveState.linkedPaymentMethods = [];
         return;
       }
-      throw new Error(firstMessage(response, "Could not load your P2P dashboard."));
+      const data = await res.json();
+      liveState.myAds = Array.isArray(data.offers) ? data.offers.map(o => _mapBitegitAd(o)) : [];
+      applyLiveAdOverrides();
+    } catch(e) {
+      liveState.myAds = [];
     }
-
-    liveState.myAds = Array.isArray(response.data && response.data.my_ads) ? response.data.my_ads : [];
-    liveState.orders = Array.isArray(response.data && response.data.orders) ? response.data.orders : [];
-    liveState.paymentCatalog = Array.isArray(response.data && response.data.payment_methods)
-      ? response.data.payment_methods
-      : liveState.paymentCatalog;
-    liveState.linkedPaymentMethods = Array.isArray(response.data && response.data.linked_payment_methods)
-      ? response.data.linked_payment_methods
-      : [];
-    liveState.wallet = response.data && response.data.wallet ? response.data.wallet : null;
-
-    if (response.data && response.data.user) {
-      persistLiveUser(response.data.user);
-    }
-    applyLiveAdOverrides();
   }
 
   function activeOrderRole(order) {
@@ -909,8 +914,9 @@
             </div>
             <div style="font-size:12px;color:#888;line-height:1.7;">${escapeHtml(ad.terms || "No special trade terms added.")}</div>
             <div style="margin-top:12px;font-size:11px;color:#555;">Created ${escapeHtml(ad.createdAtLabel || "just now")}</div>
-            <div style="margin-top:12px;">
-              <button onclick="editAd('${escapeHtml(String(ad.id))}')" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:50px;padding:10px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;">✏️ Edit Ad</button>
+            <div style="margin-top:12px;display:flex;gap:8px;">
+              <button onclick="editAd('${escapeHtml(String(ad.id))}')" style="flex:1;background:#1a1a1a;border:1px solid #333;border-radius:50px;padding:10px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;">✏️ Edit Ad</button>
+              <button onclick="deleteAd('${escapeHtml(String(ad.id))}')" style="flex:1;background:#1a1a1a;border:1px solid rgba(246,70,93,0.4);border-radius:50px;padding:10px;font-size:13px;font-weight:600;color:#f6465d;cursor:pointer;">🗑 Delete</button>
             </div>
           </div>
         `;
@@ -955,6 +961,22 @@
 
     if (typeof goToScreen === "function") goToScreen("screen-create-ad");
     if (typeof updateAdPreview === "function") updateAdPreview();
+  };
+
+  deleteAd = window.deleteAd = async function (id) {
+    if (!confirm('Delete this ad? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/p2p/offers/${id}`, { method: 'DELETE', credentials: 'include' });
+      if (!res.ok) { showToast('Could not delete ad.', '!'); return; }
+      liveState.myAds = liveState.myAds.filter(a => String(a.id) !== String(id));
+      liveState.publicSellAds = liveState.publicSellAds.filter(a => String(a.id) !== String(id));
+      liveState.publicBuyAds = liveState.publicBuyAds.filter(a => String(a.id) !== String(id));
+      renderStoredAds();
+      renderPublicBitcovexAds();
+      showToast('Ad deleted.', '✓');
+    } catch(e) {
+      showToast('Network error.', '!');
+    }
   };
 
   renderBuyerOrders = window.renderBuyerOrders = function () {
@@ -1518,7 +1540,21 @@
     const editId = window._editingAdId || null;
     if (editId) {
       window._editingAdId = null;
-      // Patch liveState directly (no API call needed — route doesn't exist)
+      try {
+        await fetch(`/api/p2p/offers/${editId}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            price: payload.price,
+            minLimit: payload.min_limit,
+            maxLimit: payload.max_limit,
+            payments: payload.payment_methods,
+            releaseTime: String(payload.payment_window),
+            remark: payload.terms,
+          })
+        });
+      } catch(e) {}
       const editedFields = {
         price: payload.price,
         minLimit: payload.min_limit,
@@ -1530,19 +1566,14 @@
         paymentMethods: payload.payment_methods.length ? payload.payment_methods : undefined,
         paymentWindow: payload.payment_window,
       };
-      // Remove undefined keys
       Object.keys(editedFields).forEach((k) => editedFields[k] === undefined && delete editedFields[k]);
-
-      // Save override so future syncs re-apply this
       saveAdOverride(editId, editedFields);
-
       const patchFn = (arr) => arr.map((a) =>
         String(a.id) === String(editId) ? Object.assign({}, a, editedFields) : a
       );
       liveState.publicSellAds = patchFn(liveState.publicSellAds);
       liveState.publicBuyAds  = patchFn(liveState.publicBuyAds);
       liveState.myAds         = patchFn(liveState.myAds);
-      // Clear form
       ["ad-price","ad-min-limit","ad-max-limit","ad-total-usdt","ad-auto-reply","ad-terms"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = "";
@@ -1550,7 +1581,6 @@
       if (typeof updateAdPreview === "function") updateAdPreview();
       renderStoredAds();
       renderPublicBitcovexAds();
-      // Reset button text
       const btn = document.querySelector('#screen-create-ad .sticky-bottom .btn-white-pill[style*="a8ff3e"]');
       if (btn) btn.textContent = "Publish Ad";
       const title = document.querySelector('#screen-create-ad .topbar-title');
