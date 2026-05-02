@@ -1254,7 +1254,8 @@ async function deleteMyAd(offerId) {
     const res = await fetch(`/api/p2p/offers/${offerId}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) { alert(data.message || 'Failed to delete ad.'); return; }
-    await loadMyAds();
+    if (_offersResponseCache) _offersResponseCache.clear();
+    await Promise.all([loadMyAds(), loadOffers()]);
   } catch (e) { alert('Network error.'); }
 }
 

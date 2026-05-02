@@ -933,6 +933,7 @@
     set("ad-total-usdt", ad.totalUsdt || ad.availableUsdt);
     set("ad-auto-reply", ad.autoReply);
     set("ad-terms", ad.terms);
+    set("ad-payment-window", ad.paymentWindow || ad.payment_window || 30);
 
     // Set ad type toggle
     if (typeof switchAdType === "function") switchAdType(ad.type || "sell");
@@ -1489,6 +1490,7 @@
       payment_methods: Array.from(document.querySelectorAll("#ad-payment-methods .rating-tag.selected"))
         .map((tag) => tag.textContent.trim())
         .filter(Boolean),
+      payment_window: Number(document.getElementById("ad-payment-window")?.value || 30),
     };
 
     if (!Number.isFinite(payload.price) || payload.price <= 0) {
@@ -1526,6 +1528,7 @@
         terms: payload.terms,
         autoReply: payload.auto_reply,
         paymentMethods: payload.payment_methods.length ? payload.payment_methods : undefined,
+        paymentWindow: payload.payment_window,
       };
       // Remove undefined keys
       Object.keys(editedFields).forEach((k) => editedFields[k] === undefined && delete editedFields[k]);
