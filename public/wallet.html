@@ -1209,6 +1209,7 @@
   function bcvFetch(path, opts) {
     opts = opts || {};
     opts.headers = bcvHeaders(opts.headers);
+    opts.credentials = 'include';
     var url = path.startsWith('http') ? path : BCV_API + path;
     return fetch(url, opts);
   }
@@ -1246,11 +1247,32 @@
       : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
   }
 
+  var fundingBalance = 0;
+
+  function loadFundingBalance() {
+    bcvFetch('/p2p/balance')
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || data.status !== 'success') return;
+        fundingBalance = Number(data.data.funding_balance || 0);
+      })
+      .catch(function() {});
+  }
+
   function ovSwitchTab(tab) {
     ['overview','spot','futures','earn'].forEach(function(t){
       var btn = document.getElementById('ovTab'+t.charAt(0).toUpperCase()+t.slice(1));
       if(btn) btn.classList.toggle('active', t===tab);
     });
+    var bal = (tab === 'earn') ? fundingBalance : ovTotalUsdt;
+    var usdtBal = document.getElementById('ovBal_USDT');
+    var usdtSub = document.getElementById('ovSub_USDT');
+    if (usdtBal) usdtBal.textContent = bal.toFixed(2);
+    if (usdtSub) usdtSub.textContent = '≈' + bal.toFixed(2) + ' USDT';
+    var balValEl = document.getElementById('balVal');
+    var balSubEl = document.getElementById('balSub');
+    if (balValEl && balVisible) balValEl.textContent = bal.toFixed(2);
+    if (balSubEl) balSubEl.textContent = '≈' + (bal * (OV_RATES['BTC'] || 0.0000154)).toFixed(8) + ' BTC';
   }
 
   // Coin config
@@ -1575,6 +1597,37 @@
     'ERC20': { name:'ERC20 (Ethereum)',             fee:5,  min:10, sub:'Fee: 5 USDT · Min: 10 USDT' }
   };
   var currentWdNetwork = 'TRC20';
+  var WD_METHOD_MAP = {}; // network key → numeric method id from API
+
+  function loadWdMethods() {
+    bcvFetch('/withdraw-method')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var methods = (d && d.data && d.data.withdrawMethod) ? d.data.withdrawMethod : [];
+        WD_METHOD_MAP = {};
+        methods.forEach(function(m){
+          var nm = (m.name || '').toUpperCase();
+          ['TRC20','ERC20','BEP20','MORPH'].forEach(function(key){
+            if(nm.indexOf(key) !== -1) WD_METHOD_MAP[key] = m.id;
+          });
+          // fallback: also map by exact name key
+          if(m.id && !WD_METHOD_MAP[nm]) WD_METHOD_MAP[nm] = m.id;
+        });
+        // Also update fees/mins from API if available
+        methods.forEach(function(m){
+          var nm = (m.name || '').toUpperCase();
+          ['TRC20','ERC20','BEP20','MORPH'].forEach(function(key){
+            if(nm.indexOf(key) !== -1 && WD_NETWORKS[key]) {
+              if(m.fixed_charge) WD_NETWORKS[key].fee = Number(m.fixed_charge);
+              if(m.min_limit)    WD_NETWORKS[key].min = Number(m.min_limit);
+              WD_NETWORKS[key].sub = 'Fee: ' + WD_NETWORKS[key].fee + ' USDT · Min: ' + WD_NETWORKS[key].min + ' USDT';
+            }
+          });
+        });
+        updateWdNetworkUI(currentWdNetwork);
+      })
+      .catch(function(){});
+  }
 
   function openWithdrawDetail(coin) {
     document.getElementById('wdDetailTitle').textContent = 'Withdraw ' + coin;
@@ -1583,6 +1636,7 @@
     document.getElementById('wdAddrInput').value = '';
     updateWdNetworkUI('TRC20');
     loadWdBalance();
+    loadWdMethods();
     showScreen('screenWithdrawDetail');
   }
 
@@ -1669,25 +1723,64 @@
   function doWithdraw() {
     if(!_pendingWithdraw) return;
     var p = _pendingWithdraw;
+    var addr = p.addr;
     document.getElementById('modalWdConfirm').classList.add('hidden');
+    showToast('Processing...');
+    // Step 1: create withdrawal record
     bcvFetch('/withdraw-request', {
       method:'POST',
-      body: JSON.stringify({ method_code: p.netKey, amount: p.amt, currency: 'USDT', wallet_type: 'spot', trx: p.addr })
+      body: JSON.stringify({ method_code: WD_METHOD_MAP[p.netKey] || p.netKey, amount: p.amt, currency: 'USDT', wallet_type: 'spot' })
     })
-    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
-    .then(function(res){
-      var d = res.d;
-      if(d.status === 'success') {
-        showToast('Withdrawal submitted successfully');
-        loadWithdrawHistory();
-        loadWalletBalances && loadWalletBalances();
-        showScreen('screenOverview');
-      } else {
-        var msg = (d.message && d.message.error) ? d.message.error[0] : 'Withdrawal failed';
-        showToast(msg);
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      console.log('[WD Step1]', JSON.stringify(d));
+      if(d.status !== 'success') {
+        var msg = (d.message && d.message.error) ? d.message.error[0] : (d.message || 'Withdrawal failed');
+        showToast(String(msg));
+        return;
       }
+      var trxCode = d.data.trx;
+      // Build confirm body dynamically from returned form fields
+      var confirmBody = { trx: trxCode };
+      var rawForm = d.data.form;
+      // form can be object {label: {...}} or array [{label,type,...}]
+      var fields = [];
+      if(Array.isArray(rawForm)) {
+        fields = rawForm;
+      } else if(rawForm && typeof rawForm === 'object') {
+        fields = Object.values(rawForm);
+      }
+      if(fields.length > 0) {
+        fields.forEach(function(fld){
+          var lbl = fld.label || fld.name || '';
+          confirmBody[lbl] = addr;
+        });
+      }
+      // Always send common fallback field names
+      confirmBody['wallet_address'] = addr;
+      confirmBody['address'] = addr;
+      console.log('[WD Step2 body]', JSON.stringify(confirmBody));
+      // Step 2: confirm — deducts balance + notifies admin
+      return bcvFetch('/withdraw-request/confirm', {
+        method:'POST',
+        body: JSON.stringify(confirmBody)
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d2){
+        console.log('[WD Step2]', JSON.stringify(d2));
+        if(d2.status === 'success') {
+          showToast('Withdrawal request sent successfully!');
+          setTimeout(function(){ loadWithdrawHistory(); }, 1000);
+          loadWalletBalances && loadWalletBalances();
+          showScreen('screenOverview');
+        } else {
+          var errs = d2.message && d2.message.error;
+          var msg2 = Array.isArray(errs) ? errs.join(', ') : (errs || d2.message || 'Confirmation failed');
+          showToast(String(msg2));
+        }
+      });
     })
-    .catch(function(){ showToast('Network error. Please try again.'); });
+    .catch(function(e){ console.error('[WD error]', e); showToast('Network error. Please try again.'); });
     _pendingWithdraw = null;
   }
 
@@ -1744,7 +1837,18 @@
           var statusColor = status === 'approved' || status === '1' ? '#0ecb81' : status === 'rejected' || status === '3' ? '#f6465d' : '#f5a623';
           var statusLabel = status === '1' ? 'Approved' : status === '3' ? 'Rejected' : status === '2' ? 'Processing' : 'Pending';
           var network = (w.method && w.method.name) ? w.method.name : 'TRC20';
-          var address = w.withdraw_information ? (JSON.parse(w.withdraw_information||'{}').trx || '-') : '-';
+          var address = '-';
+          try {
+            var wi = w.withdraw_information;
+            if(wi) {
+              var parsed = typeof wi === 'string' ? JSON.parse(wi) : wi;
+              if(Array.isArray(parsed) && parsed.length > 0) {
+                address = parsed[0].value || '-';
+              } else if(parsed && typeof parsed === 'object') {
+                address = parsed.wallet_address || parsed.address || parsed.trx || Object.values(parsed)[0] || '-';
+              }
+            }
+          } catch(e){}
           var fee = Number(w.charge || 0);
           var detId = 'wdDet_'+idx;
           var row = document.createElement('div');
@@ -1805,6 +1909,7 @@
       .catch(function() {});
   }
   loadWalletBalances();
+  loadFundingBalance();
 
   // ── CONVERT ──
   var CV_SVGS = {
