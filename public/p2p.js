@@ -2126,12 +2126,18 @@ function syncMobileTabFromHash(options = {}) {
   }
 
   if (resolvedTab === 'orders') {
+    if (typeof showMobScreen === 'function') {
+      showMobScreen('mobOrdersScreen');
+    }
     _applyOrdersFocusState();
     renderMobileOrdersList();
     loadLiveOrders();
   } else if (resolvedTab === 'ads') {
     loadMyAds();
   } else if (resolvedTab === 'profile') {
+    if (typeof showMobScreen === 'function') {
+      showMobScreen('mobProfileScreen');
+    }
     loadProfilePanel();
   } else if (options.refreshP2P !== false) {
     loadOffers();
@@ -2153,12 +2159,18 @@ function setMobileTab(tab, options = {}) {
     }
 
     if (normalized === 'orders') {
+      if (typeof showMobScreen === 'function') {
+        showMobScreen('mobOrdersScreen');
+      }
       _applyOrdersFocusState();
       renderMobileOrdersList();
       loadLiveOrders();
     } else if (normalized === 'ads') {
       loadMyAds();
     } else if (normalized === 'profile') {
+      if (typeof showMobScreen === 'function') {
+        showMobScreen('mobProfileScreen');
+      }
       loadProfilePanel();
     } else {
       loadOffers();
