@@ -3406,7 +3406,7 @@ function connectWithdrawalSSE() {
 
 async function refreshWithdrawalNotifications({ silent = false } = {}) {
   try {
-    const data = await apiRequest('/wallet/withdrawals?status=PENDING&limit=50');
+    const data = await apiRequest('/wallet/withdrawals?status=pending&limit=50');
     const rows = Array.isArray(data.withdrawals) ? data.withdrawals : [];
     _wdPendingList = rows;
     _wdPendingCount = rows.length;
@@ -3552,15 +3552,73 @@ function showWithdrawalNotification(info) {
   setTimeout(() => { if (n.isConnected) n.remove(); }, 12000);
 }
 
+function _wdRenderRows(withdrawals) {
+  if (withdrawals.length === 0) {
+    return `<div style="padding:2rem;text-align:center;color:#848e9c;">No pending withdrawals 🎉</div>`;
+  }
+  return withdrawals.map((w, idx) => {
+    const id = String(w.requestId || w.id || '').trim();
+    const address = String(w.address || w.toAddress || w.to || '-').trim();
+    const detailId = 'wdDetail_' + idx;
+    const fee = w.fee != null ? String(w.fee) : '0';
+    const createdAt = w.createdAt ? formatDate(w.createdAt) : '-';
+    const processedAt = w.processedAt ? formatDate(w.processedAt) : '-';
+    const userName = escapeHtml(w.username || w.userId || 'User');
+    const userEmail = escapeHtml(w.email || '-');
+    return `
+    <div style="border-bottom:1px solid rgba(255,255,255,0.06);">
+      <div onclick="wdToggleDetail('${detailId}')" style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:16px;font-weight:800;color:#eaecef;">${escapeHtml(String(w.amount))} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
+          <div style="font-size:11px;color:#848e9c;margin-top:2px;">${userName} &nbsp;·&nbsp; ${escapeHtml(createdAt)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${statusBadge(w.status || 'pending')}
+          <span style="color:#848e9c;font-size:16px;" id="${detailId}_arr">▸</span>
+        </div>
+      </div>
+      <div id="${detailId}" style="display:none;padding:0 16px 14px;">
+        <div style="padding:12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.03);display:grid;gap:7px;font-size:12px;color:#c9d1d9;margin-bottom:10px;">
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Username:</span> <b style="color:#eaecef;">${userName}</b></div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Email:</span> ${userEmail}</div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Network:</span> ${escapeHtml(w.network || '-')}</div>
+          <div style="word-break:break-all;"><span style="color:#848e9c;min-width:90px;display:inline-block;">Address:</span> ${escapeHtml(address)}</div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Fee:</span> ${escapeHtml(fee)} USDT</div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Request ID:</span> <span style="font-size:10px;word-break:break-all;">${escapeHtml(id || '-')}</span></div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Submitted:</span> ${escapeHtml(createdAt)}</div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Processed:</span> ${escapeHtml(processedAt)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
+            style="background:#02c076;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">✓ Approve</button>
+          <button onclick="wdAction('${escapeHtml(id)}','REJECTED',this)"
+            style="background:#f6465d;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">✕ Reject</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function _wdLoadIntoPanel() {
+  const panelBody = document.getElementById('wdPanelBody');
+  const panelSub = document.getElementById('wdPanelSub');
+  if (!panelBody) return;
+  panelBody.innerHTML = '<div style="padding:2rem;text-align:center;color:#848e9c;">Loading...</div>';
+  let withdrawals = [];
+  try {
+    const data = await apiRequest('/wallet/withdrawals?status=pending&limit=50');
+    withdrawals = Array.isArray(data.withdrawals) ? data.withdrawals : [];
+  } catch(e) {}
+  _wdPendingCount = withdrawals.length;
+  updateWithdrawalBadge();
+  if (panelSub) panelSub.textContent = withdrawals.length + ' pending';
+  panelBody.innerHTML = _wdRenderRows(withdrawals);
+}
+
 async function openWithdrawalPanel() {
-  // Toggle: close if already open
   const existing = document.getElementById('wdPanel');
   if (existing) { existing.remove(); return; }
 
-  _wdPendingCount = 0;
-  updateWithdrawalBadge();
-
-  // Show panel immediately with loading state
   const panel = document.createElement('div');
   panel.id = 'wdPanel';
   panel.style.cssText = 'position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;background:#0d1117;border-left:1px solid rgba(255,255,255,0.07);z-index:99999;display:flex;flex-direction:column;overflow:hidden;box-shadow:-4px 0 24px rgba(0,0,0,0.5);';
@@ -3571,65 +3629,7 @@ async function openWithdrawalPanel() {
     </div>
     <div style="flex:1;overflow-y:auto;" id="wdPanelBody"><div style="padding:2rem;text-align:center;color:#848e9c;">Loading...</div></div>`;
   document.body.appendChild(panel);
-
-  // Load pending withdrawals from server
-  let withdrawals = [];
-  try {
-    const data = await apiRequest('/wallet/withdrawals?status=PENDING&limit=50');
-    withdrawals = (data.withdrawals || []);
-  } catch(e) {}
-
-  const panelBody = document.getElementById('wdPanelBody');
-  const panelSub = document.getElementById('wdPanelSub');
-  if (!panelBody) return;
-
-  if (panelSub) panelSub.textContent = withdrawals.length + ' pending';
-
-  const rows = withdrawals.length === 0
-    ? `<div style="padding:2rem;text-align:center;color:#848e9c;">No pending withdrawals 🎉</div>`
-    : withdrawals.map((w, idx) => {
-      const id = String(w.requestId || w.id || '').trim();
-      const address = String(w.address || w.toAddress || w.to || '-').trim();
-      const detailId = 'wdDetail_' + idx;
-      const fee = w.fee != null ? String(w.fee) : '0';
-      const createdAt = w.createdAt ? formatDate(w.createdAt) : '-';
-      const processedAt = w.processedAt ? formatDate(w.processedAt) : '-';
-      const userName = escapeHtml(w.username || w.userId || 'User');
-      const userEmail = escapeHtml(w.email || '-');
-      return `
-      <div style="border-bottom:1px solid rgba(255,255,255,0.06);">
-        <div onclick="wdToggleDetail('${detailId}')" style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:16px;font-weight:800;color:#eaecef;">${escapeHtml(String(w.amount))} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
-            <div style="font-size:11px;color:#848e9c;margin-top:2px;">${userName} &nbsp;·&nbsp; ${escapeHtml(createdAt)}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            ${statusBadge(w.status || 'PENDING')}
-            <span style="color:#848e9c;font-size:16px;" id="${detailId}_arr">▸</span>
-          </div>
-        </div>
-        <div id="${detailId}" style="display:none;padding:0 16px 14px;">
-          <div style="padding:12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.03);display:grid;gap:7px;font-size:12px;color:#c9d1d9;margin-bottom:10px;">
-            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Username:</span> <b style="color:#eaecef;">${userName}</b></div>
-            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Email:</span> ${userEmail}</div>
-            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Network:</span> ${escapeHtml(w.network || '-')}</div>
-            <div style="word-break:break-all;"><span style="color:#848e9c;min-width:90px;display:inline-block;">Address:</span> ${escapeHtml(address)}</div>
-            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Fee:</span> ${escapeHtml(fee)} USDT</div>
-            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Request ID:</span> <span style="font-size:10px;word-break:break-all;">${escapeHtml(id || '-')}</span></div>
-            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Submitted:</span> ${escapeHtml(createdAt)}</div>
-            <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Processed:</span> ${escapeHtml(processedAt)}</div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
-              style="background:#02c076;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Approve</button>
-            <button onclick="wdAction('${escapeHtml(id)}','REJECTED',this)"
-              style="background:#f6465d;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Reject</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-
-  panelBody.innerHTML = rows;
+  await _wdLoadIntoPanel();
 }
 
 function wdToggleDetail(detailId) {
@@ -3649,13 +3649,12 @@ async function wdAction(withdrawalId, decision, btn) {
       method: 'POST',
       body: JSON.stringify({ decision, reason: decision === 'APPROVED' ? 'Approved by admin' : 'Rejected by admin' })
     });
-    const row = btn.closest('div[style*="border-bottom"]');
-    if (row) {
-      row.style.opacity = '0.4';
-      row.innerHTML = `<div style="padding:8px 0;font-size:12px;color:${decision==='APPROVED'?'#02c076':'#f6465d'};font-weight:700;">
-        ${decision==='APPROVED'?'✓ Approved — balance deducted':'✕ Rejected — funds returned'}</div>`;
-    }
-    showMessage(decision === 'APPROVED' ? 'Withdrawal approved. Balance deducted.' : 'Withdrawal rejected. Funds returned to user.', decision === 'APPROVED' ? 'success' : 'error');
+    showMessage(
+      decision === 'APPROVED' ? 'Withdrawal approved. Balance deducted.' : 'Withdrawal rejected. Funds returned to user.',
+      decision === 'APPROVED' ? 'success' : 'error'
+    );
+    // Reload panel with fresh data so badge count and list stay accurate
+    await _wdLoadIntoPanel();
   } catch(e) {
     showMessage(e.message || 'Action failed', 'error');
     btn.disabled = false;
