@@ -1,15 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" style="background:#000;color-scheme:dark;">
+<html lang="en">
   <head>
     <meta charset="UTF-8" /><meta name="theme-color" content="#000000"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Bitegit | Crypto Exchange</title>
-    <!-- Zero-flash: black before any CSS loads -->
-    <style>html,body{background:#000!important;}</style>
-    <link rel="stylesheet" href="/styles.css?v=20260503a" />
-    <link rel="stylesheet" href="/coinflare.css?v=20260503a" />
-    <link rel="stylesheet" href="/mobile-nav.css?v=20260503a" />
-  <script src="/app-nav.js?v=20260503a" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=20260303x" />
+    <link rel="stylesheet" href="/coinflare.css?v=20260416c" />
+    <link rel="stylesheet" href="/mobile-nav.css?v=20260416c" />
+  <script src="/app-nav.js?v=20260416c" defer></script>
   <script>
     // Zero-flash auth: stamp html class synchronously before body renders
     try {
@@ -61,12 +59,12 @@
           <a id="topSignupBtn" href="/auth?mode=signup" class="cf-signup" data-auth-guest-only>Sign Up</a>
           <a id="topAssetsBtn" href="/wallet" class="cf-login" data-auth-user-only>Assets</a>
           <button id="topLogoutBtn" type="button" class="cf-login" data-auth-user-only>Logout</button>
+          <button id="homeNavToggle" class="cf-nav-toggle" type="button" aria-label="Open navigation" aria-controls="homeNavDrawer" aria-expanded="false">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
-        <button id="homeNavToggle" class="cf-nav-toggle" type="button" aria-label="Open navigation" aria-controls="homeNavDrawer" aria-expanded="false">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
       </div>
     </header>
 
@@ -118,7 +116,7 @@
       <div data-auth-guest-only style="position:relative;z-index:5;text-align:center;width:90%;max-width:520px;margin:0 auto;padding:44px 0 36px;">
         <h1 style="font-size:clamp(28px,8vw,42px);font-weight:300;line-height:1.25;letter-spacing:-0.5px;margin-bottom:14px;color:#fff;text-shadow:none;text-align:center;max-width:100%;width:100%;">Your crypto journey,<br>simplified.</h1>
         <p style="font-size:15px;color:#aaa;line-height:1.6;margin-bottom:28px;">Sign up to unlock up to <span style="color:#00e5ff;font-weight:500;">5,100 USDT</span> in Welcome Bonuses</p>
-        <a href="/auth?mode=signup" style="display:block;width:100%;background:linear-gradient(135deg,#00e5ff 0%,#00b8d4 100%);color:#000;padding:18px 0;border-radius:50px;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;text-decoration:none;box-shadow:0 0 32px rgba(0,229,255,0.45),0 4px 18px rgba(0,229,255,0.25);letter-spacing:0.3px;-webkit-tap-highlight-color:transparent;">Sign Up Now</a>
+        <a href="/auth?mode=signup" style="display:block;width:100%;background:#00e5ff;color:#000;padding:17px 0;border-radius:50px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:none;text-decoration:none;">Sign Up Now</a>
       </div>
 
       <!-- Logged-in user action grid -->
@@ -938,7 +936,7 @@
     var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setClearColor(0x000000);
     renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 3));
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(50, W/H, 0.1, 100);
     camera.position.set(0, 0, 8);

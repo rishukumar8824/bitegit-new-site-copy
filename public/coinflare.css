@@ -246,20 +246,6 @@ a {
   gap: 0.75rem;
 }
 
-/* Mobile: center Login+Signup between logo and hamburger */
-@media (max-width: 1023px) {
-  .cf-header-inner {
-    position: relative;
-  }
-  .cf-actions {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    margin: 0;
-    gap: 0.5rem;
-  }
-}
-
 .cf-search-btn {
   width: 38px;
   height: 38px;
@@ -283,27 +269,20 @@ a {
 .cf-signup,
 .cf-signup-link,
 .cf-apk-cta {
-  min-height: 28px;
-  border-radius: 6px;
-  padding: 0 0.65rem;
-  border: 1px solid rgba(255,255,255,0.18);
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 0.6rem;
+  border: 1px solid var(--cf-line);
   background: transparent;
   color: var(--cf-text);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-  white-space: nowrap;
-}
-
-.cf-login {
-  border: 1px solid rgba(255,255,255,0.22) !important;
-  background: transparent !important;
-  color: #fff !important;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .cf-signup,
@@ -313,7 +292,7 @@ a {
   border-color: transparent !important;
   color: #000 !important;
   font-weight: 800 !important;
-  box-shadow: 0 2px 10px rgba(0,229,255,0.22) !important;
+  box-shadow: 0 10px 24px rgba(0, 229, 255, 0.18) !important;
 }
 
 .cf-user-logout {
@@ -2772,11 +2751,6 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   display: block;
   transform: scale(1.03);
   transform-origin: center center;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  will-change: transform;
 }
 
 .cf-partners {
@@ -3244,19 +3218,12 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   }
 
   .cf-signup {
-    min-height: 30px;
-    padding: 0 0.85rem;
-    font-size: 0.78rem;
+    min-height: 42px;
+    padding: 0 1.4rem;
+    font-size: 0.95rem;
     font-weight: 800;
-    background: #00e5ff !important;
-    border-radius: 6px;
-  }
-
-  .cf-login {
-    min-height: 30px;
-    padding: 0 0.75rem;
-    font-size: 0.78rem;
-    border-radius: 6px;
+    background: linear-gradient(135deg, #00e5ff 0%, #00b8d4 100%);
+    border-radius: 999px;
   }
 
   .cf-user-panel {
