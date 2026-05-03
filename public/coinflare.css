@@ -269,20 +269,26 @@ a {
 .cf-signup,
 .cf-signup-link,
 .cf-apk-cta {
-  min-height: 26px;
-  border-radius: 999px;
-  padding: 0 0.6rem;
-  border: 1px solid var(--cf-line);
+  min-height: 32px;
+  border-radius: 8px;
+  padding: 0 1rem;
+  border: 1px solid rgba(255,255,255,0.18);
   background: transparent;
   color: var(--cf-text);
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cf-login {
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  background: transparent !important;
+  color: #fff !important;
 }
 
 .cf-signup,
@@ -292,7 +298,7 @@ a {
   border-color: transparent !important;
   color: #000 !important;
   font-weight: 800 !important;
-  box-shadow: 0 10px 24px rgba(0, 229, 255, 0.18) !important;
+  box-shadow: 0 2px 12px rgba(0,229,255,0.25) !important;
 }
 
 .cf-user-logout {
@@ -3223,12 +3229,19 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   }
 
   .cf-signup {
-    min-height: 42px;
-    padding: 0 1.4rem;
-    font-size: 0.95rem;
+    min-height: 36px;
+    padding: 0 1.2rem;
+    font-size: 0.85rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #00e5ff 0%, #00b8d4 100%);
-    border-radius: 999px;
+    background: #00e5ff !important;
+    border-radius: 8px;
+  }
+
+  .cf-login {
+    min-height: 36px;
+    padding: 0 1rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
   }
 
   .cf-user-panel {
