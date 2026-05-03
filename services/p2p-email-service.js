@@ -122,7 +122,50 @@ ${buildFooter()}
     }
   }
 
-  return { sendOrderConfirmation, sendOrderUpdate };
+  // 5-minute payment reminder alert to buyer
+  async function sendPaymentReminderEmail(email, order) {
+    try {
+      if (!resend || !fromEmail) return { delivered: false, reason: 'not_configured' };
+      const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
+      const subject = `[${BRAND_NAME}] [P2P] Confirm Payment — 5 Minutes Left!`;
+      const creationTime = order.createdAt
+        ? new Date(order.createdAt).toISOString().replace('T', ' ').slice(0, 19) + '(UTC+0)'
+        : new Date().toISOString().replace('T', ' ').slice(0, 19) + '(UTC+0)';
+      const html = buildHeader() + `
+<tr><td style="padding:28px 28px 0;">
+  <!-- Alert banner -->
+  <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;">
+    <span style="font-size:22px;margin-right:10px;">⚠️</span>
+    <span style="font-size:14px;font-weight:700;color:#856404;">Action Required — Only 5 Minutes Remaining!</span>
+  </div>
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#111;">[P2P] Confirm Payment</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:#333;line-height:1.7;">You have a P2P order: <strong style="color:#00b8d4;">${escapeHtml(String(order.id || ''))}</strong> that needs payment confirmation within the next <strong style="color:#e53935;">5 minutes</strong>, otherwise the order will be canceled.</p>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
+    <tr><td style="background:#f8f8f8;border-radius:6px;padding:18px 20px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr><td style="padding:6px 0;font-size:14px;color:#333;width:160px;vertical-align:top;">Order ID:</td><td style="padding:6px 0;font-size:14px;color:#00b8d4;font-weight:500;">${escapeHtml(String(order.id || 'N/A'))}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#333;vertical-align:top;">Trade amount:</td><td style="padding:6px 0;font-size:14px;color:#00b8d4;font-weight:500;">${escapeHtml(String(order.cryptoAmount || '0'))} ${escapeHtml(String(order.asset || 'USDT'))}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#333;vertical-align:top;">Transaction amount:</td><td style="padding:6px 0;font-size:14px;color:#00b8d4;font-weight:500;">${escapeHtml(String(order.fiatAmount || '0'))} ${escapeHtml(String(order.fiatCurrency || 'INR'))}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#333;vertical-align:top;">Created at:</td><td style="padding:6px 0;font-size:14px;color:#00b8d4;font-weight:500;">${escapeHtml(creationTime)}</td></tr>
+      </table>
+    </td></tr>
+  </table>
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://bitegit.com/p2p" style="color:#00b8d4;text-decoration:none;font-weight:600;">View Details</a></p>
+  <p style="margin:0 0 28px;font-size:13px;color:#555;">If you do not recognize this activity, please <a href="https://bitegit.com/support" style="color:#00b8d4;text-decoration:none;">disable account</a>. The link is valid for 10 minutes only.</p>
+  <p style="margin:0 0 4px;font-size:13px;color:#333;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:#888;">Please do not reply to this email</p>
+</td></tr>
+${buildFooter()}
+</table></td></tr></table></body></html>`;
+      await resend.emails.send({ from: fromEmail, to: email, subject, html });
+      return { delivered: true };
+    } catch (e) {
+      return { delivered: false, reason: e.message };
+    }
+  }
+
+  return { sendOrderConfirmation, sendOrderUpdate, sendPaymentReminderEmail };
 }
 
 module.exports = { createP2PEmailService };
