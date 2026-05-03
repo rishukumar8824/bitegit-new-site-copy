@@ -3177,10 +3177,17 @@ app.get('/api/p2p/offers', async (req, res) => {
           ? 'online'
           : 'offline';
 
+      // Compute baseOrders server-side for offers that don't have it stored
+      const _baseCounts = [40, 113, 370, 405, 88, 215, 312, 178];
+      const _advStr = advertiserName || userId || String(offer.id || '');
+      const _baseIdx = _advStr.split('').reduce(function(a, c) { return a + c.charCodeAt(0); }, 0) % _baseCounts.length;
+      const baseOrders = offer.baseOrders != null ? offer.baseOrders : _baseCounts[_baseIdx];
+
       return {
         ...offer,
         merchantBadge,
         merchantBadges,
+        baseOrders,
         onlineStatus
       };
     });
@@ -3734,6 +3741,32 @@ app.post('/api/admin/p2p/orders/:orderId/admin-reply', requiresAdminSession, asy
 app.get('/api/admin/merchant-applications', requiresAdminSession, (req, res) => {
   const list = Array.from(merchantApplications.values()).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
   return res.json({ success: true, applications: list });
+});
+
+// ── Admin: Fix security deposits for all approved merchants ──
+app.post('/api/admin/merchant-applications/fix-deposits', requiresAdminSession, async (req, res) => {
+  try {
+    const cols = getCollections();
+    let fixed = 0, skipped = 0;
+    for (const [, app] of merchantApplications) {
+      if (app.status !== 'approved') { skipped++; continue; }
+      const email = String(app.email || '').trim().toLowerCase();
+      if (!email) { skipped++; continue; }
+      const cred = await cols.p2pCredentials.findOne({ email });
+      const current = Number(cred?.merchant?.depositLocked || 0);
+      const target = _getBadgesArray(app).length > 0 ? MERCHANT_BADGE_MIN_DEPOSIT : MERCHANT_ACTIVATION_DEPOSIT;
+      if (current >= target) { skipped++; continue; }
+      await cols.p2pCredentials.updateOne(
+        { email },
+        { $set: { 'merchant.depositLocked': target, 'merchant.isMerchant': true, 'merchant.activatedAt': new Date() } },
+        { upsert: true }
+      );
+      fixed++;
+    }
+    return res.json({ success: true, fixed, skipped });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // ── Merchant Application: Admin assign badge ──

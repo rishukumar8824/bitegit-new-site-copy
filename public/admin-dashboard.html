@@ -262,6 +262,7 @@
                 <option value="rejected">Rejected</option>
               </select>
               <button onclick="loadMerchantApplications()" class="btn-primary btn-sm">Reload</button>
+              <button onclick="fixMerchantDeposits()" class="btn-secondary btn-sm" title="Set 200/500 USDT security deposit for all approved merchants">Fix Deposits</button>
               <span style="font-size:11px;color:var(--text-2);" id="merchantCount"></span>
             </div>
           </div>
@@ -1146,6 +1147,16 @@ async function rejectMerchantApp(id) {
     });
     var data = await res.json();
     if (data.success) { showGlobalMsg('Application rejected.', 'success'); loadMerchantApplications(); }
+    else showGlobalMsg('❌ ' + data.message, 'error');
+  } catch(e) { showGlobalMsg('Network error.', 'error'); }
+}
+
+async function fixMerchantDeposits() {
+  if (!confirm('Set 200 USDT (or 500 if has badge) security deposit for all approved merchants missing it?')) return;
+  try {
+    var res = await fetch('/api/admin/merchant-applications/fix-deposits', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'} });
+    var data = await res.json();
+    if (data.success) showGlobalMsg('Fixed ' + data.fixed + ' merchants (' + data.skipped + ' already correct).', 'success');
     else showGlobalMsg('❌ ' + data.message, 'error');
   } catch(e) { showGlobalMsg('Network error.', 'error'); }
 }
