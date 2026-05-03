@@ -5211,6 +5211,7 @@ async function boot() {
     authEmailService = createAuthEmailService();
     p2pEmailService = createP2PEmailService();
     app.set('authEmailService', authEmailService);
+    app.set('p2pEmailService', p2pEmailService);
     logEmailProviderRuntimeEnv();
     walletService = createWalletService(collections, getMongoClient(), {
       hooks: {
