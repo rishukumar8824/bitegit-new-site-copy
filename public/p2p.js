@@ -6717,86 +6717,127 @@ async function refreshMerchantStatus() {
   var box = document.getElementById('merchantStatusBox');
   if (!box) return;
   try {
-    // Fetch deposit status + application status in parallel
     var [depRes, appRes] = await Promise.all([
       fetch('/api/p2p/security-deposit', { credentials: 'include' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }),
       fetch('/api/merchant/application-status', { credentials: 'include' }).then(function(r){ return r.json(); }).catch(function(){ return {}; })
     ]);
     var dep = Number(appRes.depositLocked || depRes.securityDeposit || 0);
-    var canPost = !!(appRes.canPostAds || depRes.canPostAds || dep >= 200);
+    var canApply = !!(appRes.canApplyMerchant || depRes.canApplyMerchant || dep >= 200);
+    var canPost = !!appRes.canPostAds;
     var badgeEligible = !!(appRes.badgeEligible || depRes.badgeEligible || dep >= 500);
-    var appStatus = appRes.status || null; // 'pending' | 'approved' | 'rejected' | null
+    var appStatus = appRes.status || null;
     var hasBadge = !!appRes.badge;
+    var needsMoreForBadge = Math.max(0, 500 - dep);
+    var hasSubmitted = appStatus === 'pending' || appStatus === 'approved' || appStatus === 'rejected';
 
     var html = '';
-
-    // Current deposit badge
     html += '<div style="text-align:center;margin-bottom:1rem;">' +
       '<span style="font-size:.78rem;color:#848e9c;">Current security deposit: </span>' +
       '<span style="font-size:.85rem;font-weight:700;color:' + (dep >= 500 ? '#f7931a' : dep >= 200 ? '#16c784' : '#f6465d') + ';">' + dep + ' USDT</span>' +
     '</div>';
 
     if (appStatus === 'approved' && hasBadge) {
-      // ✅ Already a merchant with badge
       html += '<div style="background:rgba(22,199,132,.1);border:1px solid rgba(22,199,132,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
         '<div style="font-size:1.4rem;margin-bottom:.3rem;">🏅</div>' +
         '<div style="font-weight:700;color:#16c784;font-size:1rem;">Verified Merchant</div>' +
         '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">Your merchant badge is active on all your ads</div>' +
       '</div>';
+    } else if (appStatus === 'approved') {
+      html += '<div style="background:rgba(22,199,132,.1);border:1px solid rgba(22,199,132,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
+        '<div style="font-size:1.4rem;margin-bottom:.3rem;">✅</div>' +
+        '<div style="font-weight:700;color:#16c784;font-size:1rem;">Merchant Approved</div>' +
+        '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">Admin approved your merchant account. You can post ads now.</div>' +
+      '</div>';
     } else if (appStatus === 'pending') {
-      // ⏳ Pending review
       html += '<div style="background:rgba(247,147,26,.08);border:1px solid rgba(247,147,26,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
         '<div style="font-size:1.2rem;margin-bottom:.3rem;">⏳</div>' +
         '<div style="font-weight:700;color:#f7931a;font-size:.95rem;">Application Under Review</div>' +
         '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">Admin will review within 2-5 business days</div>' +
       '</div>';
-    } else if (canPost) {
+    } else if (appStatus === 'rejected') {
+      html += '<div style="background:rgba(246,70,93,.08);border:1px solid rgba(246,70,93,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
+        '<div style="font-size:1.2rem;margin-bottom:.3rem;">⚠️</div>' +
+        '<div style="font-weight:700;color:#f6465d;font-size:.95rem;">Merchant Application Rejected</div>' +
+        '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">Update your details and submit again for admin review.</div>' +
+      '</div>';
+    } else if (canApply) {
       html += '<div style="background:rgba(22,199,132,.1);border:1px solid rgba(22,199,132,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
-        '<div style="font-size:1.4rem;margin-bottom:.3rem;">✅</div>' +
-        '<div style="font-weight:700;color:#16c784;font-size:1rem;">Merchant Access Active</div>' +
-        '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">You can post ads now. Badge will show only after admin assigns one.</div>' +
-      '</div>';
-    } else {
-      // Not applied yet — show deposit steps
-      // Step 1: 200 USDT to post ads
-      html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:1rem;margin-bottom:.75rem;">' +
-        '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">' +
-          '<div style="width:22px;height:22px;border-radius:50%;background:' + (canPost ? '#16c784' : '#f6465d') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;font-weight:800;color:#fff;">' + (canPost ? '✓' : '1') + '</div>' +
-          '<div style="font-weight:700;color:#fff;font-size:.9rem;">200 USDT — Post Ads</div>' +
-        '</div>' +
-        '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (canPost ? '0' : '.8rem') + ';">Lock 200 USDT security deposit to start posting ads on P2P marketplace.</div>' +
-        (!canPost ? '<div style="display:flex;gap:.5rem;align-items:center;">' +
-          '<input id="secDepInput" type="number" min="200" value="200" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;">' +
-          '<button onclick="lockSecurityDeposit()" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;">Lock USDT</button>' +
-        '</div>' : '') +
-      '</div>';
-
-      // Step 2: 500 USDT for merchant badge
-      html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:1rem;margin-bottom:.75rem;">' +
-        '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">' +
-          '<div style="width:22px;height:22px;border-radius:50%;background:' + (badgeEligible ? '#f7931a' : 'rgba(255,255,255,.15)') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;font-weight:800;color:#fff;">' + (badgeEligible ? '✓' : '2') + '</div>' +
-          '<div style="font-weight:700;color:' + (badgeEligible ? '#f7931a' : 'rgba(255,255,255,.5)') + ';font-size:.9rem;">500 USDT — Merchant Badge</div>' +
-        '</div>' +
-        '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (badgeEligible ? '.8rem' : '0') + ';">Lock 500 USDT total to apply for verified merchant badge — priority listing, zero fees.</div>' +
-        (badgeEligible ? '<button onclick="openP2PScreen(\'merchantApplyScreen\')" style="width:100%;background:linear-gradient(135deg,#f7931a,#e67e00);color:#fff;border:none;border-radius:10px;padding:.75rem;font-size:.9rem;font-weight:700;cursor:pointer;">Apply for Merchant Badge →</button>' :
-          (canPost ? '<div style="font-size:.75rem;color:#f7931a;font-weight:600;">Need ' + (500 - dep) + ' USDT more — <button onclick="document.getElementById(\'secDepInput2\').style.display=\'block\'" style="background:none;border:none;color:#00e5ff;cursor:pointer;font-size:.75rem;font-weight:700;padding:0;text-decoration:underline;">Upgrade now</button></div>' +
-            '<div id="secDepInput2" style="display:none;display:flex;gap:.5rem;margin-top:.5rem;"><input type="number" min="' + (500-dep) + '" value="' + (500-dep) + '" id="secDepInput" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;"><button onclick="lockSecurityDeposit()" style="background:#f7931a;color:#fff;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;">Add</button></div>'
-          : '') +
-        '') +
+        '<div style="font-size:1.4rem;margin-bottom:.3rem;">🔐</div>' +
+        '<div style="font-weight:700;color:#16c784;font-size:1rem;">Security Deposit Locked</div>' +
+        '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">Now submit your merchant application. Ad posting starts only after admin approval.</div>' +
       '</div>';
     }
 
+    html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:1rem;margin-bottom:.75rem;">' +
+      '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">' +
+        '<div style="width:22px;height:22px;border-radius:50%;background:' + (canApply ? '#16c784' : '#f6465d') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;font-weight:800;color:#fff;">' + (canApply ? '✓' : '1') + '</div>' +
+        '<div style="font-weight:700;color:#fff;font-size:.9rem;">Lock 200 USDT Security Deposit</div>' +
+      '</div>' +
+      '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (canApply ? '0' : '.8rem') + ';">Deposit lock is required before merchant application can be submitted.</div>' +
+      (!canApply ? '<div style="display:flex;gap:.5rem;align-items:center;">' +
+        '<input id="secDepInput" type="number" min="200" value="200" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;">' +
+        '<button onclick="lockSecurityDeposit()" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;">Lock USDT</button>' +
+      '</div>' : '') +
+    '</div>';
+
+    html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:1rem;margin-bottom:.75rem;">' +
+      '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">' +
+        '<div style="width:22px;height:22px;border-radius:50%;background:' + (canPost ? '#16c784' : hasSubmitted ? '#f7931a' : canApply ? '#00e5ff' : 'rgba(255,255,255,.15)') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;font-weight:800;color:#fff;">' + (canPost ? '✓' : '2') + '</div>' +
+        '<div style="font-weight:700;color:#fff;font-size:.9rem;">Merchant Approval</div>' +
+      '</div>' +
+      '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (canApply && !canPost && appStatus !== 'pending' ? '.8rem' : '0') + ';">Admin approval is required before you can post P2P ads.</div>' +
+      (appStatus === 'pending'
+        ? '<div style="font-size:.78rem;color:#f7931a;font-weight:600;">Your application is under admin review.</div>'
+        : appStatus === 'approved'
+          ? '<div style="font-size:.78rem;color:#16c784;font-weight:600;">Approved. Ad posting is unlocked for your account.</div>'
+          : appStatus === 'rejected'
+            ? '<button onclick="openP2PScreen(\'merchantApplyScreen\')" style="width:100%;background:linear-gradient(135deg,#00e5ff,#00b8d9);color:#000;border:none;border-radius:10px;padding:.75rem;font-size:.9rem;font-weight:700;cursor:pointer;">Reapply for Merchant Approval</button>'
+            : canApply
+              ? '<button onclick="openP2PScreen(\'merchantApplyScreen\')" style="width:100%;background:linear-gradient(135deg,#00e5ff,#00b8d9);color:#000;border:none;border-radius:10px;padding:.75rem;font-size:.9rem;font-weight:700;cursor:pointer;">Apply for Merchant Approval</button>'
+              : '') +
+    '</div>';
+
+    html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:1rem;margin-bottom:.75rem;">' +
+      '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">' +
+        '<div style="width:22px;height:22px;border-radius:50%;background:' + (hasBadge ? '#f7931a' : badgeEligible ? '#f7931a' : 'rgba(255,255,255,.15)') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;font-weight:800;color:#fff;">' + ((hasBadge || badgeEligible) ? '✓' : '3') + '</div>' +
+        '<div style="font-weight:700;color:' + (hasBadge || badgeEligible ? '#f7931a' : 'rgba(255,255,255,.75)') + ';font-size:.9rem;">500 USDT Badge Eligibility</div>' +
+      '</div>' +
+      (hasBadge
+        ? '<div style="font-size:.78rem;color:#f7931a;font-weight:600;">Your admin-assigned merchant badge is already active.</div>'
+        : badgeEligible
+          ? '<div style="font-size:.78rem;color:#f7931a;font-weight:600;">You are eligible for admin badge assignment once your trading quality is reviewed.</div>'
+          : canApply
+            ? '<div style="font-size:.75rem;color:#f7931a;font-weight:600;">Need ' + needsMoreForBadge + ' USDT more. Badge remains admin-assigned only.</div>' +
+              '<div style="display:flex;gap:.5rem;margin-top:.6rem;"><input type="number" min="' + Math.max(1, needsMoreForBadge) + '" value="' + Math.max(1, needsMoreForBadge) + '" id="secDepUpgradeInput" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;"><button onclick="lockSecurityDeposit(\'secDepUpgradeInput\')" style="background:#f7931a;color:#fff;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;">Add</button></div>'
+            : '<div style="font-size:.78rem;color:#848e9c;">First lock 200 USDT, then you can increase to 500 USDT for badge eligibility.</div>') +
+    '</div>';
+
     box.innerHTML = html;
+    return {
+      depositLocked: dep,
+      canApplyMerchant: canApply,
+      canPostAds: canPost,
+      status: appStatus,
+      badgeEligible: badgeEligible,
+      hasBadge: hasBadge
+    };
   } catch(e) {
     box.innerHTML = '<div style="text-align:center;color:#f6465d;font-size:.85rem;">Failed to load status. Try again.</div>';
+    return null;
   }
 }
 
-async function lockSecurityDeposit() {
-  var input = document.getElementById('secDepInput');
+function merchantToast(message) {
+  if (typeof showToast === 'function') showToast(message);
+  else alert(message);
+}
+
+async function lockSecurityDeposit(inputId) {
+  var input = document.getElementById(inputId || 'secDepInput');
   var amt = Number(input ? input.value : 200);
-  if (!amt || amt < 200) { showToast && showToast('Minimum 200 USDT required'); return; }
+  if (!amt || amt <= 0) { merchantToast('Enter a valid USDT amount'); return; }
   var btn = event && event.target;
+  var originalLabel = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = '…'; }
   try {
     var res = await fetch('/api/p2p/security-deposit', {
@@ -6806,15 +6847,18 @@ async function lockSecurityDeposit() {
     });
     var data = await res.json();
     if (data.success) {
-      showToast && showToast(data.message || 'Security deposit locked!');
-      refreshMerchantStatus();
+      merchantToast(data.message || 'Security deposit locked!');
+      var merchantState = await refreshMerchantStatus();
+      if (merchantState && merchantState.canApplyMerchant && !merchantState.canPostAds && merchantState.status !== 'pending') {
+        openP2PScreen('merchantApplyScreen');
+      }
     } else {
-      showToast && showToast(data.message || 'Failed to lock deposit');
+      merchantToast(data.message || 'Failed to lock deposit');
     }
   } catch(e) {
-    showToast && showToast('Network error. Try again.');
+    merchantToast('Network error. Try again.');
   }
-  if (btn) { btn.disabled = false; btn.textContent = 'Lock USDT'; }
+  if (btn) { btn.disabled = false; btn.textContent = originalLabel || 'Lock USDT'; }
 }
 function closeP2PScreen(id) {
   closePaymentQrSheet();
@@ -6961,6 +7005,8 @@ async function submitMerchantApp() {
       alert('✅ ' + data.message);
       // Reset form state
       merchantFormData = { idPhotoBase64: '', currency: '', twitter: '', telegram: '', instagram: '' };
+      refreshMerchantStatus();
+      loadMerchantBadge();
       closeP2PScreen('merchantApplyScreen');
       closeP2PScreen('merchantScreen');
     } else {
@@ -7052,7 +7098,15 @@ function applyMerchantAccessToProfileUI(data) {
   if (applyItem) {
     var label = applyItem.querySelector('.bg-menu-label');
     if (label) {
-      label.textContent = data && data.canPostAds ? 'Merchant Active ✓' : 'Become Merchant';
+      if (data && data.canPostAds) {
+        label.textContent = 'Merchant Active ✓';
+      } else if (data && data.status === 'pending') {
+        label.textContent = 'Merchant Review Pending';
+      } else if (data && data.depositLocked >= 200) {
+        label.textContent = 'Apply Merchant';
+      } else {
+        label.textContent = 'Become Merchant';
+      }
     }
   }
   if (data && data.depositLocked) {
@@ -7093,7 +7147,7 @@ async function loadMerchantBadge() {
       }
       // Show badge in profile UI
       applyBadgeToProfileUI(data.badge);
-    } else if (data.success && data.canPostAds) {
+    } else if (data.success) {
       _myMerchantBadge = null;
       try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
       applyMerchantAccessToProfileUI(data);

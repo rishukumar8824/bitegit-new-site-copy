@@ -144,6 +144,29 @@ function matchesMerchantIdentity(app, userId, username, email) {
   );
 }
 
+function isLegacyDepositActivationApproval(app) {
+  return String(app?.approvalSource || '').trim().toLowerCase() === 'deposit_activation';
+}
+
+function getMerchantApplicationPriority(app) {
+  if (!app) {
+    return -1;
+  }
+  if (app.status === 'approved' && !isLegacyDepositActivationApproval(app)) {
+    return 4;
+  }
+  if (app.status === 'pending') {
+    return 3;
+  }
+  if (app.status === 'rejected') {
+    return 2;
+  }
+  if (app.status === 'approved') {
+    return 1;
+  }
+  return 0;
+}
+
 function getBestMerchantApplicationForUser({ userId, username, email }) {
   let best = null;
 
@@ -155,11 +178,13 @@ function getBestMerchantApplicationForUser({ userId, username, email }) {
       best = app;
       continue;
     }
-    if (app.status === 'approved' && best.status !== 'approved') {
+    const appPriority = getMerchantApplicationPriority(app);
+    const bestPriority = getMerchantApplicationPriority(best);
+    if (appPriority > bestPriority) {
       best = app;
       continue;
     }
-    if (app.status !== 'approved' && best.status === 'approved') {
+    if (appPriority < bestPriority) {
       continue;
     }
     const appTime = app.reviewedAt ? new Date(app.reviewedAt).getTime() : new Date(app.submittedAt || 0).getTime();
@@ -175,6 +200,7 @@ function getBestMerchantApplicationForUser({ userId, username, email }) {
 async function getMerchantAccessState({ userId, username, email }) {
   const bestApplication = getBestMerchantApplicationForUser({ userId, username, email });
   const badge = bestApplication?.assignedBadge || bestApplication?.badge || null;
+  const status = isLegacyDepositActivationApproval(bestApplication) ? null : bestApplication?.status || null;
 
   let depositLocked = 0;
   let merchantActivated = false;
@@ -199,65 +225,18 @@ async function getMerchantAccessState({ userId, username, email }) {
     } catch (_) {}
   }
 
+  const approvedMerchant = status === 'approved';
+
   return {
     application: bestApplication,
-    status: bestApplication?.status || null,
+    status,
     badge,
     depositLocked,
     merchantActivated,
-    canPostAds: merchantActivated,
+    canApplyMerchant: merchantActivated,
+    canPostAds: merchantActivated && approvedMerchant,
     badgeEligible: depositLocked >= MERCHANT_BADGE_MIN_DEPOSIT
   };
-}
-
-async function ensureApprovedMerchantRecord({ id, userId, username, email }) {
-  const normalizedUserId = String(userId || id || '').trim();
-  const normalizedUsername = String(username || '').trim();
-  const normalizedEmail = String(email || '').trim().toLowerCase();
-  const nowIso = new Date().toISOString();
-  let application = getBestMerchantApplicationForUser({
-    userId: normalizedUserId,
-    username: normalizedUsername,
-    email: normalizedEmail
-  });
-
-  if (!application) {
-    application = {
-      id: `MRC-${String(merchantAppCounter++).padStart(5, '0')}`,
-      userId: normalizedUserId,
-      username: normalizedUsername,
-      email: normalizedEmail,
-      photoBase64: '',
-      currency: '',
-      socialAccounts: { twitter: '', telegram: '', instagram: '' },
-      status: 'approved',
-      assignedBadge: null,
-      submittedAt: nowIso,
-      reviewedAt: nowIso,
-      approvalSource: 'deposit_activation'
-    };
-  } else {
-    application = {
-      ...application,
-      userId: String(application.userId || normalizedUserId).trim(),
-      username: String(application.username || normalizedUsername).trim(),
-      email: String(application.email || normalizedEmail).trim().toLowerCase(),
-      photoBase64: String(application.photoBase64 || '').trim(),
-      currency: String(application.currency || '').trim(),
-      socialAccounts: application.socialAccounts && typeof application.socialAccounts === 'object'
-        ? application.socialAccounts
-        : { twitter: '', telegram: '', instagram: '' },
-      status: 'approved',
-      assignedBadge: application.assignedBadge || null,
-      submittedAt: application.submittedAt || nowIso,
-      reviewedAt: nowIso,
-      approvalSource: application.approvalSource || 'deposit_activation'
-    };
-  }
-
-  merchantApplications.set(application.id, application);
-  await saveMerchantApp(application);
-  return application;
 }
 
 async function saveMerchantApp(app) {
@@ -3337,20 +3316,25 @@ async function createP2PAdController(req, res) {
   try {
     const userId = String(req.p2pUser.id || '').trim();
     const username = String(req.p2pUser.username || '').trim();
+    const merchantAccess = await getMerchantAccessState({
+      userId: req.p2pUser.id,
+      username: req.p2pUser.username,
+      email: req.p2pUser.email
+    });
 
-    // Security deposit gate: must have >= 200 USDT locked as security deposit
-    let securityDepositAmt = 0;
-    try {
-      const cols = getCollections();
-      const cred = await cols.p2pCredentials.findOne({ email: req.p2pUser.email });
-      if (cred) securityDepositAmt = Number(cred?.merchant?.depositLocked || 0) || 0;
-    } catch (_) {}
-    if (securityDepositAmt < MERCHANT_ACTIVATION_DEPOSIT) {
+    if (merchantAccess.depositLocked < MERCHANT_ACTIVATION_DEPOSIT) {
       return res.status(403).json({
         message: `You need to lock at least ${MERCHANT_ACTIVATION_DEPOSIT} USDT as security deposit to post ads.`,
         code: 'SECURITY_DEPOSIT_REQUIRED',
         required: MERCHANT_ACTIVATION_DEPOSIT,
-        current: securityDepositAmt
+        current: merchantAccess.depositLocked
+      });
+    }
+
+    if (!merchantAccess.canPostAds) {
+      return res.status(403).json({
+        message: 'Merchant approval is pending. Please wait for admin approval before posting ads.',
+        code: 'MERCHANT_APPROVAL_REQUIRED'
       });
     }
 
@@ -3514,21 +3498,35 @@ app.delete('/api/p2p/offers/:offerId', requiresP2PUser, async (req, res) => {
 // ── Security Deposit: lock USDT as security deposit (200 USDT min to post ads, 500 for badge) ──
 app.post('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
   try {
-    const { amount } = req.body || {};
-    const lockAmount = Number(amount) || MERCHANT_ACTIVATION_DEPOSIT;
-    if (lockAmount < MERCHANT_ACTIVATION_DEPOSIT) {
-      return res.status(400).json({ success: false, message: `Minimum security deposit is ${MERCHANT_ACTIVATION_DEPOSIT} USDT.` });
+    const merchantAccess = await getMerchantAccessState({
+      userId: req.p2pUser.id,
+      username: req.p2pUser.username,
+      email: req.p2pUser.email
+    });
+    const currentDeposit = Number(merchantAccess.depositLocked || 0);
+    const lockAmount = Number(req.body?.amount) || 0;
+    if (!Number.isFinite(lockAmount) || lockAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Enter a valid security deposit amount.' });
+    }
+    if (currentDeposit + lockAmount < MERCHANT_ACTIVATION_DEPOSIT) {
+      return res.status(400).json({
+        success: false,
+        message: `Lock at least ${MERCHANT_ACTIVATION_DEPOSIT} USDT total to continue.`,
+        required: MERCHANT_ACTIVATION_DEPOSIT,
+        current: currentDeposit
+      });
     }
     const activation = await walletService.activateMerchant({
       actor: req.p2pUser,
       depositAmount: lockAmount
     });
-    await ensureApprovedMerchantRecord(req.p2pUser);
     return res.json({
       success: true,
       message: `${lockAmount} USDT locked as security deposit.`,
       securityDeposit: activation.merchant?.depositLocked || lockAmount,
-      wallet: activation.wallet
+      wallet: activation.wallet,
+      canApplyMerchant: (activation.merchant?.depositLocked || 0) >= MERCHANT_ACTIVATION_DEPOSIT,
+      canPostAds: false
     });
   } catch (error) {
     const knownStatus = Number(error?.status || 0);
@@ -3542,17 +3540,20 @@ app.post('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
 // ── Security Deposit: get current deposit status ──
 app.get('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
   try {
-    const cols = getCollections();
-    const cred = await cols.p2pCredentials.findOne({ email: req.p2pUser.email });
-    const depositLocked = Number(cred?.merchant?.depositLocked || 0);
+    const merchantAccess = await getMerchantAccessState({
+      userId: req.p2pUser.id,
+      username: req.p2pUser.username,
+      email: req.p2pUser.email
+    });
     return res.json({
       success: true,
-      securityDeposit: depositLocked,
-      canPostAds: depositLocked >= MERCHANT_ACTIVATION_DEPOSIT,
-      badgeEligible: depositLocked >= MERCHANT_BADGE_MIN_DEPOSIT
+      securityDeposit: merchantAccess.depositLocked,
+      canApplyMerchant: merchantAccess.canApplyMerchant,
+      canPostAds: merchantAccess.canPostAds,
+      badgeEligible: merchantAccess.badgeEligible
     });
   } catch (_) {
-    return res.json({ success: true, securityDeposit: 0, canPostAds: false, badgeEligible: false });
+    return res.json({ success: true, securityDeposit: 0, canApplyMerchant: false, canPostAds: false, badgeEligible: false });
   }
 });
 
@@ -3562,18 +3563,14 @@ app.post('/api/merchant/activate', requiresP2PUser, async (req, res) => {
       actor: req.p2pUser,
       depositAmount: MERCHANT_ACTIVATION_DEPOSIT
     });
-    const application = await ensureApprovedMerchantRecord(req.p2pUser);
 
     return res.json({
       success: true,
-      message: `Merchant activated successfully. ${MERCHANT_ACTIVATION_DEPOSIT} USDT locked as security deposit.`,
+      message: `Security deposit locked successfully. Submit your merchant application for admin approval.`,
       merchant: activation.merchant,
       wallet: activation.wallet,
-      application: {
-        id: application.id,
-        status: application.status,
-        badge: application.assignedBadge || null
-      }
+      canApplyMerchant: true,
+      canPostAds: false
     });
   } catch (error) {
     const knownStatus = Number(error?.status || 0);
@@ -3605,6 +3602,21 @@ app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
     const social = socialAccounts || {};
     if (!social.twitter && !social.telegram && !social.instagram) {
       return res.status(400).json({ success: false, message: 'At least one social media account is required.' });
+    }
+
+    const merchantAccess = await getMerchantAccessState({
+      userId,
+      username,
+      email
+    });
+    if (merchantAccess.depositLocked < MERCHANT_ACTIVATION_DEPOSIT) {
+      return res.status(400).json({
+        success: false,
+        message: `Lock ${MERCHANT_ACTIVATION_DEPOSIT} USDT security deposit before applying.`
+      });
+    }
+    if (merchantAccess.status === 'approved') {
+      return res.status(400).json({ success: false, message: 'Your merchant account is already approved.' });
     }
 
     // Check if already applied
@@ -3957,12 +3969,14 @@ app.get('/api/merchant/application-status', requiresP2PUser, async (req, res) =>
     email: req.p2pUser.email
   });
   const best = merchantAccess.application;
+  const hasRealApplication = Boolean(best && !isLegacyDepositActivationApproval(best));
   return res.json({
     success: true,
-    found: Boolean(best),
+    found: hasRealApplication,
     status: merchantAccess.status,
     badge: merchantAccess.badge,
-    applicationId: best?.id || null,
+    applicationId: hasRealApplication ? best?.id || null : null,
+    canApplyMerchant: merchantAccess.canApplyMerchant,
     canPostAds: merchantAccess.canPostAds,
     merchantActivated: merchantAccess.merchantActivated,
     depositLocked: merchantAccess.depositLocked,
