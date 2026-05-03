@@ -4639,6 +4639,78 @@ app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
   req.on('close', () => { clearInterval(ping); adminWithdrawalSseClients.delete(res); });
 });
 
+// ── Admin: List all withdrawal requests ───────────────────────────────────────
+app.get('/api/admin/wallet/withdrawals', requiresAdminSession, async (req, res) => {
+  try {
+    const statusFilter = String(req.query.status || '').toUpperCase();
+    const limit = Math.min(Math.max(Number(req.query.limit || 50), 1), 200);
+    const db = await repos.getP2PCredential();
+    const withdrawalRequests = db.collection('withdrawal_requests');
+    const query = {};
+    if (statusFilter) query.status = statusFilter;
+    const rows = await withdrawalRequests
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+    const withdrawals = rows.map((r) => ({
+      requestId: r.requestId || String(r._id),
+      id: r.requestId || String(r._id),
+      userId: r.userId,
+      username: r.username || r.userId,
+      email: r.email || null,
+      amount: r.amount,
+      currency: r.currency || 'USDT',
+      coin: r.currency || 'USDT',
+      network: (r.metadata && r.metadata.network) || r.network || null,
+      address: r.address || r.toAddress || null,
+      fee: (r.metadata && r.metadata.fee) || r.fee || 0,
+      status: (r.status || 'PENDING').toUpperCase(),
+      createdAt: r.createdAt,
+      processedAt: r.processedAt || null,
+      reason: (r.metadata && r.metadata.reason) || null
+    }));
+    return res.json({ total: withdrawals.length, withdrawals });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while fetching withdrawals.' });
+  }
+});
+
+// ── Admin: Approve or reject a withdrawal request ─────────────────────────────
+app.post('/api/admin/wallet/withdrawals/:requestId/review', requiresAdminSession, async (req, res) => {
+  const requestId = String(req.params.requestId || '').trim();
+  if (!requestId) return res.status(400).json({ message: 'requestId is required.' });
+  const { decision, reason } = req.body || {};
+  const normalizedDecision = String(decision || '').toUpperCase();
+  if (!['APPROVED', 'REJECTED'].includes(normalizedDecision)) {
+    return res.status(400).json({ message: 'decision must be APPROVED or REJECTED.' });
+  }
+  try {
+    const targetStatus = normalizedDecision === 'APPROVED' ? 'approved' : 'rejected';
+    const withdrawal = await walletService.processWithdrawalRequest(requestId, targetStatus, {
+      isAdmin: true,
+      userId: 'admin',
+      username: 'Admin',
+      reason: String(reason || (normalizedDecision === 'APPROVED' ? 'Approved by admin' : 'Rejected by admin')).trim()
+    });
+    broadcastAdminWithdrawalEvent({
+      type: 'withdrawal_reviewed',
+      requestId,
+      decision: normalizedDecision,
+      status: withdrawal.status
+    });
+    return res.json({
+      message: normalizedDecision === 'APPROVED'
+        ? 'Withdrawal approved successfully.'
+        : 'Withdrawal rejected. Funds returned to user.',
+      withdrawal
+    });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ message: error.message });
+    return res.status(500).json({ message: String(error.message || 'Server error while reviewing withdrawal.') });
+  }
+});
+
 // ── Public Support Chat — user submits message ────────────────────────────────
 app.post('/api/support/chat', async (req, res) => {
   try {
