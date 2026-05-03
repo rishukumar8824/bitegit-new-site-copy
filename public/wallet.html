@@ -1213,10 +1213,12 @@
       return fetch('/api/wallet/summary', { credentials: 'include' })
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          var bal = d.summary ? Number(d.summary.available_balance || d.summary.total_balance || 0) : 0;
-          return _fakeRes({ status: 'success', data: { estimated_balance: bal, funding_balance: bal } });
+          var avail   = d.summary ? Number(d.summary.available_balance || 0) : 0;
+          var locked  = d.summary ? Number(d.summary.locked_balance    || 0) : 0;
+          var total   = d.summary ? Number(d.summary.total_balance      || avail) : avail;
+          return _fakeRes({ status: 'success', data: { estimated_balance: avail, total_balance: total, funding_balance: locked } });
         })
-        .catch(function() { return _fakeRes({ status: 'success', data: { estimated_balance: 0, funding_balance: 0 } }); });
+        .catch(function() { return _fakeRes({ status: 'success', data: { estimated_balance: 0, total_balance: 0, funding_balance: 0 } }); });
     }
 
     // ── Deposit history ──
@@ -1325,16 +1327,12 @@
       : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
   }
 
-  var fundingBalance = 0;
+  var fundingBalance = 0;  // locked balance (security deposit, locked orders)
+  var spotBalance    = 0;  // available balance
+  var totalBalance   = 0;  // total = spot + funding
 
   function loadFundingBalance() {
-    bcvFetch('/p2p/balance')
-      .then(function(r) { return r.ok ? r.json() : null; })
-      .then(function(data) {
-        if (!data || data.status !== 'success') return;
-        fundingBalance = Number(data.data.funding_balance || 0);
-      })
-      .catch(function() {});
+    // no-op — balances are loaded together in loadWalletBalances
   }
 
   function ovSwitchTab(tab) {
@@ -1342,7 +1340,7 @@
       var btn = document.getElementById('ovTab'+t.charAt(0).toUpperCase()+t.slice(1));
       if(btn) btn.classList.toggle('active', t===tab);
     });
-    var bal = (tab === 'earn') ? fundingBalance : ovTotalUsdt;
+    var bal = (tab === 'earn') ? fundingBalance : (tab === 'spot' || tab === 'futures') ? spotBalance : totalBalance;
     var usdtBal = document.getElementById('ovBal_USDT');
     var usdtSub = document.getElementById('ovSub_USDT');
     if (usdtBal) usdtBal.textContent = bal.toFixed(2);
@@ -1969,20 +1967,22 @@
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
         if (!data || data.status !== 'success') return;
-        var total = Number(data.data.estimated_balance || 0);
+        spotBalance    = Number(data.data.estimated_balance || 0);   // available
+        fundingBalance = Number(data.data.funding_balance   || 0);   // locked
+        totalBalance   = Number(data.data.total_balance     || spotBalance + fundingBalance);
+        ovTotalUsdt    = totalBalance;
 
-        // Update USDT balance row and total
-        ovTotalUsdt = total;
+        // Overview tab shows total by default
         var usdtBal = document.getElementById('ovBal_USDT');
         var usdtSub = document.getElementById('ovSub_USDT');
-        if (usdtBal) usdtBal.textContent = total.toFixed(2);
-        if (usdtSub) usdtSub.textContent = '≈' + total.toFixed(2) + ' USDT';
+        if (usdtBal) usdtBal.textContent = totalBalance.toFixed(2);
+        if (usdtSub) usdtSub.textContent = '≈' + totalBalance.toFixed(2) + ' USDT';
 
         // Top balance display
         var balValEl = document.getElementById('balVal');
         var balSubEl = document.getElementById('balSub');
-        if (balValEl && balVisible) balValEl.textContent = total.toFixed(2);
-        if (balSubEl) balSubEl.textContent = '≈' + (total * (OV_RATES['BTC'] || 0.0000154)).toFixed(8) + ' BTC';
+        if (balValEl && balVisible) balValEl.textContent = totalBalance.toFixed(2);
+        if (balSubEl) balSubEl.textContent = '≈' + (totalBalance * (OV_RATES['BTC'] || 0.0000154)).toFixed(8) + ' BTC';
       })
       .catch(function() {});
   }

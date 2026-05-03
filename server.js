@@ -2343,7 +2343,7 @@ app.get('/api/wallet/summary', requiresP2PUser, async (req, res) => {
         available_balance: Number(wallet.availableBalance || wallet.balance || 0),
         locked_balance: Number(wallet.lockedBalance || wallet.p2pLocked || 0),
         spot_balance: Number(wallet.availableBalance || wallet.balance || 0),
-        funding_balance: Number(wallet.availableBalance || wallet.balance || 0),
+        funding_balance: Number(wallet.lockedBalance || wallet.p2pLocked || 0),
         asset_balances: assetBalances,
         deposit_address: depositConfig.depositAddress,
         deposit_network: depositConfig.activeNetwork?.network || depositConfig.defaultNetwork,
