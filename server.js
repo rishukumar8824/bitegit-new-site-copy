@@ -78,6 +78,7 @@ const merchantApplications = new Map(); // id -> application
 let merchantAppCounter = 1;
 
 function _getBadgesArray(app) {
+  if (!app) return [];
   if (Array.isArray(app.assignedBadges) && app.assignedBadges.length) return app.assignedBadges;
   if (app.assignedBadge) return [app.assignedBadge];
   return [];
