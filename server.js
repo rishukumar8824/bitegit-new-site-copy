@@ -5210,6 +5210,7 @@ async function boot() {
     auditLogService = createAuditLogService(collections);
     authEmailService = createAuthEmailService();
     p2pEmailService = createP2PEmailService();
+    app.set('authEmailService', authEmailService);
     logEmailProviderRuntimeEnv();
     walletService = createWalletService(collections, getMongoClient(), {
       hooks: {
