@@ -3094,7 +3094,6 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 }
 
 @media (max-width: 1023px) {
-  .cf-actions .cf-login,
   .cf-actions .cf-apk-cta {
     display: none;
   }
@@ -3217,13 +3216,14 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
     gap: 0.45rem;
   }
 
-  .cf-signup {
-    height: 28px !important;
+  .cf-actions .cf-login,
+  .cf-actions .cf-signup {
+    height: 30px !important;
     min-height: unset !important;
-    padding: 0 0.75rem !important;
+    padding: 0 0.85rem !important;
     font-size: 0.75rem !important;
-    font-weight: 800 !important;
-    border-radius: 999px !important;
+    font-weight: 700 !important;
+    border-radius: 7px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
