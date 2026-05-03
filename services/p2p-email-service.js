@@ -85,34 +85,55 @@ ${buildFooter()}
     }
   }
 
-  // Seller email: new buyer placed an order, action required
+  // Seller emails: new order received (wait) OR payment sent (release crypto)
   async function sendOrderUpdate(email, order, status) {
     try {
       if (!resend || !fromEmail) return { delivered: false, reason: 'not_configured' };
       const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
 
-      const isSeller = status === 'new_order_seller';
-      const subject = isSeller
-        ? `[${BRAND_NAME}] [P2P] New Order — Action Required`
-        : `[${BRAND_NAME}] [P2P] Order ${escapeHtml(String(order.id || ''))} Update: ${escapeHtml(String(status || ''))}`;
+      let subject, bodyContent;
 
-      const bodyContent = isSeller
-        ? `<h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#111;">[P2P] New Order — Action Required</h1>
-           <p style="margin:0 0 14px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
-           <p style="margin:0 0 18px;font-size:14px;color:#333;line-height:1.7;">A buyer has placed order <strong style="color:#00b8d4;">${escapeHtml(String(order.id || ''))}</strong> and your funds have been locked. Please release the funds promptly once you confirm payment has been received. The order will be automatically cancelled after <strong>20 minutes</strong> if no action is taken.</p>
-           ${buildDetailsBox(order)}
-           <p style="margin:0 0 10px;font-size:14px;"><a href="https://bitegit.com/p2p" style="color:#00b8d4;text-decoration:none;font-weight:600;">View Details</a></p>
-           <p style="margin:0 0 28px;font-size:13px;color:#555;">If you do not recognize this activity, please <a href="https://bitegit.com/support" style="color:#00b8d4;text-decoration:none;">disable account</a>. The link is valid for 10 minutes only.</p>
-           <p style="margin:0 0 4px;font-size:13px;color:#333;">${BRAND_NAME} Team</p>
-           <p style="margin:0 0 28px;font-size:12px;color:#888;">Please do not reply to this email</p>`
-        : `<h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#111;">[P2P] Order Update</h1>
-           <p style="margin:0 0 14px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
-           <p style="margin:0 0 18px;font-size:14px;color:#333;line-height:1.7;">Your P2P order <strong style="color:#00b8d4;">${escapeHtml(String(order.id || ''))}</strong> status has been updated to: <strong style="color:#00b8d4;">${escapeHtml(String(status || ''))}</strong>.</p>
-           ${buildDetailsBox(order)}
-           <p style="margin:0 0 10px;font-size:14px;"><a href="https://bitegit.com/p2p" style="color:#00b8d4;text-decoration:none;font-weight:600;">View Details</a></p>
-           <p style="margin:0 0 28px;font-size:13px;color:#555;">If you do not recognize this activity, please <a href="https://bitegit.com/support" style="color:#00b8d4;text-decoration:none;">disable account</a>.</p>
-           <p style="margin:0 0 4px;font-size:13px;color:#333;">${BRAND_NAME} Team</p>
-           <p style="margin:0 0 28px;font-size:12px;color:#888;">Please do not reply to this email</p>`;
+      if (status === 'new_order_seller') {
+        // Order just created — seller just needs to wait
+        subject = `[${BRAND_NAME}] [P2P] New Order Received`;
+        bodyContent = `
+          <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#111;">[P2P] New Order Received</h1>
+          <p style="margin:0 0 14px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
+          <p style="margin:0 0 18px;font-size:14px;color:#333;line-height:1.7;">A buyer has placed order <strong style="color:#00b8d4;">${escapeHtml(String(order.id || ''))}</strong>. Your funds have been locked in escrow. Please wait for the buyer to complete payment — once they confirm, you will receive another email to release the crypto.</p>
+          ${buildDetailsBox(order)}
+          <p style="margin:0 0 10px;font-size:14px;"><a href="https://bitegit.com/p2p" style="color:#00b8d4;text-decoration:none;font-weight:600;">View Details</a></p>
+          <p style="margin:0 0 28px;font-size:13px;color:#555;">If you do not recognize this activity, please <a href="https://bitegit.com/support" style="color:#00b8d4;text-decoration:none;">disable account</a>. The link is valid for 10 minutes only.</p>
+          <p style="margin:0 0 4px;font-size:13px;color:#333;">${BRAND_NAME} Team</p>
+          <p style="margin:0 0 28px;font-size:12px;color:#888;">Please do not reply to this email</p>`;
+
+      } else if (status === 'payment_sent_seller') {
+        // Buyer marked payment as sent — seller must release crypto NOW
+        subject = `[${BRAND_NAME}] [P2P] Action Required — Release Crypto`;
+        bodyContent = `
+          <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px 18px;margin-bottom:20px;">
+            <span style="font-size:20px;margin-right:8px;">⚠️</span>
+            <span style="font-size:14px;font-weight:700;color:#856404;">Action Required — Buyer has sent payment!</span>
+          </div>
+          <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#111;">[P2P] Release Crypto</h1>
+          <p style="margin:0 0 14px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
+          <p style="margin:0 0 18px;font-size:14px;color:#333;line-height:1.7;">The buyer has confirmed payment for order <strong style="color:#00b8d4;">${escapeHtml(String(order.id || ''))}</strong>. Please verify payment in your bank/UPI account and <strong>release the crypto</strong> to complete the trade.</p>
+          ${buildDetailsBox(order)}
+          <p style="margin:0 0 10px;font-size:14px;"><a href="https://bitegit.com/p2p" style="color:#00b8d4;text-decoration:none;font-weight:600;">Go to Order &rarr; Release Crypto</a></p>
+          <p style="margin:0 0 28px;font-size:13px;color:#888;">Do NOT release crypto until you have verified payment in your account.</p>
+          <p style="margin:0 0 4px;font-size:13px;color:#333;">${BRAND_NAME} Team</p>
+          <p style="margin:0 0 28px;font-size:12px;color:#888;">Please do not reply to this email</p>`;
+
+      } else {
+        // Generic status update
+        subject = `[${BRAND_NAME}] [P2P] Order Update`;
+        bodyContent = `
+          <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#111;">[P2P] Order Update</h1>
+          <p style="margin:0 0 14px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
+          <p style="margin:0 0 18px;font-size:14px;color:#333;line-height:1.7;">Your P2P order <strong style="color:#00b8d4;">${escapeHtml(String(order.id || ''))}</strong> status has been updated to: <strong style="color:#00b8d4;">${escapeHtml(String(status || ''))}</strong>.</p>
+          ${buildDetailsBox(order)}
+          <p style="margin:0 0 10px;font-size:14px;"><a href="https://bitegit.com/p2p" style="color:#00b8d4;text-decoration:none;font-weight:600;">View Details</a></p>
+          <p style="margin:0 0 4px;font-size:13px;color:#333;">${BRAND_NAME} Team</p>
+          <p style="margin:0 0 28px;font-size:12px;color:#888;">Please do not reply to this email</p>`;
 
       const html = buildHeader() + `<tr><td style="padding:28px 28px 0;">${bodyContent}</td></tr>` + buildFooter() + `</table></td></tr></table></body></html>`;
       await resend.emails.send({ from: fromEmail, to: email, subject, html });

@@ -3308,6 +3308,21 @@ app.post('/api/p2p/orders/:orderId/mark-paid', requiresP2PUser, async (req, res)
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
+    // Notify seller to release crypto
+    if (p2pEmailService) {
+      const sellerParticipant = (updatedOrder.participants || []).find(p => p.role === 'seller');
+      if (sellerParticipant?.email) {
+        const emailOrder = {
+          id: updatedOrder.id,
+          cryptoAmount: updatedOrder.cryptoAmount,
+          asset: updatedOrder.asset || 'USDT',
+          fiatAmount: updatedOrder.fiatAmount,
+          fiatCurrency: updatedOrder.fiatCurrency || 'INR',
+          createdAt: updatedOrder.createdAt
+        };
+        p2pEmailService.sendOrderUpdate(sellerParticipant.email, emailOrder, 'payment_sent_seller').catch(() => {});
+      }
+    }
     return res.json({ success: true, order: { ...normalizedOrder, messages: normalizedMessages }, messages: normalizedMessages });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Server error.' });
