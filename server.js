@@ -4713,6 +4713,30 @@ app.post('/api/admin/wallet/withdrawals/:requestId/review', requiresAdminSession
       decision: normalizedDecision,
       status: withdrawal.status
     });
+
+    // Send withdrawal success email if approved
+    if (normalizedDecision === 'APPROVED') {
+      try {
+        const emailService = req.app.get('authEmailService');
+        if (emailService && withdrawal.userId) {
+          const cols = getCollections();
+          const cred = await cols.p2pCredentials.findOne({
+            $or: [{ userId: withdrawal.userId }, { id: withdrawal.userId }]
+          }).catch(() => null);
+          const userEmail = cred?.email;
+          if (userEmail) {
+            emailService.sendWithdrawalSuccessEmail(userEmail, {
+              amount: withdrawal.amount,
+              asset: withdrawal.currency || 'USDT',
+              address: withdrawal.address,
+              transactionId: withdrawal.requestId,
+              processedAt: withdrawal.processedAt || new Date().toISOString()
+            }).catch(() => {});
+          }
+        }
+      } catch (_) {}
+    }
+
     return res.json({
       message: normalizedDecision === 'APPROVED'
         ? 'Withdrawal approved successfully.'
@@ -4725,6 +4749,75 @@ app.post('/api/admin/wallet/withdrawals/:requestId/review', requiresAdminSession
   }
 });
 
+
+// ── Admin: Review deposit request (approve / reject) ──────────────────────────
+app.post('/api/admin/wallet/deposits/:depositId/review', requiresAdminSession, async (req, res) => {
+  const depositId = String(req.params.depositId || '').trim();
+  if (!depositId) return res.status(400).json({ message: 'depositId is required.' });
+  const { decision, reason } = req.body || {};
+  const normalizedDecision = String(decision || '').toUpperCase();
+  if (!['APPROVED', 'REJECTED'].includes(normalizedDecision)) {
+    return res.status(400).json({ message: 'decision must be APPROVED or REJECTED.' });
+  }
+  try {
+    const deposit = await adminStore.reviewDeposit(
+      depositId,
+      normalizedDecision === 'APPROVED' ? 'COMPLETED' : 'REJECTED',
+      String(reason || (normalizedDecision === 'APPROVED' ? 'Approved by admin' : 'Rejected by admin')).trim(),
+      { id: 'admin', role: 'admin' }
+    );
+
+    // Credit wallet if approved
+    if (normalizedDecision === 'APPROVED' && walletService) {
+      try {
+        await walletService.creditAvailable(deposit.userId, Number(deposit.amount || 0), {
+          type: 'deposit',
+          currency: String(deposit.coin || 'USDT').toUpperCase(),
+          referenceId: deposit.id,
+          metadata: { source: 'admin_deposit_approval' }
+        });
+      } catch (_) {}
+    }
+
+    // Send deposit success email
+    if (normalizedDecision === 'APPROVED') {
+      try {
+        const emailService = req.app.get('authEmailService');
+        const userEmail = deposit.email;
+        if (emailService && userEmail) {
+          emailService.sendDepositSuccessEmail(userEmail, {
+            amount: deposit.amount,
+            asset: deposit.coin || 'USDT',
+            txId: deposit.txHash || deposit.id,
+            processedAt: new Date().toISOString()
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+
+    return res.json({
+      message: normalizedDecision === 'APPROVED'
+        ? 'Deposit approved and credited to user wallet.'
+        : 'Deposit request rejected.',
+      deposit
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({ message: String(error.message || 'Server error while reviewing deposit.') });
+  }
+});
+
+// ── Admin: List deposit requests ──────────────────────────────────────────────
+app.get('/api/admin/wallet/deposits', requiresAdminSession, async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page || 1));
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit || 20)));
+    const status = String(req.query.status || '').toUpperCase() || undefined;
+    const result = await adminStore.listDeposits({ page, limit, status });
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ message: String(error.message || 'Server error while listing deposits.') });
+  }
+});
 
 // ── Public Support Chat — user submits message ────────────────────────────────
 app.post('/api/support/chat', async (req, res) => {
