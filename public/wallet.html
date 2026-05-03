@@ -673,7 +673,9 @@
   <div class="s-header">
     <button class="s-back" onclick="goBack()">‹</button>
     <span class="s-title">Record</span>
-    <span style="width:32px"></span>
+    <button class="s-action" onclick="loadRecordData()" title="Refresh" style="color:#00c2b2;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" id="recDepTab" onclick="switchRecTab('dep')">Deposit</button>
@@ -965,8 +967,8 @@
   <div class="s-header">
     <button class="s-back" onclick="goBack()">‹</button>
     <span class="s-title">Withdraw history</span>
-    <button class="s-action">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    <button class="s-action" onclick="loadWithdrawHistory()" title="Refresh" style="color:#00c2b2;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
     </button>
   </div>
   <div class="dep-hist-filter">
@@ -2085,9 +2087,22 @@
   }
 
   // init convert UI when screen opens
+  // Auto-poll withdrawal status while on history screens
+  var _wdPollTimer = null;
+  function _startWdPoll(loadFn) {
+    _stopWdPoll();
+    _wdPollTimer = setInterval(function() { loadFn(); }, 12000);
+  }
+  function _stopWdPoll() {
+    if (_wdPollTimer) { clearInterval(_wdPollTimer); _wdPollTimer = null; }
+  }
+
   var _origShowScreen = showScreen;
   showScreen = function(id) {
+    _stopWdPoll();
     _origShowScreen(id);
+    if (id === 'screenWithdrawHistory') _startWdPoll(loadWithdrawHistory);
+    if (id === 'screenRecord')          _startWdPoll(loadRecordData);
     if(id === 'screenConvert') {
       var bal = parseFloat((document.getElementById('ovBal_USDT') || {}).textContent) || 0;
       document.getElementById('cvFromBal').textContent = bal.toFixed(2);
