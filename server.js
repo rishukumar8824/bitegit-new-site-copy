@@ -4710,25 +4710,6 @@ app.post('/api/admin/wallet/withdrawals/:requestId/review', requiresAdminSession
   }
 });
 
-// ── Admin: Send Test Emails ───────────────────────────────────────────────────
-app.post('/api/admin/send-test-email', requiresAdminSession, async (req, res) => {
-  const { to } = req.body || {};
-  const targetEmail = String(to || '').trim();
-  if (!targetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(targetEmail)) {
-    return res.status(400).json({ message: 'Valid email address required.' });
-  }
-  if (!authEmailService) {
-    return res.status(503).json({ message: 'Email service not configured on server.' });
-  }
-  const results = {};
-  try { results.signup_otp = await authEmailService.sendSignupOtpEmail(targetEmail, '123456'); } catch(e) { results.signup_otp = { delivered: false, error: e.message }; }
-  try { results.login_otp = await authEmailService.sendLoginOtpEmail(targetEmail, '654321'); } catch(e) { results.login_otp = { delivered: false, error: e.message }; }
-  try { results.password_reset = await authEmailService.sendPasswordResetOtpEmail(targetEmail, '999888'); } catch(e) { results.password_reset = { delivered: false, error: e.message }; }
-  try { results.new_device_alert = await authEmailService.sendNewDeviceAlert(targetEmail, { ip: '192.168.1.1', device: 'Test Browser', time: new Date().toUTCString() }); } catch(e) { results.new_device_alert = { delivered: false, error: e.message }; }
-  try { results.deposit = await authEmailService.sendDepositNotification(targetEmail, { asset: 'USDT', amount: '100.00', txHash: '0xTEST123' }); } catch(e) { results.deposit = { delivered: false, error: e.message }; }
-  try { results.withdrawal = await authEmailService.sendWithdrawalNotification(targetEmail, { asset: 'USDT', amount: '50.00', address: '0xTESTADDR' }); } catch(e) { results.withdrawal = { delivered: false, error: e.message }; }
-  return res.json({ message: 'Test emails sent.', to: targetEmail, results });
-});
 
 // ── Public Support Chat — user submits message ────────────────────────────────
 app.post('/api/support/chat', async (req, res) => {
