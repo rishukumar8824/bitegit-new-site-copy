@@ -6710,7 +6710,11 @@ function openP2PScreen(id) {
   el.style.setProperty('display','flex','important');
   el.style.flexDirection = 'column';
   document.body.classList.add('mob-screen-open');
-  if (id === 'merchantScreen') refreshMerchantStatus();
+  if (id === 'merchantScreen') {
+    var box = document.getElementById('merchantStatusBox');
+    if (box) box.innerHTML = '<div style="text-align:center;padding:2rem;color:#848e9c;font-size:.9rem;">Loading…</div>';
+    refreshMerchantStatus();
+  }
 }
 
 async function refreshMerchantStatus() {
@@ -9533,3 +9537,4 @@ window.deleteMobAd = async function(offerId) {
   // Also ping when network comes back online
   window.addEventListener('online', _pingServer);
 })();
+

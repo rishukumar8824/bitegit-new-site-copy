@@ -226,6 +226,12 @@ async function getMerchantAccessState({ userId, username, email }) {
   }
 
   const approvedMerchant = status === 'approved';
+  // If admin formally approved this merchant, treat as activated
+  // even if the deposit credential lookup failed (DB error/timeout)
+  if (approvedMerchant && !merchantActivated) {
+    merchantActivated = true;
+    if (depositLocked < MERCHANT_ACTIVATION_DEPOSIT) depositLocked = MERCHANT_ACTIVATION_DEPOSIT;
+  }
 
   return {
     application: bestApplication,
@@ -5463,3 +5469,4 @@ async function boot() {
 }
 
 boot();
+
