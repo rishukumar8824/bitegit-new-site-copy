@@ -7661,18 +7661,17 @@ function submitKycAdvance() {
 // ── Post Ad Tab: non-merchants redirected to merchant screen ────────────────
 async function handlePostAdTabClick() {
   if (!currentUser) { setAuthModalOpen(true); return; }
-  // Check merchant status via API (most reliable)
   try {
     var res = await fetch('/api/merchant/application-status', { credentials: 'include' });
     var data = await res.json();
-    var isMerchant = data.success && data.canPostAds;
+    // approved merchant (canPostAds OR admin-approved status) → go to post ad directly
+    var isMerchant = data.success && (data.canPostAds || data.status === 'approved');
     if (!isMerchant) {
-      // Not a merchant — redirect to merchant info/apply screen
       openP2PScreen('merchantScreen');
       return;
     }
   } catch(_) {
-    // On network error fall through to show the screen anyway
+    // On network error fall through to post ad screen
   }
   showMobScreen('mobPostAdScreen');
   initMobPostAdScreen();
