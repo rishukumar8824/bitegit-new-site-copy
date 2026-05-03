@@ -3218,11 +3218,11 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   }
 
   .cf-signup {
-    min-height: 42px;
-    padding: 0 1.4rem;
-    font-size: 0.95rem;
+    min-height: 28px;
+    padding: 0 0.75rem;
+    font-size: 0.75rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #00e5ff 0%, #00b8d4 100%);
+    background: #00e5ff;
     border-radius: 999px;
   }
 
