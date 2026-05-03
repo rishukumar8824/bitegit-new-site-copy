@@ -1767,10 +1767,8 @@ async function loadProfilePanel(options = {}) {
               secDepStatus.textContent = 'Active';
               secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(22,199,132,0.15);color:#16c784;margin-left:4px;vertical-align:middle;display:inline;';
             } else {
-              secDepStatus.textContent = 'None';
-              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(246,70,93,0.15);color:#f6465d;margin-left:4px;vertical-align:middle;display:inline;';
+              secDepStatus.style.display = 'none';
             }
-            // If user has merchant badge, hide the status tag
             if (_myMerchantBadge) secDepStatus.style.display = 'none';
           }
 
@@ -3136,8 +3134,9 @@ function renderOffers(data, append) {
     `);
 
     const rep = offer.reputation || {};
-    const repOrders = rep.completedOrders != null ? rep.completedOrders : (offer.orders || 0);
-    const repRate = rep.completionRate != null ? rep.completionRate : (offer.completionRate || 100);
+    const _base = offer.baseOrders || 0;
+    const repOrders = _base + (rep.completedOrders != null ? rep.completedOrders : (offer.orders || 0));
+    const repRate = Math.max(90, rep.completionRate != null ? rep.completionRate : (offer.completionRate || 100));
     const repTime = offer.releaseTime ? offer.releaseTime + ' min' : (rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes + ' min' : '15 min');
     const onlineStatus = isOwnAd ? 'online' : (offer.onlineStatus || 'offline');
     const onlineDotColor = onlineStatus === 'online' ? '#2ebd85' : onlineStatus === 'away' ? '#a8ff3e' : '#555';
@@ -7027,7 +7026,8 @@ async function submitMerchantApp() {
 var MERCHANT_BADGES = {
   1: { name: 'Bronze',  color: '#cd7f32', icon: '✦', desc: 'Verified merchants with a solid P2P trading history and security deposit.' },
   2: { name: 'Silver',  color: '#a8a9ad', icon: '✦', desc: 'Advanced merchants with positive P2P records and consistent volume.' },
-  3: { name: 'Block',   color: '#7c4dff', icon: '◆', desc: 'Merchants with advanced trading experiences and high trading volume.' }
+  3: { name: 'Block',   color: '#7c4dff', icon: '◆', desc: 'Merchants with advanced trading experiences and high trading volume.' },
+  4: { name: 'PRO',     color: '#e53935', icon: '★', desc: 'Merchants with professional local crypto exchange experience.' }
 };
 
 // Global: current user's own merchant badge number (1/2/3), set after loadMerchantBadge()
@@ -7052,8 +7052,7 @@ function applySecDepToProfileUI(secDepStr) {
       secDepStatus.textContent = 'Active';
       secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(22,199,132,0.15);color:#16c784;margin-left:4px;vertical-align:middle;display:inline;';
     } else {
-      secDepStatus.textContent = 'None';
-      secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(246,70,93,0.15);color:#f6465d;margin-left:4px;vertical-align:middle;display:inline;';
+      secDepStatus.style.display = 'none';
     }
   }
 }

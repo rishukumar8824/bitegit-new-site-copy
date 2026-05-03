@@ -3781,8 +3781,8 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
     }
 
     const badgeNum = Number(badge);
-    if (![1, 2, 3].includes(badgeNum)) {
-      return res.status(400).json({ success: false, message: 'Badge must be 1, 2, or 3.' });
+    if (![1, 2, 3, 4].includes(badgeNum)) {
+      return res.status(400).json({ success: false, message: 'Badge must be 1, 2, 3, or 4.' });
     }
 
     app.status = 'approved';
@@ -3865,7 +3865,7 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
 
     // Assign badge
     const badgeNum = Number(badge);
-    if (![1, 2, 3].includes(badgeNum)) return res.status(400).json({ success: false, message: 'Badge must be 1, 2, or 3.' });
+    if (![1, 2, 3, 4].includes(badgeNum)) return res.status(400).json({ success: false, message: 'Badge must be 1, 2, 3, or 4.' });
 
     // Find existing application or create a direct-assign record
     let existingApp = null;
