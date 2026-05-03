@@ -77,18 +77,22 @@ const MERCHANT_BADGE_MIN_DEPOSIT = 500;  // Minimum security deposit for badge e
 const merchantApplications = new Map(); // id -> application
 let merchantAppCounter = 1;
 
-function keepLatestMerchantBadge(targetMap, key, badge, reviewedAtMs) {
-  const normalizedKey = String(key || '').trim().toLowerCase();
-  if (!normalizedKey || !badge) {
-    return;
-  }
+function _getBadgesArray(app) {
+  if (Array.isArray(app.assignedBadges) && app.assignedBadges.length) return app.assignedBadges;
+  if (app.assignedBadge) return [app.assignedBadge];
+  return [];
+}
 
+function keepLatestMerchantBadges(targetMap, key, badges, reviewedAtMs) {
+  const normalizedKey = String(key || '').trim().toLowerCase();
+  if (!normalizedKey || !badges || !badges.length) return;
   const existing = targetMap.get(normalizedKey);
   if (!existing || reviewedAtMs >= existing.reviewedAtMs) {
-    targetMap.set(normalizedKey, {
-      badge,
-      reviewedAtMs
-    });
+    targetMap.set(normalizedKey, { badges, reviewedAtMs });
+  } else {
+    // merge badges from both records
+    const merged = Array.from(new Set([...existing.badges, ...badges]));
+    targetMap.set(normalizedKey, { badges: merged, reviewedAtMs: existing.reviewedAtMs });
   }
 }
 
@@ -97,35 +101,32 @@ function buildApprovedMerchantBadgeLookup() {
   const byUsername = new Map();
 
   for (const [, app] of merchantApplications) {
-    if (app.status !== 'approved' || !app.assignedBadge) {
-      continue;
-    }
-
+    const badges = _getBadgesArray(app);
+    if (app.status !== 'approved' || !badges.length) continue;
     const reviewedAtMs = app.reviewedAt ? new Date(app.reviewedAt).getTime() || 0 : 0;
-    keepLatestMerchantBadge(byUserId, app.userId, app.assignedBadge, reviewedAtMs);
-    keepLatestMerchantBadge(byUsername, app.username, app.assignedBadge, reviewedAtMs);
+    keepLatestMerchantBadges(byUserId, app.userId, badges, reviewedAtMs);
+    keepLatestMerchantBadges(byUsername, app.username, badges, reviewedAtMs);
   }
 
-  return {
-    byUserId,
-    byUsername
-  };
+  return { byUserId, byUsername };
 }
 
-function resolveApprovedMerchantBadge(lookup, userId, username, fallbackBadge = null) {
-  if (!lookup) {
-    return fallbackBadge;
-  }
-
+function resolveApprovedMerchantBadges(lookup, userId, username, fallbackBadges = null) {
+  if (!lookup) return fallbackBadges;
   const normalizedUserId = String(userId || '').trim().toLowerCase();
   const normalizedUsername = String(username || '').trim().toLowerCase();
-
   if (normalizedUserId && lookup.byUserId.has(normalizedUserId)) {
-    return lookup.byUserId.get(normalizedUserId).badge;
+    return lookup.byUserId.get(normalizedUserId).badges;
   }
   if (normalizedUsername && lookup.byUsername.has(normalizedUsername)) {
-    return lookup.byUsername.get(normalizedUsername).badge;
+    return lookup.byUsername.get(normalizedUsername).badges;
   }
+  return fallbackBadges;
+}
+// backward-compat alias: returns first badge (single number) or null
+function resolveApprovedMerchantBadge(lookup, userId, username, fallbackBadge = null) {
+  const arr = resolveApprovedMerchantBadges(lookup, userId, username, null);
+  if (arr && arr.length) return arr[0];
   return fallbackBadge;
 }
 
@@ -199,7 +200,8 @@ function getBestMerchantApplicationForUser({ userId, username, email }) {
 
 async function getMerchantAccessState({ userId, username, email }) {
   const bestApplication = getBestMerchantApplicationForUser({ userId, username, email });
-  const badge = bestApplication?.assignedBadge || bestApplication?.badge || null;
+  const badges = _getBadgesArray(bestApplication);
+  const badge = badges.length ? badges[0] : null;
   const status = isLegacyDepositActivationApproval(bestApplication) ? null : bestApplication?.status || null;
 
   let depositLocked = 0;
@@ -237,6 +239,7 @@ async function getMerchantAccessState({ userId, username, email }) {
     application: bestApplication,
     status,
     badge,
+    badges,
     depositLocked,
     merchantActivated,
     canApplyMerchant: merchantActivated,
@@ -3162,6 +3165,12 @@ app.get('/api/p2p/offers', async (req, res) => {
         advertiserName,
         offer.merchantBadge || null
       );
+      const merchantBadges = resolveApprovedMerchantBadges(
+        merchantBadgeLookup,
+        userId,
+        advertiserName,
+        offer.merchantBadges || (merchantBadge ? [merchantBadge] : null)
+      );
       const onlineStatus =
         offer.lastActiveAt && (Date.now() - new Date(offer.lastActiveAt).getTime()) < 300000
           ? 'online'
@@ -3170,6 +3179,7 @@ app.get('/api/p2p/offers', async (req, res) => {
       return {
         ...offer,
         merchantBadge,
+        merchantBadges,
         onlineStatus
       };
     });
@@ -3786,19 +3796,22 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
     }
 
     app.status = 'approved';
-    app.assignedBadge = badgeNum;
+    const _prevBadges = _getBadgesArray(app);
+    if (!_prevBadges.includes(badgeNum)) _prevBadges.push(badgeNum);
+    app.assignedBadges = _prevBadges;
+    app.assignedBadge = _prevBadges[_prevBadges.length - 1];
     app.reviewedAt = new Date().toISOString();
     merchantApplications.set(id, app);
     await saveMerchantApp(app);
 
-    // Stamp badge onto all of this merchant's offer documents so buyers always see it
+    // Stamp badges onto all of this merchant's offer documents so buyers always see them
     try {
       const cols = getCollections();
       const matchQ = { $or: [] };
       if (app.userId) matchQ.$or.push({ createdByUserId: String(app.userId) });
       if (app.username) matchQ.$or.push({ advertiser: app.username });
       if (matchQ.$or.length) {
-        await cols.p2pOffers.updateMany(matchQ, { $set: { merchantBadge: badgeNum } });
+        await cols.p2pOffers.updateMany(matchQ, { $set: { merchantBadge: badgeNum, merchantBadges: _prevBadges } });
       }
     } catch (_) {}
 
@@ -3880,7 +3893,10 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
 
     if (existingApp) {
       existingApp.status = 'approved';
-      existingApp.assignedBadge = badgeNum;
+      const _prevB = _getBadgesArray(existingApp);
+      if (!_prevB.includes(badgeNum)) _prevB.push(badgeNum);
+      existingApp.assignedBadges = _prevB;
+      existingApp.assignedBadge = _prevB[_prevB.length - 1];
       existingApp.reviewedAt = new Date().toISOString();
       merchantApplications.set(existingApp.id, existingApp);
       await saveMerchantApp(existingApp);
@@ -3890,7 +3906,7 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
       const newApp = {
         id, userId: targetUserId, username, email,
         photoBase64: '', currency: 'USDT', socialAccounts: {},
-        status: 'approved', assignedBadge: badgeNum,
+        status: 'approved', assignedBadge: badgeNum, assignedBadges: [badgeNum],
         submittedAt: new Date().toISOString(), reviewedAt: new Date().toISOString(),
         directAssign: true
       };
@@ -3898,12 +3914,13 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
       await saveMerchantApp(newApp);
     }
 
-    // Stamp badge on all their offers
+    // Stamp badges on all their offers
+    const _allBadges = existingApp ? _getBadgesArray(existingApp) : [badgeNum];
     try {
       const cols = getCollections();
       await cols.p2pOffers.updateMany(
         { $or: [{ createdByUserId: targetUserId }, { advertiser: username }] },
-        { $set: { merchantBadge: badgeNum } }
+        { $set: { merchantBadge: badgeNum, merchantBadges: _allBadges } }
       );
     } catch (_) {}
 
@@ -3963,8 +3980,8 @@ app.get('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async (
   } catch (_) {}
 
   const stats = { securityDeposit, totalOrders, completedOrders, completionRate, badgeEligible: securityDeposit >= MERCHANT_BADGE_MIN_DEPOSIT };
-  if (best) return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || null, applicationId: best.id, stats });
-  return res.json({ success: true, found: false, status: null, badge: null, stats });
+  if (best) return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || null, badges: _getBadgesArray(best), applicationId: best.id, stats });
+  return res.json({ success: true, found: false, status: null, badge: null, badges: [], stats });
 });
 
 // ── Merchant Application: User checks their status ──
@@ -3981,6 +3998,7 @@ app.get('/api/merchant/application-status', requiresP2PUser, async (req, res) =>
     found: hasRealApplication,
     status: merchantAccess.status,
     badge: merchantAccess.badge,
+    badges: merchantAccess.badges || [],
     applicationId: hasRealApplication ? best?.id || null : null,
     canApplyMerchant: merchantAccess.canApplyMerchant,
     canPostAds: merchantAccess.canPostAds,

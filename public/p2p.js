@@ -3094,11 +3094,15 @@ function renderOffers(data, append) {
     const _BADGE_SVG = {
       1: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(1)"><path d="M22 4 L36 10 L36 22 C36 30 29 37 22 40 C15 37 8 30 8 22 L8 10 Z" fill="#cd7f32"/><path d="M22 8 L33 13 L33 22 C33 28.5 27.5 34 22 37 C16.5 34 11 28.5 11 22 L11 13 Z" fill="#e8a060" opacity="0.5"/><text x="22" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">B</text></svg>`,
       2: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(2)"><path d="M22 4 L36 10 L36 22 C36 30 29 37 22 40 C15 37 8 30 8 22 L8 10 Z" fill="#a8a9ad"/><path d="M22 8 L33 13 L33 22 C33 28.5 27.5 34 22 37 C16.5 34 11 28.5 11 22 L11 13 Z" fill="#d0d0d0" opacity="0.5"/><text x="22" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">S</text></svg>`,
-      3: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(3)"><path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#7c4dff"/><path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#b085ff" opacity="0.35"/><polyline points="14,22 20,28 30,16" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      3: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(3)"><path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#7c4dff"/><path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#b085ff" opacity="0.35"/><polyline points="14,22 20,28 30,16" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      4: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(4)"><rect x="4" y="4" width="36" height="36" rx="6" fill="#e53935"/><text x="22" y="19" text-anchor="middle" font-size="8" font-weight="900" fill="#fff">PRO</text><polygon points="22,22 26,32 22,30 18,32" fill="#fff" opacity="0.9"/></svg>`
     };
     const _isMyAd = currentUser && currentUser.username && offer.advertiser === currentUser.username;
-    const _badgeNum = offer.merchantBadge || (_isMyAd && _myMerchantBadge ? _myMerchantBadge : null);
-    const verificationBadge = _badgeNum && _BADGE_SVG[_badgeNum] ? _BADGE_SVG[_badgeNum] : '';
+    // Support multiple badges (array) from server, fall back to single badge or own badge
+    const _badgeNums = (Array.isArray(offer.merchantBadges) && offer.merchantBadges.length)
+      ? offer.merchantBadges
+      : (offer.merchantBadge ? [offer.merchantBadge] : (_isMyAd && _myMerchantBadge ? [_myMerchantBadge] : []));
+    const verificationBadge = _badgeNums.map(function(n){ return _BADGE_SVG[n] || ''; }).join('');
     const initial = String(offer.advertiser || 'U')
       .trim()
       .slice(0, 1)
@@ -3111,7 +3115,7 @@ function renderOffers(data, append) {
             <span class="table-user-avatar">${escapeHtml(initial)}</span>
             <div>
               <p class="adv-name">${escapeHtml(offer.advertiser)} ${verificationBadge}</p>
-              <p class="adv-meta">${(offer.reputation && offer.reputation.completedOrders != null) ? offer.reputation.completedOrders : offer.orders} Orders | ${(offer.reputation && offer.reputation.completionRate != null) ? offer.reputation.completionRate : offer.completionRate}% | <span style="color:${offer.onlineStatus==='online'?'#2ebd85':offer.onlineStatus==='away'?'#a8ff3e':'#888'}">${offer.onlineStatus==='online'?'● Online':offer.onlineStatus==='away'?'● Away':'● Offline'}</span></p>
+              <p class="adv-meta">${(offer.baseOrders||0) + ((offer.reputation && offer.reputation.completedOrders != null) ? offer.reputation.completedOrders : (offer.orders||0))} Orders | ${Math.max(90,(offer.reputation && offer.reputation.completionRate != null) ? offer.reputation.completionRate : (offer.completionRate||100))}% | <span style="color:${offer.onlineStatus==='online'?'#2ebd85':offer.onlineStatus==='away'?'#a8ff3e':'#888'}">${offer.onlineStatus==='online'?'● Online':offer.onlineStatus==='away'?'● Away':'● Offline'}</span></p>
             </div>
           </div>
         </td>
