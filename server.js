@@ -4644,8 +4644,7 @@ app.get('/api/admin/wallet/withdrawals', requiresAdminSession, async (req, res) 
   try {
     const statusFilter = String(req.query.status || '').toLowerCase();
     const limit = Math.min(Math.max(Number(req.query.limit || 50), 1), 200);
-    const db = await repos.getP2PCredential();
-    const withdrawalRequests = db.collection('withdrawal_requests');
+    const { withdrawalRequests } = getCollections();
     const query = {};
     if (statusFilter) query.status = statusFilter;
     const rows = await withdrawalRequests
