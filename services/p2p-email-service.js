@@ -186,7 +186,114 @@ ${buildFooter()}
     }
   }
 
-  return { sendOrderConfirmation, sendOrderUpdate, sendPaymentReminderEmail };
+  // Buyer email: seller has released crypto — funds deposited
+  async function sendOrderReleased(email, order) {
+    try {
+      if (!resend || !fromEmail) return { delivered: false, reason: 'not_configured' };
+      const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
+      const cryptoAmount = Number(order.cryptoAmount || 0);
+      const asset = String(order.asset || 'USDT').toUpperCase();
+      const sellerName = String(
+        (order.participants || []).find(p => p.role === 'seller')?.username ||
+        order.sellerUsername || 'The seller'
+      );
+      const subject = `[${BRAND_NAME}] [P2P] Crypto Released — Funds Deposited`;
+      const html = buildHeader() + `
+<tr><td style="padding:28px 28px 0;">
+  <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#111;">P2P trading:</h1>
+  <p style="margin:0 0 18px;font-size:15px;color:#333;line-height:1.8;">
+    <strong>${escapeHtml(sellerName)}</strong> has released the crypto and
+    <strong style="color:#00b8d4;">${cryptoAmount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</strong>
+    have been deposited into your account.<br/>
+    Order no. <strong>${escapeHtml(String(order.id || 'N/A'))}</strong>
+  </p>
+  <hr style="border:none;border-top:1px solid #f0f0f0;margin:0 0 28px;"/>
+</td></tr>
+${buildFooter()}
+</table></td></tr></table></body></html>`;
+      await resend.emails.send({ from: fromEmail, to: email, subject, html });
+      return { delivered: true };
+    } catch (e) {
+      return { delivered: false, reason: e.message };
+    }
+  }
+
+  // Seller email: buyer marked payment sent — release crypto
+  async function sendOrderPaid(email, order) {
+    try {
+      if (!resend || !fromEmail) return { delivered: false, reason: 'not_configured' };
+      const emailOrder = {
+        id: order.id, cryptoAmount: order.cryptoAmount,
+        asset: order.asset || 'USDT', fiatAmount: order.fiatAmount,
+        fiatCurrency: order.fiatCurrency || 'INR', createdAt: order.createdAt
+      };
+      return sendOrderUpdate(email, emailOrder, 'payment_sent_seller');
+    } catch (e) {
+      return { delivered: false, reason: e.message };
+    }
+  }
+
+  // Both parties: order cancelled
+  async function sendOrderCancelled(email, order) {
+    try {
+      if (!resend || !fromEmail) return { delivered: false, reason: 'not_configured' };
+      const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
+      const subject = `[${BRAND_NAME}] [P2P] Order Cancelled`;
+      const html = buildHeader() + `
+<tr><td style="padding:28px 28px 0;">
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#111;">[P2P] Order Cancelled</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:#333;line-height:1.7;">Your P2P order <strong style="color:#00b8d4;">${escapeHtml(String(order.id || 'N/A'))}</strong> has been cancelled. Any locked funds have been returned to your account.</p>
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://bitegit.com/p2p" style="color:#00b8d4;text-decoration:none;font-weight:600;">View Details</a></p>
+  <p style="margin:0 0 4px;font-size:13px;color:#333;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:#888;">Please do not reply to this email</p>
+</td></tr>
+${buildFooter()}
+</table></td></tr></table></body></html>`;
+      await resend.emails.send({ from: fromEmail, to: email, subject, html });
+      return { delivered: true };
+    } catch (e) {
+      return { delivered: false, reason: e.message };
+    }
+  }
+
+  // Admin + parties: dispute raised
+  async function sendDisputeRaised(email, order, raisedBy) {
+    try {
+      if (!resend || !fromEmail) return { delivered: false, reason: 'not_configured' };
+      const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
+      const subject = `[${BRAND_NAME}] [P2P] Dispute Raised — Order ${escapeHtml(String(order.id || ''))}`;
+      const html = buildHeader() + `
+<tr><td style="padding:28px 28px 0;">
+  <div style="background:#fdecea;border:1px solid #e53935;border-radius:8px;padding:14px 18px;margin-bottom:20px;">
+    <span style="font-size:20px;margin-right:8px;">🚨</span>
+    <span style="font-size:14px;font-weight:700;color:#c62828;">A dispute has been raised on this order.</span>
+  </div>
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#111;">[P2P] Dispute Raised</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:#333;line-height:1.7;">A dispute has been raised by <strong>${escapeHtml(String(raisedBy || 'a participant'))}</strong> on order <strong style="color:#00b8d4;">${escapeHtml(String(order.id || 'N/A'))}</strong>. Our support team will review and resolve it shortly.</p>
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://bitegit.com/p2p" style="color:#00b8d4;text-decoration:none;font-weight:600;">View Order</a></p>
+  <p style="margin:0 0 4px;font-size:13px;color:#333;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:#888;">Please do not reply to this email</p>
+</td></tr>
+${buildFooter()}
+</table></td></tr></table></body></html>`;
+      await resend.emails.send({ from: fromEmail, to: email, subject, html });
+      return { delivered: true };
+    } catch (e) {
+      return { delivered: false, reason: e.message };
+    }
+  }
+
+  return {
+    sendOrderConfirmation,
+    sendOrderUpdate,
+    sendPaymentReminderEmail,
+    sendOrderReleased,
+    sendOrderPaid,
+    sendOrderCancelled,
+    sendDisputeRaised
+  };
 }
 
 module.exports = { createP2PEmailService };
