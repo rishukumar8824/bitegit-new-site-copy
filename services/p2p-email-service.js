@@ -134,6 +134,7 @@ ${buildFooter()}
           <p style="margin:0 0 10px;font-size:14px;"><a href="https://bitegit.com/p2p" style="color:#00b8d4;text-decoration:none;font-weight:600;">View Details</a></p>
           <p style="margin:0 0 4px;font-size:13px;color:#333;">${BRAND_NAME} Team</p>
           <p style="margin:0 0 28px;font-size:12px;color:#888;">Please do not reply to this email</p>`;
+      }
 
       const html = buildHeader() + `<tr><td style="padding:28px 28px 0;">${bodyContent}</td></tr>` + buildFooter() + `</table></td></tr></table></body></html>`;
       await resend.emails.send({ from: fromEmail, to: email, subject, html });
