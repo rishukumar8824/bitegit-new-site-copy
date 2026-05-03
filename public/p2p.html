@@ -2580,10 +2580,10 @@ function openMerchantBadgeSheet(badgeNum) {
   if (!s || !content) return;
   var b = _BADGE_SHEET_DATA[badgeNum];
   if (!b) return;
-  content.innerHTML = '<div style="display:flex;gap:16px;align-items:flex-start;background:#f7f7f7;border-radius:14px;padding:16px;margin-bottom:8px;">' +
+  content.innerHTML = '<div style="display:flex;gap:16px;align-items:center;background:#fff;border-radius:16px;padding:18px 16px;margin-bottom:8px;box-shadow:0 2px 12px rgba(0,0,0,0.07);">' +
     '<div style="flex-shrink:0;width:48px;height:48px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;">' + b.svg + '</div>' +
     '<div style="flex:1;">' +
-      '<p style="color:#111;font-size:15px;font-weight:700;margin:0 0 4px;">' + b.name + '</p>' +
+      '<p style="color:#111;font-size:16px;font-weight:700;margin:0 0 4px;">' + b.name + '</p>' +
       '<p style="color:#888;font-size:13px;line-height:1.5;margin:0;">' + b.desc + '</p>' +
     '</div>' +
     '<span style="font-size:20px;color:#ccc;align-self:center;">›</span>' +
