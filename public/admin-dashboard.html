@@ -1016,6 +1016,7 @@ async function loadMerchantApplications() {
         '<td class="admin-td">' +
           '<button onclick="viewMerchantApp(\'' + a.id + '\')" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);font-size:11px;font-weight:600;cursor:pointer;">👁 View</button>' +
           (['pending','approved'].includes(a.status) ? '<br>' + [
+            '<button onclick="approveMerchantWithoutBadge(\'' + a.id + '\')" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(22,199,132,0.12);color:#16c784;border:1px solid rgba(22,199,132,0.3);font-size:11px;font-weight:700;cursor:pointer;">✓ Approve</button>',
             '<button onclick="assignMerchantBadge(\'' + a.id + '\',1)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(26,111,244,0.12);color:#1a6ff4;border:1px solid rgba(26,111,244,0.3);font-size:11px;font-weight:700;cursor:pointer;">◆ Blue V</button>',
             '<button onclick="assignMerchantBadge(\'' + a.id + '\',2)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(247,147,26,0.12);color:#f7931a;border:1px solid rgba(247,147,26,0.3);font-size:11px;font-weight:700;cursor:pointer;">♛ Crown</button>',
             '<button onclick="assignMerchantBadge(\'' + a.id + '\',3)" style="margin:2px;padding:4px 10px;border-radius:6px;background:rgba(245,166,35,0.12);color:#f5a623;border:1px solid rgba(245,166,35,0.3);font-size:11px;font-weight:700;cursor:pointer;">❖ Shield</button>',
@@ -1088,6 +1089,7 @@ function viewMerchantApp(id) {
         '<div style="font-size:13px;color:rgba(255,255,255,0.75);">' + new Date(a.submittedAt).toLocaleString() + '</div>' +
       '</div>' +
       (['pending','approved'].includes(a.status) ? '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">' +
+        '<button onclick="approveMerchantWithoutBadge(\'' + a.id + '\');document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(22,199,132,0.15);color:#16c784;border:1px solid rgba(22,199,132,0.35);font-size:13px;font-weight:700;cursor:pointer;">✓ Approve</button>' +
         '<button onclick="assignMerchantBadge(\'' + a.id + '\',1);document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(26,111,244,0.15);color:#1a6ff4;border:1px solid rgba(26,111,244,0.35);font-size:13px;font-weight:700;cursor:pointer;">◆ Blue V</button>' +
         '<button onclick="assignMerchantBadge(\'' + a.id + '\',2);document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(247,147,26,0.15);color:#f7931a;border:1px solid rgba(247,147,26,0.35);font-size:13px;font-weight:700;cursor:pointer;">♛ Crown</button>' +
         '<button onclick="assignMerchantBadge(\'' + a.id + '\',3);document.getElementById(\'merchantDetailModal\').style.display=\'none\';" style="flex:1;min-width:80px;padding:10px;border-radius:10px;background:rgba(245,166,35,0.15);color:#f5a623;border:1px solid rgba(245,166,35,0.35);font-size:13px;font-weight:700;cursor:pointer;">❖ Shield</button>' +
@@ -1096,6 +1098,20 @@ function viewMerchantApp(id) {
     '</div>' +
   '</div>';
   modal.style.display = 'flex';
+}
+
+async function approveMerchantWithoutBadge(id) {
+  if (!confirm('Approve this merchant without assigning a badge right now?')) return;
+  try {
+    var res = await fetch('/api/admin/merchant-applications/' + id + '/badge', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'approve' })
+    });
+    var data = await res.json();
+    if (data.success) { showGlobalMsg('✅ ' + data.message, 'success'); loadMerchantApplications(); }
+    else showGlobalMsg('❌ ' + data.message, 'error');
+  } catch(e) { showGlobalMsg('Network error.', 'error'); }
 }
 
 async function assignMerchantBadge(id, badge) {

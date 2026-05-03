@@ -6722,10 +6722,11 @@ async function refreshMerchantStatus() {
       fetch('/api/p2p/security-deposit', { credentials: 'include' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }),
       fetch('/api/merchant/application-status', { credentials: 'include' }).then(function(r){ return r.json(); }).catch(function(){ return {}; })
     ]);
-    var dep = Number(depRes.securityDeposit || 0);
-    var canPost = dep >= 200;
-    var badgeEligible = dep >= 500;
+    var dep = Number(appRes.depositLocked || depRes.securityDeposit || 0);
+    var canPost = !!(appRes.canPostAds || depRes.canPostAds || dep >= 200);
+    var badgeEligible = !!(appRes.badgeEligible || depRes.badgeEligible || dep >= 500);
     var appStatus = appRes.status || null; // 'pending' | 'approved' | 'rejected' | null
+    var hasBadge = !!appRes.badge;
 
     var html = '';
 
@@ -6735,8 +6736,8 @@ async function refreshMerchantStatus() {
       '<span style="font-size:.85rem;font-weight:700;color:' + (dep >= 500 ? '#f7931a' : dep >= 200 ? '#16c784' : '#f6465d') + ';">' + dep + ' USDT</span>' +
     '</div>';
 
-    if (appStatus === 'approved') {
-      // ✅ Already a merchant
+    if (appStatus === 'approved' && hasBadge) {
+      // ✅ Already a merchant with badge
       html += '<div style="background:rgba(22,199,132,.1);border:1px solid rgba(22,199,132,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
         '<div style="font-size:1.4rem;margin-bottom:.3rem;">🏅</div>' +
         '<div style="font-weight:700;color:#16c784;font-size:1rem;">Verified Merchant</div>' +
@@ -6748,6 +6749,12 @@ async function refreshMerchantStatus() {
         '<div style="font-size:1.2rem;margin-bottom:.3rem;">⏳</div>' +
         '<div style="font-weight:700;color:#f7931a;font-size:.95rem;">Application Under Review</div>' +
         '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">Admin will review within 2-5 business days</div>' +
+      '</div>';
+    } else if (canPost) {
+      html += '<div style="background:rgba(22,199,132,.1);border:1px solid rgba(22,199,132,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
+        '<div style="font-size:1.4rem;margin-bottom:.3rem;">✅</div>' +
+        '<div style="font-weight:700;color:#16c784;font-size:1rem;">Merchant Access Active</div>' +
+        '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">You can post ads now. Badge will show only after admin assigns one.</div>' +
       '</div>';
     } else {
       // Not applied yet — show deposit steps
@@ -7035,6 +7042,28 @@ function applyBadgeToProfileUI(badgeNum) {
   if (secDepStatus) secDepStatus.style.display = 'none';
 }
 
+function applyMerchantAccessToProfileUI(data) {
+  var badgeEl = document.getElementById('mobMerchantBadge');
+  if (badgeEl) {
+    badgeEl.style.display = 'none';
+    badgeEl.textContent = '';
+  }
+  var applyItem = document.getElementById('mobMerchantApplyItem');
+  if (applyItem) {
+    var label = applyItem.querySelector('.bg-menu-label');
+    if (label) {
+      label.textContent = data && data.canPostAds ? 'Merchant Active ✓' : 'Become Merchant';
+    }
+  }
+  if (data && data.depositLocked) {
+    applySecDepToProfileUI(String(data.depositLocked) + ' USDT');
+  }
+  var secDepStatus = document.getElementById('profileSecDepStatus');
+  if (secDepStatus) {
+    secDepStatus.style.display = '';
+  }
+}
+
 // Apply from localStorage seed immediately — no delay needed
 if (_myMerchantBadge) {
   // Try immediately (if DOM is ready)
@@ -7064,9 +7093,14 @@ async function loadMerchantBadge() {
       }
       // Show badge in profile UI
       applyBadgeToProfileUI(data.badge);
+    } else if (data.success && data.canPostAds) {
+      _myMerchantBadge = null;
+      try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
+      applyMerchantAccessToProfileUI(data);
     } else {
       _myMerchantBadge = null;
       try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
+      applyMerchantAccessToProfileUI(null);
     }
   } catch(e) {}
 }
@@ -7570,7 +7604,7 @@ async function handlePostAdTabClick() {
   try {
     var res = await fetch('/api/merchant/application-status', { credentials: 'include' });
     var data = await res.json();
-    var isMerchant = data.success && data.status === 'approved' && data.badge;
+    var isMerchant = data.success && data.canPostAds;
     if (!isMerchant) {
       // Not a merchant — redirect to merchant info/apply screen
       openP2PScreen('merchantScreen');

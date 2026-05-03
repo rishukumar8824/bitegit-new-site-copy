@@ -129,6 +129,137 @@ function resolveApprovedMerchantBadge(lookup, userId, username, fallbackBadge = 
   return fallbackBadge;
 }
 
+function matchesMerchantIdentity(app, userId, username, email) {
+  const appUserId = String(app?.userId || '').trim();
+  const appUsername = String(app?.username || '').trim().toLowerCase();
+  const appEmail = String(app?.email || '').trim().toLowerCase();
+  const normalizedUserId = String(userId || '').trim();
+  const normalizedUsername = String(username || '').trim().toLowerCase();
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+
+  return Boolean(
+    (normalizedUserId && appUserId && appUserId === normalizedUserId) ||
+    (normalizedUsername && appUsername && appUsername === normalizedUsername) ||
+    (normalizedEmail && appEmail && appEmail === normalizedEmail)
+  );
+}
+
+function getBestMerchantApplicationForUser({ userId, username, email }) {
+  let best = null;
+
+  for (const [, app] of merchantApplications) {
+    if (!matchesMerchantIdentity(app, userId, username, email)) {
+      continue;
+    }
+    if (!best) {
+      best = app;
+      continue;
+    }
+    if (app.status === 'approved' && best.status !== 'approved') {
+      best = app;
+      continue;
+    }
+    if (app.status !== 'approved' && best.status === 'approved') {
+      continue;
+    }
+    const appTime = app.reviewedAt ? new Date(app.reviewedAt).getTime() : new Date(app.submittedAt || 0).getTime();
+    const bestTime = best.reviewedAt ? new Date(best.reviewedAt).getTime() : new Date(best.submittedAt || 0).getTime();
+    if (appTime > bestTime) {
+      best = app;
+    }
+  }
+
+  return best;
+}
+
+async function getMerchantAccessState({ userId, username, email }) {
+  const bestApplication = getBestMerchantApplicationForUser({ userId, username, email });
+  const badge = bestApplication?.assignedBadge || bestApplication?.badge || null;
+
+  let depositLocked = 0;
+  let merchantActivated = false;
+  if (repos && typeof repos.getP2PCredential === 'function' && email) {
+    try {
+      const credential = await repos.getP2PCredential(String(email || '').trim().toLowerCase());
+      const merchantMeta = credential?.merchant && typeof credential.merchant === 'object' ? credential.merchant : {};
+      const rawDepositLocked = Number(merchantMeta.depositLocked);
+      if (Number.isFinite(rawDepositLocked) && rawDepositLocked > 0) {
+        depositLocked = rawDepositLocked;
+      } else if (credential?.merchantDepositLocked === true) {
+        depositLocked = MERCHANT_ACTIVATION_DEPOSIT;
+      }
+      merchantActivated =
+        merchantMeta.isMerchant === true ||
+        credential?.isMerchant === true ||
+        credential?.merchantDepositLocked === true ||
+        depositLocked >= MERCHANT_ACTIVATION_DEPOSIT;
+      if (merchantActivated && depositLocked < MERCHANT_ACTIVATION_DEPOSIT) {
+        depositLocked = MERCHANT_ACTIVATION_DEPOSIT;
+      }
+    } catch (_) {}
+  }
+
+  return {
+    application: bestApplication,
+    status: bestApplication?.status || null,
+    badge,
+    depositLocked,
+    merchantActivated,
+    canPostAds: merchantActivated,
+    badgeEligible: depositLocked >= MERCHANT_BADGE_MIN_DEPOSIT
+  };
+}
+
+async function ensureApprovedMerchantRecord({ id, userId, username, email }) {
+  const normalizedUserId = String(userId || id || '').trim();
+  const normalizedUsername = String(username || '').trim();
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const nowIso = new Date().toISOString();
+  let application = getBestMerchantApplicationForUser({
+    userId: normalizedUserId,
+    username: normalizedUsername,
+    email: normalizedEmail
+  });
+
+  if (!application) {
+    application = {
+      id: `MRC-${String(merchantAppCounter++).padStart(5, '0')}`,
+      userId: normalizedUserId,
+      username: normalizedUsername,
+      email: normalizedEmail,
+      photoBase64: '',
+      currency: '',
+      socialAccounts: { twitter: '', telegram: '', instagram: '' },
+      status: 'approved',
+      assignedBadge: null,
+      submittedAt: nowIso,
+      reviewedAt: nowIso,
+      approvalSource: 'deposit_activation'
+    };
+  } else {
+    application = {
+      ...application,
+      userId: String(application.userId || normalizedUserId).trim(),
+      username: String(application.username || normalizedUsername).trim(),
+      email: String(application.email || normalizedEmail).trim().toLowerCase(),
+      photoBase64: String(application.photoBase64 || '').trim(),
+      currency: String(application.currency || '').trim(),
+      socialAccounts: application.socialAccounts && typeof application.socialAccounts === 'object'
+        ? application.socialAccounts
+        : { twitter: '', telegram: '', instagram: '' },
+      status: 'approved',
+      assignedBadge: application.assignedBadge || null,
+      submittedAt: application.submittedAt || nowIso,
+      reviewedAt: nowIso,
+      approvalSource: application.approvalSource || 'deposit_activation'
+    };
+  }
+
+  merchantApplications.set(application.id, application);
+  await saveMerchantApp(application);
+  return application;
+}
+
 async function saveMerchantApp(app) {
   try {
     const collections = getCollections();
@@ -3392,6 +3523,7 @@ app.post('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
       actor: req.p2pUser,
       depositAmount: lockAmount
     });
+    await ensureApprovedMerchantRecord(req.p2pUser);
     return res.json({
       success: true,
       message: `${lockAmount} USDT locked as security deposit.`,
@@ -3430,12 +3562,18 @@ app.post('/api/merchant/activate', requiresP2PUser, async (req, res) => {
       actor: req.p2pUser,
       depositAmount: MERCHANT_ACTIVATION_DEPOSIT
     });
+    const application = await ensureApprovedMerchantRecord(req.p2pUser);
 
     return res.json({
       success: true,
-      message: 'Merchant activated successfully.',
+      message: `Merchant activated successfully. ${MERCHANT_ACTIVATION_DEPOSIT} USDT locked as security deposit.`,
       merchant: activation.merchant,
-      wallet: activation.wallet
+      wallet: activation.wallet,
+      application: {
+        id: application.id,
+        status: application.status,
+        badge: application.assignedBadge || null
+      }
     });
   } catch (error) {
     const knownStatus = Number(error?.status || 0);
@@ -3603,6 +3741,25 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
         }
       } catch (_) {}
       return res.json({ success: true, message: 'Application rejected.' });
+    }
+
+    const badgeRaw = String(badge ?? '').trim();
+    if (action === 'approve' && !badgeRaw) {
+      app.status = 'approved';
+      app.assignedBadge = null;
+      app.reviewedAt = new Date().toISOString();
+      merchantApplications.set(id, app);
+      await saveMerchantApp(app);
+      try {
+        const cols = getCollections();
+        const matchQ = { $or: [] };
+        if (app.userId) matchQ.$or.push({ createdByUserId: String(app.userId) });
+        if (app.username) matchQ.$or.push({ advertiser: app.username });
+        if (matchQ.$or.length) {
+          await cols.p2pOffers.updateMany(matchQ, { $unset: { merchantBadge: '' } });
+        }
+      } catch (_) {}
+      return res.json({ success: true, message: `${app.username} approved as merchant without badge.`, application: app });
     }
 
     const badgeNum = Number(badge);
@@ -3793,25 +3950,26 @@ app.get('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async (
 });
 
 // ── Merchant Application: User checks their status ──
-app.get('/api/merchant/application-status', requiresP2PUser, (req, res) => {
-  const userId = req.p2pUser.id;
-  // Return most recently reviewed approved app, or latest pending
-  let best = null;
-  for (const [, app] of merchantApplications) {
-    if (app.userId !== userId) continue;
-    if (!best) { best = app; continue; }
-    // Prefer approved over non-approved
-    if (app.status === 'approved' && best.status !== 'approved') { best = app; continue; }
-    if (app.status !== 'approved' && best.status === 'approved') continue;
-    // Among same status, prefer most recently reviewed
-    const t1 = app.reviewedAt ? new Date(app.reviewedAt).getTime() : new Date(app.submittedAt || 0).getTime();
-    const t2 = best.reviewedAt ? new Date(best.reviewedAt).getTime() : new Date(best.submittedAt || 0).getTime();
-    if (t1 > t2) best = app;
-  }
-  if (best) {
-    return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || best.badge || null, applicationId: best.id });
-  }
-  return res.json({ success: true, found: false, status: null, badge: null });
+app.get('/api/merchant/application-status', requiresP2PUser, async (req, res) => {
+  const merchantAccess = await getMerchantAccessState({
+    userId: req.p2pUser.id,
+    username: req.p2pUser.username,
+    email: req.p2pUser.email
+  });
+  const best = merchantAccess.application;
+  return res.json({
+    success: true,
+    found: Boolean(best),
+    status: merchantAccess.status,
+    badge: merchantAccess.badge,
+    applicationId: best?.id || null,
+    canPostAds: merchantAccess.canPostAds,
+    merchantActivated: merchantAccess.merchantActivated,
+    depositLocked: merchantAccess.depositLocked,
+    badgeEligible: merchantAccess.badgeEligible,
+    activationDepositRequired: MERCHANT_ACTIVATION_DEPOSIT,
+    badgeReviewDepositRequired: MERCHANT_BADGE_MIN_DEPOSIT
+  });
 });
 
 // Returns only the current user's own active orders (for mobile Active tab)
