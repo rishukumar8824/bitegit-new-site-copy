@@ -2751,6 +2751,11 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   display: block;
   transform: scale(1.03);
   transform-origin: center center;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 .cf-partners {
