@@ -3224,6 +3224,10 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
     font-weight: 800;
     background: #00e5ff;
     border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
   }
 
   .cf-user-panel {
