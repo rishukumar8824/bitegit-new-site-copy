@@ -3218,16 +3218,17 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
   }
 
   .cf-signup {
-    min-height: 28px;
-    padding: 0 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 800;
-    background: #00e5ff;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
+    height: 28px !important;
+    min-height: unset !important;
+    padding: 0 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: center !important;
+    line-height: 1 !important;
   }
 
   .cf-user-panel {
