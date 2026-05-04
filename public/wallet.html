@@ -1277,12 +1277,14 @@
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: payload.amount, currency: payload.currency || 'USDT', address: addr, network: payload.network || 'TRC20' })
-      }).then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (d.requestId || d.id || (d.message && !d.message.toLowerCase().includes('error'))) {
+      }).then(function(r) {
+          return r.json().then(function(d) { return { ok: r.ok, data: d }; });
+        })
+        .then(function(result) {
+          if (result.ok && (result.data.requestId || result.data.id)) {
             return _fakeRes({ status: 'success', message: 'Withdrawal request submitted' });
           }
-          return _fakeRes({ status: 'error', message: d.message || 'Withdrawal failed' });
+          return _fakeRes({ status: 'error', message: result.data.message || 'Withdrawal failed' });
         })
         .catch(function() { return _fakeRes({ status: 'error', message: 'Network error' }); });
     }

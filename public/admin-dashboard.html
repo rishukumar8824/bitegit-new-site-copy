@@ -263,6 +263,7 @@
               </select>
               <button onclick="loadMerchantApplications()" class="btn-primary btn-sm">Reload</button>
               <button onclick="fixMerchantDeposits()" class="btn-secondary btn-sm" title="Set 200/500 USDT security deposit for all approved merchants">Fix Deposits</button>
+              <button onclick="capMerchantBalances()" class="btn-secondary btn-sm" style="background:rgba(246,70,93,0.15);color:#f6465d;border-color:rgba(246,70,93,0.35);" title="Cap all merchant wallet balances to 500 USDT">Cap Balances →500</button>
               <span style="font-size:11px;color:var(--text-2);" id="merchantCount"></span>
             </div>
           </div>
@@ -1147,6 +1148,20 @@ async function rejectMerchantApp(id) {
     });
     var data = await res.json();
     if (data.success) { showGlobalMsg('Application rejected.', 'success'); loadMerchantApplications(); }
+    else showGlobalMsg('❌ ' + data.message, 'error');
+  } catch(e) { showGlobalMsg('Network error.', 'error'); }
+}
+
+async function capMerchantBalances() {
+  var cap = prompt('Cap all merchant wallets to how much USDT?', '500');
+  if (cap === null) return;
+  cap = Number(cap);
+  if (!cap || cap < 0) { alert('Invalid amount'); return; }
+  if (!confirm('This will reduce all merchant wallet balances to ' + cap + ' USDT. Continue?')) return;
+  try {
+    var res = await fetch('/api/admin/wallets/cap-merchant-balances', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ capAmount: cap }) });
+    var data = await res.json();
+    if (data.success) showGlobalMsg('✅ Capped ' + data.capped + ' merchants to ' + data.capAmount + ' USDT (' + data.skipped + ' already under limit).', 'success');
     else showGlobalMsg('❌ ' + data.message, 'error');
   } catch(e) { showGlobalMsg('Network error.', 'error'); }
 }

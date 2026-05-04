@@ -3795,6 +3795,35 @@ app.post('/api/admin/merchant-applications/fix-deposits', requiresAdminSession, 
   }
 });
 
+// ── Admin: Cap all merchant wallet balances to a max amount ──
+app.post('/api/admin/wallets/cap-merchant-balances', requiresAdminSession, async (req, res) => {
+  try {
+    const capAmount = Math.max(0, Number(req.body.capAmount || 500));
+    const { wallets, p2pCredentials } = getCollections();
+    // Get all merchant userIds
+    const merchants = await p2pCredentials.find({ isMerchant: true }, { projection: { userId: 1, email: 1 } }).toArray();
+    let capped = 0, skipped = 0;
+    for (const m of merchants) {
+      const uid = String(m.userId || '').trim();
+      if (!uid) { skipped++; continue; }
+      const wallet = await wallets.findOne({ userId: uid });
+      if (!wallet) { skipped++; continue; }
+      const current = Number(wallet.availableBalance || wallet.balance || 0);
+      if (current <= capAmount) { skipped++; continue; }
+      const diff = current - capAmount;
+      await wallets.updateOne(
+        { userId: uid },
+        { $set: { availableBalance: capAmount, balance: capAmount, updatedAt: new Date() },
+          $inc: { totalDeducted: diff } }
+      );
+      capped++;
+    }
+    return res.json({ success: true, capped, skipped, capAmount });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ── Merchant Application: Admin assign badge ──
 app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, async (req, res) => {
   try {
