@@ -995,12 +995,26 @@
   })();
   </script>
   <script>
-  // Copy Trading buttons → redirect to P2P
-  document.querySelectorAll('.cf-copy-btn, .cf-copy-card').forEach(function(el) {
-    el.addEventListener('click', function() {
-      window.location.href = '/p2p';
+  // Copy Trading cards/buttons → redirect to P2P (scroll-safe on Android)
+  (function() {
+    var _tsx = 0, _tsy = 0;
+    document.addEventListener('touchstart', function(e) {
+      _tsx = e.touches[0].clientX;
+      _tsy = e.touches[0].clientY;
+    }, { passive: true });
+    document.querySelectorAll('.cf-copy-btn, .cf-copy-card').forEach(function(el) {
+      el.addEventListener('touchend', function(e) {
+        var dx = Math.abs(e.changedTouches[0].clientX - _tsx);
+        var dy = Math.abs(e.changedTouches[0].clientY - _tsy);
+        if (dx > 8 || dy > 8) return;
+        e.preventDefault();
+        window.location.href = '/p2p';
+      }, { passive: false });
+      el.addEventListener('click', function() {
+        window.location.href = '/p2p';
+      });
     });
-  });
+  })();
   </script>
   </body>
 </html>

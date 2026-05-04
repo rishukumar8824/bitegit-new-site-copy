@@ -1306,13 +1306,24 @@ signupPromptEmail?.addEventListener('keydown', (event) => {
 });
 
 if (marketList) {
-  const _mlNav = (e) => {
+  let _mlTsx = 0, _mlTsy = 0;
+  marketList.addEventListener('touchstart', (e) => {
+    _mlTsx = e.touches[0].clientX;
+    _mlTsy = e.touches[0].clientY;
+  }, { passive: true });
+  marketList.addEventListener('touchend', (e) => {
+    if (e.target.closest('a')) return;
+    const dx = Math.abs(e.changedTouches[0].clientX - _mlTsx);
+    const dy = Math.abs(e.changedTouches[0].clientY - _mlTsy);
+    if (dx > 8 || dy > 8) return; // was a scroll, not a tap
+    const row = e.target.closest('tr[data-href]');
+    if (row) { e.preventDefault(); window.location.href = row.dataset.href; }
+  }, { passive: false });
+  marketList.addEventListener('click', (e) => {
     if (e.target.closest('a')) return;
     const row = e.target.closest('tr[data-href]');
-    if (row) { if(e.type==='touchend') e.preventDefault(); window.location.href = row.dataset.href; }
-  };
-  marketList.addEventListener('click', _mlNav);
-  marketList.addEventListener('touchend', _mlNav, {passive:false});
+    if (row) window.location.href = row.dataset.href;
+  });
 }
 
 if (marketTabs) {
