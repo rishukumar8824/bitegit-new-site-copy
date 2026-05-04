@@ -1590,16 +1590,28 @@ function normalizeOrderState(order) {
   };
 }
 
-function isParticipant(order, userId) {
-  if (!order || !userId) {
-    return false;
+function isParticipant(order, userId, p2pUser) {
+  if (!order || !userId) return false;
+
+  // Check participants array by id
+  if (Array.isArray(order.participants) && order.participants.some((p) => p.id === userId)) return true;
+
+  // Check direct userId fields
+  if ([order.sellerUserId, order.buyerUserId, order.sellerId, order.buyerId].includes(userId)) return true;
+
+  // Fallback: match by username or email for legacy orders that may have stored differently
+  if (p2pUser) {
+    const myUsername = String(p2pUser.username || '').trim().toLowerCase();
+    const myEmail = String(p2pUser.email || '').trim().toLowerCase();
+    if (myUsername && Array.isArray(order.participants) &&
+      order.participants.some((p) => String(p.username || '').trim().toLowerCase() === myUsername)) return true;
+    if (myUsername && [order.sellerUsername, order.buyerUsername].some(
+      (u) => String(u || '').trim().toLowerCase() === myUsername)) return true;
+    if (myEmail && [order.sellerEmail, order.buyerEmail].some(
+      (e) => String(e || '').trim().toLowerCase() === myEmail)) return true;
   }
 
-  if (Array.isArray(order.participants) && order.participants.some((participant) => participant.id === userId)) {
-    return true;
-  }
-
-  return [order.sellerUserId, order.buyerUserId].includes(userId);
+  return false;
 }
 
 function resolveMyRole(order, p2pUser) {
@@ -4217,7 +4229,7 @@ app.get('/api/p2p/orders/by-reference/:reference', requiresP2PUser, async (req, 
       return res.status(404).json({ message: 'Order not found for this reference.' });
     }
 
-    if (!isParticipant(orderByReference, req.p2pUser.id)) {
+    if (!isParticipant(orderByReference, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -4236,7 +4248,7 @@ app.post('/api/p2p/orders/:orderId/join', requiresP2PUser, async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: 'Order not found.' });
     }
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -4257,7 +4269,7 @@ app.get('/api/p2p/orders/:orderId', requiresP2PUser, async (req, res) => {
       return res.status(404).json({ message: 'Order not found.' });
     }
 
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -4322,6 +4334,19 @@ app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) =>
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
 
+    // Notify admin via SSE immediately (real-time popup in admin dashboard)
+    const raisedByUser = req.p2pUser.username || req.p2pUser.email;
+    broadcastAdminSupportEvent({
+      type: 'dispute',
+      orderId: updatedOrder.id,
+      reference: updatedOrder.reference || updatedOrder.id,
+      agentName: raisedByUser,
+      email: req.p2pUser.email || '',
+      subject: `Dispute filed on order #${updatedOrder.reference || updatedOrder.id}`,
+      message: String(appealReason).slice(0, 100),
+      appealType
+    });
+
     if (p2pEmailService) {
       setImmediate(async () => {
         try {
@@ -4329,12 +4354,11 @@ app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) =>
             repos.getP2PCredentialByUserId(updatedOrder.sellerUserId),
             repos.getP2PCredentialByUserId(updatedOrder.buyerUserId)
           ]);
-          const raisedBy = req.p2pUser.username || req.p2pUser.email;
           const adminEmail = String(process.env.ADMIN_EMAIL || '').trim();
-          if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, raisedBy);
-          if (sellerCred?.email) await p2pEmailService.sendDisputeRaised(sellerCred.email, updatedOrder, raisedBy);
+          if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, raisedByUser);
+          if (sellerCred?.email) await p2pEmailService.sendDisputeRaised(sellerCred.email, updatedOrder, raisedByUser);
           if (buyerCred?.email && buyerCred.email !== sellerCred?.email) {
-            await p2pEmailService.sendDisputeRaised(buyerCred.email, updatedOrder, raisedBy);
+            await p2pEmailService.sendDisputeRaised(buyerCred.email, updatedOrder, raisedByUser);
           }
         } catch (emailErr) {
           console.warn('[p2p-email] appeal notification failed:', emailErr.message);
@@ -4397,7 +4421,7 @@ app.post('/api/p2p/orders/:orderId/rate', requiresP2PUser, async (req, res) => {
   try {
     const order = await repos.getP2POrderById(req.params.orderId);
     if (!order) return res.status(404).json({ message: 'Order not found.' });
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only participants can rate this order.' });
     }
 
@@ -4552,7 +4576,7 @@ app.get('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) =
       return res.status(404).json({ message: 'Order not found.' });
     }
 
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -4574,7 +4598,7 @@ app.post('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) 
 
   try {
     const mutation = await withOrderMutation(req.params.orderId, (next) => {
-      if (!isParticipant(next, req.p2pUser.id)) {
+      if (!isParticipant(next, req.p2pUser.id, req.p2pUser)) {
         return { error: 'not_participant' };
       }
 
@@ -4630,7 +4654,7 @@ app.get('/api/p2p/orders/:orderId/stream', requiresP2PUser, async (req, res) => 
       return res.status(404).json({ message: 'Order not found.' });
     }
 
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 

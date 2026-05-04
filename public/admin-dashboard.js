@@ -3276,15 +3276,21 @@ function connectSupportSSE() {
   _supportSSE.onmessage = (ev) => {
     try {
       const info = JSON.parse(ev.data);
-      // Update sidebar badge
-      _lastKnownOpenTicketCount++;
-      const badge = document.getElementById('supportBadge');
-      if (badge) { badge.style.display = ''; badge.textContent = _lastKnownOpenTicketCount; }
-      // Show popup with agent name
-      showSupportNotification(info);
-      // If on support view, refresh list
-      if (state.currentView === 'support' && !state.support.activeTicketId) {
-        loadSupport().catch(() => {});
+      if (info && info.type === 'dispute') {
+        // Dispute/appeal filed — show orange popup and badge on P2P section
+        showDisputeNotification(info);
+        const p2pBadge = document.getElementById('p2pDisputeBadge');
+        if (p2pBadge) { p2pBadge.style.display = ''; p2pBadge.textContent = (parseInt(p2pBadge.textContent || '0') || 0) + 1; }
+        if (state.currentView === 'p2p') { loadP2P().catch(() => {}); }
+      } else {
+        // Support ticket
+        _lastKnownOpenTicketCount++;
+        const badge = document.getElementById('supportBadge');
+        if (badge) { badge.style.display = ''; badge.textContent = _lastKnownOpenTicketCount; }
+        showSupportNotification(info);
+        if (state.currentView === 'support' && !state.support.activeTicketId) {
+          loadSupport().catch(() => {});
+        }
       }
     } catch (_) {}
   };
@@ -3356,6 +3362,40 @@ function showSupportNotification(info) {
   const badge = document.getElementById('supportBadge');
   if (badge) { badge.style.animation = 'none'; badge.style.transform = 'scale(1.4)'; setTimeout(() => { badge.style.transform = ''; }, 300); }
   setTimeout(() => { if (n.isConnected) n.remove(); }, 10000);
+}
+
+function showDisputeNotification(info) {
+  const user = info.agentName || info.email || 'A user';
+  const orderId = info.orderId || '';
+  const ref = info.reference || orderId;
+  const reason = info.message || info.appealType || 'No details';
+
+  const n = document.createElement('div');
+  n.style.cssText = `position:fixed;top:18px;right:18px;z-index:9999;
+    background:var(--bg-card);border:1px solid #f97316;border-radius:14px;
+    padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:340px;`;
+  n.innerHTML = `
+    <div style="width:38px;height:38px;border-radius:50%;background:#f9731620;border:2px solid #f9731640;
+                display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⚠️</div>
+    <div style="flex:1;min-width:0;">
+      <p style="margin:0 0 2px;font-size:12px;font-weight:700;color:#f97316;">Dispute / Appeal Filed!</p>
+      <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:var(--text-1);">${user}</p>
+      <p style="margin:0;font-size:11px;color:var(--text-2);">Order: <b>#${ref}</b></p>
+      <p style="margin:2px 0 0;font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${reason}</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#f97316;font-weight:600;">👆 Click to view disputes</p>
+    </div>
+    <button onclick="event.stopPropagation();this.closest('[style]').remove();"
+      style="background:none;border:none;color:var(--text-2);cursor:pointer;font-size:16px;padding:0;flex-shrink:0;">✕</button>`;
+
+  n.addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON') return;
+    n.remove();
+    changeView('p2p');
+  });
+
+  document.body.appendChild(n);
+  setTimeout(() => { if (n.isConnected) n.remove(); }, 15000);
 }
 
 async function init() {
