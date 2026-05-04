@@ -1506,6 +1506,18 @@ async function requiresP2PUser(req, res, next) {
       role: tokenService.normalizeRole(user.role || 'USER')
     };
     req.p2pUser = user;
+
+    // Update lastActiveAt in p2pCredentials (fire-and-forget, non-blocking)
+    if (user.email) {
+      const cols = getCollections();
+      if (cols && cols.p2pCredentials) {
+        cols.p2pCredentials.updateOne(
+          { email: user.email },
+          { $set: { lastActiveAt: new Date() } }
+        ).catch(() => {});
+      }
+    }
+
     return next();
   } catch (error) {
     return res.status(500).json({ message: 'Server error while validating user session.' });

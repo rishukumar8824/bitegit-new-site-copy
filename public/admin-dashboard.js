@@ -627,6 +627,11 @@ async function loadUsers(options = {}) {
   });
 }
 
+function isUserOnline(lastActiveAt) {
+  if (!lastActiveAt) return false;
+  return (Date.now() - new Date(lastActiveAt).getTime()) < 3600000; // 1 hour
+}
+
 function renderUsersTable(users, merchantMap) {
   const body = document.getElementById('usersTableBody');
   if (users.length === 0) {
@@ -638,10 +643,14 @@ function renderUsersTable(users, merchantMap) {
     const merchantCell = mb
       ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${BADGE_COLORS[mb]}22;color:${BADGE_COLORS[mb]};border:1px solid ${BADGE_COLORS[mb]}55;white-space:nowrap;">${BADGE_ICONS[mb]}</span>`
       : `<span style="font-size:11px;color:var(--text-2);">—</span>`;
+    const online = isUserOnline(user.lastActiveAt);
+    const onlineDot = online
+      ? `<span title="Online (active within 1 hr)" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:5px;vertical-align:middle;box-shadow:0 0 4px #22c55e99;"></span>`
+      : `<span title="Offline" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#64748b44;margin-right:5px;vertical-align:middle;"></span>`;
     return `
     <tr class="user-row" data-profile-id="${user.userId}" style="cursor:pointer;transition:background 0.15s;" title="Click to view full profile">
       <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${user.userId}</td>
-      <td class="admin-td" style="font-weight:500;">${user.email}</td>
+      <td class="admin-td" style="font-weight:500;">${onlineDot}${user.email}</td>
       <td class="admin-td">${statusBadge(user.role)}</td>
       <td class="admin-td">${statusBadge(user.status)}</td>
       <td class="admin-td">${statusBadge(user.kycStatus)}</td>
