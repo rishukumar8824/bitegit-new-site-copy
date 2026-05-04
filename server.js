@@ -4384,7 +4384,18 @@ app.post('/api/p2p/orders/:orderId/cancel-appeal', requiresP2PUser, async (req, 
     const order = await p2pOrders.findOne({ id: req.params.orderId });
     if (!order) return res.status(404).json({ message: 'Order not found.' });
     if (order.status !== 'DISPUTED') return res.status(400).json({ message: 'Order is not under appeal.' });
-    if (order.appealedByUserId !== req.p2pUser.id) {
+    const myId = req.p2pUser.id;
+    const myUsername = String(req.p2pUser.username || '').trim().toLowerCase();
+    const myEmail = String(req.p2pUser.email || '').trim().toLowerCase();
+    const isAppealOwner =
+      order.appealedByUserId === myId ||
+      (myUsername && String(order.appealedByUsername || order.disputedBy || '').trim().toLowerCase() === myUsername) ||
+      (myEmail && String(order.appealedByEmail || order.sellerEmail || order.buyerEmail || '').trim().toLowerCase() === myEmail &&
+        [order.sellerEmail, order.buyerEmail].includes(myEmail) &&
+        [order.sellerUserId, order.buyerUserId, order.sellerId, order.buyerId].some((id) =>
+          id === myId || (myUsername && (order.sellerUsername === myUsername || order.buyerUsername === myUsername))
+        ));
+    if (!isAppealOwner) {
       return res.status(403).json({ message: 'Only the user who raised the appeal can cancel it.' });
     }
     const revertStatus = order.preDisputeStatus || 'PAYMENT_SENT';
