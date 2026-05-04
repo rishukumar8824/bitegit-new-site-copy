@@ -2055,12 +2055,22 @@ app.put('/api/p2p/profile', requiresP2PUser, async (req, res) => {
 
     const collections = getCollections();
 
+    // Check change limit (max 5 times)
+    const cred = await collections.p2pCredentials.findOne({ email });
+    const changeCount = Number(cred?.usernameChangeCount || 0);
+    if (changeCount >= 5) {
+      return res.status(400).json({ ok: false, message: 'Username can only be changed 5 times. Limit reached.' });
+    }
+
     // Check uniqueness
     const taken = await collections.p2pCredentials.findOne({ username: newUsername, email: { $ne: email } });
     if (taken) return res.status(400).json({ ok: false, message: 'Username already taken. Try another.' });
 
-    // Update credential
-    await collections.p2pCredentials.updateOne({ email }, { $set: { username: newUsername, updatedAt: new Date() } });
+    // Update credential + increment change count
+    await collections.p2pCredentials.updateOne(
+      { email },
+      { $set: { username: newUsername, updatedAt: new Date() }, $inc: { usernameChangeCount: 1 } }
+    );
 
     // Update all offers by this user
     await collections.p2pOffers.updateMany(
@@ -2074,7 +2084,15 @@ app.put('/api/p2p/profile', requiresP2PUser, async (req, res) => {
     // Update ALL active sessions so refresh returns the new username immediately
     await collections.p2pUserSessions.updateMany({ userId }, { $set: { username: newUsername } });
 
-    return res.json({ ok: true, nickname: newUsername, message: 'Username updated.' });
+    // Update orders where this user is buyer or seller (participants array)
+    await collections.p2pOrders.updateMany(
+      { 'participants.id': userId },
+      { $set: { 'participants.$[p].username': newUsername } },
+      { arrayFilters: [{ 'p.id': userId }] }
+    );
+
+    const remaining = 5 - (changeCount + 1);
+    return res.json({ ok: true, nickname: newUsername, message: 'Username updated.', changesLeft: remaining });
   } catch (err) {
     console.error('[profile] update error:', err.message);
     return res.status(500).json({ ok: false, message: 'Server error while updating username.' });

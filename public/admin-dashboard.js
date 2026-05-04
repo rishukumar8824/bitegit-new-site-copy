@@ -2502,6 +2502,9 @@ async function loadUpMerchantBadge() {
       </div>
       <div style="font-size:11px;color:var(--text-2);margin-bottom:8px;">200 USDT deposit → can post ads. 500 USDT + good completion → badge eligible. Admin assigns badge manually.</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button onclick="adminAssignMerchantBadge('${userId}',4)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(229,53,96,0.13);color:#e53560;border:1px solid rgba(229,53,96,0.45);font-size:12px;font-weight:800;cursor:pointer;${currentBadge===4?'outline:2px solid #e53560;':''}" title="PRO Merchant — professional local crypto exchange">
+          <span style="display:inline-flex;align-items:center;gap:4px;"><svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;vertical-align:middle;"><path d="M4 3 C3.4 3 3 3.4 3 4 L3 40 C3 40.6 3.4 41 4 41 L40 41 C40.6 41 41 40.6 41 40 L41 14 L30 3 Z" fill="#e53560"/><path d="M30 3 L30 13 C30 13.6 30.4 14 31 14 L41 14 Z" fill="rgba(0,0,0,0.18)"/><text x="21" y="28" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="Arial,sans-serif" font-style="italic">Pro</text></svg> PRO</span>
+        </button>
         <button onclick="adminAssignMerchantBadge('${userId}',1)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(26,111,244,0.12);color:#1a6ff4;border:1px solid rgba(26,111,244,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===1?'outline:2px solid #1a6ff4;':''}" title="High-quality verified merchant">◆ Blue V</button>
         <button onclick="adminAssignMerchantBadge('${userId}',2)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(247,147,26,0.12);color:#f7931a;border:1px solid rgba(247,147,26,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===2?'outline:2px solid #f7931a;':''}" title="Top-level certified merchant">♛ Crown</button>
         <button onclick="adminAssignMerchantBadge('${userId}',3)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(245,166,35,0.12);color:#f5a623;border:1px solid rgba(245,166,35,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===3?'outline:2px solid #f5a623;':''}" title="Compensation-protected merchant">❖ Shield</button>
@@ -2513,7 +2516,7 @@ async function loadUpMerchantBadge() {
 }
 
 async function adminAssignMerchantBadge(userId, badge) {
-  const BADGE_LABELS = { 1: 'Blue V (Verified)', 2: 'Crown (Pro)', 3: 'Shield (Elite)' };
+  const BADGE_LABELS = { 4: 'PRO Merchant', 1: 'Blue V (Verified)', 2: 'Crown (Pro)', 3: 'Shield (Elite)' };
   if (!confirm(`Assign Badge ${badge} — ${BADGE_LABELS[badge]} to this user?\nThis grants them merchant privileges and the ability to post P2P ads.`)) return;
   try {
     const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/merchant-badge`, {

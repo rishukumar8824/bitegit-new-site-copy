@@ -2046,7 +2046,7 @@ function openProfileEditModal() {
     var quotaEl = document.getElementById('editNicknameChangesLeft');
     var saveBtn = document.getElementById('editNicknameSaveBtn');
     var msgEl = document.getElementById('editNicknameMsg');
-    if (quotaEl) quotaEl.textContent = left + ' username change' + (left === 1 ? '' : 's') + ' remaining this month';
+    if (quotaEl) quotaEl.textContent = left + ' username change' + (left === 1 ? '' : 's') + ' remaining (max 5 total)';
     if (saveBtn) {
       saveBtn.disabled = left <= 0;
       saveBtn.style.opacity = left <= 0 ? '0.4' : '1';
@@ -2060,14 +2060,12 @@ function openProfileEditModal() {
   }
 }
 
-// ── Name-change quota: 3 times per rolling 30 days ───────────────────────────
+// ── Name-change quota: 5 times total (tracked server-side) ───────────────────
+var _serverNameChangesLeft = null; // set from server response
 function _getNameChanges() {
   try {
     var raw = localStorage.getItem('_p2p_name_changes');
     var arr = raw ? JSON.parse(raw) : [];
-    var now = Date.now();
-    // Keep only changes within last 30 days
-    arr = arr.filter(function(ts) { return now - ts < 30 * 24 * 60 * 60 * 1000; });
     return arr;
   } catch(_) { return []; }
 }
@@ -2078,7 +2076,10 @@ function _recordNameChange() {
     localStorage.setItem('_p2p_name_changes', JSON.stringify(arr));
   } catch(_) {}
 }
-function _nameChangesLeft() { return Math.max(0, 5 - _getNameChanges().length); }
+function _nameChangesLeft() {
+  if (_serverNameChangesLeft !== null) return _serverNameChangesLeft;
+  return Math.max(0, 5 - _getNameChanges().length);
+}
 
 function saveProfileNickname() {
   var nicknameInput = document.getElementById('editNicknameInput');
@@ -2094,7 +2095,7 @@ function saveProfileNickname() {
   }
   // Enforce 3x/month limit (client-side guard)
   if (_nameChangesLeft() <= 0) {
-    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'You can only change your username 5 times per month.'; }
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Username change limit reached (max 5 times total).'; }
     return;
   }
   if (msg) { msg.style.color = 'rgba(255,255,255,0.5)'; msg.textContent = 'Saving...'; }
@@ -2105,10 +2106,11 @@ function saveProfileNickname() {
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.ok || d.success || d.nickname) {
       _recordNameChange();
+      if (typeof d.changesLeft === 'number') _serverNameChangesLeft = d.changesLeft;
       if (msg) {
         var left = _nameChangesLeft();
         msg.style.color = '#16c784';
-        msg.textContent = '✓ Username updated! (' + left + ' change' + (left === 1 ? '' : 's') + ' left this month)';
+        msg.textContent = '✓ Username updated! (' + left + ' change' + (left === 1 ? '' : 's') + ' remaining)';
       }
       // Update currentUser everywhere
       if (currentUser) { currentUser.username = nickname; currentUser.nickname = nickname; }
