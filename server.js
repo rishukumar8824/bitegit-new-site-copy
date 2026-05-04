@@ -4390,11 +4390,7 @@ app.post('/api/p2p/orders/:orderId/cancel-appeal', requiresP2PUser, async (req, 
     const isAppealOwner =
       order.appealedByUserId === myId ||
       (myUsername && String(order.appealedByUsername || order.disputedBy || '').trim().toLowerCase() === myUsername) ||
-      (myEmail && String(order.appealedByEmail || order.sellerEmail || order.buyerEmail || '').trim().toLowerCase() === myEmail &&
-        [order.sellerEmail, order.buyerEmail].includes(myEmail) &&
-        [order.sellerUserId, order.buyerUserId, order.sellerId, order.buyerId].some((id) =>
-          id === myId || (myUsername && (order.sellerUsername === myUsername || order.buyerUsername === myUsername))
-        ));
+      (myEmail && String(order.appealedByEmail || '').trim().toLowerCase() === myEmail);
     if (!isAppealOwner) {
       return res.status(403).json({ message: 'Only the user who raised the appeal can cancel it.' });
     }
