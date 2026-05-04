@@ -2606,25 +2606,7 @@
     document.getElementById('chatCancelOrAppealBtn').addEventListener('click', _doCancelOrAppeal);
     document.getElementById('chatCancelOrAppealBtn').addEventListener('touchend', function(e) { e.preventDefault(); _doCancelOrAppeal(); });
 
-    var _doCancelAppeal = mkDebounce(async function() {
-      if (!currentOrder || !currentOrder.id) return;
-      if (!confirm('Cancel your appeal? Order will resume from its previous status.')) return;
-      try {
-        var resp = await fetch('/api/p2p/orders/' + currentOrder.id + '/cancel-appeal', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        var data = await resp.json();
-        if (!resp.ok) { showToast(data.message || 'Failed to cancel appeal.'); return; }
-        showToast('Appeal cancelled. Order resumed.');
-        if (data.order) {
-          currentOrder = Object.assign({}, currentOrder, data.order);
-          applyOrderAndShow(currentOrder, false, null);
-        }
-      } catch (e) {
-        showToast('Error cancelling appeal. Try again.');
-      }
-    });
+    // _doCancelAppeal is defined at outer scope below wireEvents()
 
     // "File an appeal" link in 5-min appeal banner
     document.getElementById('chatFileAppealBtn').addEventListener('click', function() { _doFileAppeal(); });
@@ -3634,6 +3616,28 @@
         '</div>';
     }).join('');
   }
+
+  // Outer-scope so updateOrderScreenForStatus / seller sync can assign to cancelBtn.onclick
+  var _doCancelAppeal = mkDebounce(async function() {
+    if (!currentOrder || !currentOrder.id) return;
+    if (!confirm('Cancel your appeal? Order will resume from its previous status.')) return;
+    try {
+      var resp = await fetch('/api/p2p/orders/' + currentOrder.id + '/cancel-appeal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      var data = await resp.json();
+      if (!resp.ok) { showToast(data.message || 'Failed to cancel appeal.'); return; }
+      showToast('Appeal cancelled. Order resumed.');
+      if (data.order) {
+        currentOrder = Object.assign({}, currentOrder, data.order);
+        applyOrderAndShow(currentOrder, false, null);
+      }
+    } catch (e) {
+      showToast('Error cancelling appeal. Try again.');
+    }
+  });
 
   function _setAppealModalOpen(open) {
     var modal = document.getElementById('appealModal');
