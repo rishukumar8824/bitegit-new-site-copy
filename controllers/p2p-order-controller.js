@@ -118,6 +118,17 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
         return res.status(400).json({ success: false, message: 'adId is required.' });
       }
 
+      // Block if user already has an active or disputed order
+      const myActive = await repos.listMyActiveOrders(req.p2pUser.id);
+      const hasActiveOrder = myActive.some(o => ['CREATED', 'PENDING', 'PAYMENT_SENT', 'PAID', 'DISPUTED'].includes(o.status));
+      if (hasActiveOrder) {
+        const disputed = myActive.some(o => o.status === 'DISPUTED');
+        const msg = disputed
+          ? 'You have an ongoing dispute. Resolve it before placing a new order.'
+          : 'You already have an active order. Complete or cancel it first.';
+        return res.status(409).json({ success: false, message: msg, code: 'ACTIVE_ORDER_EXISTS' });
+      }
+
       const offer = await repos.getOfferById(adId);
       if (!offer) {
         return res.status(404).json({ success: false, message: 'Ad not found.' });

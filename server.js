@@ -2536,8 +2536,19 @@ app.post(
     }
 
     try {
+      // Block withdrawal if user has an active or disputed order
+      const activeOrders = await repos.listMyActiveOrders(req.p2pUser.id);
+      const blockingOrder = activeOrders.find(o => ['CREATED', 'PENDING', 'PAYMENT_SENT', 'PAID', 'DISPUTED'].includes(o.status));
+      if (blockingOrder) {
+        const msg = blockingOrder.status === 'DISPUTED'
+          ? 'Withdrawal blocked: you have an ongoing dispute. Resolve it first.'
+          : 'Withdrawal blocked: complete or cancel your active order first.';
+        return res.status(409).json({ message: msg });
+      }
+
       const withdrawal = await walletService.createWithdrawalRequest(req.p2pUser.id, {
         username: req.p2pUser.username,
+        email: req.p2pUser.email || '',
         amount,
         currency,
         address,
