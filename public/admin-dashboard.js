@@ -3564,13 +3564,14 @@ function _wdRenderRows(withdrawals) {
     const createdAt = w.createdAt ? formatDate(w.createdAt) : '-';
     const processedAt = w.processedAt ? formatDate(w.processedAt) : '-';
     const userName = escapeHtml(w.username || w.userId || 'User');
+    const displayName = escapeHtml(w.name || w.username || w.userId || 'User');
     const userEmail = escapeHtml(w.email || '-');
     return `
     <div style="border-bottom:1px solid rgba(255,255,255,0.06);">
       <div onclick="wdToggleDetail('${detailId}')" style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">
         <div style="flex:1;min-width:0;">
           <div style="font-size:16px;font-weight:800;color:#eaecef;">${escapeHtml(String(w.amount))} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
-          <div style="font-size:11px;color:#848e9c;margin-top:2px;">${userName} &nbsp;·&nbsp; ${escapeHtml(createdAt)}</div>
+          <div style="font-size:11px;color:#848e9c;margin-top:2px;">${displayName} &nbsp;·&nbsp; ${escapeHtml(createdAt)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           ${statusBadge(w.status || 'pending')}
@@ -3579,8 +3580,9 @@ function _wdRenderRows(withdrawals) {
       </div>
       <div id="${detailId}" style="display:none;padding:0 16px 14px;">
         <div style="padding:12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.03);display:grid;gap:7px;font-size:12px;color:#c9d1d9;margin-bottom:10px;">
-          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Username:</span> <b style="color:#eaecef;">${userName}</b></div>
-          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Email:</span> ${userEmail}</div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Name:</span> <b style="color:#eaecef;">${escapeHtml(w.name || userName)}</b></div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Username:</span> <span style="color:#c9d1d9;">${userName}</span></div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Email:</span> <span style="color:#00e5ff;">${userEmail !== '-' ? userEmail : '<span style="color:#848e9c;">-</span>'}</span></div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Network:</span> ${escapeHtml(w.network || '-')}</div>
           <div style="word-break:break-all;"><span style="color:#848e9c;min-width:90px;display:inline-block;">Address:</span> ${escapeHtml(address)}</div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Fee:</span> ${escapeHtml(fee)} USDT</div>

@@ -4670,7 +4670,7 @@ app.get('/api/admin/wallet/withdrawals', requiresAdminSession, async (req, res) 
   try {
     const statusFilter = String(req.query.status || '').toLowerCase();
     const limit = Math.min(Math.max(Number(req.query.limit || 50), 1), 200);
-    const { withdrawalRequests } = getCollections();
+    const { withdrawalRequests, p2pCredentials } = getCollections();
     const query = {};
     if (statusFilter) query.status = statusFilter;
     const rows = await withdrawalRequests
@@ -4678,23 +4678,42 @@ app.get('/api/admin/wallet/withdrawals', requiresAdminSession, async (req, res) 
       .sort({ createdAt: -1 })
       .limit(limit)
       .toArray();
-    const withdrawals = rows.map((r) => ({
-      requestId: r.requestId || String(r._id),
-      id: r.requestId || String(r._id),
-      userId: r.userId,
-      username: r.username || r.userId,
-      email: r.email || null,
-      amount: r.amount,
-      currency: r.currency || 'USDT',
-      coin: r.currency || 'USDT',
-      network: (r.metadata && r.metadata.network) || r.network || null,
-      address: r.address || r.toAddress || null,
-      fee: (r.metadata && r.metadata.fee) || r.fee || 0,
-      status: (r.status || 'PENDING').toUpperCase(),
-      createdAt: r.createdAt,
-      processedAt: r.processedAt || null,
-      reason: (r.metadata && r.metadata.reason) || null
-    }));
+
+    // Enrich records missing email — look up credential by userId
+    const missingEmail = rows.filter(r => !r.email && r.userId);
+    let credMap = {};
+    if (missingEmail.length > 0) {
+      const userIds = [...new Set(missingEmail.map(r => r.userId))];
+      const creds = await p2pCredentials.find({ userId: { $in: userIds } }, { projection: { userId: 1, email: 1, username: 1 } }).toArray();
+      for (const c of creds) credMap[c.userId] = c;
+    }
+
+    const withdrawals = rows.map((r) => {
+      const cred = credMap[r.userId] || {};
+      const email = r.email || cred.email || null;
+      const rawUsername = r.username || cred.username || r.userId || '';
+      // derive display name from email if username looks like a userId
+      const derivedName = email ? email.split('@')[0].replace(/[^a-z0-9_]/gi, '_').slice(0, 20) : rawUsername;
+      const displayName = (rawUsername && !rawUsername.startsWith('usr_')) ? rawUsername : derivedName;
+      return {
+        requestId: r.requestId || String(r._id),
+        id: r.requestId || String(r._id),
+        userId: r.userId,
+        name: displayName,
+        username: r.userId,
+        email: email,
+        amount: r.amount,
+        currency: r.currency || 'USDT',
+        coin: r.currency || 'USDT',
+        network: (r.metadata && r.metadata.network) || r.network || null,
+        address: r.address || r.toAddress || null,
+        fee: (r.metadata && r.metadata.fee) || r.fee || 0,
+        status: (r.status || 'PENDING').toUpperCase(),
+        createdAt: r.createdAt,
+        processedAt: r.processedAt || null,
+        reason: (r.metadata && r.metadata.reason) || null
+      };
+    });
     return res.json({ total: withdrawals.length, withdrawals });
   } catch (error) {
     return res.status(500).json({ message: 'Server error while fetching withdrawals.' });
