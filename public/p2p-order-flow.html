@@ -3697,25 +3697,51 @@
       submitBtn.style.transform = 'scale(0.98)';
       submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:14px;height:14px;border:2px solid rgba(17,17,17,0.22);border-top-color:#111;border-radius:50%;animation:_spin 0.7s linear infinite;display:inline-block;"></span>Submitting appeal...</span>';
     }
-    showToast('Submitting appeal...');
+    showToast('Submitting inquiry...');
     try {
-      var res = await fetch('/api/p2p/orders/' + currentOrder.id + '/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          action: 'dispute',
-          appealType: type,
-          appealReason: reason,
-          appealImages: _appealDraft.images
-        })
-      });
-      var data = await res.json().catch(function() { return {}; });
-      if (res.ok && data.order) {
-        _setAppealModalOpen(false);
-        _finalizeAppealState(data.order, 'Appeal submitted. Redirecting to dispute orders...');
+      var orderStatus = String((currentOrder.status || '')).toUpperCase();
+      var isCompleted = ['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(orderStatus);
+
+      if (isCompleted) {
+        // Completed orders → support ticket (cannot be disputed)
+        var res = await fetch('/api/support/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            topic: type,
+            message: '[Order #' + (currentOrder.reference || currentOrder.id) + '] ' + reason,
+            name: '',
+            email: ''
+          })
+        });
+        var data = await res.json().catch(function() { return {}; });
+        if (res.ok) {
+          _setAppealModalOpen(false);
+          showToast('Inquiry submitted. Our support team will review and contact you.');
+        } else {
+          showToast(data.message || 'Failed to submit inquiry. Try again.');
+        }
       } else {
-        showToast(data.message || 'Failed to file appeal. Try again.');
+        // Active orders → proper dispute
+        var res = await fetch('/api/p2p/orders/' + currentOrder.id + '/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            action: 'dispute',
+            appealType: type,
+            appealReason: reason,
+            appealImages: _appealDraft.images
+          })
+        });
+        var data = await res.json().catch(function() { return {}; });
+        if (res.ok && data.order) {
+          _setAppealModalOpen(false);
+          _finalizeAppealState(data.order, 'Appeal submitted. Redirecting to dispute orders...');
+        } else {
+          showToast(data.message || 'Failed to file appeal. Try again.');
+        }
       }
     } catch (err) {
       showToast('Network error. Try again.');

@@ -4522,6 +4522,21 @@ app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) =>
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
 
+    // Real-time admin SSE for disputes
+    if (action === 'dispute') {
+      const raisedBy = req.p2pUser.username || req.p2pUser.email;
+      broadcastAdminSupportEvent({
+        type: 'dispute',
+        orderId: updatedOrder.id,
+        reference: updatedOrder.reference || updatedOrder.id,
+        agentName: raisedBy,
+        email: req.p2pUser.email || '',
+        subject: `Dispute filed on order #${updatedOrder.reference || updatedOrder.id}`,
+        message: String(req.body.appealReason || req.body.reason || '').slice(0, 100),
+        appealType: String(req.body.appealType || '').trim()
+      });
+    }
+
     // Send email notifications (non-blocking)
     if (p2pEmailService) {
       setImmediate(async () => {
@@ -4545,9 +4560,10 @@ app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) =>
           } else if (action === 'dispute') {
             // Notify admin + both parties
             const adminEmail = String(process.env.ADMIN_EMAIL || '').trim();
-            if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, req.p2pUser.username || req.p2pUser.email);
-            if (sellerEmail) await p2pEmailService.sendDisputeRaised(sellerEmail, updatedOrder, req.p2pUser.username || req.p2pUser.email);
-            if (buyerEmail && buyerEmail !== sellerEmail) await p2pEmailService.sendDisputeRaised(buyerEmail, updatedOrder, req.p2pUser.username || req.p2pUser.email);
+            const raisedBy = req.p2pUser.username || req.p2pUser.email;
+            if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, raisedBy);
+            if (sellerEmail) await p2pEmailService.sendDisputeRaised(sellerEmail, updatedOrder, raisedBy);
+            if (buyerEmail && buyerEmail !== sellerEmail) await p2pEmailService.sendDisputeRaised(buyerEmail, updatedOrder, raisedBy);
           }
         } catch (emailErr) {
           console.warn('[p2p-email] notification failed:', emailErr.message);
