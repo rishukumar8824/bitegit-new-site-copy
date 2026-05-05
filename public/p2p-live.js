@@ -405,13 +405,11 @@
   async function loadPublicState() {
     try {
       const [buyRes, sellRes] = await Promise.all([
-        fetch('/api/p2p/offers?side=buy&asset=USDT&limit=20', { credentials: 'include' }),
-        fetch('/api/p2p/offers?side=sell&asset=USDT&limit=20', { credentials: 'include' })
+        p2pRequest('/p2p/offers?side=buy&asset=USDT&limit=20'),
+        p2pRequest('/p2p/offers?side=sell&asset=USDT&limit=20')
       ]);
-      const buyData = buyRes.ok ? await buyRes.json() : { offers: [] };
-      const sellData = sellRes.ok ? await sellRes.json() : { offers: [] };
-      liveState.publicBuyAds = Array.isArray(buyData.offers) ? buyData.offers.map(o => _mapBitegitAd(o, 'buy')) : [];
-      liveState.publicSellAds = Array.isArray(sellData.offers) ? sellData.offers.map(o => _mapBitegitAd(o, 'sell')) : [];
+      liveState.publicBuyAds = Array.isArray(buyRes.offers) ? buyRes.offers.map(o => _mapBitegitAd(o, 'buy')) : [];
+      liveState.publicSellAds = Array.isArray(sellRes.offers) ? sellRes.offers.map(o => _mapBitegitAd(o, 'sell')) : [];
       applyLiveAdOverrides();
     } catch(e) {
       throw new Error('Could not load public P2P ads.');
@@ -420,14 +418,20 @@
 
   async function loadPrivateState() {
     try {
-      const res = await fetch('/api/p2p/my-ads', { credentials: 'include' });
-      if (!res.ok) {
-        liveState.myAds = [];
-        return;
-      }
-      const data = await res.json();
-      liveState.myAds = Array.isArray(data.offers) ? data.offers.map(o => _mapBitegitAd(o)) : [];
+      const [myAdsRes, pmRes] = await Promise.all([
+        p2pRequest('/p2p/my-ads'),
+        p2pRequest('/p2p/payment-methods')
+      ]);
+      liveState.myAds = Array.isArray(myAdsRes.offers) ? myAdsRes.offers.map(o => _mapBitegitAd(o)) : [];
       applyLiveAdOverrides();
+      if (pmRes.ok) {
+        if (Array.isArray(pmRes.catalog)) {
+          liveState.paymentCatalog = pmRes.catalog;
+        }
+        if (Array.isArray(pmRes.linked_payment_methods)) {
+          liveState.linkedPaymentMethods = pmRes.linked_payment_methods;
+        }
+      }
     } catch(e) {
       liveState.myAds = [];
     }

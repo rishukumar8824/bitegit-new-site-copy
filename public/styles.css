@@ -5,7 +5,7 @@
   --muted: #95a2b5;
   --success: #1fd07b;
   --danger: #f44762;
-  --primary: #00e5ff;
+  --primary: #00e676;
   --primary-hover: #00b8d4;
   --whatsapp: #24d366;
   --whatsapp-hover: #1ebe57;
@@ -224,7 +224,7 @@ button:hover,
 }
 
 .hero-sub strong {
-  color: #00e5ff;
+  color: #00e676;
   font-weight: 700;
 }
 
@@ -306,7 +306,7 @@ button:hover,
 .secondary-btn.soft {
   background: rgba(0,229,255,0.12);
   border-color: rgba(0,229,255,0.32);
-  color: #00e5ff;
+  color: #00e676;
 }
 
 .whatsapp-btn {
@@ -393,7 +393,7 @@ button:hover,
   place-items: center;
   background: rgba(0,229,255,0.18);
   border: 1px solid rgba(0,229,255,0.45);
-  color: #00e5ff;
+  color: #00e676;
   font-weight: 700;
 }
 
@@ -423,7 +423,7 @@ button:hover,
   width: 100%;
   background: rgba(0,229,255,0.2);
   border: 1px solid rgba(0,229,255,0.35);
-  color: #00e5ff;
+  color: #00e676;
 }
 
 .coin-trade-btn:hover {
@@ -482,7 +482,7 @@ button:hover,
 .pair-btn.active {
   background: rgba(244, 171, 52, 0.25);
   border-color: rgba(0,229,255,0.45);
-  color: #00e5ff;
+  color: #00e676;
 }
 
 .chart-wrap {
@@ -619,7 +619,7 @@ button:hover,
 
 .side-tab.active {
   background: rgba(0,229,255,0.2);
-  color: #00e5ff;
+  color: #00e676;
 }
 
 .p2p-filters {
@@ -867,7 +867,7 @@ button:hover,
 
 .p2p-price {
   font-weight: 800;
-  color: #00e5ff !important;
+  color: #00e676 !important;
 }
 
 .pay-chip {
@@ -893,7 +893,7 @@ button:hover,
 }
 
 .buy-offer-btn {
-  background: #00e5ff;
+  background: #00e676;
   color: #1f1710;
 }
 
@@ -984,7 +984,7 @@ button:hover,
 
 .status-open {
   background: rgba(248, 180, 73, 0.22);
-  color: #00e5ff;
+  color: #00e676;
 }
 
 .status-paid {
@@ -1371,7 +1371,7 @@ th {
 }
 
 .p2p-top-actions .cta-mini {
-  background: #00e5ff;
+  background: #00e676;
   color: #161821;
 }
 
@@ -1397,7 +1397,7 @@ th {
 }
 
 .p2p-subnav a.active {
-  color: #00e5ff;
+  color: #00e676;
   font-weight: 700;
 }
 
@@ -2567,8 +2567,8 @@ th {
 }
 
 .p2p-bybit .p2p-subnav a.active {
-  color: #00e5ff;
-  border-bottom: 2px solid #00e5ff;
+  color: #00e676;
+  border-bottom: 2px solid #00e676;
   padding-bottom: 16px;
 }
 
@@ -2669,7 +2669,7 @@ th {
 }
 
 .p2p-bybit .asset-chip.active {
-  color: #00e5ff;
+  color: #00e676;
   font-weight: 700;
 }
 
@@ -2697,7 +2697,7 @@ th {
 .p2p-bybit .filter-btn {
   border: none;
   background: transparent;
-  color: #00e5ff;
+  color: #00e676;
   font-weight: 600;
 }
 
@@ -2708,7 +2708,7 @@ th {
   border-radius: 999px;
   align-items: center;
   justify-content: center;
-  background: #00e5ff;
+  background: #00e676;
   color: #fff;
   font-size: 10px;
   margin-left: 5px;

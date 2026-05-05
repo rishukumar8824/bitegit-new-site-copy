@@ -1287,7 +1287,7 @@ async function openEditAdModal(offerId) {
   if (!savedMethods.length) {
     paymentsHtml = `<div style="background:#111;border-radius:10px;padding:12px 14px;text-align:center;">
       <p style="color:#f6a623;font-size:13px;margin:0 0 10px;">No payment methods saved yet.</p>
-      <button onclick="openPaymentMethodsScreen();closeEditAdModal();" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:13px;touch-action:manipulation;">Add Payment Method</button>
+      <button onclick="openPaymentMethodsScreen();closeEditAdModal();" style="background:#00e676;color:#000;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:13px;touch-action:manipulation;">Add Payment Method</button>
     </div>`;
   } else {
     paymentsHtml = savedMethods.map(function(pm) {
@@ -5228,7 +5228,7 @@ function _ordShowLogin() {
     '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">' +
     '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>' +
     '<p style="color:rgba(255,255,255,0.45);font-size:14px;margin:0;text-align:center;">Login to view your orders</p>' +
-    '<button onclick="window.location.href=\'/auth?redirect=/p2p\'" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
+    '<button onclick="window.location.href=\'/auth?redirect=/p2p\'" style="background:#00e676;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
     '</div>';
 }
 
@@ -6665,7 +6665,7 @@ async function refreshMerchantStatus() {
         '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (canPost ? '0' : '.8rem') + ';">Lock 200 USDT security deposit to start posting ads on P2P marketplace.</div>' +
         (!canPost ? '<div style="display:flex;gap:.5rem;align-items:center;">' +
           '<input id="secDepInput" type="number" min="200" value="200" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;">' +
-          '<button onclick="lockSecurityDeposit()" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;">Lock USDT</button>' +
+          '<button onclick="lockSecurityDeposit()" style="background:#00e676;color:#000;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;">Lock USDT</button>' +
         '</div>' : '') +
       '</div>';
 
@@ -6677,7 +6677,7 @@ async function refreshMerchantStatus() {
         '</div>' +
         '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (badgeEligible ? '.8rem' : '0') + ';">Lock 500 USDT total to apply for verified merchant badge — priority listing, zero fees.</div>' +
         (badgeEligible ? '<button onclick="openP2PScreen(\'merchantApplyScreen\')" style="width:100%;background:linear-gradient(135deg,#f7931a,#e67e00);color:#fff;border:none;border-radius:10px;padding:.75rem;font-size:.9rem;font-weight:700;cursor:pointer;">Apply for Merchant Badge →</button>' :
-          (canPost ? '<div style="font-size:.75rem;color:#f7931a;font-weight:600;">Need ' + (500 - dep) + ' USDT more — <button onclick="document.getElementById(\'secDepInput2\').style.display=\'block\'" style="background:none;border:none;color:#00e5ff;cursor:pointer;font-size:.75rem;font-weight:700;padding:0;text-decoration:underline;">Upgrade now</button></div>' +
+          (canPost ? '<div style="font-size:.75rem;color:#f7931a;font-weight:600;">Need ' + (500 - dep) + ' USDT more — <button onclick="document.getElementById(\'secDepInput2\').style.display=\'block\'" style="background:none;border:none;color:#00e676;cursor:pointer;font-size:.75rem;font-weight:700;padding:0;text-decoration:underline;">Upgrade now</button></div>' +
             '<div id="secDepInput2" style="display:none;display:flex;gap:.5rem;margin-top:.5rem;"><input type="number" min="' + (500-dep) + '" value="' + (500-dep) + '" id="secDepInput" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;"><button onclick="lockSecurityDeposit()" style="background:#f7931a;color:#fff;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;">Add</button></div>'
           : '') +
         '') +
@@ -7552,7 +7552,7 @@ function initMobPostAdScreen() {
             if (adLimitMsg) {
               adLimitMsg.style.display = 'block';
               adLimitMsg.style.color = '#f6a623';
-              adLimitMsg.innerHTML = 'Add a payment method first before posting an ad. <button onclick="openPaymentMethodsScreen()" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:6px 14px;font-weight:700;cursor:pointer;margin-top:8px;display:block;width:100%;">Add Payment Method</button>';
+              adLimitMsg.innerHTML = 'Add a payment method first before posting an ad. <button onclick="openPaymentMethodsScreen()" style="background:#00e676;color:#000;border:none;border-radius:8px;padding:6px 14px;font-weight:700;cursor:pointer;margin-top:8px;display:block;width:100%;">Add Payment Method</button>';
             }
           } else {
             if (createSection) createSection.style.display = 'block';

@@ -11,7 +11,7 @@
 
     <!-- App mount guard: hide raw HTML until JS initializes -->
     <div id="appInitLoader" style="position:fixed;inset:0;background:#0b0e11;z-index:99999;display:flex;align-items:center;justify-content:center;">
-      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#00e5ff;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
+      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#00e676;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
     </div>
     <style>@keyframes _apl_spin{to{transform:rotate(360deg)}} body{visibility:hidden!important;} body.app-ready{visibility:visible!important;}</style>
     <script>
@@ -30,7 +30,7 @@
       <div class="p2p-header-inner">
         <div class="p2p-brand-wrap">
           <a href="/" class="p2p-brand">
-            <span class="p2p-brand-word" style="color:#00e5ff;letter-spacing:0.04em;">BITEGIT</span>
+            <span class="p2p-brand-word" style="color:#00e676;letter-spacing:0.04em;">BITEGIT</span>
           </a>
         </div>
         <nav class="p2p-main-nav" aria-label="Primary navigation">
@@ -83,7 +83,7 @@
     <aside id="p2pNavDrawer" class="p2p-nav-drawer" aria-hidden="true">
       <div class="p2p-drawer-head">
         <strong>
-          <a href="/" style="color:#00e5ff;font-weight:800;font-size:1.1rem;letter-spacing:0.04em;text-decoration:none;">BITEGIT</a>
+          <a href="/" style="color:#00e676;font-weight:800;font-size:1.1rem;letter-spacing:0.04em;text-decoration:none;">BITEGIT</a>
         </strong>
         <button id="p2pNavClose" type="button" aria-label="Close">✕</button>
       </div>
@@ -189,7 +189,7 @@
 
         <!-- Alert -->
         <div class="p2p-alert-bar" id="p2pAlertBar" style="position:relative;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span>Do not share personal contact details. Always verify payment information independently.</span>
           <button onclick="document.getElementById('p2pAlertBar').style.display='none'" type="button" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.5);font-size:14px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;">✕</button>
         </div>
@@ -345,7 +345,7 @@
 
       <!-- Main tabs: Pending | Ended -->
       <div id="ordMainTabs" style="display:flex;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;">
-        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #00e5ff;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
+        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #00e676;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
         <button id="ordTabEnded" data-ord-main="ended" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.4);font-size:14px;font-weight:500;cursor:pointer;touch-action:manipulation;">Ended</button>
       </div>
 
@@ -524,7 +524,7 @@
         <p id="editNicknameChangesLeft" style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 4px;"></p>
         <p id="editNicknameMsg" style="font-size:13px;min-height:18px;margin:0 0 28px;"></p>
 
-        <button id="editNicknameSaveBtn" onclick="saveProfileNickname()" style="width:100%;padding:15px;border-radius:14px;background:#00e5ff;border:none;color:#000;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.02em;">
+        <button id="editNicknameSaveBtn" onclick="saveProfileNickname()" style="width:100%;padding:15px;border-radius:14px;background:#00e676;border:none;color:#000;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.02em;">
           Save Username
         </button>
       </div>
@@ -658,16 +658,108 @@
         <div class="sp-section">
           <div class="sp-section-head">
             <strong>FAQ</strong>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
           <div class="sp-faq-list">
-            <div class="sp-faq-row">Account &amp; security <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
-            <div class="sp-faq-row">Identity verification <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
-            <div class="sp-faq-row">Crypto deposit &amp; withdrawal <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
-            <div class="sp-faq-row">P2P trading <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
-            <div class="sp-faq-row">Buy crypto (fiat) <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
-            <div class="sp-faq-row">Spot trading <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
-            <div class="sp-faq-row">Futures trading <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
+
+            <!-- Account & security -->
+            <div class="sp-faq-cat">
+              <div class="sp-faq-row" onclick="spToggleFaq(this)">
+                <span>🔐 Account &amp; security</span>
+                <svg class="sp-faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sp-faq-items">
+                <div class="sp-faq-item"><strong>How do I reset my password?</strong><p>Go to Login page → tap "Forgot Password" → enter your registered email → check your inbox for a reset link. The link expires in 15 minutes.</p></div>
+                <div class="sp-faq-item"><strong>How do I enable 2FA?</strong><p>Go to Profile → 2FA Security → enable Email OTP. Enter the OTP sent to your registered email to confirm. Google Authenticator support coming soon.</p></div>
+                <div class="sp-faq-item"><strong>My account is locked — what do I do?</strong><p>Too many failed login attempts can temporarily lock your account. Wait 30 minutes and try again, or contact support via Chat for manual unlock.</p></div>
+                <div class="sp-faq-item"><strong>How do I change my registered email?</strong><p>Email change is currently handled by our support team. Start a chat and verify your identity — changes are made within 24 hours.</p></div>
+              </div>
+            </div>
+
+            <!-- Identity verification -->
+            <div class="sp-faq-cat">
+              <div class="sp-faq-row" onclick="spToggleFaq(this)">
+                <span>🪪 Identity verification</span>
+                <svg class="sp-faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sp-faq-items">
+                <div class="sp-faq-item"><strong>What documents are required for KYC?</strong><p>You need a valid government-issued photo ID (Aadhaar card — front &amp; back) and a live selfie. All images must be clear, unblurred and unedited.</p></div>
+                <div class="sp-faq-item"><strong>How long does KYC verification take?</strong><p>Verification is typically completed within 24–48 hours. You will receive an email notification once your status is updated.</p></div>
+                <div class="sp-faq-item"><strong>My KYC was rejected — why?</strong><p>Common reasons: blurry image, expired document, selfie mismatch, or edited photo. Re-submit from Profile → KYC Verification with clearer documents.</p></div>
+                <div class="sp-faq-item"><strong>What are the benefits of completing KYC?</strong><p>KYC unlocks higher P2P trading limits, ability to post ads, withdrawal access, and full platform features. Unverified users have restricted access.</p></div>
+              </div>
+            </div>
+
+            <!-- Crypto deposit & withdrawal -->
+            <div class="sp-faq-cat">
+              <div class="sp-faq-row" onclick="spToggleFaq(this)">
+                <span>💰 Crypto deposit &amp; withdrawal</span>
+                <svg class="sp-faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sp-faq-items">
+                <div class="sp-faq-item"><strong>How do I deposit USDT?</strong><p>Go to Wallet → Deposit → select USDT → choose a network (TRC20 recommended for low fees) → copy your unique deposit address and send from your external wallet.</p></div>
+                <div class="sp-faq-item"><strong>How long do deposits take?</strong><p>TRC20/BEP20 deposits confirm in ~3–5 minutes. ERC20 may take 10–30 minutes depending on network congestion. Do NOT send via a wrong network — funds may be lost.</p></div>
+                <div class="sp-faq-item"><strong>What are the withdrawal fees?</strong><p>TRC20: 1 USDT | BEP20: 1 USDT | ERC20: 5 USDT | MORPH: 1 USDT. Fees are deducted from the sent amount. Minimum withdrawal is 10 USDT.</p></div>
+                <div class="sp-faq-item"><strong>My deposit hasn't arrived — what should I do?</strong><p>Check the transaction on a blockchain explorer using your TXID. If confirmed on-chain but not credited after 1 hour, contact support with your TXID and screenshot.</p></div>
+                <div class="sp-faq-item"><strong>Can I cancel a withdrawal?</strong><p>Withdrawals in "Pending" status can be reviewed by support. Once "Processing" or "Completed", cancellation is not possible.</p></div>
+              </div>
+            </div>
+
+            <!-- P2P trading -->
+            <div class="sp-faq-cat">
+              <div class="sp-faq-row" onclick="spToggleFaq(this)">
+                <span>🔄 P2P trading</span>
+                <svg class="sp-faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sp-faq-items">
+                <div class="sp-faq-item"><strong>How does P2P trading work?</strong><p>You trade directly with other users at negotiated prices. BITEGIT acts as an escrow — USDT is locked when an order is created and released only after payment confirmation.</p></div>
+                <div class="sp-faq-item"><strong>What is a security deposit?</strong><p>To post P2P ads, you must lock a minimum of 200 USDT as a security deposit. This deposit protects buyers in case of disputes. Merchant badge requires 500 USDT + admin approval.</p></div>
+                <div class="sp-faq-item"><strong>How do I post a P2P ad?</strong><p>Go to P2P → My Ads → Post Ad. Set your price, limits, payment method and terms. Your security deposit must be ≥ 200 USDT to post ads.</p></div>
+                <div class="sp-faq-item"><strong>What happens if there is a dispute?</strong><p>Either party can raise a dispute during an active order. Our support team will review evidence (chat, payment proof) and release funds to the rightful party within 24 hours.</p></div>
+                <div class="sp-faq-item"><strong>What is a Merchant badge?</strong><p>Merchants are verified high-volume traders. To apply: deposit 500 USDT security → go to Profile → Apply to Become Merchant → await admin approval. Approved merchants get a colored badge on their ads.</p></div>
+              </div>
+            </div>
+
+            <!-- Buy crypto (fiat) -->
+            <div class="sp-faq-cat">
+              <div class="sp-faq-row" onclick="spToggleFaq(this)">
+                <span>💳 Buy crypto (fiat)</span>
+                <svg class="sp-faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sp-faq-items">
+                <div class="sp-faq-item"><strong>How do I buy USDT with INR?</strong><p>On the P2P page, select "Buy" and choose USDT. Browse merchant ads, pick one matching your amount and preferred payment method, then click Buy and follow the order steps.</p></div>
+                <div class="sp-faq-item"><strong>Which payment methods are supported?</strong><p>UPI, IMPS, NEFT, bank transfer, Paytm, PhonePe, and other methods as listed by individual merchants. Each ad shows its accepted payment options.</p></div>
+                <div class="sp-faq-item"><strong>What are the trading limits?</strong><p>Limits vary per merchant ad (shown as Min–Max on each card). Your KYC status determines your overall daily limit. Complete KYC to unlock higher limits.</p></div>
+                <div class="sp-faq-item"><strong>Is my fiat payment safe?</strong><p>BITEGIT escrow locks the USDT before you pay. Only pay the amount shown — never pay extra or outside the order. Mark payment only after actual transfer. Never cancel after paying.</p></div>
+              </div>
+            </div>
+
+            <!-- Spot trading -->
+            <div class="sp-faq-cat">
+              <div class="sp-faq-row" onclick="spToggleFaq(this)">
+                <span>📊 Spot trading</span>
+                <svg class="sp-faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sp-faq-items">
+                <div class="sp-faq-item"><strong>What is spot trading?</strong><p>Spot trading is buying or selling crypto at the current market price for immediate settlement. You own the actual asset — no leverage or contracts involved.</p></div>
+                <div class="sp-faq-item"><strong>How do I place a market order?</strong><p>Go to Trade → select a trading pair → choose Market order type → enter the amount → confirm. The order executes instantly at the best available price.</p></div>
+                <div class="sp-faq-item"><strong>What trading fees are charged?</strong><p>Spot trading fees are 0.1% per trade (maker and taker). Volume-based discounts and VIP tiers may apply. Fees are deducted from the received asset.</p></div>
+              </div>
+            </div>
+
+            <!-- Futures trading -->
+            <div class="sp-faq-cat">
+              <div class="sp-faq-row" onclick="spToggleFaq(this)">
+                <span>📈 Futures trading</span>
+                <svg class="sp-faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="sp-faq-items">
+                <div class="sp-faq-item"><strong>What is futures trading?</strong><p>Futures trading lets you speculate on crypto price movements using leverage, without owning the underlying asset. You can go Long (profit if price rises) or Short (profit if price falls).</p></div>
+                <div class="sp-faq-item"><strong>What is leverage?</strong><p>Leverage amplifies your position size. For example, 10× leverage means a 1% price move equals a 10% gain or loss on your margin. Higher leverage = higher risk of liquidation.</p></div>
+                <div class="sp-faq-item"><strong>What is liquidation?</strong><p>If your position losses exceed your available margin, the position is automatically liquidated (closed) to prevent negative balance. Always use stop-loss orders to manage risk.</p></div>
+                <div class="sp-faq-item"><strong>Are futures available on BITEGIT?</strong><p>Futures trading is coming soon on BITEGIT. Currently P2P and spot trading are available. Stay tuned for the launch announcement.</p></div>
+              </div>
+            </div>
+
           </div>
         </div>
         <div style="height:5rem;"></div>
@@ -1150,7 +1242,7 @@
           <h2 id="orderTitle" style="margin:0 0 0.3rem;font-size:1.05rem;font-weight:700;line-height:1.4;color:#fff;">Waiting for seller to release crypto</h2>
           <p style="margin:0;font-size:0.81rem;color:rgba(255,255,255,0.45);">
             <span id="orderTimerLabel" style="margin-right:4px;">Pay before timer expires</span>
-            <strong id="orderTimer" style="color:#00e5ff;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
+            <strong id="orderTimer" style="color:#00e676;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
           </p>
         </div>
 
@@ -1158,11 +1250,11 @@
         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;margin-bottom:0.85rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
-              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#00e5ff;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
+              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#00e676;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
               <div>
                 <div style="display:flex;align-items:center;gap:0.35rem;">
                   <h3 id="orderMerchant" style="margin:0;font-size:0.88rem;font-weight:700;color:#fff;"></h3>
-                  <span style="color:#00e5ff;font-size:0.75rem;">⚡</span>
+                  <span style="color:#00e676;font-size:0.75rem;">⚡</span>
                 </div>
                 <p id="orderCounterpartyMeta" style="margin:0;font-size:0.72rem;color:rgba(255,255,255,0.4);"></p>
               </div>
@@ -1340,7 +1432,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:50%;height:100%;background:linear-gradient(90deg,#00e5ff,#00b8d4);border-radius:99px;"></div>
+          <div style="width:50%;height:100%;background:linear-gradient(90deg,#00e676,#00b8d4);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1388,7 +1480,7 @@
 
         <p class="mob-kyc-fp-note">🔒 Your data is encrypted and used only for verification</p>
         <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
-          Powered by <span style="color:#00e5ff;font-weight:700;">Sumsub</span>
+          Powered by <span style="color:#00e676;font-weight:700;">Sumsub</span>
         </p>
       </div>
     </div>
@@ -1406,7 +1498,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:100%;height:100%;background:linear-gradient(90deg,#00e5ff,#00b8d4);border-radius:99px;"></div>
+          <div style="width:100%;height:100%;background:linear-gradient(90deg,#00e676,#00b8d4);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1489,7 +1581,7 @@
 
         <p class="mob-kyc-fp-note">🔒 Review takes 24–48 hours. You'll be notified on approval.</p>
         <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
-          Powered by <span style="color:#00e5ff;font-weight:700;">Sumsub</span>
+          Powered by <span style="color:#00e676;font-weight:700;">Sumsub</span>
         </p>
       </div>
     </div>
@@ -1547,7 +1639,7 @@
               <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="4">0</text>
               <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="rgba(255,255,255,0.08)">0</text>
               <!-- % teal -->
-              <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#00e5ff">%</text>
+              <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#00e676">%</text>
             </svg>
           </div>
           <h1 style="font-size:1.6rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;line-height:1.25;">Become a Merchant</h1>
@@ -1708,7 +1800,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;">
               <div style="display:flex;align-items:center;gap:12px;">
                 <span id="merchantCurrencyCheck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Select a currency <span id="merchantCurrencyLabel" style="color:#00e5ff;font-weight:700;"></span> <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
+                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Select a currency <span id="merchantCurrencyLabel" style="color:#00e676;font-weight:700;"></span> <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
               </div>
               <button id="merchantCurrencyAddBtn" onclick="merchantToggleCurrency()" style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
             </div>
@@ -1764,7 +1856,7 @@
                   <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:0.75rem;color:rgba(255,255,255,0.35);pointer-events:none;">Instagram</span>
                   <input id="merchantInstagram" type="text" placeholder="@username" style="width:100%;padding:12px 12px 12px 82px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.88rem;box-sizing:border-box;outline:none;">
                 </div>
-                <button onclick="merchantSaveSocial()" style="width:100%;padding:12px;border-radius:10px;background:#00e5ff;color:#000;font-size:0.9rem;font-weight:700;border:none;cursor:pointer;margin-top:2px;">Save</button>
+                <button onclick="merchantSaveSocial()" style="width:100%;padding:12px;border-radius:10px;background:#00e676;color:#000;font-size:0.9rem;font-weight:700;border:none;cursor:pointer;margin-top:2px;">Save</button>
               </div>
             </div>
           </div>
@@ -1774,8 +1866,8 @@
         <!-- Agreement + Submit -->
         <div style="margin-top:1.8rem;">
           <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:1.5rem;">
-            <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#00e5ff;flex-shrink:0;" />
-            <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#00e5ff;cursor:pointer;">Merchant Service Agreement</span></span>
+            <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#00e676;flex-shrink:0;" />
+            <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#00e676;cursor:pointer;">Merchant Service Agreement</span></span>
           </label>
           <button onclick="submitMerchantApp()" style="width:100%;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;">Submit Application</button>
         </div>
@@ -1795,7 +1887,7 @@
         <!-- Icon -->
         <div style="display:flex;justify-content:center;margin-bottom:1.5rem;">
           <div style="width:72px;height:72px;border-radius:50%;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.25);display:flex;align-items:center;justify-content:center;">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#00e5ff"/></svg>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#00e676"/></svg>
           </div>
         </div>
         <h2 style="font-size:1.3rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;">Two-Factor Authentication</h2>
@@ -1805,7 +1897,7 @@
         <div style="border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:1rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:.8rem;">
             <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,229,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </div>
             <div>
               <div style="font-weight:700;color:#fff;font-size:.9rem;">Email OTP</div>
@@ -1826,7 +1918,7 @@
               <div style="font-size:.75rem;color:#848e9c;margin-top:2px;">TOTP-based 2FA</div>
             </div>
           </div>
-          <button onclick="(function(b){var t=document.createElement('div');t.textContent='Google Authenticator coming soon';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap;';document.body.appendChild(t);setTimeout(function(){t.remove();},2000);})(this)" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#00e5ff;font-weight:600;cursor:pointer;">Enable</button>
+          <button onclick="(function(b){var t=document.createElement('div');t.textContent='Google Authenticator coming soon';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap;';document.body.appendChild(t);setTimeout(function(){t.remove();},2000);})(this)" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#00e676;font-weight:600;cursor:pointer;">Enable</button>
         </div>
 
         <!-- Security tips -->
@@ -2446,7 +2538,7 @@
       // Show queue position immediately
       var queuePos = Math.floor(Math.random()*8)+2;
       var waitMin = Math.ceil(queuePos * 1.5);
-      spAddBotBubble('<p>🎧 <strong>Connecting you to a live agent…</strong></p><p style="font-size:0.82rem;opacity:0.8;">📋 Your position in queue: <strong style="color:#00e5ff;">#' + queuePos + '</strong><br>⏱️ Estimated wait: ~' + waitMin + ' min<br><span style="font-size:0.75rem;opacity:0.55;">Please describe your issue while you wait.</span></p>');
+      spAddBotBubble('<p>🎧 <strong>Connecting you to a live agent…</strong></p><p style="font-size:0.82rem;opacity:0.8;">📋 Your position in queue: <strong style="color:#00e676;">#' + queuePos + '</strong><br>⏱️ Estimated wait: ~' + waitMin + ' min<br><span style="font-size:0.75rem;opacity:0.55;">Please describe your issue while you wait.</span></p>');
       spSetStatus('🟡 Queue #' + queuePos + ' — Waiting…', 'waiting');
 
       try {
