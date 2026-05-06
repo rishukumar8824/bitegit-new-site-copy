@@ -49,7 +49,10 @@ function createAdminControllers({
   repos,
   setCookie,
   clearCookie,
-  cookieNames
+  cookieNames,
+  userCookieNames,
+  tokenService,
+  buildP2PUserFromEmail
 }) {
   const loginLimiter = createInMemoryRateLimiter({
     windowMs: 10 * 60 * 1000,
@@ -753,6 +756,41 @@ function createAdminControllers({
     return res.json(data);
   }
 
+  async function loginAsUser(req, res) {
+    if (!tokenService || !buildP2PUserFromEmail || !userCookieNames) {
+      return res.status(501).json({ message: 'Login-as-user is not configured on this server.' });
+    }
+    const userId = String(req.params.userId || '').trim();
+    if (!userId) return res.status(400).json({ message: 'userId is required.' });
+
+    const userRecord = await adminStore.getUserById(userId);
+    if (!userRecord || !userRecord.email) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const user = buildP2PUserFromEmail(userRecord.email, userRecord.role || 'USER');
+    const tokenPair = tokenService.createTokenPair(user);
+
+    await repos.saveRefreshToken({
+      userId: user.id,
+      role: user.role,
+      username: user.username,
+      email: user.email,
+      tokenHash: tokenService.hashRefreshToken(tokenPair.refreshToken),
+      issuedAt: Date.now(),
+      expiresAt: tokenPair.refreshTokenExpiresAt
+    });
+
+    setCookie(res, userCookieNames.accessToken, tokenPair.accessToken, tokenService.ACCESS_TOKEN_TTL_SECONDS);
+    setCookie(res, userCookieNames.refreshToken, tokenPair.refreshToken, tokenService.REFRESH_TOKEN_TTL_SECONDS);
+
+    return res.json({
+      message: 'Impersonation session created.',
+      user: { id: user.id, username: user.username, email: user.email, role: user.role },
+      accessToken: tokenPair.accessToken
+    });
+  }
+
   return {
     authLogin,
     authRefresh,
@@ -804,7 +842,8 @@ function createAdminControllers({
     listAuditLogs,
     logAudit,
     setAdminCookies,
-    clearAdminCookies
+    clearAdminCookies,
+    loginAsUser
   };
 }
 

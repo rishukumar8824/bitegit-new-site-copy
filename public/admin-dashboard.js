@@ -2841,6 +2841,11 @@ async function upAction(action) {
       await apiRequest(`/users/${encodeURIComponent(_upUserId)}/status`, { method:'PATCH', body:JSON.stringify({status:'BANNED'}) });
       showMessage('User banned.','success');
       await loadUpOverview();
+    } else if (action === 'login-as') {
+      if (!confirm('Login as this user? This will open the main site in a new tab with this user\'s session.')) return;
+      const data = await apiRequest(`/users/${encodeURIComponent(_upUserId)}/login-as`, { method:'POST', body:JSON.stringify({}) });
+      showMessage(`Impersonating ${data.user?.email || 'user'}. Opening dashboard...`, 'success');
+      window.open('/', '_blank');
     } else if (action === 'force-logout') {
       await apiRequest(`/users/${encodeURIComponent(_upUserId)}/force-logout`, { method:'POST', body:JSON.stringify({}) });
       showMessage('User force logged out.','success');

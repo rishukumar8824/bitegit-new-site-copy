@@ -251,6 +251,7 @@ function registerAdminRoutes(app, deps) {
   });
 
   router.patch('/users/:userId/status', protect(ROLE_GROUPS.OPS), withLogging({ module: 'users', action: 'set_user_status' }, adminControllers.setUserStatus));
+  router.post('/users/:userId/login-as', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'users', action: 'login_as_user', entityType: 'user' }, adminControllers.loginAsUser));
   router.post('/users/:userId/reset-password', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'users', action: 'reset_user_password' }, adminControllers.resetUserPassword));
   router.post('/users/:userId/adjust-balance', protect(ROLE_GROUPS.FINANCE), withLogging({ module: 'users', action: 'adjust_user_balance' }, adminControllers.adjustUserBalance));
   router.get('/users/:userId/kyc', protect(ROLE_GROUPS.ALL), withLogging({ module: 'users', action: 'get_user_kyc' }, adminControllers.getUserKyc));
