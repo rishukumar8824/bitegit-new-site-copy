@@ -176,7 +176,7 @@
             <div id="notifEmpty" style="padding:24px;text-align:center;color:rgba(255,255,255,0.3);font-size:12px;">No new notifications 🎉</div>
           </div>
         </div>
-        <button id="withdrawalBellBtn" onclick="openWithdrawalPanel()" style="position:relative;z-index:10001;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);color:#00e676;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;">
+        <button id="withdrawalBellBtn" onclick="openWithdrawalPanel()" style="position:relative;z-index:10001;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);color:#00b8d4;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;">
           💸 Withdrawals <span id="withdrawalBadge" style="display:none;background:#f6465d;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:800;align-items:center;justify-content:center;line-height:1;margin-left:2px;">0</span>
         </button>
         <button class="topbar-btn danger" id="logoutBtn">
@@ -997,7 +997,7 @@ async function loadMerchantApplications() {
   try {
     var res = await fetch('/api/admin/merchant-applications', { credentials:'include' });
     if (res.status === 401 || res.status === 403) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#f59e0b;padding:24px;">Session expired — please <a href="/admin/login" style="color:#00e676;">log in again</a>.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#f59e0b;padding:24px;">Session expired — please <a href="/admin/login" style="color:#00b8d4;">log in again</a>.</td></tr>';
       return;
     }
     var data = await res.json();
@@ -1025,7 +1025,7 @@ async function loadMerchantApplications() {
         '<td class="admin-td" style="font-family:monospace;font-size:12px;">' + escH(a.id) + '</td>' +
         '<td class="admin-td"><strong>' + escH(a.username) + '</strong><br><span style="font-size:11px;color:var(--text-2);">' + escH(a.email) + '</span></td>' +
         '<td class="admin-td" style="font-size:11px;">' + new Date(a.submittedAt).toLocaleDateString() + '</td>' +
-        '<td class="admin-td" style="font-size:12px;color:#00e676;font-weight:700;">' + escH(a.currency || '—') + '</td>' +
+        '<td class="admin-td" style="font-size:12px;color:#00b8d4;font-weight:700;">' + escH(a.currency || '—') + '</td>' +
         '<td class="admin-td" style="font-size:11px;color:var(--text-2);max-width:140px;">' + escH(socialStr) + '</td>' +
         '<td class="admin-td"><span style="color:' + statusColor + ';font-weight:700;text-transform:capitalize;">' + escH(a.status) + '</span></td>' +
         '<td class="admin-td">' + badgesHtml + '</td>' +
@@ -1084,7 +1084,7 @@ function viewMerchantApp(id) {
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
         '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;">' +
           '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Currency</div>' +
-          '<div style="font-weight:700;color:#00e676;font-size:1rem;">' + escH(a.currency || '—') + '</div>' +
+          '<div style="font-weight:700;color:#00b8d4;font-size:1rem;">' + escH(a.currency || '—') + '</div>' +
         '</div>' +
         '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;">' +
           '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Status</div>' +
@@ -1095,9 +1095,9 @@ function viewMerchantApp(id) {
       '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;">' +
         '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Social Media</div>' +
         '<div style="display:flex;flex-direction:column;gap:6px;">' +
-          (social.twitter ? '<div style="font-size:13px;color:#fff;">𝕏 Twitter/X: <span style="color:#00e676;">' + escH(social.twitter) + '</span></div>' : '') +
-          (social.telegram ? '<div style="font-size:13px;color:#fff;">✈ Telegram: <span style="color:#00e676;">' + escH(social.telegram) + '</span></div>' : '') +
-          (social.instagram ? '<div style="font-size:13px;color:#fff;">📷 Instagram: <span style="color:#00e676;">' + escH(social.instagram) + '</span></div>' : '') +
+          (social.twitter ? '<div style="font-size:13px;color:#fff;">𝕏 Twitter/X: <span style="color:#00b8d4;">' + escH(social.twitter) + '</span></div>' : '') +
+          (social.telegram ? '<div style="font-size:13px;color:#fff;">✈ Telegram: <span style="color:#00b8d4;">' + escH(social.telegram) + '</span></div>' : '') +
+          (social.instagram ? '<div style="font-size:13px;color:#fff;">📷 Instagram: <span style="color:#00b8d4;">' + escH(social.instagram) + '</span></div>' : '') +
           (!social.twitter && !social.telegram && !social.instagram ? '<div style="color:rgba(255,255,255,0.3);font-size:12px;">None provided</div>' : '') +
         '</div>' +
       '</div>' +

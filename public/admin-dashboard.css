@@ -11,9 +11,9 @@
   --bg-input:     #0d1117;
   --border:       rgba(255,255,255,0.07);
   --border-hover: rgba(255,255,255,0.14);
-  --accent:       #00e676;
-  --accent-hover: #33eeff;
-  --accent-dim:   rgba(0,229,255,0.10);
+  --accent:       #00b8d4;
+  --accent-hover: #0288d1;
+  --accent-dim:   rgba(0,184,212,0.10);
   --green:        #02c076;
   --green-dim:    rgba(2,192,118,0.12);
   --red:          #f6465d;
@@ -42,7 +42,7 @@ html,body{margin:0;padding:0;background:var(--bg-base);color:var(--text-1);font-
 .admin-nav-btn svg{flex-shrink:0;opacity:0.65;transition:opacity 0.15s;}
 .admin-nav-btn:hover{color:var(--text-1);background:rgba(255,255,255,0.04);border-color:var(--border);}
 .admin-nav-btn:hover svg{opacity:1;}
-.admin-nav-btn.active{color:var(--accent);background:var(--accent-dim);border-color:rgba(0,229,255,0.22);font-weight:600;}
+.admin-nav-btn.active{color:var(--accent);background:var(--accent-dim);border-color:rgba(0,184,212,0.22);font-weight:600;}
 .admin-nav-btn.active svg{opacity:1;}
 .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px;min-width:18px;text-align:center;line-height:16px;}
 .sidebar-footer{padding:12px 8px;border-top:1px solid var(--border);flex-shrink:0;}
@@ -124,14 +124,14 @@ button:disabled{opacity:0.4;cursor:not-allowed;}
 .toggle input:checked+.toggle-slider::after{transform:translateX(18px);}
 .ticket-item{padding:11px 12px;border-radius:9px;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;margin-bottom:4px;}
 .ticket-item:hover{border-color:var(--border-hover);background:rgba(255,255,255,0.03);}
-.ticket-item.active{border-color:rgba(0,229,255,0.35);background:var(--accent-dim);}
+.ticket-item.active{border-color:rgba(0,184,212,0.35);background:var(--accent-dim);}
 .ticket-subject{font-size:13px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ticket-meta{font-size:11px;color:var(--text-2);margin-top:3px;}
 .chat-msg{max-width:76%;margin-bottom:12px;display:flex;flex-direction:column;}
 .chat-msg.admin-msg{margin-left:auto;align-items:flex-end;}
 .chat-bubble{border-radius:14px;padding:10px 14px;font-size:13px;line-height:1.5;}
 .chat-msg.user-msg .chat-bubble{background:var(--bg-card2);color:var(--text-1);border-radius:14px 14px 14px 4px;}
-.chat-msg.admin-msg .chat-bubble{background:var(--accent-dim);color:var(--text-1);border:1px solid rgba(0,229,255,0.18);border-radius:14px 14px 4px 14px;}
+.chat-msg.admin-msg .chat-bubble{background:var(--accent-dim);color:var(--text-1);border:1px solid rgba(0,184,212,0.18);border-radius:14px 14px 4px 14px;}
 .chat-sender{font-size:10px;font-weight:700;color:var(--text-2);margin-bottom:4px;}
 .chat-msg.admin-msg .chat-sender{color:var(--accent);}
 .chat-time{font-size:10px;color:var(--text-3);margin-top:4px;}
@@ -190,7 +190,7 @@ button:disabled{opacity:0.4;cursor:not-allowed;}
   transition:border-color .15s, background .15s;
 }
 .support-ticket-item:hover{border-color:var(--border-hover);background:var(--bg-card2);}
-.support-ticket-item.active{border-color:var(--accent);background:rgba(0,229,255,0.05);}
+.support-ticket-item.active{border-color:var(--accent);background:rgba(0,184,212,0.05);}
 .support-ticket-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;border-radius:0 3px 3px 0;background:var(--accent);}
 
 /* ── Chat Empty State ─────────────────────────────────────── */

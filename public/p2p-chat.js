@@ -417,8 +417,8 @@ function buildMessageMarkup(message) {
     String(message.sender || '') === 'Support'
   );
   const senderDisplay = isAdminMsg
-    ? `<span style="display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#00e676;">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#00e676;color:#000;font-size:10px;font-weight:900;flex-shrink:0;">BX</span>
+    ? `<span style="display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#00b8d4;">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#00b8d4;color:#000;font-size:10px;font-weight:900;flex-shrink:0;">BX</span>
         Support
        </span>`
     : escapeHtml(message.sender);

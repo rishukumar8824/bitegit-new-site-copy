@@ -11,7 +11,7 @@
 
     <!-- App mount guard: hide raw HTML until JS initializes -->
     <div id="appInitLoader" style="position:fixed;inset:0;background:#0b0e11;z-index:99999;display:flex;align-items:center;justify-content:center;">
-      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#00e676;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
+      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#00b8d4;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
     </div>
     <style>@keyframes _apl_spin{to{transform:rotate(360deg)}} body{visibility:hidden!important;} body.app-ready{visibility:visible!important;}</style>
     <script>
@@ -30,7 +30,7 @@
       <div class="p2p-header-inner">
         <div class="p2p-brand-wrap">
           <a href="/" class="p2p-brand">
-            <span class="p2p-brand-word" style="color:#00e676;letter-spacing:0.04em;">BITEGIT</span>
+            <span class="p2p-brand-word" style="color:#00b8d4;letter-spacing:0.04em;">BITEGIT</span>
           </a>
         </div>
         <nav class="p2p-main-nav" aria-label="Primary navigation">
@@ -83,7 +83,7 @@
     <aside id="p2pNavDrawer" class="p2p-nav-drawer" aria-hidden="true">
       <div class="p2p-drawer-head">
         <strong>
-          <a href="/" style="color:#00e676;font-weight:800;font-size:1.1rem;letter-spacing:0.04em;text-decoration:none;">BITEGIT</a>
+          <a href="/" style="color:#00b8d4;font-weight:800;font-size:1.1rem;letter-spacing:0.04em;text-decoration:none;">BITEGIT</a>
         </strong>
         <button id="p2pNavClose" type="button" aria-label="Close">✕</button>
       </div>
@@ -189,7 +189,7 @@
 
         <!-- Alert -->
         <div class="p2p-alert-bar" id="p2pAlertBar" style="position:relative;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00b8d4" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span>Do not share personal contact details. Always verify payment information independently.</span>
           <button onclick="document.getElementById('p2pAlertBar').style.display='none'" type="button" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.5);font-size:14px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;">✕</button>
         </div>
@@ -345,7 +345,7 @@
 
       <!-- Main tabs: Pending | Ended -->
       <div id="ordMainTabs" style="display:flex;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;">
-        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #00e676;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
+        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #00b8d4;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
         <button id="ordTabEnded" data-ord-main="ended" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.4);font-size:14px;font-weight:500;cursor:pointer;touch-action:manipulation;">Ended</button>
       </div>
 
@@ -524,7 +524,7 @@
         <p id="editNicknameChangesLeft" style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 4px;"></p>
         <p id="editNicknameMsg" style="font-size:13px;min-height:18px;margin:0 0 28px;"></p>
 
-        <button id="editNicknameSaveBtn" onclick="saveProfileNickname()" style="width:100%;padding:15px;border-radius:14px;background:#00e676;border:none;color:#000;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.02em;">
+        <button id="editNicknameSaveBtn" onclick="saveProfileNickname()" style="width:100%;padding:15px;border-radius:14px;background:#00b8d4;border:none;color:#000;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.02em;">
           Save Username
         </button>
       </div>
@@ -1242,7 +1242,7 @@
           <h2 id="orderTitle" style="margin:0 0 0.3rem;font-size:1.05rem;font-weight:700;line-height:1.4;color:#fff;">Waiting for seller to release crypto</h2>
           <p style="margin:0;font-size:0.81rem;color:rgba(255,255,255,0.45);">
             <span id="orderTimerLabel" style="margin-right:4px;">Pay before timer expires</span>
-            <strong id="orderTimer" style="color:#00e676;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
+            <strong id="orderTimer" style="color:#00b8d4;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
           </p>
         </div>
 
@@ -1250,11 +1250,11 @@
         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;margin-bottom:0.85rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
-              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#00e676;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
+              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#00b8d4;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
               <div>
                 <div style="display:flex;align-items:center;gap:0.35rem;">
                   <h3 id="orderMerchant" style="margin:0;font-size:0.88rem;font-weight:700;color:#fff;"></h3>
-                  <span style="color:#00e676;font-size:0.75rem;">⚡</span>
+                  <span style="color:#00b8d4;font-size:0.75rem;">⚡</span>
                 </div>
                 <p id="orderCounterpartyMeta" style="margin:0;font-size:0.72rem;color:rgba(255,255,255,0.4);"></p>
               </div>
@@ -1432,7 +1432,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:50%;height:100%;background:linear-gradient(90deg,#00e676,#00b8d4);border-radius:99px;"></div>
+          <div style="width:50%;height:100%;background:linear-gradient(90deg,#00b8d4,#00b8d4);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1480,7 +1480,7 @@
 
         <p class="mob-kyc-fp-note">🔒 Your data is encrypted and used only for verification</p>
         <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
-          Powered by <span style="color:#00e676;font-weight:700;">Sumsub</span>
+          Powered by <span style="color:#00b8d4;font-weight:700;">Sumsub</span>
         </p>
       </div>
     </div>
@@ -1498,7 +1498,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:100%;height:100%;background:linear-gradient(90deg,#00e676,#00b8d4);border-radius:99px;"></div>
+          <div style="width:100%;height:100%;background:linear-gradient(90deg,#00b8d4,#00b8d4);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1581,7 +1581,7 @@
 
         <p class="mob-kyc-fp-note">🔒 Review takes 24–48 hours. You'll be notified on approval.</p>
         <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
-          Powered by <span style="color:#00e676;font-weight:700;">Sumsub</span>
+          Powered by <span style="color:#00b8d4;font-weight:700;">Sumsub</span>
         </p>
       </div>
     </div>
@@ -1639,7 +1639,7 @@
               <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="4">0</text>
               <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="rgba(255,255,255,0.08)">0</text>
               <!-- % teal -->
-              <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#00e676">%</text>
+              <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#00b8d4">%</text>
             </svg>
           </div>
           <h1 style="font-size:1.6rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;line-height:1.25;">Become a Merchant</h1>
@@ -1800,7 +1800,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;">
               <div style="display:flex;align-items:center;gap:12px;">
                 <span id="merchantCurrencyCheck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Select a currency <span id="merchantCurrencyLabel" style="color:#00e676;font-weight:700;"></span> <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
+                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Select a currency <span id="merchantCurrencyLabel" style="color:#00b8d4;font-weight:700;"></span> <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
               </div>
               <button id="merchantCurrencyAddBtn" onclick="merchantToggleCurrency()" style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
             </div>
@@ -1856,7 +1856,7 @@
                   <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:0.75rem;color:rgba(255,255,255,0.35);pointer-events:none;">Instagram</span>
                   <input id="merchantInstagram" type="text" placeholder="@username" style="width:100%;padding:12px 12px 12px 82px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.88rem;box-sizing:border-box;outline:none;">
                 </div>
-                <button onclick="merchantSaveSocial()" style="width:100%;padding:12px;border-radius:10px;background:#00e676;color:#000;font-size:0.9rem;font-weight:700;border:none;cursor:pointer;margin-top:2px;">Save</button>
+                <button onclick="merchantSaveSocial()" style="width:100%;padding:12px;border-radius:10px;background:#00b8d4;color:#000;font-size:0.9rem;font-weight:700;border:none;cursor:pointer;margin-top:2px;">Save</button>
               </div>
             </div>
           </div>
@@ -1866,8 +1866,8 @@
         <!-- Agreement + Submit -->
         <div style="margin-top:1.8rem;">
           <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:1.5rem;">
-            <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#00e676;flex-shrink:0;" />
-            <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#00e676;cursor:pointer;">Merchant Service Agreement</span></span>
+            <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#00b8d4;flex-shrink:0;" />
+            <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#00b8d4;cursor:pointer;">Merchant Service Agreement</span></span>
           </label>
           <button onclick="submitMerchantApp()" style="width:100%;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;">Submit Application</button>
         </div>
@@ -1887,7 +1887,7 @@
         <!-- Icon -->
         <div style="display:flex;justify-content:center;margin-bottom:1.5rem;">
           <div style="width:72px;height:72px;border-radius:50%;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.25);display:flex;align-items:center;justify-content:center;">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#00e676"/></svg>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#00b8d4" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#00b8d4"/></svg>
           </div>
         </div>
         <h2 style="font-size:1.3rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;">Two-Factor Authentication</h2>
@@ -1897,7 +1897,7 @@
         <div style="border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:1rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:.8rem;">
             <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,229,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00b8d4" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </div>
             <div>
               <div style="font-weight:700;color:#fff;font-size:.9rem;">Email OTP</div>
@@ -1918,7 +1918,7 @@
               <div style="font-size:.75rem;color:#848e9c;margin-top:2px;">TOTP-based 2FA</div>
             </div>
           </div>
-          <button onclick="(function(b){var t=document.createElement('div');t.textContent='Google Authenticator coming soon';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap;';document.body.appendChild(t);setTimeout(function(){t.remove();},2000);})(this)" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#00e676;font-weight:600;cursor:pointer;">Enable</button>
+          <button onclick="(function(b){var t=document.createElement('div');t.textContent='Google Authenticator coming soon';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap;';document.body.appendChild(t);setTimeout(function(){t.remove();},2000);})(this)" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#00b8d4;font-weight:600;cursor:pointer;">Enable</button>
         </div>
 
         <!-- Security tips -->
@@ -2538,7 +2538,7 @@
       // Show queue position immediately
       var queuePos = Math.floor(Math.random()*8)+2;
       var waitMin = Math.ceil(queuePos * 1.5);
-      spAddBotBubble('<p>🎧 <strong>Connecting you to a live agent…</strong></p><p style="font-size:0.82rem;opacity:0.8;">📋 Your position in queue: <strong style="color:#00e676;">#' + queuePos + '</strong><br>⏱️ Estimated wait: ~' + waitMin + ' min<br><span style="font-size:0.75rem;opacity:0.55;">Please describe your issue while you wait.</span></p>');
+      spAddBotBubble('<p>🎧 <strong>Connecting you to a live agent…</strong></p><p style="font-size:0.82rem;opacity:0.8;">📋 Your position in queue: <strong style="color:#00b8d4;">#' + queuePos + '</strong><br>⏱️ Estimated wait: ~' + waitMin + ' min<br><span style="font-size:0.75rem;opacity:0.55;">Please describe your issue while you wait.</span></p>');
       spSetStatus('🟡 Queue #' + queuePos + ' — Waiting…', 'waiting');
 
       try {

@@ -415,7 +415,7 @@ async function loadOverview() {
   const other  = Math.max(0, Number(revenue.totalRevenue?.month || 0) - p2p - spot - wdfee);
   const donutData  = [p2p, spot, wdfee, other];
   const donutLabels = ['P2P', 'Spot Fees', 'Withdrawal', 'Other'];
-  const donutColors = ['#00e676', '#f0b90b', '#0ecb81', '#a78bfa'];
+  const donutColors = ['#00b8d4', '#f0b90b', '#0ecb81', '#a78bfa'];
   const donutTotal = p2p + spot + wdfee + other;
 
   const dtEl = document.getElementById('donutTotal');
@@ -890,7 +890,7 @@ function buildDisputeMsgBubble(msg, buyerLabel, sellerLabel) {
     : '';
   let roleLabel, roleColor, bubble;
   if (rawSender.startsWith('admin') || rawSender === 'admin' || msg.sender === 'Support') {
-    roleLabel = 'BX Support'; roleColor = '#00e676'; bubble = 'rgba(0,229,255,0.10)';
+    roleLabel = 'BX Support'; roleColor = '#00b8d4'; bubble = 'rgba(0,229,255,0.10)';
   } else if (rawSender === 'buyer' || rawSender.includes('buyer')) {
     roleLabel = '🟦 Buyer (' + escapeHtml(buyerLabel) + ')'; roleColor = '#3b82f6'; bubble = 'rgba(59,130,246,0.10)';
   } else if (rawSender === 'seller' || rawSender.includes('seller')) {
@@ -1244,7 +1244,7 @@ async function loadSupport() {
 
     // User avatar (first letter of userId or email)
     const avatarChar = (userLabel[0] || '?').toUpperCase();
-    const avatarColors = ['#00e676','#02c076','#4263eb','#f6465d','#a855f7'];
+    const avatarColors = ['#00b8d4','#02c076','#4263eb','#f6465d','#a855f7'];
     const avatarColor = avatarColors[avatarChar.charCodeAt(0) % avatarColors.length];
 
     return `<div class="support-ticket-item${isActive ? ' active' : ''}"
@@ -1442,7 +1442,7 @@ async function loadRevenue() {
     'revenueChart',
     trend.map((point) => point.date),
     trend.map((point) => Number(point.revenue || 0)),
-    '#00e676'
+    '#00b8d4'
   );
 
   // ── Revenue Donut Chart ──
@@ -1452,7 +1452,7 @@ async function loadRevenue() {
   const rother = Math.max(0, Number(payload.totalRevenue?.month || 0) - rp2p - rspot - rwdfee);
   const rdData   = [rp2p, rspot, rwdfee, rother];
   const rdLabels = ['P2P', 'Spot Fees', 'Withdrawal', 'Other'];
-  const rdColors = ['#00e676', '#0099a8', '#38bdf8', '#0ea5e9'];
+  const rdColors = ['#00b8d4', '#0099a8', '#38bdf8', '#0ea5e9'];
   const rdTotal  = rp2p + rspot + rwdfee + rother;
 
   const rdTotalEl = document.getElementById('revDonutTotal');
@@ -2770,7 +2770,7 @@ async function loadUpLogins() {
               <span style="font-size:10px;color:var(--text-2);white-space:nowrap;">${formatDate(time)}</span>
             </div>
             <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;align-items:center;">
-              <span style="font-size:11px;color:var(--text-2);">🌐 <span style="color:#00e676;font-family:monospace;font-size:11px;">${ip}</span></span>
+              <span style="font-size:11px;color:var(--text-2);">🌐 <span style="color:#00b8d4;font-family:monospace;font-size:11px;">${ip}</span></span>
               ${locationStr
                 ? `<span style="font-size:11px;color:var(--text-2);">${flag} <span style="color:var(--text-1);">${locationStr}</span></span>`
                 : '<span style="font-size:11px;color:rgba(255,255,255,0.2);">📍 Location unavailable</span>'}
@@ -2778,7 +2778,7 @@ async function loadUpLogins() {
             </div>
             <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;align-items:center;">
               ${deviceStr ? `<span style="font-size:10px;color:rgba(255,255,255,0.4);">📱 ${deviceStr}</span>` : ''}
-              ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="font-size:10px;color:#00e676;text-decoration:none;">🗺️ View on Map</a>` : ''}
+              ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="font-size:10px;color:#00b8d4;text-decoration:none;">🗺️ View on Map</a>` : ''}
             </div>
           </div>`;
         }).join('')}
@@ -3343,7 +3343,7 @@ function showSupportNotification(info) {
     padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
     box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:320px;`;
 
-  const avatarColor = '#00e676';
+  const avatarColor = '#00b8d4';
   n.innerHTML = `
     <div style="width:38px;height:38px;border-radius:50%;background:${avatarColor}20;border:2px solid ${avatarColor}40;
                 display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🎧</div>
@@ -3533,7 +3533,7 @@ function renderNotifPanel() {
   }
   if (empty) empty.style.display = 'none';
   var icons = { withdrawal:'💸', deposit:'⬇️', kyc:'🪪', support:'💬', system:'⚙️' };
-  var colors = { withdrawal:'#f6465d', deposit:'#0ecb81', kyc:'#f0b90b', support:'#00e676', system:'#a78bfa' };
+  var colors = { withdrawal:'#f6465d', deposit:'#0ecb81', kyc:'#f0b90b', support:'#00b8d4', system:'#a78bfa' };
   list.innerHTML = _notifs.map(function(n, i) {
     var ic = icons[n.type] || '🔔';
     var cl = colors[n.type] || '#fff';
@@ -3596,11 +3596,11 @@ function showWithdrawalNotification(info) {
     <div style="width:38px;height:38px;border-radius:50%;background:rgba(0,229,255,0.1);border:2px solid rgba(0,229,255,0.3);
                 display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💸</div>
     <div style="flex:1;min-width:0;">
-      <p style="margin:0 0 2px;font-size:12px;font-weight:700;color:#00e676;">New Withdrawal Request</p>
+      <p style="margin:0 0 2px;font-size:12px;font-weight:700;color:#00b8d4;">New Withdrawal Request</p>
       <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#eaecef;">${info.username || 'User'}</p>
       <p style="margin:0 0 2px;font-size:13px;color:#eaecef;font-weight:700;">${info.amount} ${info.currency || 'USDT'} <span style="font-size:11px;color:#848e9c;">(${info.network || ''})</span></p>
       <p style="margin:2px 0 0;font-size:10px;color:#848e9c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${info.address || ''}</p>
-      <p style="margin:4px 0 0;font-size:11px;color:#00e676;font-weight:600;">👆 Click to review</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#00b8d4;font-weight:600;">👆 Click to review</p>
     </div>
     <button onclick="event.stopPropagation();this.closest('[style]').remove();"
       style="background:none;border:none;color:#848e9c;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;">✕</button>`;
@@ -3717,7 +3717,7 @@ async function openWithdrawalPanel() {
       <div style="border-bottom:1px solid rgba(255,255,255,0.06);">
         <div onclick="wdToggleDetail('${detailId}')" style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:16px;font-weight:800;color:#eaecef;">${escapeHtml(String(w.amount))} <span style="color:#00e676;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
+            <div style="font-size:16px;font-weight:800;color:#eaecef;">${escapeHtml(String(w.amount))} <span style="color:#00b8d4;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
             <div style="font-size:11px;color:#848e9c;margin-top:2px;">${userName} &nbsp;·&nbsp; ${escapeHtml(createdAt)}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
