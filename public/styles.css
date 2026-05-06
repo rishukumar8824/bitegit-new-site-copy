@@ -92,7 +92,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: rgba(244, 171, 52, 0.7);
-  box-shadow: 0 0 0 2px rgba(0,229,255,0.2);
+  box-shadow: 0 0 0 2px rgba(0,184,212,0.2);
 }
 
 button,
@@ -304,8 +304,8 @@ button:hover,
 }
 
 .secondary-btn.soft {
-  background: rgba(0,229,255,0.12);
-  border-color: rgba(0,229,255,0.32);
+  background: rgba(0,184,212,0.12);
+  border-color: rgba(0,184,212,0.32);
   color: #00b8d4;
 }
 
@@ -391,8 +391,8 @@ button:hover,
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(0,229,255,0.18);
-  border: 1px solid rgba(0,229,255,0.45);
+  background: rgba(0,184,212,0.18);
+  border: 1px solid rgba(0,184,212,0.45);
   color: #00b8d4;
   font-weight: 700;
 }
@@ -421,13 +421,13 @@ button:hover,
   border-radius: 10px;
   padding: 9px 12px;
   width: 100%;
-  background: rgba(0,229,255,0.2);
-  border: 1px solid rgba(0,229,255,0.35);
+  background: rgba(0,184,212,0.2);
+  border: 1px solid rgba(0,184,212,0.35);
   color: #00b8d4;
 }
 
 .coin-trade-btn:hover {
-  background: rgba(0,229,255,0.34);
+  background: rgba(0,184,212,0.34);
 }
 
 .landing-chart-card {
@@ -481,7 +481,7 @@ button:hover,
 
 .pair-btn.active {
   background: rgba(244, 171, 52, 0.25);
-  border-color: rgba(0,229,255,0.45);
+  border-color: rgba(0,184,212,0.45);
   color: #00b8d4;
 }
 
@@ -618,7 +618,7 @@ button:hover,
 }
 
 .side-tab.active {
-  background: rgba(0,229,255,0.2);
+  background: rgba(0,184,212,0.2);
   color: #00b8d4;
 }
 
@@ -1519,7 +1519,7 @@ th {
 }
 
 .asset-chip.active {
-  background: rgba(0,229,255,0.1);
+  background: rgba(0,184,212,0.1);
   color: #00b8d4;
 }
 

@@ -97,7 +97,7 @@ html,body{margin:0;padding:0;background:var(--bg-base);color:var(--text-1);font-
 .badge-blue{color:#7ab5f5;background:rgba(74,107,235,0.15);}
 .input-dark{width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:var(--bg-input);color:var(--text-1);padding:9px 12px;font-size:13px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
 .input-dark::placeholder{color:var(--text-3);}
-.input-dark:focus{border-color:rgba(0,229,255,0.5);box-shadow:0 0 0 3px rgba(0,229,255,0.08);}
+.input-dark:focus{border-color:rgba(0,184,212,0.5);box-shadow:0 0 0 3px rgba(0,184,212,0.08);}
 select.input-dark{cursor:pointer;}
 textarea.input-dark{resize:vertical;}
 .input-label{font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;display:block;}
