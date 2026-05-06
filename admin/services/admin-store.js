@@ -908,8 +908,18 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     }
 
     const profile = await adminUserProfiles.findOne({ userId: normalizedUserId });
-    const email = String(profile?.email || '').trim().toLowerCase();
-    const credential = email ? await p2pCredentials.findOne({ email }) : null;
+    let email = String(profile?.email || '').trim().toLowerCase();
+
+    // Fallback: if no profile entry, derive email from p2pCredentials by matching derived userId
+    let credential = email ? await p2pCredentials.findOne({ email }) : null;
+    if (!email) {
+      const allCreds = await p2pCredentials.find({}, { projection: { email: 1, role: 1 } }).toArray();
+      const matched = allCreds.find(c => makeP2PUserId(String(c.email || '').trim().toLowerCase()) === normalizedUserId);
+      if (matched) {
+        email = String(matched.email || '').trim().toLowerCase();
+        credential = matched;
+      }
+    }
     const wallet = await wallets.findOne({ userId: normalizedUserId });
     const p2pOrderCount = await p2pOrders.countDocuments({ $or: [{ buyerUserId: normalizedUserId }, { sellerUserId: normalizedUserId }] });
     const tradeOrderCount = await tradeOrders.countDocuments({ userId: normalizedUserId });

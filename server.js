@@ -5731,7 +5731,9 @@ async function boot() {
         legacyP2PSession: P2P_USER_COOKIE_NAME
       },
       tokenService,
-      buildP2PUserFromEmail
+      buildP2PUserFromEmail,
+      createLegacyP2PUserSession: createP2PUserSession,
+      p2pUserTtlMs: P2P_USER_TTL_MS
     });
 
     registerAdminRoutes(app, {

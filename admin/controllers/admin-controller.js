@@ -52,7 +52,9 @@ function createAdminControllers({
   cookieNames,
   userCookieNames,
   tokenService,
-  buildP2PUserFromEmail
+  buildP2PUserFromEmail,
+  createLegacyP2PUserSession,
+  p2pUserTtlMs
 }) {
   const loginLimiter = createInMemoryRateLimiter({
     windowMs: 10 * 60 * 1000,
@@ -783,6 +785,14 @@ function createAdminControllers({
 
     setCookie(res, userCookieNames.accessToken, tokenPair.accessToken, tokenService.ACCESS_TOKEN_TTL_SECONDS);
     setCookie(res, userCookieNames.refreshToken, tokenPair.refreshToken, tokenService.REFRESH_TOKEN_TTL_SECONDS);
+
+    if (createLegacyP2PUserSession && userCookieNames.legacyP2PSession) {
+      try {
+        const legacySession = await createLegacyP2PUserSession(user.email, user.role);
+        const ttlSeconds = Math.floor(Number(p2pUserTtlMs || 86400000) / 1000);
+        setCookie(res, userCookieNames.legacyP2PSession, legacySession.token, ttlSeconds);
+      } catch (_) {}
+    }
 
     return res.json({
       message: 'Impersonation session created.',
