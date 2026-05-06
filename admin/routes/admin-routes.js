@@ -272,9 +272,11 @@ function registerAdminRoutes(app, deps) {
         aadhaarMasked: data.aadhaarMasked,
         submittedAt: data.submittedAt,
         hasAadhaarFront: !!data.aadhaarFront,
+        hasAadhaarBack: !!data.aadhaarBack,
         hasSelfie: !!data.selfie,
         // Include actual data for backward-compat (admin may use it)
         aadhaarFront: data.aadhaarFront || null,
+        aadhaarBack: data.aadhaarBack || null,
         selfie: data.selfie || null
       });
     })
@@ -286,13 +288,17 @@ function registerAdminRoutes(app, deps) {
     protect(ROLE_GROUPS.COMPLIANCE),
     async (req, res) => {
       const userId = safeString(req.params.userId);
-      const type   = safeString(req.params.type); // 'aadhaar' | 'selfie'
-      if (!userId || !['aadhaar','selfie'].includes(type)) {
+      const type   = safeString(req.params.type); // 'aadhaar' | 'aadhaar-back' | 'selfie'
+      if (!userId || !['aadhaar', 'aadhaar-back', 'selfie'].includes(type)) {
         return res.status(400).json({ message: 'Invalid request' });
       }
       try {
         const data = await adminStore.getKycDocuments(userId);
-        const raw = type === 'aadhaar' ? data.aadhaarFront : data.selfie;
+        const raw = type === 'aadhaar'
+          ? data.aadhaarFront
+          : type === 'aadhaar-back'
+            ? data.aadhaarBack
+            : data.selfie;
         if (!raw) return res.status(404).json({ message: 'Image not found' });
 
         // raw is a data URL: "data:image/jpeg;base64,..."
@@ -383,6 +389,35 @@ function registerAdminRoutes(app, deps) {
   router.get('/monitoring/api-logs', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'monitoring', action: 'api_logs' }, adminControllers.monitoringApiLogs));
   router.get('/monitoring/health', protect(ROLE_GROUPS.ALL), withLogging({ module: 'monitoring', action: 'health', audit: false }, adminControllers.monitoringHealth));
   router.get('/audit/logs', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'audit', action: 'list_logs' }, adminControllers.listAuditLogs));
+
+  // ── Test Email ──
+  router.post('/send-test-email', protect(ROLE_GROUPS.ALL), async (req, res) => {
+    const authEmailService = req.app.get('authEmailService');
+    const { to } = req.body || {};
+    const targetEmail = String(to || '').trim();
+    if (!targetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(targetEmail)) {
+      return res.status(400).json({ message: 'Valid email address required.' });
+    }
+    if (!authEmailService) {
+      return res.status(503).json({ message: 'Email service not configured on server.' });
+    }
+    const p2pEmailService = req.app.get('p2pEmailService');
+    const results = {};
+    try { results.signup_otp = await authEmailService.sendSignupOtpEmail(targetEmail, '123456'); } catch(e) { results.signup_otp = { delivered: false, error: e.message }; }
+    try { results.login_otp = await authEmailService.sendLoginOtpEmail(targetEmail, '654321'); } catch(e) { results.login_otp = { delivered: false, error: e.message }; }
+    try { results.forgot_password = await authEmailService.sendForgotPasswordOtpEmail(targetEmail, '999888'); } catch(e) { results.forgot_password = { delivered: false, error: e.message }; }
+    try { results.new_device_alert = await authEmailService.sendNewDeviceLoginAlert(targetEmail, { ipAddress: '192.168.1.1', userAgent: 'Test Browser / Chrome 120', loginTimeUtc: new Date().toISOString(), location: 'India' }); } catch(e) { results.new_device_alert = { delivered: false, error: e.message }; }
+    try { results.deposit = await authEmailService.sendDepositSuccessEmail(targetEmail, { asset: 'USDT', amount: 100, transactionId: 'TEST-TX-DEPOSIT-001' }); } catch(e) { results.deposit = { delivered: false, error: e.message }; }
+    try { results.withdrawal = await authEmailService.sendWithdrawalSuccessEmail(targetEmail, { asset: 'USDT', amount: 50, address: '0xTESTADDR123456', transactionId: 'TEST-TX-WITHDRAW-001' }); } catch(e) { results.withdrawal = { delivered: false, error: e.message }; }
+    if (p2pEmailService) {
+      try { results.p2p_order_confirm = await p2pEmailService.sendOrderConfirmation(targetEmail, { id: 'TEST-ORDER-001' }); } catch(e) { results.p2p_order_confirm = { delivered: false, error: e.message }; }
+      try { results.p2p_order_update = await p2pEmailService.sendOrderUpdate(targetEmail, { id: 'TEST-ORDER-001' }, 'COMPLETED'); } catch(e) { results.p2p_order_update = { delivered: false, error: e.message }; }
+    } else {
+      results.p2p_order_confirm = { delivered: false, reason: 'p2p email service not configured' };
+      results.p2p_order_update = { delivered: false, reason: 'p2p email service not configured' };
+    }
+    return res.json({ message: 'Test emails sent.', to: targetEmail, results });
+  });
 
   app.use('/api/admin', router);
 

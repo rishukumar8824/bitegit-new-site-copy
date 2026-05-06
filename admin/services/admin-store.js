@@ -844,7 +844,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
 
     const requiresPostFilter = Boolean(userIdQuery || normalizedStatusFilter || kycStatusQuery);
     const baseCursor = p2pCredentials
-      .find(query, { projection: { email: 1, role: 1, updatedAt: 1, createdAt: 1 } })
+      .find(query, { projection: { email: 1, role: 1, updatedAt: 1, createdAt: 1, lastActiveAt: 1 } })
       .sort({ updatedAt: -1 });
 
     const credentials = requiresPostFilter
@@ -873,7 +873,8 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
         kycStatus: String(profile?.kycStatus || 'PENDING').toUpperCase(),
         balance: getAvailableBalance(wallet),
         lockedBalance: toNumber(wallet?.lockedBalance, 0),
-        updatedAt: toDate(item.updatedAt || item.createdAt || Date.now()).toISOString()
+        updatedAt: toDate(item.updatedAt || item.createdAt || Date.now()).toISOString(),
+        lastActiveAt: item.lastActiveAt ? toDate(item.lastActiveAt).toISOString() : null
       };
     });
 
@@ -1035,6 +1036,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
         userId: normalizedUserId,
         status: String(profile?.kycStatus || 'PENDING').toUpperCase(),
         aadhaarFront: null,
+        aadhaarBack: null,
         selfie: null,
         aadhaarLast4: '',
         aadhaarMasked: '',
@@ -1043,6 +1045,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     }
 
     let aadhaarFront = null;
+    let aadhaarBack = null;
     let selfie = null;
 
     if (kycRequest.aadhaarFrontImage) {
@@ -1061,6 +1064,14 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       }
     }
 
+    if (kycRequest.aadhaarBackImage) {
+      try {
+        aadhaarBack = decryptText(kycRequest.aadhaarBackImage);
+      } catch (_err) {
+        aadhaarBack = null;
+      }
+    }
+
     const aadhaarMasked = String(kycRequest.aadhaarMasked || '');
     const aadhaarLast4 = aadhaarMasked.length >= 4 ? aadhaarMasked.slice(-4) : aadhaarMasked;
 
@@ -1068,6 +1079,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       userId: normalizedUserId,
       status: String(profile?.kycStatus || kycRequest.status || 'PENDING').toUpperCase(),
       aadhaarFront,
+      aadhaarBack,
       selfie,
       aadhaarLast4,
       aadhaarMasked,

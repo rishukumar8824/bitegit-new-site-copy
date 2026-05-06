@@ -16,6 +16,8 @@ function buildWithdrawalRequest(input = {}) {
   return {
     requestId: String(input.requestId || '').trim(),
     userId: String(input.userId || '').trim(),
+    username: String(input.username || '').trim(),
+    email: String(input.email || '').trim().toLowerCase(),
     amount: Number.isFinite(amount) ? Number(amount.toFixed(8)) : 0,
     currency: String(input.currency || 'USDT')
       .trim()

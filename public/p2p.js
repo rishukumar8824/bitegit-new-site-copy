@@ -469,6 +469,47 @@ function updateCurrentUserKyc(kyc) {
     statusLabel: getKycStatusLabel(status),
     canBuy: true
   };
+  syncP2PHintCache();
+}
+
+function buildP2PHintPayload() {
+  if (!currentUser) {
+    return null;
+  }
+  return {
+    id: getCurrentUserId(),
+    username: currentUser.username,
+    email: currentUser.email,
+    role: currentUser.role,
+    avatar: currentUser.avatar || '',
+    createdAt: currentUser.createdAt || null,
+    emailVerified: Boolean(currentUser.emailVerified),
+    kyc: currentUser.kyc && typeof currentUser.kyc === 'object' ? { ...currentUser.kyc } : {}
+  };
+}
+
+function syncP2PHintCache() {
+  try {
+    var payload = buildP2PHintPayload();
+    if (!payload) {
+      localStorage.removeItem('_p2p_hint');
+      return;
+    }
+    localStorage.setItem('_p2p_hint', JSON.stringify(payload));
+  } catch (_) {}
+}
+
+function getStoredP2PAccessToken() {
+  try {
+    return String(localStorage.getItem('bitegit_token') || '').trim();
+  } catch (_) {
+    return '';
+  }
+}
+
+function buildP2PAuthHeaders() {
+  var token = getStoredP2PAccessToken();
+  return token ? { Authorization: 'Bearer ' + token } : {};
 }
 
 function isKycVerifiedForBuy() {
@@ -1726,10 +1767,8 @@ async function loadProfilePanel(options = {}) {
               secDepStatus.textContent = 'Active';
               secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(22,199,132,0.15);color:#16c784;margin-left:4px;vertical-align:middle;display:inline;';
             } else {
-              secDepStatus.textContent = 'None';
-              secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(246,70,93,0.15);color:#f6465d;margin-left:4px;vertical-align:middle;display:inline;';
+              secDepStatus.style.display = 'none';
             }
-            // If user has merchant badge, hide the status tag
             if (_myMerchantBadge) secDepStatus.style.display = 'none';
           }
 
@@ -1971,16 +2010,7 @@ async function submitProfileEdit() {
       createdAt: nextProfile.createdAt || currentUser?.createdAt || null
     });
 
-    try {
-      localStorage.setItem('_p2p_hint', JSON.stringify({
-        id: getCurrentUserId(),
-        username: currentUser.username,
-        email: currentUser.email,
-        role: currentUser.role,
-        avatar: currentUser.avatar || '',
-        createdAt: currentUser.createdAt || null
-      }));
-    } catch (_) {}
+    syncP2PHintCache();
 
     updateUserUi();
     closeProfileEditModal();
@@ -2016,7 +2046,7 @@ function openProfileEditModal() {
     var quotaEl = document.getElementById('editNicknameChangesLeft');
     var saveBtn = document.getElementById('editNicknameSaveBtn');
     var msgEl = document.getElementById('editNicknameMsg');
-    if (quotaEl) quotaEl.textContent = left + ' username change' + (left === 1 ? '' : 's') + ' remaining this month';
+    if (quotaEl) quotaEl.textContent = left + ' username change' + (left === 1 ? '' : 's') + ' remaining (max 5 total)';
     if (saveBtn) {
       saveBtn.disabled = left <= 0;
       saveBtn.style.opacity = left <= 0 ? '0.4' : '1';
@@ -2030,14 +2060,12 @@ function openProfileEditModal() {
   }
 }
 
-// ── Name-change quota: 3 times per rolling 30 days ───────────────────────────
+// ── Name-change quota: 5 times total (tracked server-side) ───────────────────
+var _serverNameChangesLeft = null; // set from server response
 function _getNameChanges() {
   try {
     var raw = localStorage.getItem('_p2p_name_changes');
     var arr = raw ? JSON.parse(raw) : [];
-    var now = Date.now();
-    // Keep only changes within last 30 days
-    arr = arr.filter(function(ts) { return now - ts < 30 * 24 * 60 * 60 * 1000; });
     return arr;
   } catch(_) { return []; }
 }
@@ -2048,7 +2076,10 @@ function _recordNameChange() {
     localStorage.setItem('_p2p_name_changes', JSON.stringify(arr));
   } catch(_) {}
 }
-function _nameChangesLeft() { return Math.max(0, 3 - _getNameChanges().length); }
+function _nameChangesLeft() {
+  if (_serverNameChangesLeft !== null) return _serverNameChangesLeft;
+  return Math.max(0, 5 - _getNameChanges().length);
+}
 
 function saveProfileNickname() {
   var nicknameInput = document.getElementById('editNicknameInput');
@@ -2064,7 +2095,7 @@ function saveProfileNickname() {
   }
   // Enforce 3x/month limit (client-side guard)
   if (_nameChangesLeft() <= 0) {
-    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'You can only change your username 3 times per month.'; }
+    if (msg) { msg.style.color = '#f6465d'; msg.textContent = 'Username change limit reached (max 5 times total).'; }
     return;
   }
   if (msg) { msg.style.color = 'rgba(255,255,255,0.5)'; msg.textContent = 'Saving...'; }
@@ -2075,24 +2106,16 @@ function saveProfileNickname() {
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.ok || d.success || d.nickname) {
       _recordNameChange();
+      if (typeof d.changesLeft === 'number') _serverNameChangesLeft = d.changesLeft;
       if (msg) {
         var left = _nameChangesLeft();
         msg.style.color = '#16c784';
-        msg.textContent = '✓ Username updated! (' + left + ' change' + (left === 1 ? '' : 's') + ' left this month)';
+        msg.textContent = '✓ Username updated! (' + left + ' change' + (left === 1 ? '' : 's') + ' remaining)';
       }
       // Update currentUser everywhere
       if (currentUser) { currentUser.username = nickname; currentUser.nickname = nickname; }
       // Persist to localStorage so name survives refresh
-      try {
-        localStorage.setItem('_p2p_hint', JSON.stringify({
-          id: getCurrentUserId(),
-          username: nickname,
-          email: currentUser ? currentUser.email : '',
-          role: currentUser ? currentUser.role : '',
-          avatar: currentUser ? (currentUser.avatar || '') : '',
-          createdAt: currentUser ? (currentUser.createdAt || null) : null
-        }));
-      } catch(_) {}
+      syncP2PHintCache();
       var el;
       if ((el = document.getElementById('profileNameMobile'))) el.textContent = nickname;
       if ((el = document.getElementById('profileName'))) el.textContent = nickname;
@@ -2126,12 +2149,18 @@ function syncMobileTabFromHash(options = {}) {
   }
 
   if (resolvedTab === 'orders') {
+    if (typeof showMobScreen === 'function') {
+      showMobScreen('mobOrdersScreen');
+    }
     _applyOrdersFocusState();
     renderMobileOrdersList();
     loadLiveOrders();
   } else if (resolvedTab === 'ads') {
     loadMyAds();
   } else if (resolvedTab === 'profile') {
+    if (typeof showMobScreen === 'function') {
+      showMobScreen('mobProfileScreen');
+    }
     loadProfilePanel();
   } else if (options.refreshP2P !== false) {
     loadOffers();
@@ -2153,12 +2182,18 @@ function setMobileTab(tab, options = {}) {
     }
 
     if (normalized === 'orders') {
+      if (typeof showMobScreen === 'function') {
+        showMobScreen('mobOrdersScreen');
+      }
       _applyOrdersFocusState();
       renderMobileOrdersList();
       loadLiveOrders();
     } else if (normalized === 'ads') {
       loadMyAds();
     } else if (normalized === 'profile') {
+      if (typeof showMobScreen === 'function') {
+        showMobScreen('mobProfileScreen');
+      }
       loadProfilePanel();
     } else {
       loadOffers();
@@ -2376,7 +2411,10 @@ async function refreshCurrentUserKyc() {
   }
 
   try {
-    const response = await fetch('/api/p2p/kyc/status');
+    const response = await fetch('/api/p2p/kyc/status', {
+      credentials: 'include',
+      headers: buildP2PAuthHeaders()
+    });
     const data = await response.json();
     if (!response.ok || !data?.kyc) {
       return;
@@ -2727,7 +2765,7 @@ async function loadCurrentUser() {
 
   let _networkErr = false; // true only on real network/parse failure
   try {
-    var _jwtTok = (typeof localStorage !== 'undefined' && localStorage.getItem('bitegit_token')) || '';
+    var _jwtTok = getStoredP2PAccessToken();
     var _meHeaders = _jwtTok ? { 'Authorization': 'Bearer ' + _jwtTok } : {};
     const response = await fetch('/api/p2p/me', { credentials: 'include', headers: _meHeaders });
     // Treat 5xx as network error — don't log out on server hiccups
@@ -2743,7 +2781,7 @@ async function loadCurrentUser() {
       }
       currentUser = Object.assign({}, currentUser || {}, normalizedUser);
       updateCurrentUserKyc(currentUser.kyc || {});
-      try { localStorage.setItem('_p2p_hint', JSON.stringify({ id: getCurrentUserId(), username: currentUser.username, email: currentUser.email, role: currentUser.role, avatar: currentUser.avatar || '', createdAt: currentUser.createdAt || null })); } catch(_) {}
+      syncP2PHintCache();
       // Load merchant badge on login so ad cards show it immediately
       loadMerchantBadge && loadMerchantBadge();
       // Poll badge every 30s so admin badge changes appear without page refresh
@@ -2781,16 +2819,64 @@ async function loadCurrentUser() {
           currentUser = retryUser;
           updateCurrentUserKyc(currentUser.kyc || {});
           updateUserUi();
-          // Re-run user-specific loads now that we have a valid session
-          loadMyAds();
-          loadProfilePanel({ refreshWallet: true });
-          fetchOrdersSafe();
-          // Re-render offers so "Buy" buttons appear (not "Login")
-          loadOffers();
+          // Re-render offers first so buy cards recover quickly after a cold-start retry.
+          await loadOffers();
+          queueP2PNonCriticalLoads({
+            includeTicker: true,
+            includeOrders: true,
+            includeMyAds: true,
+            includeFetchOrders: true,
+            delayMs: 180
+          });
         }
       } catch (_) {}
     }, 2500);
   }
+}
+
+function queueP2PNonCriticalLoads(options) {
+  var opts = options && typeof options === 'object' ? options : {};
+  var delayMs = Math.max(Number(opts.delayMs || 0), 0);
+  var tasks = [];
+
+  if (opts.includeTicker !== false && typeof loadExchangeTicker === 'function') {
+    tasks.push(function() { return loadExchangeTicker(); });
+  }
+
+  if (currentUser) {
+    if (opts.includeOrders && typeof loadLiveOrders === 'function') {
+      tasks.push(function() { return loadLiveOrders(); });
+    }
+    if (opts.includeMyAds && typeof loadMyAds === 'function') {
+      tasks.push(function() { return loadMyAds(); });
+    }
+    if (opts.includeFetchOrders && typeof fetchOrdersSafe === 'function') {
+      tasks.push(function() { return fetchOrdersSafe(); });
+    }
+  }
+
+  if (!tasks.length) {
+    return;
+  }
+
+  var run = function() {
+    Promise.allSettled(tasks.map(function(task) {
+      return Promise.resolve().then(task);
+    })).catch(function() {});
+  };
+
+  if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(function() {
+      if (delayMs > 0) {
+        setTimeout(run, delayMs);
+      } else {
+        run();
+      }
+    }, { timeout: Math.max(800, delayMs + 500) });
+    return;
+  }
+
+  setTimeout(run, delayMs);
 }
 
 async function loginUser() {
@@ -2838,21 +2924,27 @@ async function loginUser() {
     }
     updateCurrentUserKyc(currentUser?.kyc || {});
     // Persist a session hint so refresh shows logged-in UI instantly (no flicker)
-    try { localStorage.setItem('_p2p_hint', JSON.stringify({ id: getCurrentUserId(), username: currentUser.username, email: currentUser.email, role: currentUser.role, avatar: currentUser.avatar || '', createdAt: currentUser.createdAt || null })); } catch(_) {}
+    syncP2PHintCache();
     updateUserUi();
     setAuthModalOpen(false);
     setP2PNavOpen(false);
-    // run all post-login loads in parallel — much faster
-    Promise.all([loadOffers(), loadLiveOrders(), loadMyAds(), loadProfilePanel({ refreshWallet: true })]);
-    // Single entry point — shows cache or skeleton, then fetches fresh
-    fetchOrdersSafe();
-    _startFallbackPoll(); // 15s fallback (SSE handles real-time; this is backup only)
 
     const redirectPath = getPostLoginRedirectPath();
     if (redirectPath) {
       window.location.href = redirectPath;
       return;
     }
+
+    // Prioritize offer cards first; queue heavier user-specific panels just after first paint.
+    await loadOffers();
+    queueP2PNonCriticalLoads({
+      includeTicker: true,
+      includeOrders: true,
+      includeMyAds: true,
+      includeFetchOrders: true,
+      delayMs: 160
+    });
+    _startFallbackPoll(); // 15s fallback (SSE handles real-time; this is backup only)
   } catch (error) {
     console.warn('[loginUser] error:', error.message);
     setUserStatus(error.name === 'AbortError' ? 'Request timed out. Try again.' : (error.message || 'Login failed.'), 'user-error');
@@ -2905,11 +2997,18 @@ function doP2PLogout() {
 
 async function logoutUser() {
   try {
-    await fetch('/api/p2p/logout', { method: 'POST' });
+    await fetch('/api/p2p/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: buildP2PAuthHeaders()
+    });
   } finally {
     currentUser = null;
     try { localStorage.removeItem('_p2p_hint'); } catch(_) {}
     try { localStorage.removeItem('_p2p_sec_dep'); _mySecDep = null; } catch(_) {}
+    try { localStorage.removeItem('bitegit_token'); } catch(_) {}
+    try { localStorage.removeItem('bitegit_refresh_token'); } catch(_) {}
+    try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
     _clearOrdersCache(); // cancels any in-flight request, wipes state + cache
     _stopFallbackPoll();
     mobileOrdersCache.clear();
@@ -2995,13 +3094,17 @@ function renderOffers(data, append) {
     const actionText = isOwnAd ? 'Your Ad' : currentUser ? actionLabel : 'Login';
     // Admin-assigned merchant badge — use server value OR fall back to current user's own badge
     const _BADGE_SVG = {
-      1: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet()"><path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#1a6ff4"/><path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#2979ff" opacity="0.4"/><polyline points="14,22 20,28 30,16" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-      2: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet()"><path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#f7931a"/><path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#ffb347" opacity="0.35"/><path d="M13 28 L13 20 L17 24 L22 15 L27 24 L31 20 L31 28 Z" fill="#fff" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/></svg>`,
-      3: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet()"><path d="M22 4 L36 10 L36 22 C36 30 29 37 22 40 C15 37 8 30 8 22 L8 10 Z" fill="#f5a623"/><path d="M22 8 L33 13 L33 22 C33 28.5 27.5 34 22 37 C16.5 34 11 28.5 11 22 L11 13 Z" fill="#ffc849" opacity="0.4"/><path d="M22 13 L28 16 L28 22 C28 26 25 29 22 31 C19 29 16 26 16 22 L16 16 Z" fill="#fff" opacity="0.9"/></svg>`
+      1: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(1)"><path d="M22 4 L36 10 L36 22 C36 30 29 37 22 40 C15 37 8 30 8 22 L8 10 Z" fill="#cd7f32"/><path d="M22 8 L33 13 L33 22 C33 28.5 27.5 34 22 37 C16.5 34 11 28.5 11 22 L11 13 Z" fill="#e8a060" opacity="0.5"/><text x="22" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">B</text></svg>`,
+      2: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(2)"><path d="M22 4 L36 10 L36 22 C36 30 29 37 22 40 C15 37 8 30 8 22 L8 10 Z" fill="#a8a9ad"/><path d="M22 8 L33 13 L33 22 C33 28.5 27.5 34 22 37 C16.5 34 11 28.5 11 22 L11 13 Z" fill="#d0d0d0" opacity="0.5"/><text x="22" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">S</text></svg>`,
+      3: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(3)"><path d="M22 2 L40 12 L40 32 L22 42 L4 32 L4 12 Z" fill="#7c4dff"/><path d="M22 6 L37 14.5 L37 31.5 L22 40 L7 31.5 L7 14.5 Z" fill="#b085ff" opacity="0.35"/><polyline points="14,22 20,28 30,16" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      4: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;vertical-align:middle;margin-left:4px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(4)"><path d="M4 3 C3.4 3 3 3.4 3 4 L3 40 C3 40.6 3.4 41 4 41 L40 41 C40.6 41 41 40.6 41 40 L41 14 L30 3 Z" fill="#e53560"/><path d="M30 3 L30 13 C30 13.6 30.4 14 31 14 L41 14 Z" fill="rgba(0,0,0,0.18)"/><text x="21" y="28" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="Arial,sans-serif" font-style="italic">Pro</text></svg>`
     };
     const _isMyAd = currentUser && currentUser.username && offer.advertiser === currentUser.username;
-    const _badgeNum = offer.merchantBadge || (_isMyAd && _myMerchantBadge ? _myMerchantBadge : null);
-    const verificationBadge = _badgeNum && _BADGE_SVG[_badgeNum] ? _BADGE_SVG[_badgeNum] : '';
+    // Support multiple badges (array) from server, fall back to single badge or own badge
+    const _badgeNums = (Array.isArray(offer.merchantBadges) && offer.merchantBadges.length)
+      ? offer.merchantBadges
+      : (offer.merchantBadge ? [offer.merchantBadge] : (_isMyAd && _myMerchantBadge ? [_myMerchantBadge] : []));
+    const verificationBadge = _badgeNums.map(function(n){ return _BADGE_SVG[n] || ''; }).join('');
     const initial = String(offer.advertiser || 'U')
       .trim()
       .slice(0, 1)
@@ -3014,7 +3117,7 @@ function renderOffers(data, append) {
             <span class="table-user-avatar">${escapeHtml(initial)}</span>
             <div>
               <p class="adv-name">${escapeHtml(offer.advertiser)} ${verificationBadge}</p>
-              <p class="adv-meta">${(offer.reputation && offer.reputation.completedOrders != null) ? offer.reputation.completedOrders : offer.orders} Orders | ${(offer.reputation && offer.reputation.completionRate != null) ? offer.reputation.completionRate : offer.completionRate}% | <span style="color:${offer.onlineStatus==='online'?'#2ebd85':offer.onlineStatus==='away'?'#a8ff3e':'#888'}">${offer.onlineStatus==='online'?'● Online':offer.onlineStatus==='away'?'● Away':'● Offline'}</span></p>
+              <p class="adv-meta">${(offer.baseOrders||0) + ((offer.reputation && offer.reputation.completedOrders != null) ? offer.reputation.completedOrders : (offer.orders||0))} Orders | ${Math.max(90,(offer.reputation && offer.reputation.completionRate != null) ? offer.reputation.completionRate : (offer.completionRate||100))}% | <span style="color:${offer.onlineStatus==='online'?'#2ebd85':offer.onlineStatus==='away'?'#a8ff3e':'#888'}">${offer.onlineStatus==='online'?'● Online':offer.onlineStatus==='away'?'● Away':'● Offline'}</span></p>
             </div>
           </div>
         </td>
@@ -3037,8 +3140,9 @@ function renderOffers(data, append) {
     `);
 
     const rep = offer.reputation || {};
-    const repOrders = rep.completedOrders != null ? rep.completedOrders : (offer.orders || 0);
-    const repRate = rep.completionRate != null ? rep.completionRate : (offer.completionRate || 100);
+    const _base = offer.baseOrders || 0;
+    const repOrders = _base + (rep.completedOrders != null ? rep.completedOrders : (offer.orders || 0));
+    const repRate = Math.max(90, rep.completionRate != null ? rep.completionRate : (offer.completionRate || 100));
     const repTime = offer.releaseTime ? offer.releaseTime + ' min' : (rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes + ' min' : '15 min');
     const onlineStatus = isOwnAd ? 'online' : (offer.onlineStatus || 'offline');
     const onlineDotColor = onlineStatus === 'online' ? '#2ebd85' : onlineStatus === 'away' ? '#a8ff3e' : '#555';
@@ -6013,18 +6117,14 @@ window.addEventListener('pagehide', () => {
   await loadCurrentUser();
   console.log('[init] loadCurrentUser done, currentUser:', currentUser ? currentUser.email : 'null');
 
-  // Run all data loads in PARALLEL — sequential await caused one hanging call
-  // to block all subsequent loads (including the orders prefetch setTimeout below)
-  Promise.allSettled([
-    loadOffers(),
-    loadLiveOrders(),
-    loadMyAds(),
-    loadProfilePanel({ refreshWallet: true }),
-    loadExchangeTicker()
-  ]).then(function(results) {
-    results.forEach(function(r, i) {
-      if (r.status === 'rejected') console.warn('[init] parallel load #' + i + ' failed:', r.reason);
-    });
+  // Prioritize offer cards first. Defer heavier secondary panels until after the first visible list paints.
+  await loadOffers();
+  queueP2PNonCriticalLoads({
+    includeTicker: true,
+    includeOrders: true,
+    includeMyAds: true,
+    includeFetchOrders: false,
+    delayMs: 180
   });
 
   syncMobileTabFromHash();
@@ -6615,40 +6715,49 @@ function openP2PScreen(id) {
   el.style.setProperty('display','flex','important');
   el.style.flexDirection = 'column';
   document.body.classList.add('mob-screen-open');
-  if (id === 'merchantScreen') refreshMerchantStatus();
+  if (id === 'merchantScreen') {
+    var box = document.getElementById('merchantStatusBox');
+    if (box) box.innerHTML = '<div style="text-align:center;padding:2rem;color:#848e9c;font-size:.9rem;">Loading…</div>';
+    refreshMerchantStatus();
+  }
 }
 
 async function refreshMerchantStatus() {
   var box = document.getElementById('merchantStatusBox');
   if (!box) return;
   try {
-    // Fetch deposit status + application status in parallel
     var [depRes, appRes] = await Promise.all([
       fetch('/api/p2p/security-deposit', { credentials: 'include' }).then(function(r){ return r.json(); }).catch(function(){ return {}; }),
       fetch('/api/merchant/application-status', { credentials: 'include' }).then(function(r){ return r.json(); }).catch(function(){ return {}; })
     ]);
-    var dep = Number(depRes.securityDeposit || 0);
-    var canPost = dep >= 200;
-    var badgeEligible = dep >= 500;
-    var appStatus = appRes.status || null; // 'pending' | 'approved' | 'rejected' | null
+    var dep = Number(appRes.depositLocked || depRes.securityDeposit || 0);
+    var canApply = !!(appRes.canApplyMerchant || depRes.canApplyMerchant || dep >= 200);
+    var canPost = !!appRes.canPostAds;
+    var badgeEligible = !!(appRes.badgeEligible || depRes.badgeEligible || dep >= 500);
+    var appStatus = appRes.status || null;
+    var hasBadge = !!appRes.badge;
+    var needsMoreForBadge = Math.max(0, 500 - dep);
+    var hasSubmitted = appStatus === 'pending' || appStatus === 'approved' || appStatus === 'rejected';
 
     var html = '';
-
-    // Current deposit badge
     html += '<div style="text-align:center;margin-bottom:1rem;">' +
       '<span style="font-size:.78rem;color:#848e9c;">Current security deposit: </span>' +
       '<span style="font-size:.85rem;font-weight:700;color:' + (dep >= 500 ? '#f7931a' : dep >= 200 ? '#16c784' : '#f6465d') + ';">' + dep + ' USDT</span>' +
     '</div>';
 
-    if (appStatus === 'approved') {
-      // ✅ Already a merchant
+    if (appStatus === 'approved' && hasBadge) {
       html += '<div style="background:rgba(22,199,132,.1);border:1px solid rgba(22,199,132,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
         '<div style="font-size:1.4rem;margin-bottom:.3rem;">🏅</div>' +
         '<div style="font-weight:700;color:#16c784;font-size:1rem;">Verified Merchant</div>' +
         '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">Your merchant badge is active on all your ads</div>' +
       '</div>';
+    } else if (appStatus === 'approved') {
+      html += '<div style="background:rgba(22,199,132,.1);border:1px solid rgba(22,199,132,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
+        '<div style="font-size:1.4rem;margin-bottom:.3rem;">✅</div>' +
+        '<div style="font-weight:700;color:#16c784;font-size:1rem;">Merchant Approved</div>' +
+        '<div style="font-size:.78rem;color:#848e9c;margin-top:.3rem;">Admin approved your merchant account. You can post ads now.</div>' +
+      '</div>';
     } else if (appStatus === 'pending') {
-      // ⏳ Pending review
       html += '<div style="background:rgba(247,147,26,.08);border:1px solid rgba(247,147,26,.3);border-radius:14px;padding:1rem;text-align:center;margin-bottom:1rem;">' +
         '<div style="font-size:1.2rem;margin-bottom:.3rem;">⏳</div>' +
         '<div style="font-weight:700;color:#f7931a;font-size:.95rem;">Application Under Review</div>' +
@@ -6684,17 +6793,76 @@ async function refreshMerchantStatus() {
       '</div>';
     }
 
+    html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:1rem;margin-bottom:.75rem;">' +
+      '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">' +
+        '<div style="width:22px;height:22px;border-radius:50%;background:' + (canApply ? '#16c784' : '#f6465d') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;font-weight:800;color:#fff;">' + (canApply ? '✓' : '1') + '</div>' +
+        '<div style="font-weight:700;color:#fff;font-size:.9rem;">Lock 200 USDT Security Deposit</div>' +
+      '</div>' +
+      '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (canApply ? '0' : '.8rem') + ';">Deposit lock is required before merchant application can be submitted.</div>' +
+      (!canApply ? '<div style="display:flex;gap:.5rem;align-items:center;">' +
+        '<input id="secDepInput" type="number" min="200" value="200" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;">' +
+        '<button onclick="lockSecurityDeposit()" style="background:#00e5ff;color:#000;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;">Lock USDT</button>' +
+      '</div>' : '') +
+    '</div>';
+
+    html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:1rem;margin-bottom:.75rem;">' +
+      '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">' +
+        '<div style="width:22px;height:22px;border-radius:50%;background:' + (canPost ? '#16c784' : hasSubmitted ? '#f7931a' : canApply ? '#00e5ff' : 'rgba(255,255,255,.15)') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;font-weight:800;color:#fff;">' + (canPost ? '✓' : '2') + '</div>' +
+        '<div style="font-weight:700;color:#fff;font-size:.9rem;">Merchant Approval</div>' +
+      '</div>' +
+      '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (canApply && !canPost && appStatus !== 'pending' ? '.8rem' : '0') + ';">Admin approval is required before you can post P2P ads.</div>' +
+      (appStatus === 'pending'
+        ? '<div style="font-size:.78rem;color:#f7931a;font-weight:600;">Your application is under admin review.</div>'
+        : appStatus === 'approved'
+          ? '<div style="font-size:.78rem;color:#16c784;font-weight:600;">Approved. Ad posting is unlocked for your account.</div>'
+          : appStatus === 'rejected'
+            ? '<button onclick="openP2PScreen(\'merchantApplyScreen\')" style="width:100%;background:linear-gradient(135deg,#00e5ff,#00b8d9);color:#000;border:none;border-radius:10px;padding:.75rem;font-size:.9rem;font-weight:700;cursor:pointer;">Reapply for Merchant Approval</button>'
+            : canApply
+              ? '<button onclick="openP2PScreen(\'merchantApplyScreen\')" style="width:100%;background:linear-gradient(135deg,#00e5ff,#00b8d9);color:#000;border:none;border-radius:10px;padding:.75rem;font-size:.9rem;font-weight:700;cursor:pointer;">Apply for Merchant Approval</button>'
+              : '') +
+    '</div>';
+
+    html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:1rem;margin-bottom:.75rem;">' +
+      '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">' +
+        '<div style="width:22px;height:22px;border-radius:50%;background:' + (hasBadge ? '#f7931a' : badgeEligible ? '#f7931a' : 'rgba(255,255,255,.15)') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;font-weight:800;color:#fff;">' + ((hasBadge || badgeEligible) ? '✓' : '3') + '</div>' +
+        '<div style="font-weight:700;color:' + (hasBadge || badgeEligible ? '#f7931a' : 'rgba(255,255,255,.75)') + ';font-size:.9rem;">500 USDT Badge Eligibility</div>' +
+      '</div>' +
+      (hasBadge
+        ? '<div style="font-size:.78rem;color:#f7931a;font-weight:600;">Your admin-assigned merchant badge is already active.</div>'
+        : badgeEligible
+          ? '<div style="font-size:.78rem;color:#f7931a;font-weight:600;">You are eligible for admin badge assignment once your trading quality is reviewed.</div>'
+          : canApply
+            ? '<div style="font-size:.75rem;color:#f7931a;font-weight:600;">Need ' + needsMoreForBadge + ' USDT more. Badge remains admin-assigned only.</div>' +
+              '<div style="display:flex;gap:.5rem;margin-top:.6rem;"><input type="number" min="' + Math.max(1, needsMoreForBadge) + '" value="' + Math.max(1, needsMoreForBadge) + '" id="secDepUpgradeInput" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;"><button onclick="lockSecurityDeposit(\'secDepUpgradeInput\')" style="background:#f7931a;color:#fff;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;">Add</button></div>'
+            : '<div style="font-size:.78rem;color:#848e9c;">First lock 200 USDT, then you can increase to 500 USDT for badge eligibility.</div>') +
+    '</div>';
+
     box.innerHTML = html;
+    return {
+      depositLocked: dep,
+      canApplyMerchant: canApply,
+      canPostAds: canPost,
+      status: appStatus,
+      badgeEligible: badgeEligible,
+      hasBadge: hasBadge
+    };
   } catch(e) {
     box.innerHTML = '<div style="text-align:center;color:#f6465d;font-size:.85rem;">Failed to load status. Try again.</div>';
+    return null;
   }
 }
 
-async function lockSecurityDeposit() {
-  var input = document.getElementById('secDepInput');
+function merchantToast(message) {
+  if (typeof showToast === 'function') showToast(message);
+  else alert(message);
+}
+
+async function lockSecurityDeposit(inputId) {
+  var input = document.getElementById(inputId || 'secDepInput');
   var amt = Number(input ? input.value : 200);
-  if (!amt || amt < 200) { showToast && showToast('Minimum 200 USDT required'); return; }
+  if (!amt || amt <= 0) { merchantToast('Enter a valid USDT amount'); return; }
   var btn = event && event.target;
+  var originalLabel = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = '…'; }
   try {
     var res = await fetch('/api/p2p/security-deposit', {
@@ -6704,15 +6872,18 @@ async function lockSecurityDeposit() {
     });
     var data = await res.json();
     if (data.success) {
-      showToast && showToast(data.message || 'Security deposit locked!');
-      refreshMerchantStatus();
+      merchantToast(data.message || 'Security deposit locked!');
+      var merchantState = await refreshMerchantStatus();
+      if (merchantState && merchantState.canApplyMerchant && !merchantState.canPostAds && merchantState.status !== 'pending') {
+        openP2PScreen('merchantApplyScreen');
+      }
     } else {
-      showToast && showToast(data.message || 'Failed to lock deposit');
+      merchantToast(data.message || 'Failed to lock deposit');
     }
   } catch(e) {
-    showToast && showToast('Network error. Try again.');
+    merchantToast('Network error. Try again.');
   }
-  if (btn) { btn.disabled = false; btn.textContent = 'Lock USDT'; }
+  if (btn) { btn.disabled = false; btn.textContent = originalLabel || 'Lock USDT'; }
 }
 function closeP2PScreen(id) {
   closePaymentQrSheet();
@@ -6859,6 +7030,8 @@ async function submitMerchantApp() {
       alert('✅ ' + data.message);
       // Reset form state
       merchantFormData = { idPhotoBase64: '', currency: '', twitter: '', telegram: '', instagram: '' };
+      refreshMerchantStatus();
+      loadMerchantBadge();
       closeP2PScreen('merchantApplyScreen');
       closeP2PScreen('merchantScreen');
     } else {
@@ -6873,9 +7046,10 @@ async function submitMerchantApp() {
 
 // Merchant badge names & colors
 var MERCHANT_BADGES = {
-  1: { name: 'Blue V',  color: '#1a6ff4', icon: '◆' },
-  2: { name: 'Crown',   color: '#f7931a', icon: '♛' },
-  3: { name: 'Shield',  color: '#f5a623', icon: '❖' }
+  1: { name: 'Bronze',  color: '#cd7f32', icon: '✦', desc: 'Verified merchants with a solid P2P trading history and security deposit.' },
+  2: { name: 'Silver',  color: '#a8a9ad', icon: '✦', desc: 'Advanced merchants with positive P2P records and consistent volume.' },
+  3: { name: 'Block',   color: '#7c4dff', icon: '◆', desc: 'Merchants with advanced trading experiences and high trading volume.' },
+  4: { name: 'PRO',     color: '#e53935', icon: '★', desc: 'Merchants with professional local crypto exchange experience.' }
 };
 
 // Global: current user's own merchant badge number (1/2/3), set after loadMerchantBadge()
@@ -6900,8 +7074,7 @@ function applySecDepToProfileUI(secDepStr) {
       secDepStatus.textContent = 'Active';
       secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(22,199,132,0.15);color:#16c784;margin-left:4px;vertical-align:middle;display:inline;';
     } else {
-      secDepStatus.textContent = 'None';
-      secDepStatus.style.cssText = 'font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(246,70,93,0.15);color:#f6465d;margin-left:4px;vertical-align:middle;display:inline;';
+      secDepStatus.style.display = 'none';
     }
   }
 }
@@ -6940,6 +7113,36 @@ function applyBadgeToProfileUI(badgeNum) {
   if (secDepStatus) secDepStatus.style.display = 'none';
 }
 
+function applyMerchantAccessToProfileUI(data) {
+  var badgeEl = document.getElementById('mobMerchantBadge');
+  if (badgeEl) {
+    badgeEl.style.display = 'none';
+    badgeEl.textContent = '';
+  }
+  var applyItem = document.getElementById('mobMerchantApplyItem');
+  if (applyItem) {
+    var label = applyItem.querySelector('.bg-menu-label');
+    if (label) {
+      if (data && data.canPostAds) {
+        label.textContent = 'Merchant Active ✓';
+      } else if (data && data.status === 'pending') {
+        label.textContent = 'Merchant Review Pending';
+      } else if (data && data.depositLocked >= 200) {
+        label.textContent = 'Apply Merchant';
+      } else {
+        label.textContent = 'Become Merchant';
+      }
+    }
+  }
+  if (data && data.depositLocked) {
+    applySecDepToProfileUI(String(data.depositLocked) + ' USDT');
+  }
+  var secDepStatus = document.getElementById('profileSecDepStatus');
+  if (secDepStatus) {
+    secDepStatus.style.display = '';
+  }
+}
+
 // Apply from localStorage seed immediately — no delay needed
 if (_myMerchantBadge) {
   // Try immediately (if DOM is ready)
@@ -6969,9 +7172,14 @@ async function loadMerchantBadge() {
       }
       // Show badge in profile UI
       applyBadgeToProfileUI(data.badge);
+    } else if (data.success) {
+      _myMerchantBadge = null;
+      try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
+      applyMerchantAccessToProfileUI(data);
     } else {
       _myMerchantBadge = null;
       try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
+      applyMerchantAccessToProfileUI(null);
     }
   } catch(e) {}
 }
@@ -7370,6 +7578,10 @@ function _kycHint(id, msg, type) {
 }
 
 function submitKycBasicAndNext() {
+  if (window.__p2pKycStepBusy && Date.now() - window.__p2pKycStepBusy < 700) {
+    return;
+  }
+  window.__p2pKycStepBusy = Date.now();
   var name  = ((document.getElementById('kycFullName')||{}).value||'').trim();
   var dob   = ((document.getElementById('kycDob')||{}).value||'').trim();
   var phone = ((document.getElementById('kycPhone')||{}).value||'').trim();
@@ -7386,6 +7598,9 @@ function submitKycBasicAndNext() {
 }
 
 function submitKycAdvance() {
+  if (window.__p2pKycSubmitInFlight) {
+    return;
+  }
   var aadhaarNum = ((document.getElementById('kycAadhaarNumber')||{}).value||'').replace(/\s/g,'');
   var front   = (document.getElementById('kycAadhaarFront')||{}).files;
   var back    = (document.getElementById('kycAadhaarBack')||{}).files;
@@ -7399,44 +7614,20 @@ function submitKycAdvance() {
 
   // Disable button while submitting
   var btn = document.querySelector('#kycAdvanceScreen [data-kyc-submit]');
+  window.__p2pKycSubmitInFlight = true;
   if(btn){ btn.disabled=true; btn.textContent='Uploading…'; }
-  _kycHint('kycAdvHint','Uploading documents, please wait…','');
-
-  // Compress + convert image to base64 JPEG (max 1200px, quality 0.75)
-  function compressImage(file) {
-    return new Promise(function(resolve, reject) {
-      var reader = new FileReader();
-      reader.onerror = reject;
-      reader.onload = function(e) {
-        var img = new Image();
-        img.onerror = reject;
-        img.onload = function() {
-          var MAX = 1200;
-          var w = img.width, h = img.height;
-          if (w > MAX || h > MAX) {
-            if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-            else       { w = Math.round(w * MAX / h); h = MAX; }
-          }
-          var canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', 0.75));
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  }
+  _kycHint('kycAdvHint','Optimizing document images, please wait…','');
 
   Promise.all([
-    compressImage(front[0]),
-    compressImage(back[0]),
-    compressImage(selfie[0])
+    compressImageForKyc(front[0]),
+    compressImageForKyc(back[0]),
+    compressImageForKyc(selfie[0])
   ]).then(function(results) {
     var aadhaarFrontDataUrl = results[0];
     var aadhaarBackDataUrl  = results[1];
     var selfieDataUrl       = results[2];
 
+    _kycHint('kycAdvHint','Submitting documents for verification…','');
     return fetch('/api/p2p/kyc/submit', {
       method: 'POST',
       credentials: 'include',
@@ -7479,6 +7670,8 @@ function submitKycAdvance() {
   }).catch(function(err) {
     _kycHint('kycAdvHint','Network error. Please check connection and retry.','error');
     if(btn){ btn.disabled=false; btn.textContent='Submit for Verification'; }
+  }).finally(function() {
+    window.__p2pKycSubmitInFlight = false;
   });
 }
 
@@ -7486,18 +7679,17 @@ function submitKycAdvance() {
 // ── Post Ad Tab: non-merchants redirected to merchant screen ────────────────
 async function handlePostAdTabClick() {
   if (!currentUser) { setAuthModalOpen(true); return; }
-  // Check merchant status via API (most reliable)
   try {
     var res = await fetch('/api/merchant/application-status', { credentials: 'include' });
     var data = await res.json();
-    var isMerchant = data.success && data.status === 'approved' && data.badge;
+    // approved merchant (canPostAds OR admin-approved status) → go to post ad directly
+    var isMerchant = data.success && (data.canPostAds || data.status === 'approved');
     if (!isMerchant) {
-      // Not a merchant — redirect to merchant info/apply screen
       openP2PScreen('merchantScreen');
       return;
     }
   } catch(_) {
-    // On network error fall through to show the screen anyway
+    // On network error fall through to post ad screen
   }
   showMobScreen('mobPostAdScreen');
   initMobPostAdScreen();
@@ -9365,3 +9557,4 @@ window.deleteMobAd = async function(offerId) {
   // Also ping when network comes back online
   window.addEventListener('online', _pingServer);
 })();
+

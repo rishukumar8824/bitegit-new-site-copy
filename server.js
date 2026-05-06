@@ -77,6 +77,178 @@ const MERCHANT_BADGE_MIN_DEPOSIT = 500;  // Minimum security deposit for badge e
 const merchantApplications = new Map(); // id -> application
 let merchantAppCounter = 1;
 
+function _getBadgesArray(app) {
+  if (!app) return [];
+  if (Array.isArray(app.assignedBadges) && app.assignedBadges.length) return app.assignedBadges;
+  if (app.assignedBadge) return [app.assignedBadge];
+  return [];
+}
+
+function keepLatestMerchantBadges(targetMap, key, badges, reviewedAtMs) {
+  const normalizedKey = String(key || '').trim().toLowerCase();
+  if (!normalizedKey || !badges || !badges.length) return;
+  const existing = targetMap.get(normalizedKey);
+  if (!existing || reviewedAtMs >= existing.reviewedAtMs) {
+    targetMap.set(normalizedKey, { badges, reviewedAtMs });
+  } else {
+    // merge badges from both records
+    const merged = Array.from(new Set([...existing.badges, ...badges]));
+    targetMap.set(normalizedKey, { badges: merged, reviewedAtMs: existing.reviewedAtMs });
+  }
+}
+
+function buildApprovedMerchantBadgeLookup() {
+  const byUserId = new Map();
+  const byUsername = new Map();
+
+  for (const [, app] of merchantApplications) {
+    const badges = _getBadgesArray(app);
+    if (app.status !== 'approved' || !badges.length) continue;
+    const reviewedAtMs = app.reviewedAt ? new Date(app.reviewedAt).getTime() || 0 : 0;
+    keepLatestMerchantBadges(byUserId, app.userId, badges, reviewedAtMs);
+    keepLatestMerchantBadges(byUsername, app.username, badges, reviewedAtMs);
+  }
+
+  return { byUserId, byUsername };
+}
+
+function resolveApprovedMerchantBadges(lookup, userId, username, fallbackBadges = null) {
+  if (!lookup) return fallbackBadges;
+  const normalizedUserId = String(userId || '').trim().toLowerCase();
+  const normalizedUsername = String(username || '').trim().toLowerCase();
+  if (normalizedUserId && lookup.byUserId.has(normalizedUserId)) {
+    return lookup.byUserId.get(normalizedUserId).badges;
+  }
+  if (normalizedUsername && lookup.byUsername.has(normalizedUsername)) {
+    return lookup.byUsername.get(normalizedUsername).badges;
+  }
+  return fallbackBadges;
+}
+// backward-compat alias: returns first badge (single number) or null
+function resolveApprovedMerchantBadge(lookup, userId, username, fallbackBadge = null) {
+  const arr = resolveApprovedMerchantBadges(lookup, userId, username, null);
+  if (arr && arr.length) return arr[0];
+  return fallbackBadge;
+}
+
+function matchesMerchantIdentity(app, userId, username, email) {
+  const appUserId = String(app?.userId || '').trim();
+  const appUsername = String(app?.username || '').trim().toLowerCase();
+  const appEmail = String(app?.email || '').trim().toLowerCase();
+  const normalizedUserId = String(userId || '').trim();
+  const normalizedUsername = String(username || '').trim().toLowerCase();
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+
+  return Boolean(
+    (normalizedUserId && appUserId && appUserId === normalizedUserId) ||
+    (normalizedUsername && appUsername && appUsername === normalizedUsername) ||
+    (normalizedEmail && appEmail && appEmail === normalizedEmail)
+  );
+}
+
+function isLegacyDepositActivationApproval(app) {
+  return String(app?.approvalSource || '').trim().toLowerCase() === 'deposit_activation';
+}
+
+function getMerchantApplicationPriority(app) {
+  if (!app) {
+    return -1;
+  }
+  if (app.status === 'approved' && !isLegacyDepositActivationApproval(app)) {
+    return 4;
+  }
+  if (app.status === 'pending') {
+    return 3;
+  }
+  if (app.status === 'rejected') {
+    return 2;
+  }
+  if (app.status === 'approved') {
+    return 1;
+  }
+  return 0;
+}
+
+function getBestMerchantApplicationForUser({ userId, username, email }) {
+  let best = null;
+
+  for (const [, app] of merchantApplications) {
+    if (!matchesMerchantIdentity(app, userId, username, email)) {
+      continue;
+    }
+    if (!best) {
+      best = app;
+      continue;
+    }
+    const appPriority = getMerchantApplicationPriority(app);
+    const bestPriority = getMerchantApplicationPriority(best);
+    if (appPriority > bestPriority) {
+      best = app;
+      continue;
+    }
+    if (appPriority < bestPriority) {
+      continue;
+    }
+    const appTime = app.reviewedAt ? new Date(app.reviewedAt).getTime() : new Date(app.submittedAt || 0).getTime();
+    const bestTime = best.reviewedAt ? new Date(best.reviewedAt).getTime() : new Date(best.submittedAt || 0).getTime();
+    if (appTime > bestTime) {
+      best = app;
+    }
+  }
+
+  return best;
+}
+
+async function getMerchantAccessState({ userId, username, email }) {
+  const bestApplication = getBestMerchantApplicationForUser({ userId, username, email });
+  const badges = _getBadgesArray(bestApplication);
+  const badge = badges.length ? badges[0] : null;
+  const status = isLegacyDepositActivationApproval(bestApplication) ? null : bestApplication?.status || null;
+
+  let depositLocked = 0;
+  let merchantActivated = false;
+  if (repos && typeof repos.getP2PCredential === 'function' && email) {
+    try {
+      const credential = await repos.getP2PCredential(String(email || '').trim().toLowerCase());
+      const merchantMeta = credential?.merchant && typeof credential.merchant === 'object' ? credential.merchant : {};
+      const rawDepositLocked = Number(merchantMeta.depositLocked);
+      if (Number.isFinite(rawDepositLocked) && rawDepositLocked > 0) {
+        depositLocked = rawDepositLocked;
+      } else if (credential?.merchantDepositLocked === true) {
+        depositLocked = MERCHANT_ACTIVATION_DEPOSIT;
+      }
+      merchantActivated =
+        merchantMeta.isMerchant === true ||
+        credential?.isMerchant === true ||
+        credential?.merchantDepositLocked === true ||
+        depositLocked >= MERCHANT_ACTIVATION_DEPOSIT;
+      if (merchantActivated && depositLocked < MERCHANT_ACTIVATION_DEPOSIT) {
+        depositLocked = MERCHANT_ACTIVATION_DEPOSIT;
+      }
+    } catch (_) {}
+  }
+
+  const approvedMerchant = status === 'approved';
+  // If admin formally approved this merchant, treat as activated
+  // even if the deposit credential lookup failed (DB error/timeout)
+  if (approvedMerchant && !merchantActivated) {
+    merchantActivated = true;
+    if (depositLocked < MERCHANT_ACTIVATION_DEPOSIT) depositLocked = MERCHANT_ACTIVATION_DEPOSIT;
+  }
+
+  return {
+    application: bestApplication,
+    status,
+    badge,
+    badges,
+    depositLocked,
+    merchantActivated,
+    canApplyMerchant: merchantActivated,
+    canPostAds: merchantActivated && approvedMerchant,
+    badgeEligible: depositLocked >= MERCHANT_BADGE_MIN_DEPOSIT
+  };
+}
+
 async function saveMerchantApp(app) {
   try {
     const collections = getCollections();
@@ -1334,6 +1506,18 @@ async function requiresP2PUser(req, res, next) {
       role: tokenService.normalizeRole(user.role || 'USER')
     };
     req.p2pUser = user;
+
+    // Update lastActiveAt in p2pCredentials (fire-and-forget, non-blocking)
+    if (user.email) {
+      const cols = getCollections();
+      if (cols && cols.p2pCredentials) {
+        cols.p2pCredentials.updateOne(
+          { email: user.email },
+          { $set: { lastActiveAt: new Date() } }
+        ).catch(() => {});
+      }
+    }
+
     return next();
   } catch (error) {
     return res.status(500).json({ message: 'Server error while validating user session.' });
@@ -1406,16 +1590,28 @@ function normalizeOrderState(order) {
   };
 }
 
-function isParticipant(order, userId) {
-  if (!order || !userId) {
-    return false;
+function isParticipant(order, userId, p2pUser) {
+  if (!order || !userId) return false;
+
+  // Check participants array by id
+  if (Array.isArray(order.participants) && order.participants.some((p) => p.id === userId)) return true;
+
+  // Check direct userId fields
+  if ([order.sellerUserId, order.buyerUserId, order.sellerId, order.buyerId].includes(userId)) return true;
+
+  // Fallback: match by username or email for legacy orders that may have stored differently
+  if (p2pUser) {
+    const myUsername = String(p2pUser.username || '').trim().toLowerCase();
+    const myEmail = String(p2pUser.email || '').trim().toLowerCase();
+    if (myUsername && Array.isArray(order.participants) &&
+      order.participants.some((p) => String(p.username || '').trim().toLowerCase() === myUsername)) return true;
+    if (myUsername && [order.sellerUsername, order.buyerUsername].some(
+      (u) => String(u || '').trim().toLowerCase() === myUsername)) return true;
+    if (myEmail && [order.sellerEmail, order.buyerEmail].some(
+      (e) => String(e || '').trim().toLowerCase() === myEmail)) return true;
   }
 
-  if (Array.isArray(order.participants) && order.participants.some((participant) => participant.id === userId)) {
-    return true;
-  }
-
-  return [order.sellerUserId, order.buyerUserId].includes(userId);
+  return false;
 }
 
 function resolveMyRole(order, p2pUser) {
@@ -1859,12 +2055,22 @@ app.put('/api/p2p/profile', requiresP2PUser, async (req, res) => {
 
     const collections = getCollections();
 
+    // Check change limit (max 5 times)
+    const cred = await collections.p2pCredentials.findOne({ email });
+    const changeCount = Number(cred?.usernameChangeCount || 0);
+    if (changeCount >= 5) {
+      return res.status(400).json({ ok: false, message: 'Username can only be changed 5 times. Limit reached.' });
+    }
+
     // Check uniqueness
     const taken = await collections.p2pCredentials.findOne({ username: newUsername, email: { $ne: email } });
     if (taken) return res.status(400).json({ ok: false, message: 'Username already taken. Try another.' });
 
-    // Update credential
-    await collections.p2pCredentials.updateOne({ email }, { $set: { username: newUsername, updatedAt: new Date() } });
+    // Update credential + increment change count
+    await collections.p2pCredentials.updateOne(
+      { email },
+      { $set: { username: newUsername, updatedAt: new Date() }, $inc: { usernameChangeCount: 1 } }
+    );
 
     // Update all offers by this user
     await collections.p2pOffers.updateMany(
@@ -1878,7 +2084,15 @@ app.put('/api/p2p/profile', requiresP2PUser, async (req, res) => {
     // Update ALL active sessions so refresh returns the new username immediately
     await collections.p2pUserSessions.updateMany({ userId }, { $set: { username: newUsername } });
 
-    return res.json({ ok: true, nickname: newUsername, message: 'Username updated.' });
+    // Update orders where this user is buyer or seller (participants array)
+    await collections.p2pOrders.updateMany(
+      { 'participants.id': userId },
+      { $set: { 'participants.$[p].username': newUsername } },
+      { arrayFilters: [{ 'p.id': userId }] }
+    );
+
+    const remaining = 5 - (changeCount + 1);
+    return res.json({ ok: true, nickname: newUsername, message: 'Username updated.', changesLeft: remaining });
   } catch (err) {
     console.error('[profile] update error:', err.message);
     return res.status(500).json({ ok: false, message: 'Server error while updating username.' });
@@ -2171,7 +2385,7 @@ app.get('/api/wallet/summary', requiresP2PUser, async (req, res) => {
         available_balance: Number(wallet.availableBalance || wallet.balance || 0),
         locked_balance: Number(wallet.lockedBalance || wallet.p2pLocked || 0),
         spot_balance: Number(wallet.availableBalance || wallet.balance || 0),
-        funding_balance: Number(wallet.availableBalance || wallet.balance || 0),
+        funding_balance: Number(wallet.lockedBalance || wallet.p2pLocked || 0),
         asset_balances: assetBalances,
         deposit_address: depositConfig.depositAddress,
         deposit_network: depositConfig.activeNetwork?.network || depositConfig.defaultNetwork,
@@ -2364,8 +2578,19 @@ app.post(
     }
 
     try {
+      // Block withdrawal if user has an active or disputed order
+      const activeOrders = await repos.listMyActiveOrders(req.p2pUser.id);
+      const blockingOrder = activeOrders.find(o => ['CREATED', 'PENDING', 'PAYMENT_SENT', 'PAID', 'DISPUTED'].includes(o.status));
+      if (blockingOrder) {
+        const msg = blockingOrder.status === 'DISPUTED'
+          ? 'Withdrawal blocked: you have an ongoing dispute. Resolve it first.'
+          : 'Withdrawal blocked: complete or cancel your active order first.';
+        return res.status(409).json({ message: msg });
+      }
+
       const withdrawal = await walletService.createWithdrawalRequest(req.p2pUser.id, {
         username: req.p2pUser.username,
+        email: req.p2pUser.email || '',
         amount,
         currency,
         address,
@@ -2942,6 +3167,7 @@ app.get('/api/p2p/offers', async (req, res) => {
       escrowBackedOnly: true,
       merchantOwnedOnly: true
     });
+    const merchantBadgeLookup = buildApprovedMerchantBadgeLookup();
 
     // Get blocked user IDs for the logged-in user (if authenticated)
     let blockedSet = new Set();
@@ -2982,35 +3208,42 @@ app.get('/api/p2p/offers', async (req, res) => {
     const totalCount = filtered.length;
     const paginated = filtered.slice(pageOffset, pageOffset + pageSize);
 
-    // Enrich each offer with advertiser reputation + merchant badge
-    const enriched = await Promise.all(paginated.map(async (offer) => {
-      try {
-        const userId = offer.createdByUserId;
-        const advertiserName = offer.advertiser || '';
+    // Keep list responses light. Offer cards already fall back to offer-level metrics,
+    // so avoid per-card reputation DB lookups here to reduce mobile card load time.
+    const enriched = paginated.map((offer) => {
+      const userId = String(offer.createdByUserId || '').trim();
+      const advertiserName = String(offer.advertiser || '').trim();
+      const merchantBadge = resolveApprovedMerchantBadge(
+        merchantBadgeLookup,
+        userId,
+        advertiserName,
+        offer.merchantBadge || null
+      );
+      const merchantBadges = resolveApprovedMerchantBadges(
+        merchantBadgeLookup,
+        userId,
+        advertiserName,
+        offer.merchantBadges || (merchantBadge ? [merchantBadge] : null)
+      );
+      const onlineStatus =
+        offer.lastActiveAt && (Date.now() - new Date(offer.lastActiveAt).getTime()) < 300000
+          ? 'online'
+          : 'offline';
 
-        // Always look up merchant badge — pick the MOST RECENTLY approved application
-        let merchantBadge = null;
-        let latestReviewedAt = null;
-        for (const [, app] of merchantApplications) {
-          if (app.status === 'approved' && app.assignedBadge) {
-            const userIdMatch = userId && String(app.userId) === String(userId);
-            const usernameMatch = advertiserName && app.username === advertiserName;
-            if (userIdMatch || usernameMatch) {
-              const reviewedAt = app.reviewedAt ? new Date(app.reviewedAt).getTime() : 0;
-              if (!latestReviewedAt || reviewedAt > latestReviewedAt) {
-                merchantBadge = app.assignedBadge;
-                latestReviewedAt = reviewedAt;
-              }
-            }
-          }
-        }
+      // Compute baseOrders server-side for offers that don't have it stored
+      const _baseCounts = [40, 113, 370, 405, 88, 215, 312, 178];
+      const _advStr = advertiserName || userId || String(offer.id || '');
+      const _baseIdx = _advStr.split('').reduce(function(a, c) { return a + c.charCodeAt(0); }, 0) % _baseCounts.length;
+      const baseOrders = offer.baseOrders != null ? offer.baseOrders : _baseCounts[_baseIdx];
 
-        const onlineStatus = (offer.lastActiveAt && (Date.now() - new Date(offer.lastActiveAt).getTime()) < 300000) ? 'online' : 'offline';
-        if (!userId) return { ...offer, merchantBadge, onlineStatus };
-        const rep = await repos.getUserReputation(userId);
-        return { ...offer, reputation: rep || undefined, merchantBadge, onlineStatus };
-      } catch (_) { return offer; }
-    }));
+      return {
+        ...offer,
+        merchantBadge,
+        merchantBadges,
+        baseOrders,
+        onlineStatus
+      };
+    });
 
     return res.json({
       side: normalizedSide,
@@ -3128,6 +3361,21 @@ app.post('/api/p2p/orders/:orderId/mark-paid', requiresP2PUser, async (req, res)
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
+    // Notify seller to release crypto
+    if (p2pEmailService) {
+      const sellerParticipant = (updatedOrder.participants || []).find(p => p.role === 'seller');
+      if (sellerParticipant?.email) {
+        const emailOrder = {
+          id: updatedOrder.id,
+          cryptoAmount: updatedOrder.cryptoAmount,
+          asset: updatedOrder.asset || 'USDT',
+          fiatAmount: updatedOrder.fiatAmount,
+          fiatCurrency: updatedOrder.fiatCurrency || 'INR',
+          createdAt: updatedOrder.createdAt
+        };
+        p2pEmailService.sendOrderUpdate(sellerParticipant.email, emailOrder, 'payment_sent_seller').catch(() => {});
+      }
+    }
     return res.json({ success: true, order: { ...normalizedOrder, messages: normalizedMessages }, messages: normalizedMessages });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Server error.' });
@@ -3160,20 +3408,25 @@ async function createP2PAdController(req, res) {
   try {
     const userId = String(req.p2pUser.id || '').trim();
     const username = String(req.p2pUser.username || '').trim();
+    const merchantAccess = await getMerchantAccessState({
+      userId: req.p2pUser.id,
+      username: req.p2pUser.username,
+      email: req.p2pUser.email
+    });
 
-    // Security deposit gate: must have >= 200 USDT locked as security deposit
-    let securityDepositAmt = 0;
-    try {
-      const cols = getCollections();
-      const cred = await cols.p2pCredentials.findOne({ email: req.p2pUser.email });
-      if (cred) securityDepositAmt = Number(cred?.merchant?.depositLocked || 0) || 0;
-    } catch (_) {}
-    if (securityDepositAmt < MERCHANT_ACTIVATION_DEPOSIT) {
+    if (merchantAccess.depositLocked < MERCHANT_ACTIVATION_DEPOSIT) {
       return res.status(403).json({
         message: `You need to lock at least ${MERCHANT_ACTIVATION_DEPOSIT} USDT as security deposit to post ads.`,
         code: 'SECURITY_DEPOSIT_REQUIRED',
         required: MERCHANT_ACTIVATION_DEPOSIT,
-        current: securityDepositAmt
+        current: merchantAccess.depositLocked
+      });
+    }
+
+    if (!merchantAccess.canPostAds) {
+      return res.status(403).json({
+        message: 'Merchant approval is pending. Please wait for admin approval before posting ads.',
+        code: 'MERCHANT_APPROVAL_REQUIRED'
       });
     }
 
@@ -3337,10 +3590,23 @@ app.delete('/api/p2p/offers/:offerId', requiresP2PUser, async (req, res) => {
 // ── Security Deposit: lock USDT as security deposit (200 USDT min to post ads, 500 for badge) ──
 app.post('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
   try {
-    const { amount } = req.body || {};
-    const lockAmount = Number(amount) || MERCHANT_ACTIVATION_DEPOSIT;
-    if (lockAmount < MERCHANT_ACTIVATION_DEPOSIT) {
-      return res.status(400).json({ success: false, message: `Minimum security deposit is ${MERCHANT_ACTIVATION_DEPOSIT} USDT.` });
+    const merchantAccess = await getMerchantAccessState({
+      userId: req.p2pUser.id,
+      username: req.p2pUser.username,
+      email: req.p2pUser.email
+    });
+    const currentDeposit = Number(merchantAccess.depositLocked || 0);
+    const lockAmount = Number(req.body?.amount) || 0;
+    if (!Number.isFinite(lockAmount) || lockAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Enter a valid security deposit amount.' });
+    }
+    if (currentDeposit + lockAmount < MERCHANT_ACTIVATION_DEPOSIT) {
+      return res.status(400).json({
+        success: false,
+        message: `Lock at least ${MERCHANT_ACTIVATION_DEPOSIT} USDT total to continue.`,
+        required: MERCHANT_ACTIVATION_DEPOSIT,
+        current: currentDeposit
+      });
     }
     const activation = await walletService.activateMerchant({
       actor: req.p2pUser,
@@ -3350,7 +3616,9 @@ app.post('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
       success: true,
       message: `${lockAmount} USDT locked as security deposit.`,
       securityDeposit: activation.merchant?.depositLocked || lockAmount,
-      wallet: activation.wallet
+      wallet: activation.wallet,
+      canApplyMerchant: (activation.merchant?.depositLocked || 0) >= MERCHANT_ACTIVATION_DEPOSIT,
+      canPostAds: false
     });
   } catch (error) {
     const knownStatus = Number(error?.status || 0);
@@ -3364,17 +3632,20 @@ app.post('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
 // ── Security Deposit: get current deposit status ──
 app.get('/api/p2p/security-deposit', requiresP2PUser, async (req, res) => {
   try {
-    const cols = getCollections();
-    const cred = await cols.p2pCredentials.findOne({ email: req.p2pUser.email });
-    const depositLocked = Number(cred?.merchant?.depositLocked || 0);
+    const merchantAccess = await getMerchantAccessState({
+      userId: req.p2pUser.id,
+      username: req.p2pUser.username,
+      email: req.p2pUser.email
+    });
     return res.json({
       success: true,
-      securityDeposit: depositLocked,
-      canPostAds: depositLocked >= MERCHANT_ACTIVATION_DEPOSIT,
-      badgeEligible: depositLocked >= MERCHANT_BADGE_MIN_DEPOSIT
+      securityDeposit: merchantAccess.depositLocked,
+      canApplyMerchant: merchantAccess.canApplyMerchant,
+      canPostAds: merchantAccess.canPostAds,
+      badgeEligible: merchantAccess.badgeEligible
     });
   } catch (_) {
-    return res.json({ success: true, securityDeposit: 0, canPostAds: false, badgeEligible: false });
+    return res.json({ success: true, securityDeposit: 0, canApplyMerchant: false, canPostAds: false, badgeEligible: false });
   }
 });
 
@@ -3387,9 +3658,11 @@ app.post('/api/merchant/activate', requiresP2PUser, async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Merchant activated successfully.',
+      message: `Security deposit locked successfully. Submit your merchant application for admin approval.`,
       merchant: activation.merchant,
-      wallet: activation.wallet
+      wallet: activation.wallet,
+      canApplyMerchant: true,
+      canPostAds: false
     });
   } catch (error) {
     const knownStatus = Number(error?.status || 0);
@@ -3421,6 +3694,21 @@ app.post('/api/merchant/apply', requiresP2PUser, async (req, res) => {
     const social = socialAccounts || {};
     if (!social.twitter && !social.telegram && !social.instagram) {
       return res.status(400).json({ success: false, message: 'At least one social media account is required.' });
+    }
+
+    const merchantAccess = await getMerchantAccessState({
+      userId,
+      username,
+      email
+    });
+    if (merchantAccess.depositLocked < MERCHANT_ACTIVATION_DEPOSIT) {
+      return res.status(400).json({
+        success: false,
+        message: `Lock ${MERCHANT_ACTIVATION_DEPOSIT} USDT security deposit before applying.`
+      });
+    }
+    if (merchantAccess.status === 'approved') {
+      return res.status(400).json({ success: false, message: 'Your merchant account is already approved.' });
     }
 
     // Check if already applied
@@ -3523,6 +3811,61 @@ app.get('/api/admin/merchant-applications', requiresAdminSession, (req, res) => 
   return res.json({ success: true, applications: list });
 });
 
+// ── Admin: Fix security deposits for all approved merchants ──
+app.post('/api/admin/merchant-applications/fix-deposits', requiresAdminSession, async (req, res) => {
+  try {
+    const cols = getCollections();
+    let fixed = 0, skipped = 0;
+    for (const [, app] of merchantApplications) {
+      if (app.status !== 'approved') { skipped++; continue; }
+      const email = String(app.email || '').trim().toLowerCase();
+      if (!email) { skipped++; continue; }
+      const cred = await cols.p2pCredentials.findOne({ email });
+      const current = Number(cred?.merchant?.depositLocked || 0);
+      const target = _getBadgesArray(app).length > 0 ? MERCHANT_BADGE_MIN_DEPOSIT : MERCHANT_ACTIVATION_DEPOSIT;
+      if (current >= target) { skipped++; continue; }
+      await cols.p2pCredentials.updateOne(
+        { email },
+        { $set: { 'merchant.depositLocked': target, 'merchant.isMerchant': true, 'merchant.activatedAt': new Date() } },
+        { upsert: true }
+      );
+      fixed++;
+    }
+    return res.json({ success: true, fixed, skipped });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── Admin: Cap all merchant wallet balances to a max amount ──
+app.post('/api/admin/wallets/cap-merchant-balances', requiresAdminSession, async (req, res) => {
+  try {
+    const capAmount = Math.max(0, Number(req.body.capAmount || 500));
+    const { wallets, p2pCredentials } = getCollections();
+    // Get all merchant userIds
+    const merchants = await p2pCredentials.find({ isMerchant: true }, { projection: { userId: 1, email: 1 } }).toArray();
+    let capped = 0, skipped = 0;
+    for (const m of merchants) {
+      const uid = String(m.userId || '').trim();
+      if (!uid) { skipped++; continue; }
+      const wallet = await wallets.findOne({ userId: uid });
+      if (!wallet) { skipped++; continue; }
+      const current = Number(wallet.availableBalance || wallet.balance || 0);
+      if (current <= capAmount) { skipped++; continue; }
+      const diff = current - capAmount;
+      await wallets.updateOne(
+        { userId: uid },
+        { $set: { availableBalance: capAmount, balance: capAmount, updatedAt: new Date() },
+          $inc: { totalDeducted: diff } }
+      );
+      capped++;
+    }
+    return res.json({ success: true, capped, skipped, capAmount });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ── Merchant Application: Admin assign badge ──
 app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, async (req, res) => {
   try {
@@ -3559,25 +3902,47 @@ app.post('/api/admin/merchant-applications/:id/badge', requiresAdminSession, asy
       return res.json({ success: true, message: 'Application rejected.' });
     }
 
+    const badgeRaw = String(badge ?? '').trim();
+    if (action === 'approve' && !badgeRaw) {
+      app.status = 'approved';
+      app.assignedBadge = null;
+      app.reviewedAt = new Date().toISOString();
+      merchantApplications.set(id, app);
+      await saveMerchantApp(app);
+      try {
+        const cols = getCollections();
+        const matchQ = { $or: [] };
+        if (app.userId) matchQ.$or.push({ createdByUserId: String(app.userId) });
+        if (app.username) matchQ.$or.push({ advertiser: app.username });
+        if (matchQ.$or.length) {
+          await cols.p2pOffers.updateMany(matchQ, { $unset: { merchantBadge: '' } });
+        }
+      } catch (_) {}
+      return res.json({ success: true, message: `${app.username} approved as merchant without badge.`, application: app });
+    }
+
     const badgeNum = Number(badge);
-    if (![1, 2, 3].includes(badgeNum)) {
-      return res.status(400).json({ success: false, message: 'Badge must be 1, 2, or 3.' });
+    if (![1, 2, 3, 4].includes(badgeNum)) {
+      return res.status(400).json({ success: false, message: 'Badge must be 1, 2, 3, or 4.' });
     }
 
     app.status = 'approved';
-    app.assignedBadge = badgeNum;
+    const _prevBadges = _getBadgesArray(app);
+    if (!_prevBadges.includes(badgeNum)) _prevBadges.push(badgeNum);
+    app.assignedBadges = _prevBadges;
+    app.assignedBadge = _prevBadges[_prevBadges.length - 1];
     app.reviewedAt = new Date().toISOString();
     merchantApplications.set(id, app);
     await saveMerchantApp(app);
 
-    // Stamp badge onto all of this merchant's offer documents so buyers always see it
+    // Stamp badges onto all of this merchant's offer documents so buyers always see them
     try {
       const cols = getCollections();
       const matchQ = { $or: [] };
       if (app.userId) matchQ.$or.push({ createdByUserId: String(app.userId) });
       if (app.username) matchQ.$or.push({ advertiser: app.username });
       if (matchQ.$or.length) {
-        await cols.p2pOffers.updateMany(matchQ, { $set: { merchantBadge: badgeNum } });
+        await cols.p2pOffers.updateMany(matchQ, { $set: { merchantBadge: badgeNum, merchantBadges: _prevBadges } });
       }
     } catch (_) {}
 
@@ -3644,7 +4009,7 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
 
     // Assign badge
     const badgeNum = Number(badge);
-    if (![1, 2, 3].includes(badgeNum)) return res.status(400).json({ success: false, message: 'Badge must be 1, 2, or 3.' });
+    if (![1, 2, 3, 4].includes(badgeNum)) return res.status(400).json({ success: false, message: 'Badge must be 1, 2, 3, or 4.' });
 
     // Find existing application or create a direct-assign record
     let existingApp = null;
@@ -3659,7 +4024,10 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
 
     if (existingApp) {
       existingApp.status = 'approved';
-      existingApp.assignedBadge = badgeNum;
+      const _prevB = _getBadgesArray(existingApp);
+      if (!_prevB.includes(badgeNum)) _prevB.push(badgeNum);
+      existingApp.assignedBadges = _prevB;
+      existingApp.assignedBadge = _prevB[_prevB.length - 1];
       existingApp.reviewedAt = new Date().toISOString();
       merchantApplications.set(existingApp.id, existingApp);
       await saveMerchantApp(existingApp);
@@ -3669,7 +4037,7 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
       const newApp = {
         id, userId: targetUserId, username, email,
         photoBase64: '', currency: 'USDT', socialAccounts: {},
-        status: 'approved', assignedBadge: badgeNum,
+        status: 'approved', assignedBadge: badgeNum, assignedBadges: [badgeNum],
         submittedAt: new Date().toISOString(), reviewedAt: new Date().toISOString(),
         directAssign: true
       };
@@ -3677,12 +4045,13 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
       await saveMerchantApp(newApp);
     }
 
-    // Stamp badge on all their offers
+    // Stamp badges on all their offers
+    const _allBadges = existingApp ? _getBadgesArray(existingApp) : [badgeNum];
     try {
       const cols = getCollections();
       await cols.p2pOffers.updateMany(
         { $or: [{ createdByUserId: targetUserId }, { advertiser: username }] },
-        { $set: { merchantBadge: badgeNum } }
+        { $set: { merchantBadge: badgeNum, merchantBadges: _allBadges } }
       );
     } catch (_) {}
 
@@ -3742,30 +4111,34 @@ app.get('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async (
   } catch (_) {}
 
   const stats = { securityDeposit, totalOrders, completedOrders, completionRate, badgeEligible: securityDeposit >= MERCHANT_BADGE_MIN_DEPOSIT };
-  if (best) return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || null, applicationId: best.id, stats });
-  return res.json({ success: true, found: false, status: null, badge: null, stats });
+  if (best) return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || null, badges: _getBadgesArray(best), applicationId: best.id, stats });
+  return res.json({ success: true, found: false, status: null, badge: null, badges: [], stats });
 });
 
 // ── Merchant Application: User checks their status ──
-app.get('/api/merchant/application-status', requiresP2PUser, (req, res) => {
-  const userId = req.p2pUser.id;
-  // Return most recently reviewed approved app, or latest pending
-  let best = null;
-  for (const [, app] of merchantApplications) {
-    if (app.userId !== userId) continue;
-    if (!best) { best = app; continue; }
-    // Prefer approved over non-approved
-    if (app.status === 'approved' && best.status !== 'approved') { best = app; continue; }
-    if (app.status !== 'approved' && best.status === 'approved') continue;
-    // Among same status, prefer most recently reviewed
-    const t1 = app.reviewedAt ? new Date(app.reviewedAt).getTime() : new Date(app.submittedAt || 0).getTime();
-    const t2 = best.reviewedAt ? new Date(best.reviewedAt).getTime() : new Date(best.submittedAt || 0).getTime();
-    if (t1 > t2) best = app;
-  }
-  if (best) {
-    return res.json({ success: true, found: true, status: best.status, badge: best.assignedBadge || best.badge || null, applicationId: best.id });
-  }
-  return res.json({ success: true, found: false, status: null, badge: null });
+app.get('/api/merchant/application-status', requiresP2PUser, async (req, res) => {
+  const merchantAccess = await getMerchantAccessState({
+    userId: req.p2pUser.id,
+    username: req.p2pUser.username,
+    email: req.p2pUser.email
+  });
+  const best = merchantAccess.application;
+  const hasRealApplication = Boolean(best && !isLegacyDepositActivationApproval(best));
+  return res.json({
+    success: true,
+    found: hasRealApplication,
+    status: merchantAccess.status,
+    badge: merchantAccess.badge,
+    badges: merchantAccess.badges || [],
+    applicationId: hasRealApplication ? best?.id || null : null,
+    canApplyMerchant: merchantAccess.canApplyMerchant,
+    canPostAds: merchantAccess.canPostAds,
+    merchantActivated: merchantAccess.merchantActivated,
+    depositLocked: merchantAccess.depositLocked,
+    badgeEligible: merchantAccess.badgeEligible,
+    activationDepositRequired: MERCHANT_ACTIVATION_DEPOSIT,
+    badgeReviewDepositRequired: MERCHANT_BADGE_MIN_DEPOSIT
+  });
 });
 
 // Returns only the current user's own active orders (for mobile Active tab)
@@ -3874,7 +4247,7 @@ app.get('/api/p2p/orders/by-reference/:reference', requiresP2PUser, async (req, 
       return res.status(404).json({ message: 'Order not found for this reference.' });
     }
 
-    if (!isParticipant(orderByReference, req.p2pUser.id)) {
+    if (!isParticipant(orderByReference, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -3893,7 +4266,7 @@ app.post('/api/p2p/orders/:orderId/join', requiresP2PUser, async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: 'Order not found.' });
     }
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -3914,7 +4287,7 @@ app.get('/api/p2p/orders/:orderId', requiresP2PUser, async (req, res) => {
       return res.status(404).json({ message: 'Order not found.' });
     }
 
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -3979,6 +4352,19 @@ app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) =>
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
 
+    // Notify admin via SSE immediately (real-time popup in admin dashboard)
+    const raisedByUser = req.p2pUser.username || req.p2pUser.email;
+    broadcastAdminSupportEvent({
+      type: 'dispute',
+      orderId: updatedOrder.id,
+      reference: updatedOrder.reference || updatedOrder.id,
+      agentName: raisedByUser,
+      email: req.p2pUser.email || '',
+      subject: `Dispute filed on order #${updatedOrder.reference || updatedOrder.id}`,
+      message: String(appealReason).slice(0, 100),
+      appealType
+    });
+
     if (p2pEmailService) {
       setImmediate(async () => {
         try {
@@ -3986,12 +4372,11 @@ app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) =>
             repos.getP2PCredentialByUserId(updatedOrder.sellerUserId),
             repos.getP2PCredentialByUserId(updatedOrder.buyerUserId)
           ]);
-          const raisedBy = req.p2pUser.username || req.p2pUser.email;
           const adminEmail = String(process.env.ADMIN_EMAIL || '').trim();
-          if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, raisedBy);
-          if (sellerCred?.email) await p2pEmailService.sendDisputeRaised(sellerCred.email, updatedOrder, raisedBy);
+          if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, raisedByUser);
+          if (sellerCred?.email) await p2pEmailService.sendDisputeRaised(sellerCred.email, updatedOrder, raisedByUser);
           if (buyerCred?.email && buyerCred.email !== sellerCred?.email) {
-            await p2pEmailService.sendDisputeRaised(buyerCred.email, updatedOrder, raisedBy);
+            await p2pEmailService.sendDisputeRaised(buyerCred.email, updatedOrder, raisedByUser);
           }
         } catch (emailErr) {
           console.warn('[p2p-email] appeal notification failed:', emailErr.message);
@@ -4017,7 +4402,14 @@ app.post('/api/p2p/orders/:orderId/cancel-appeal', requiresP2PUser, async (req, 
     const order = await p2pOrders.findOne({ id: req.params.orderId });
     if (!order) return res.status(404).json({ message: 'Order not found.' });
     if (order.status !== 'DISPUTED') return res.status(400).json({ message: 'Order is not under appeal.' });
-    if (order.appealedByUserId !== req.p2pUser.id) {
+    const myId = req.p2pUser.id;
+    const myUsername = String(req.p2pUser.username || '').trim().toLowerCase();
+    const myEmail = String(req.p2pUser.email || '').trim().toLowerCase();
+    const isAppealOwner =
+      order.appealedByUserId === myId ||
+      (myUsername && String(order.appealedByUsername || order.disputedBy || '').trim().toLowerCase() === myUsername) ||
+      (myEmail && String(order.appealedByEmail || '').trim().toLowerCase() === myEmail);
+    if (!isAppealOwner) {
       return res.status(403).json({ message: 'Only the user who raised the appeal can cancel it.' });
     }
     const revertStatus = order.preDisputeStatus || 'PAYMENT_SENT';
@@ -4054,7 +4446,7 @@ app.post('/api/p2p/orders/:orderId/rate', requiresP2PUser, async (req, res) => {
   try {
     const order = await repos.getP2POrderById(req.params.orderId);
     if (!order) return res.status(404).json({ message: 'Order not found.' });
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only participants can rate this order.' });
     }
 
@@ -4155,6 +4547,21 @@ app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) =>
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
 
+    // Real-time admin SSE for disputes
+    if (action === 'dispute') {
+      const raisedBy = req.p2pUser.username || req.p2pUser.email;
+      broadcastAdminSupportEvent({
+        type: 'dispute',
+        orderId: updatedOrder.id,
+        reference: updatedOrder.reference || updatedOrder.id,
+        agentName: raisedBy,
+        email: req.p2pUser.email || '',
+        subject: `Dispute filed on order #${updatedOrder.reference || updatedOrder.id}`,
+        message: String(req.body.appealReason || req.body.reason || '').slice(0, 100),
+        appealType: String(req.body.appealType || '').trim()
+      });
+    }
+
     // Send email notifications (non-blocking)
     if (p2pEmailService) {
       setImmediate(async () => {
@@ -4178,9 +4585,10 @@ app.post('/api/p2p/orders/:orderId/status', requiresP2PUser, async (req, res) =>
           } else if (action === 'dispute') {
             // Notify admin + both parties
             const adminEmail = String(process.env.ADMIN_EMAIL || '').trim();
-            if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, req.p2pUser.username || req.p2pUser.email);
-            if (sellerEmail) await p2pEmailService.sendDisputeRaised(sellerEmail, updatedOrder, req.p2pUser.username || req.p2pUser.email);
-            if (buyerEmail && buyerEmail !== sellerEmail) await p2pEmailService.sendDisputeRaised(buyerEmail, updatedOrder, req.p2pUser.username || req.p2pUser.email);
+            const raisedBy = req.p2pUser.username || req.p2pUser.email;
+            if (adminEmail) await p2pEmailService.sendDisputeRaised(adminEmail, updatedOrder, raisedBy);
+            if (sellerEmail) await p2pEmailService.sendDisputeRaised(sellerEmail, updatedOrder, raisedBy);
+            if (buyerEmail && buyerEmail !== sellerEmail) await p2pEmailService.sendDisputeRaised(buyerEmail, updatedOrder, raisedBy);
           }
         } catch (emailErr) {
           console.warn('[p2p-email] notification failed:', emailErr.message);
@@ -4209,7 +4617,7 @@ app.get('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) =
       return res.status(404).json({ message: 'Order not found.' });
     }
 
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -4231,7 +4639,7 @@ app.post('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) 
 
   try {
     const mutation = await withOrderMutation(req.params.orderId, (next) => {
-      if (!isParticipant(next, req.p2pUser.id)) {
+      if (!isParticipant(next, req.p2pUser.id, req.p2pUser)) {
         return { error: 'not_participant' };
       }
 
@@ -4287,7 +4695,7 @@ app.get('/api/p2p/orders/:orderId/stream', requiresP2PUser, async (req, res) => 
       return res.status(404).json({ message: 'Order not found.' });
     }
 
-    if (!isParticipant(order, req.p2pUser.id)) {
+    if (!isParticipant(order, req.p2pUser.id, req.p2pUser)) {
       return res.status(403).json({ message: 'Only buyer and seller can access this order.' });
     }
 
@@ -4361,6 +4769,190 @@ app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
   res.write(': connected\n\n');
   const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
   req.on('close', () => { clearInterval(ping); adminWithdrawalSseClients.delete(res); });
+});
+
+// ── Admin: List all withdrawal requests ───────────────────────────────────────
+app.get('/api/admin/wallet/withdrawals', requiresAdminSession, async (req, res) => {
+  try {
+    const statusFilter = String(req.query.status || '').toLowerCase();
+    const limit = Math.min(Math.max(Number(req.query.limit || 50), 1), 200);
+    const { withdrawalRequests, p2pCredentials } = getCollections();
+    const query = {};
+    if (statusFilter) query.status = statusFilter;
+    const rows = await withdrawalRequests
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+
+    // Enrich records missing email — look up credential by userId
+    const missingEmail = rows.filter(r => !r.email && r.userId);
+    let credMap = {};
+    if (missingEmail.length > 0) {
+      const userIds = [...new Set(missingEmail.map(r => r.userId))];
+      const creds = await p2pCredentials.find({ userId: { $in: userIds } }, { projection: { userId: 1, email: 1, username: 1 } }).toArray();
+      for (const c of creds) credMap[c.userId] = c;
+    }
+
+    const withdrawals = rows.map((r) => {
+      const cred = credMap[r.userId] || {};
+      const email = r.email || cred.email || null;
+      const rawUsername = r.username || cred.username || r.userId || '';
+      // derive display name from email if username looks like a userId
+      const derivedName = email ? email.split('@')[0].replace(/[^a-z0-9_]/gi, '_').slice(0, 20) : rawUsername;
+      const displayName = (rawUsername && !rawUsername.startsWith('usr_')) ? rawUsername : derivedName;
+      return {
+        requestId: r.requestId || String(r._id),
+        id: r.requestId || String(r._id),
+        userId: r.userId,
+        name: displayName,
+        username: r.userId,
+        email: email,
+        amount: r.amount,
+        currency: r.currency || 'USDT',
+        coin: r.currency || 'USDT',
+        network: (r.metadata && r.metadata.network) || r.network || null,
+        address: r.address || r.toAddress || null,
+        fee: (r.metadata && r.metadata.fee) || r.fee || 0,
+        status: (r.status || 'PENDING').toUpperCase(),
+        createdAt: r.createdAt,
+        processedAt: r.processedAt || null,
+        reason: (r.metadata && r.metadata.reason) || null
+      };
+    });
+    return res.json({ total: withdrawals.length, withdrawals });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while fetching withdrawals.' });
+  }
+});
+
+// ── Admin: Approve or reject a withdrawal request ─────────────────────────────
+app.post('/api/admin/wallet/withdrawals/:requestId/review', requiresAdminSession, async (req, res) => {
+  const requestId = String(req.params.requestId || '').trim();
+  if (!requestId) return res.status(400).json({ message: 'requestId is required.' });
+  const { decision, reason } = req.body || {};
+  const normalizedDecision = String(decision || '').toUpperCase();
+  if (!['APPROVED', 'REJECTED'].includes(normalizedDecision)) {
+    return res.status(400).json({ message: 'decision must be APPROVED or REJECTED.' });
+  }
+  try {
+    const targetStatus = normalizedDecision === 'APPROVED' ? 'approved' : 'rejected';
+    const withdrawal = await walletService.processWithdrawalRequest(requestId, targetStatus, {
+      isAdmin: true,
+      userId: 'admin',
+      username: 'Admin',
+      reason: String(reason || (normalizedDecision === 'APPROVED' ? 'Approved by admin' : 'Rejected by admin')).trim()
+    });
+    broadcastAdminWithdrawalEvent({
+      type: 'withdrawal_reviewed',
+      requestId,
+      decision: normalizedDecision,
+      status: withdrawal.status
+    });
+
+    // Send withdrawal success email if approved
+    if (normalizedDecision === 'APPROVED') {
+      try {
+        const emailService = req.app.get('authEmailService');
+        if (emailService && withdrawal.userId) {
+          const cols = getCollections();
+          const cred = await cols.p2pCredentials.findOne({
+            $or: [{ userId: withdrawal.userId }, { id: withdrawal.userId }]
+          }).catch(() => null);
+          const userEmail = cred?.email;
+          if (userEmail) {
+            emailService.sendWithdrawalSuccessEmail(userEmail, {
+              amount: withdrawal.amount,
+              asset: withdrawal.currency || 'USDT',
+              address: withdrawal.address,
+              transactionId: withdrawal.requestId,
+              processedAt: withdrawal.processedAt || new Date().toISOString()
+            }).catch(() => {});
+          }
+        }
+      } catch (_) {}
+    }
+
+    return res.json({
+      message: normalizedDecision === 'APPROVED'
+        ? 'Withdrawal approved successfully.'
+        : 'Withdrawal rejected. Funds returned to user.',
+      withdrawal
+    });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ message: error.message });
+    return res.status(500).json({ message: String(error.message || 'Server error while reviewing withdrawal.') });
+  }
+});
+
+
+// ── Admin: Review deposit request (approve / reject) ──────────────────────────
+app.post('/api/admin/wallet/deposits/:depositId/review', requiresAdminSession, async (req, res) => {
+  const depositId = String(req.params.depositId || '').trim();
+  if (!depositId) return res.status(400).json({ message: 'depositId is required.' });
+  const { decision, reason } = req.body || {};
+  const normalizedDecision = String(decision || '').toUpperCase();
+  if (!['APPROVED', 'REJECTED'].includes(normalizedDecision)) {
+    return res.status(400).json({ message: 'decision must be APPROVED or REJECTED.' });
+  }
+  try {
+    const deposit = await adminStore.reviewDeposit(
+      depositId,
+      normalizedDecision === 'APPROVED' ? 'COMPLETED' : 'REJECTED',
+      String(reason || (normalizedDecision === 'APPROVED' ? 'Approved by admin' : 'Rejected by admin')).trim(),
+      { id: 'admin', role: 'admin' }
+    );
+
+    // Credit wallet if approved
+    if (normalizedDecision === 'APPROVED' && walletService) {
+      try {
+        await walletService.creditAvailable(deposit.userId, Number(deposit.amount || 0), {
+          type: 'deposit',
+          currency: String(deposit.coin || 'USDT').toUpperCase(),
+          referenceId: deposit.id,
+          metadata: { source: 'admin_deposit_approval' }
+        });
+      } catch (_) {}
+    }
+
+    // Send deposit success email
+    if (normalizedDecision === 'APPROVED') {
+      try {
+        const emailService = req.app.get('authEmailService');
+        const userEmail = deposit.email;
+        if (emailService && userEmail) {
+          emailService.sendDepositSuccessEmail(userEmail, {
+            amount: deposit.amount,
+            asset: deposit.coin || 'USDT',
+            txId: deposit.txHash || deposit.id,
+            processedAt: new Date().toISOString()
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+
+    return res.json({
+      message: normalizedDecision === 'APPROVED'
+        ? 'Deposit approved and credited to user wallet.'
+        : 'Deposit request rejected.',
+      deposit
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({ message: String(error.message || 'Server error while reviewing deposit.') });
+  }
+});
+
+// ── Admin: List deposit requests ──────────────────────────────────────────────
+app.get('/api/admin/wallet/deposits', requiresAdminSession, async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page || 1));
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit || 20)));
+    const status = String(req.query.status || '').toUpperCase() || undefined;
+    const result = await adminStore.listDeposits({ page, limit, status });
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ message: String(error.message || 'Server error while listing deposits.') });
+  }
 });
 
 // ── Public Support Chat — user submits message ────────────────────────────────
@@ -4843,6 +5435,8 @@ async function boot() {
     auditLogService = createAuditLogService(collections);
     authEmailService = createAuthEmailService();
     p2pEmailService = createP2PEmailService();
+    app.set('authEmailService', authEmailService);
+    app.set('p2pEmailService', p2pEmailService);
     logEmailProviderRuntimeEnv();
     walletService = createWalletService(collections, getMongoClient(), {
       hooks: {
@@ -5247,3 +5841,4 @@ async function boot() {
 }
 
 boot();
+

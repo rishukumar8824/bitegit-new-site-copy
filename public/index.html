@@ -497,11 +497,11 @@
           </article>
 
           <article class="cf-guide-card cf-guide-card--trade cf-reveal">
-            <a href="/trade/spot/BTCUSDT" class="cf-guide-card-link" aria-label="Go to trading">
+            <a href="/p2p" class="cf-guide-card-link" aria-label="Go to P2P trading">
               <div class="cf-guide-card-visual">
-                <img src="/assets/home-guide/guide-card-art-3.png?v=20260416c" alt="Start trading card" loading="lazy" />
+                <img src="/assets/home-guide/guide-card-art-3.png?v=20260416c" alt="Start P2P trading card" loading="lazy" />
               </div>
-              <span class="cf-guide-cta">Go to Trading</span>
+              <span class="cf-guide-cta">Go to P2P</span>
             </a>
           </article>
         </div>
@@ -992,6 +992,28 @@
     }, { threshold: 0.06, rootMargin: '0px 0px -30px 0px' });
 
     els.forEach(function(el){ io.observe(el); });
+  })();
+  </script>
+  <script>
+  // Copy Trading cards/buttons → redirect to P2P (scroll-safe on Android)
+  (function() {
+    var _tsx = 0, _tsy = 0;
+    document.addEventListener('touchstart', function(e) {
+      _tsx = e.touches[0].clientX;
+      _tsy = e.touches[0].clientY;
+    }, { passive: true });
+    document.querySelectorAll('.cf-copy-btn, .cf-copy-card').forEach(function(el) {
+      el.addEventListener('touchend', function(e) {
+        var dx = Math.abs(e.changedTouches[0].clientX - _tsx);
+        var dy = Math.abs(e.changedTouches[0].clientY - _tsy);
+        if (dx > 8 || dy > 8) return;
+        e.preventDefault();
+        window.location.href = '/p2p';
+      }, { passive: false });
+      el.addEventListener('click', function() {
+        window.location.href = '/p2p';
+      });
+    });
   })();
   </script>
   </body>

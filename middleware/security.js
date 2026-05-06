@@ -139,7 +139,7 @@ function applySecurityHeaders(app) {
                 'https://s3.tradingview.com',
                 'https://*.tradingview.com'
               ],
-              imgSrc: ["'self'", 'data:', 'https:'],
+              imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
               connectSrc: [
                 "'self'",
                 'https://api.binance.com',
@@ -179,7 +179,7 @@ function applySecurityHeaders(app) {
       (req, res, next) => {
         res.setHeader(
           'Content-Security-Policy',
-          "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com; img-src 'self' data: https:; connect-src 'self' https://api.binance.com https://api.resend.com https://*.tradingview.com wss://*.tradingview.com; frame-src 'self' https://*.tradingview.com; font-src 'self' https: data:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
+          "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.binance.com https://data-api.binance.vision https://api.bybit.com https://api.coingecko.com https://api.resend.com https://*.tradingview.com wss://*.tradingview.com; frame-src 'self' https://*.tradingview.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https: data:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
         );
         res.setHeader('X-Frame-Options', 'DENY');
         res.setHeader('X-Content-Type-Options', 'nosniff');

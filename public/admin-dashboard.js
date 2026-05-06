@@ -541,11 +541,13 @@ async function loadKyc() {
 async function viewKycDocuments(userId) {
   const modal = document.getElementById('kycDocModal');
   const aadhaarContainer = document.getElementById('kycDocAadhaarContainer');
+  const aadhaarBackContainer = document.getElementById('kycDocAadhaarBackContainer');
   const selfieContainer = document.getElementById('kycDocSelfieContainer');
 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
   aadhaarContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
+  aadhaarBackContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
   selfieContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
 
   try {
@@ -561,6 +563,12 @@ async function viewKycDocuments(userId) {
       aadhaarContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No Aadhaar image available</p>';
     }
 
+    if (data.aadhaarBack) {
+      aadhaarBackContainer.innerHTML = `<img src="${data.aadhaarBack}" alt="Aadhaar Back" class="w-full h-auto object-contain max-h-80" />`;
+    } else {
+      aadhaarBackContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No Aadhaar back image available</p>';
+    }
+
     if (data.selfie) {
       selfieContainer.innerHTML = `<img src="${data.selfie}" alt="Selfie" class="w-full h-auto object-contain max-h-80" />`;
     } else {
@@ -573,6 +581,7 @@ async function viewKycDocuments(userId) {
     `;
   } catch (error) {
     aadhaarContainer.innerHTML = `<p class="text-sm text-rose-400 p-4">Error: ${error.message}</p>`;
+    aadhaarBackContainer.innerHTML = '';
     selfieContainer.innerHTML = '';
     showMessage(error.message || 'Failed to load KYC documents.', 'error');
   }
@@ -618,6 +627,11 @@ async function loadUsers(options = {}) {
   });
 }
 
+function isUserOnline(lastActiveAt) {
+  if (!lastActiveAt) return false;
+  return (Date.now() - new Date(lastActiveAt).getTime()) < 3600000; // 1 hour
+}
+
 function renderUsersTable(users, merchantMap) {
   const body = document.getElementById('usersTableBody');
   if (users.length === 0) {
@@ -629,10 +643,14 @@ function renderUsersTable(users, merchantMap) {
     const merchantCell = mb
       ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${BADGE_COLORS[mb]}22;color:${BADGE_COLORS[mb]};border:1px solid ${BADGE_COLORS[mb]}55;white-space:nowrap;">${BADGE_ICONS[mb]}</span>`
       : `<span style="font-size:11px;color:var(--text-2);">—</span>`;
+    const online = isUserOnline(user.lastActiveAt);
+    const onlineDot = online
+      ? `<span title="Online (active within 1 hr)" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:5px;vertical-align:middle;box-shadow:0 0 4px #22c55e99;"></span>`
+      : `<span title="Offline" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#64748b44;margin-right:5px;vertical-align:middle;"></span>`;
     return `
     <tr class="user-row" data-profile-id="${user.userId}" style="cursor:pointer;transition:background 0.15s;" title="Click to view full profile">
       <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${user.userId}</td>
-      <td class="admin-td" style="font-weight:500;">${user.email}</td>
+      <td class="admin-td" style="font-weight:500;">${onlineDot}${user.email}</td>
       <td class="admin-td">${statusBadge(user.role)}</td>
       <td class="admin-td">${statusBadge(user.status)}</td>
       <td class="admin-td">${statusBadge(user.kycStatus)}</td>
@@ -2484,6 +2502,9 @@ async function loadUpMerchantBadge() {
       </div>
       <div style="font-size:11px;color:var(--text-2);margin-bottom:8px;">200 USDT deposit → can post ads. 500 USDT + good completion → badge eligible. Admin assigns badge manually.</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button onclick="adminAssignMerchantBadge('${userId}',4)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(229,53,96,0.13);color:#e53560;border:1px solid rgba(229,53,96,0.45);font-size:12px;font-weight:800;cursor:pointer;${currentBadge===4?'outline:2px solid #e53560;':''}" title="PRO Merchant — professional local crypto exchange">
+          <span style="display:inline-flex;align-items:center;gap:4px;"><svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;vertical-align:middle;"><path d="M4 3 C3.4 3 3 3.4 3 4 L3 40 C3 40.6 3.4 41 4 41 L40 41 C40.6 41 41 40.6 41 40 L41 14 L30 3 Z" fill="#e53560"/><path d="M30 3 L30 13 C30 13.6 30.4 14 31 14 L41 14 Z" fill="rgba(0,0,0,0.18)"/><text x="21" y="28" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="Arial,sans-serif" font-style="italic">Pro</text></svg> PRO</span>
+        </button>
         <button onclick="adminAssignMerchantBadge('${userId}',1)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(26,111,244,0.12);color:#1a6ff4;border:1px solid rgba(26,111,244,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===1?'outline:2px solid #1a6ff4;':''}" title="High-quality verified merchant">◆ Blue V</button>
         <button onclick="adminAssignMerchantBadge('${userId}',2)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(247,147,26,0.12);color:#f7931a;border:1px solid rgba(247,147,26,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===2?'outline:2px solid #f7931a;':''}" title="Top-level certified merchant">♛ Crown</button>
         <button onclick="adminAssignMerchantBadge('${userId}',3)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(245,166,35,0.12);color:#f5a623;border:1px solid rgba(245,166,35,0.35);font-size:12px;font-weight:700;cursor:pointer;${currentBadge===3?'outline:2px solid #f5a623;':''}" title="Compensation-protected merchant">❖ Shield</button>
@@ -2495,7 +2516,7 @@ async function loadUpMerchantBadge() {
 }
 
 async function adminAssignMerchantBadge(userId, badge) {
-  const BADGE_LABELS = { 1: 'Blue V (Verified)', 2: 'Crown (Pro)', 3: 'Shield (Elite)' };
+  const BADGE_LABELS = { 4: 'PRO Merchant', 1: 'Blue V (Verified)', 2: 'Crown (Pro)', 3: 'Shield (Elite)' };
   if (!confirm(`Assign Badge ${badge} — ${BADGE_LABELS[badge]} to this user?\nThis grants them merchant privileges and the ability to post P2P ads.`)) return;
   try {
     const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/merchant-badge`, {
@@ -2601,10 +2622,12 @@ async function loadUpKyc() {
     const submittedAt = doc.submittedAt || '';
     // Use hasAadhaarFront/hasSelfie flags (new API) OR fall back to checking base64 blobs
     const hasAadhaar = !!(doc.hasAadhaarFront || doc.aadhaarFront);
+    const hasAadhaarBack = !!(doc.hasAadhaarBack || doc.aadhaarBack);
     const hasSelfie  = !!(doc.hasSelfie || doc.selfie);
-    const hasAnyDoc  = hasAadhaar || hasSelfie;
+    const hasAnyDoc  = hasAadhaar || hasAadhaarBack || hasSelfie;
     // Use direct image URL endpoint (binary, no base64 size issues)
     const aadhaarImgUrl = hasAadhaar ? `${API_BASE}/users/${encodeURIComponent(_upUserId)}/kyc/image/aadhaar` : null;
+    const aadhaarBackImgUrl = hasAadhaarBack ? `${API_BASE}/users/${encodeURIComponent(_upUserId)}/kyc/image/aadhaar-back` : null;
     const selfieImgUrl  = hasSelfie  ? `${API_BASE}/users/${encodeURIComponent(_upUserId)}/kyc/image/selfie`  : null;
 
     const statusColor = kycStatus === 'APPROVED' ? 'var(--green)' : kycStatus === 'REJECTED' ? 'var(--red)' : kycStatus === 'PENDING' ? 'var(--accent)' : 'var(--text-2)';
@@ -2626,6 +2649,7 @@ async function loadUpKyc() {
         ${submittedAt ? `<div class="up-info-row"><span class="up-info-label">Submitted At</span><span class="up-info-value">${formatDate(submittedAt)}</span></div>` : ''}
         <div class="up-info-row"><span class="up-info-label">Remarks</span><span class="up-info-value" style="color:${remarks?'var(--text-1)':'var(--text-2)'};">${remarks||'—'}</span></div>
         <div class="up-info-row"><span class="up-info-label">Aadhaar Doc</span><span class="up-info-value">${hasAadhaar?'<span style="color:var(--green);">✅ Uploaded</span>':'<span style="color:var(--text-2);">Not uploaded</span>'}</span></div>
+        <div class="up-info-row"><span class="up-info-label">Aadhaar Back</span><span class="up-info-value">${hasAadhaarBack?'<span style="color:var(--green);">✅ Uploaded</span>':'<span style="color:var(--text-2);">Not uploaded</span>'}</span></div>
         <div class="up-info-row" style="border:none;"><span class="up-info-label">Selfie</span><span class="up-info-value">${hasSelfie?'<span style="color:var(--green);">✅ Uploaded</span>':'<span style="color:var(--text-2);">Not uploaded</span>'}</span></div>
       </div>
 
@@ -2633,8 +2657,9 @@ async function loadUpKyc() {
 
       <!-- Document Images -->
       ${hasAnyDoc ? `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px;">
         ${kycImageBox('🪪 Aadhaar Front', aadhaarImgUrl)}
+        ${kycImageBox('🪪 Aadhaar Back', aadhaarBackImgUrl)}
         ${kycImageBox('🤳 Selfie with Doc', selfieImgUrl)}
       </div>` : `
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;margin-bottom:12px;">
@@ -3259,15 +3284,21 @@ function connectSupportSSE() {
   _supportSSE.onmessage = (ev) => {
     try {
       const info = JSON.parse(ev.data);
-      // Update sidebar badge
-      _lastKnownOpenTicketCount++;
-      const badge = document.getElementById('supportBadge');
-      if (badge) { badge.style.display = ''; badge.textContent = _lastKnownOpenTicketCount; }
-      // Show popup with agent name
-      showSupportNotification(info);
-      // If on support view, refresh list
-      if (state.currentView === 'support' && !state.support.activeTicketId) {
-        loadSupport().catch(() => {});
+      if (info && info.type === 'dispute') {
+        // Dispute/appeal filed — show orange popup and badge on P2P section
+        showDisputeNotification(info);
+        const p2pBadge = document.getElementById('p2pDisputeBadge');
+        if (p2pBadge) { p2pBadge.style.display = ''; p2pBadge.textContent = (parseInt(p2pBadge.textContent || '0') || 0) + 1; }
+        if (state.currentView === 'p2p') { loadP2P().catch(() => {}); }
+      } else {
+        // Support ticket
+        _lastKnownOpenTicketCount++;
+        const badge = document.getElementById('supportBadge');
+        if (badge) { badge.style.display = ''; badge.textContent = _lastKnownOpenTicketCount; }
+        showSupportNotification(info);
+        if (state.currentView === 'support' && !state.support.activeTicketId) {
+          loadSupport().catch(() => {});
+        }
       }
     } catch (_) {}
   };
@@ -3341,6 +3372,40 @@ function showSupportNotification(info) {
   setTimeout(() => { if (n.isConnected) n.remove(); }, 10000);
 }
 
+function showDisputeNotification(info) {
+  const user = info.agentName || info.email || 'A user';
+  const orderId = info.orderId || '';
+  const ref = info.reference || orderId;
+  const reason = info.message || info.appealType || 'No details';
+
+  const n = document.createElement('div');
+  n.style.cssText = `position:fixed;top:18px;right:18px;z-index:9999;
+    background:var(--bg-card);border:1px solid #f97316;border-radius:14px;
+    padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:340px;`;
+  n.innerHTML = `
+    <div style="width:38px;height:38px;border-radius:50%;background:#f9731620;border:2px solid #f9731640;
+                display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⚠️</div>
+    <div style="flex:1;min-width:0;">
+      <p style="margin:0 0 2px;font-size:12px;font-weight:700;color:#f97316;">Dispute / Appeal Filed!</p>
+      <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:var(--text-1);">${user}</p>
+      <p style="margin:0;font-size:11px;color:var(--text-2);">Order: <b>#${ref}</b></p>
+      <p style="margin:2px 0 0;font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${reason}</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#f97316;font-weight:600;">👆 Click to view disputes</p>
+    </div>
+    <button onclick="event.stopPropagation();this.closest('[style]').remove();"
+      style="background:none;border:none;color:var(--text-2);cursor:pointer;font-size:16px;padding:0;flex-shrink:0;">✕</button>`;
+
+  n.addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON') return;
+    n.remove();
+    changeView('p2p');
+  });
+
+  document.body.appendChild(n);
+  setTimeout(() => { if (n.isConnected) n.remove(); }, 15000);
+}
+
 async function init() {
   try {
     startLiveClock();
@@ -3398,7 +3463,7 @@ function connectWithdrawalSSE() {
 
 async function refreshWithdrawalNotifications({ silent = false } = {}) {
   try {
-    const data = await apiRequest('/wallet/withdrawals?status=PENDING&limit=50');
+    const data = await apiRequest('/wallet/withdrawals?status=pending&limit=50');
     const rows = Array.isArray(data.withdrawals) ? data.withdrawals : [];
     _wdPendingList = rows;
     _wdPendingCount = rows.length;
@@ -3544,15 +3609,75 @@ function showWithdrawalNotification(info) {
   setTimeout(() => { if (n.isConnected) n.remove(); }, 12000);
 }
 
+function _wdRenderRows(withdrawals) {
+  if (withdrawals.length === 0) {
+    return `<div style="padding:2rem;text-align:center;color:#848e9c;">No pending withdrawals 🎉</div>`;
+  }
+  return withdrawals.map((w, idx) => {
+    const id = String(w.requestId || w.id || '').trim();
+    const address = String(w.address || w.toAddress || w.to || '-').trim();
+    const detailId = 'wdDetail_' + idx;
+    const fee = w.fee != null ? String(w.fee) : '0';
+    const createdAt = w.createdAt ? formatDate(w.createdAt) : '-';
+    const processedAt = w.processedAt ? formatDate(w.processedAt) : '-';
+    const userName = escapeHtml(w.username || w.userId || 'User');
+    const displayName = escapeHtml(w.name || w.username || w.userId || 'User');
+    const userEmail = escapeHtml(w.email || '-');
+    return `
+    <div style="border-bottom:1px solid rgba(255,255,255,0.06);">
+      <div onclick="wdToggleDetail('${detailId}')" style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:16px;font-weight:800;color:#eaecef;">${escapeHtml(String(w.amount))} <span style="color:#00e5ff;">${escapeHtml(w.currency || w.coin || 'USDT')}</span></div>
+          <div style="font-size:11px;color:#848e9c;margin-top:2px;">${displayName} &nbsp;·&nbsp; ${escapeHtml(createdAt)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${statusBadge(w.status || 'pending')}
+          <span style="color:#848e9c;font-size:16px;" id="${detailId}_arr">▸</span>
+        </div>
+      </div>
+      <div id="${detailId}" style="display:none;padding:0 16px 14px;">
+        <div style="padding:12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.03);display:grid;gap:7px;font-size:12px;color:#c9d1d9;margin-bottom:10px;">
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Name:</span> <b style="color:#eaecef;">${escapeHtml(w.name || userName)}</b></div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Username:</span> <span style="color:#c9d1d9;">${userName}</span></div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Email:</span> <span style="color:#00e5ff;">${userEmail !== '-' ? userEmail : '<span style="color:#848e9c;">-</span>'}</span></div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Network:</span> ${escapeHtml(w.network || '-')}</div>
+          <div style="word-break:break-all;"><span style="color:#848e9c;min-width:90px;display:inline-block;">Address:</span> ${escapeHtml(address)}</div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Fee:</span> ${escapeHtml(fee)} USDT</div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Request ID:</span> <span style="font-size:10px;word-break:break-all;">${escapeHtml(id || '-')}</span></div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Submitted:</span> ${escapeHtml(createdAt)}</div>
+          <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Processed:</span> ${escapeHtml(processedAt)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
+            style="background:#02c076;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">✓ Approve</button>
+          <button onclick="wdAction('${escapeHtml(id)}','REJECTED',this)"
+            style="background:#f6465d;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">✕ Reject</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function _wdLoadIntoPanel() {
+  const panelBody = document.getElementById('wdPanelBody');
+  const panelSub = document.getElementById('wdPanelSub');
+  if (!panelBody) return;
+  panelBody.innerHTML = '<div style="padding:2rem;text-align:center;color:#848e9c;">Loading...</div>';
+  let withdrawals = [];
+  try {
+    const data = await apiRequest('/wallet/withdrawals?status=pending&limit=50');
+    withdrawals = Array.isArray(data.withdrawals) ? data.withdrawals : [];
+  } catch(e) {}
+  _wdPendingCount = withdrawals.length;
+  updateWithdrawalBadge();
+  if (panelSub) panelSub.textContent = withdrawals.length + ' pending';
+  panelBody.innerHTML = _wdRenderRows(withdrawals);
+}
+
 async function openWithdrawalPanel() {
-  // Toggle: close if already open
   const existing = document.getElementById('wdPanel');
   if (existing) { existing.remove(); return; }
 
-  _wdPendingCount = 0;
-  updateWithdrawalBadge();
-
-  // Show panel immediately with loading state
   const panel = document.createElement('div');
   panel.id = 'wdPanel';
   panel.style.cssText = 'position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;background:#0d1117;border-left:1px solid rgba(255,255,255,0.07);z-index:99999;display:flex;flex-direction:column;overflow:hidden;box-shadow:-4px 0 24px rgba(0,0,0,0.5);';
@@ -3641,13 +3766,12 @@ async function wdAction(withdrawalId, decision, btn) {
       method: 'POST',
       body: JSON.stringify({ decision, reason: decision === 'APPROVED' ? 'Approved by admin' : 'Rejected by admin' })
     });
-    const row = btn.closest('div[style*="border-bottom"]');
-    if (row) {
-      row.style.opacity = '0.4';
-      row.innerHTML = `<div style="padding:8px 0;font-size:12px;color:${decision==='APPROVED'?'#02c076':'#f6465d'};font-weight:700;">
-        ${decision==='APPROVED'?'✓ Approved — balance deducted':'✕ Rejected — funds returned'}</div>`;
-    }
-    showMessage(decision === 'APPROVED' ? 'Withdrawal approved. Balance deducted.' : 'Withdrawal rejected. Funds returned to user.', decision === 'APPROVED' ? 'success' : 'error');
+    showMessage(
+      decision === 'APPROVED' ? 'Withdrawal approved. Balance deducted.' : 'Withdrawal rejected. Funds returned to user.',
+      decision === 'APPROVED' ? 'success' : 'error'
+    );
+    // Reload panel with fresh data so badge count and list stay accurate
+    await _wdLoadIntoPanel();
   } catch(e) {
     showMessage(e.message || 'Action failed', 'error');
     btn.disabled = false;

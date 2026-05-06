@@ -104,17 +104,29 @@ function normalizeP2PKycStatus(rawStatus) {
   return 'NOT_SUBMITTED';
 }
 
-function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 * 1000, broadcastUserEvent }) {
+function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 * 1000, broadcastUserEvent, p2pEmailService }) {
   if (!repos || !walletService) {
     throw new Error('P2P order controller requires repos and walletService.');
   }
   const _broadcast = typeof broadcastUserEvent === 'function' ? broadcastUserEvent : () => {};
+  const _email = p2pEmailService || null;
 
   async function createOrder(req, res) {
     try {
       const adId = String(req.body.adId || req.body.offerId || '').trim();
       if (!adId) {
         return res.status(400).json({ success: false, message: 'adId is required.' });
+      }
+
+      // Block if user already has an active or disputed order
+      const myActive = await repos.listMyActiveOrders(req.p2pUser.id);
+      const hasActiveOrder = myActive.some(o => ['CREATED', 'PENDING', 'PAYMENT_SENT', 'PAID', 'DISPUTED'].includes(o.status));
+      if (hasActiveOrder) {
+        const disputed = myActive.some(o => o.status === 'DISPUTED');
+        const msg = disputed
+          ? 'You have an ongoing dispute. Resolve it before placing a new order.'
+          : 'You already have an active order. Complete or cancel it first.';
+        return res.status(409).json({ success: false, message: msg, code: 'ACTIVE_ORDER_EXISTS' });
       }
 
       const offer = await repos.getOfferById(adId);
@@ -251,6 +263,31 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
       const orderPayload = { orderId: savedOrder.id, status: savedOrder.status };
       _broadcast(String(seller.id || ''), 'new_order', orderPayload);
       _broadcast(String(buyer.id || ''), 'new_order', orderPayload);
+
+      // Send order confirmation emails to buyer and seller
+      if (_email) {
+        const emailOrder = {
+          id: savedOrder.id,
+          cryptoAmount: savedOrder.cryptoAmount,
+          asset: savedOrder.asset || 'USDT',
+          fiatAmount: savedOrder.fiatAmount,
+          fiatCurrency: savedOrder.fiatCurrency || 'INR',
+          createdAt: savedOrder.createdAt
+        };
+        if (buyer.email) {
+          _email.sendOrderConfirmation(buyer.email, emailOrder).catch(() => {});
+        }
+        if (seller.email) {
+          _email.sendOrderUpdate(seller.email, emailOrder, 'new_order_seller').catch(() => {});
+        }
+        // 5-minute payment reminder to buyer
+        const reminderDelay = Math.max((orderTtlMs || 15 * 60 * 1000) - 5 * 60 * 1000, 60 * 1000);
+        if (buyer.email) {
+          setTimeout(() => {
+            _email.sendPaymentReminderEmail(buyer.email, emailOrder).catch(() => {});
+          }, reminderDelay);
+        }
+      }
 
       const myRole = String(req.p2pUser.id || '') === String(buyer.id || '') ? 'buyer' : 'seller';
       // Strip MongoDB _id to avoid ObjectId serialization issues in res.json()
