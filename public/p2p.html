@@ -1295,7 +1295,7 @@
             <button id="chatImageBtn" type="button" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:1rem;padding:0;flex-shrink:0;">📎</button>
             <input id="chatImageInput" class="hidden-control" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" />
           </div>
-          <button id="chatSendBtn" type="button" style="background:#00c2b2;border:none;color:#000;width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
+          <button id="chatSendBtn" type="button" style="background:#00b8d4;border:none;color:#000;width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
         </div>
         <form id="chatForm" style="display:none;"></form>
         <p id="chatUploadState" class="hidden"></p>
@@ -1598,18 +1598,18 @@
       <div class="mob-kyc-fp-body" style="justify-content:center;align-items:center;text-align:center;gap:1.5rem;">
         <div style="font-size:4rem;">⏳</div>
         <div>
-          <p style="font-size:1.1rem;font-weight:800;color:#00c2b2;margin:0 0 0.5rem;">Documents Under Review</p>
+          <p style="font-size:1.1rem;font-weight:800;color:#00b8d4;margin:0 0 0.5rem;">Documents Under Review</p>
           <p style="font-size:0.82rem;color:#8a97ae;line-height:1.6;margin:0;">Your KYC documents have been submitted successfully.<br/>Our team will verify them within <strong style="color:#fff;">24–48 hours</strong>.<br/>You'll be notified once verified.</p>
         </div>
-        <div style="background:rgba(0,194,178,0.08);border:1.5px solid rgba(0,194,178,0.25);border-radius:14px;padding:1rem 1.2rem;width:100%;box-sizing:border-box;">
-          <p style="font-size:0.78rem;color:#00c2b2;margin:0;font-weight:600;">What happens next?</p>
+        <div style="background:rgba(0,184,212,0.08);border:1.5px solid rgba(0,184,212,0.25);border-radius:14px;padding:1rem 1.2rem;width:100%;box-sizing:border-box;">
+          <p style="font-size:0.78rem;color:#00b8d4;margin:0;font-weight:600;">What happens next?</p>
           <ul style="font-size:0.75rem;color:#8a97ae;margin:0.5rem 0 0;padding-left:1.2rem;line-height:1.8;text-align:left;">
             <li>Admin reviews your Aadhaar &amp; selfie</li>
             <li>Verification takes 24–48 hours</li>
             <li>You can trade once approved</li>
           </ul>
         </div>
-        <button onclick="document.getElementById('kycUnderReviewScreen').style.display='none'; window.showMobScreen && window.showMobScreen('mobProfileScreen'); window.loadProfilePanel && window.loadProfilePanel();" class="mob-kyc-fp-btn" style="margin-top:0.5rem;background:linear-gradient(96deg,#00c2b2,#0099a8);box-shadow:0 2px 14px rgba(0,194,178,0.3);">Got it</button>
+        <button onclick="document.getElementById('kycUnderReviewScreen').style.display='none'; window.showMobScreen && window.showMobScreen('mobProfileScreen'); window.loadProfilePanel && window.loadProfilePanel();" class="mob-kyc-fp-btn" style="margin-top:0.5rem;background:linear-gradient(135deg,#00b8d4,#0288d1);box-shadow:0 2px 14px rgba(0,184,212,0.3);">Got it</button>
       </div>
     </div>
 
@@ -2439,7 +2439,7 @@
       if (!msgs) return;
       var ub = document.createElement('div');
       ub.style.cssText = 'display:flex;justify-content:flex-end;margin:0.35rem 1rem;';
-      ub.innerHTML = '<span style="background:#00c2b2;color:#fff;border-radius:14px 14px 2px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;font-weight:600;max-width:78%;display:inline-block;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</span>';
+      ub.innerHTML = '<span style="background:#00b8d4;color:#fff;border-radius:14px 14px 2px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;font-weight:600;max-width:78%;display:inline-block;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</span>';
       msgs.appendChild(ub);
       spScroll();
     }
@@ -2460,8 +2460,8 @@
       var name = senderName || _spAgentName || 'Support Agent';
       var wrap = document.createElement('div');
       wrap.style.cssText = 'margin:0.35rem 1rem;';
-      wrap.innerHTML = '<div style="font-size:0.68rem;color:#00c2b2;font-weight:700;margin-bottom:3px;">🎧 ' + name + '</div>'
-        + '<div style="background:rgba(0,194,178,0.1);border:1px solid rgba(0,194,178,0.25);border-radius:2px 14px 14px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;color:#fff;max-width:78%;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</div>';
+      wrap.innerHTML = '<div style="font-size:0.68rem;color:#00b8d4;font-weight:700;margin-bottom:3px;">🎧 ' + name + '</div>'
+        + '<div style="background:rgba(0,184,212,0.1);border:1px solid rgba(0,184,212,0.25);border-radius:2px 14px 14px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;color:#fff;max-width:78%;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</div>';
       msgs.appendChild(wrap);
       spScroll();
     }

@@ -2946,7 +2946,7 @@
       var psEl = document.getElementById('paymentSelect');
       if (psEl && ad.payments.length > 1) {
         var chipsHtml = ad.payments.map(function(pm, i) {
-          return '<span data-pm="'+escHtml(pm)+'" style="cursor:pointer;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid '+(i===0?'#00c2b2':'rgba(255,255,255,0.15)')+';color:'+(i===0?'#00c2b2':'#aaa')+';background:'+(i===0?'rgba(0,194,178,0.08)':'transparent')+';transition:all 0.15s;">'+escHtml(pm)+'</span>';
+          return '<span data-pm="'+escHtml(pm)+'" style="cursor:pointer;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid '+(i===0?'#00b8d4':'rgba(255,255,255,0.15)')+';color:'+(i===0?'#00b8d4':'#aaa')+';background:'+(i===0?'rgba(0,184,212,0.08)':'transparent')+';transition:all 0.15s;">'+escHtml(pm)+'</span>';
         }).join('');
         psEl.innerHTML = '<div id="pmChips" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0;">'+chipsHtml+'</div>';
         psEl.addEventListener('click', function(e) {
@@ -2956,9 +2956,9 @@
           setText('selectedPayment', selected);
           psEl.querySelectorAll('[data-pm]').forEach(function(c) {
             var active = c.getAttribute('data-pm') === selected;
-            c.style.borderColor = active ? '#00c2b2' : 'rgba(255,255,255,0.15)';
-            c.style.color = active ? '#00c2b2' : '#aaa';
-            c.style.background = active ? 'rgba(0,194,178,0.08)' : 'transparent';
+            c.style.borderColor = active ? '#00b8d4' : 'rgba(255,255,255,0.15)';
+            c.style.color = active ? '#00b8d4' : '#aaa';
+            c.style.background = active ? 'rgba(0,184,212,0.08)' : 'transparent';
           });
         });
       }
@@ -3139,9 +3139,9 @@
           btn.addEventListener('click', function() {
             var ov = document.createElement('div');
             ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;';
-            ov.innerHTML = '<img src="'+qrUrl+'" style="max-width:280px;max-height:280px;border-radius:12px;border:2px solid #00c2b2;"/>'
+            ov.innerHTML = '<img src="'+qrUrl+'" style="max-width:280px;max-height:280px;border-radius:12px;border:2px solid #00b8d4;"/>'
               +'<p style="color:#fff;font-size:14px;margin:0;font-weight:600;">Scan to pay</p>'
-              +'<button style="background:#00c2b2;color:#000;border:none;border-radius:8px;padding:10px 28px;font-weight:700;cursor:pointer;font-size:14px;">Close</button>';
+              +'<button style="background:#00b8d4;color:#000;border:none;border-radius:8px;padding:10px 28px;font-weight:700;cursor:pointer;font-size:14px;">Close</button>';
             ov.querySelector('button').addEventListener('click', function(){ ov.remove(); });
             ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
             document.body.appendChild(ov);

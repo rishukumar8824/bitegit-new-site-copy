@@ -54,7 +54,7 @@ document.body.insertAdjacentHTML('beforeend', `
 <div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:99990;align-items:center;justify-content:center;max-width:430px;margin:0 auto;">
   <div style="background:#0d1117;border:1px solid #2b3139;border-radius:20px;width:92%;max-width:360px;padding:28px 22px;box-shadow:0 20px 60px rgba(0,0,0,.8);">
     <div style="text-align:center;margin-bottom:22px;">
-      <div style="font-size:26px;font-weight:900;color:#f0b90b;letter-spacing:-1px;">BITEGIT</div>
+      <div style="font-size:26px;font-weight:900;color:#00b8d4;letter-spacing:-1px;">BITEGIT</div>
       <div id="auth-sub" style="font-size:13px;color:#848e9c;margin-top:5px;">Sign in to your account</div>
     </div>
 
@@ -65,11 +65,11 @@ document.body.insertAdjacentHTML('beforeend', `
       <input id="auth-pass" type="password" placeholder="Password" autocomplete="current-password"
         style="width:100%;background:#1a1a1a;border:1px solid #2b3139;border-radius:10px;padding:13px 14px;color:#fff;font-size:14px;margin-bottom:16px;outline:none;box-sizing:border-box;">
       <button onclick="doLogin()" id="btn-login"
-        style="width:100%;background:#f0b90b;color:#000;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:12px;">
+        style="width:100%;background:#00b8d4;color:#000;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:12px;">
         Sign In
       </button>
       <div style="text-align:center;font-size:13px;color:#848e9c;">
-        Don't have an account? <span onclick="showRegView()" style="color:#f0b90b;cursor:pointer;font-weight:600;">Sign Up</span>
+        Don't have an account? <span onclick="showRegView()" style="color:#00b8d4;cursor:pointer;font-weight:600;">Sign Up</span>
       </div>
     </div>
 
@@ -95,11 +95,11 @@ document.body.insertAdjacentHTML('beforeend', `
           Verify &amp; Create Account
         </button>
         <div style="text-align:center;font-size:13px;color:#848e9c;">
-          <span onclick="doSendOtp()" style="color:#f0b90b;cursor:pointer;">Resend Code</span>
+          <span onclick="doSendOtp()" style="color:#00b8d4;cursor:pointer;">Resend Code</span>
         </div>
       </div>
       <div style="text-align:center;font-size:13px;color:#848e9c;margin-top:10px;">
-        Already have an account? <span onclick="showLoginView()" style="color:#f0b90b;cursor:pointer;font-weight:600;">Sign In</span>
+        Already have an account? <span onclick="showLoginView()" style="color:#00b8d4;cursor:pointer;font-weight:600;">Sign In</span>
       </div>
     </div>
 
