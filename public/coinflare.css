@@ -282,12 +282,13 @@ a {
 .cf-apk-cta {
   min-height: 30px;
   border-radius: 7px;
-  padding: 0 0.85rem;
+  padding: 2px 0.85rem 0;
   border: 1px solid var(--cf-line);
   background: transparent;
   color: var(--cf-text);
   font-weight: 700;
   font-size: 0.75rem;
+  line-height: 1;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -3232,11 +3233,11 @@ body.coinflare-page.cf-chart-open .cf-signup-link {
 
   .cf-signup {
     min-height: 42px;
-    padding: 0 1.4rem;
+    padding: 2px 1.4rem 0;
     font-size: 0.95rem;
     font-weight: 800;
     background: linear-gradient(135deg, #00b8d4 0%, #0288d1 100%);
-    border-radius: 999px;
+    border-radius: 7px;
   }
 
   .cf-user-panel {
