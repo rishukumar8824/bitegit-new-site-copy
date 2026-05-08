@@ -2991,7 +2991,6 @@ function _clearOrdersCache(options) {
 }
 
 function doP2PLogout() {
-  if (!confirm('Are you sure you want to logout?')) return;
   logoutUser();
 }
 
@@ -3009,15 +3008,10 @@ async function logoutUser() {
     try { localStorage.removeItem('bitegit_token'); } catch(_) {}
     try { localStorage.removeItem('bitegit_refresh_token'); } catch(_) {}
     try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
-    _clearOrdersCache(); // cancels any in-flight request, wipes state + cache
+    _clearOrdersCache();
     _stopFallbackPoll();
     mobileOrdersCache.clear();
-    updateUserUi();
-    Promise.all([loadOffers(), loadLiveOrders()]);
-    renderMobileOrdersList();
-    closeOrderModal();
-    closeDealModal();
-    closeKycModal();
+    window.location.href = '/auth';
   }
 }
 
