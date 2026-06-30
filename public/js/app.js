@@ -41,9 +41,30 @@
     });
   }
 
+  // Make "Trade" buttons and coin rows open the live trade screen.
+  function wireNav() {
+    document.querySelectorAll('tr').forEach((row) => {
+      if (!/\/USDT/.test(row.innerText || '')) return;
+      [...row.querySelectorAll('*')].forEach((el) => {
+        if (el.children.length === 0 && el.textContent.trim() === 'Trade' && !el.dataset.cvxNav) {
+          el.dataset.cvxNav = '1';
+          el.style.cursor = 'pointer';
+          el.addEventListener('click', (e) => { e.stopPropagation(); location.href = 'trade.html'; });
+        }
+      });
+      if (!row.dataset.cvxRowNav) {
+        row.dataset.cvxRowNav = '1';
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', () => { location.href = 'trade.html'; });
+      }
+    });
+  }
+
   function start() {
     wireMarket();
+    wireNav();
     setInterval(wireMarket, 5000);
+    setInterval(wireNav, 3000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
