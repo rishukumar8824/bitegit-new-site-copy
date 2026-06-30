@@ -18,6 +18,20 @@
     });
   }
 
+  // Replace any leftover "Bitbase" vector wordmark (viewBox 0 0 131 26) with
+  // "Bitcovex" text — covers the header logo and faint app-section watermark.
+  function wireWordmarks() {
+    document.querySelectorAll('svg[viewBox="0 0 131 26"]').forEach((s) => {
+      if (s.dataset.cvxWm) return;
+      s.dataset.cvxWm = '1';
+      const h = s.getBoundingClientRect().height || parseFloat(s.getAttribute('height')) || 22;
+      const span = document.createElement('span');
+      span.textContent = 'Bitcovex';
+      span.style.cssText = 'font-weight:800;font-size:' + (h * 0.92) + 'px;letter-spacing:-0.5px;color:currentColor;white-space:nowrap;line-height:1;display:inline-block';
+      s.replaceWith(span);
+    });
+  }
+
   let tickerMap = null;
   async function loadTicker() {
     try {
@@ -83,9 +97,9 @@
 
   async function tick() { if (!tickerMap) await loadTicker(); applyPrices(); }
   function start() {
-    wireTopNav(); loadTicker().then(() => { applyPrices(); });
+    wireTopNav(); wireWordmarks(); loadTicker().then(() => { applyPrices(); });
     wireTrade();
-    setInterval(() => { wireTopNav(); wireTrade(); }, 3000);
+    setInterval(() => { wireTopNav(); wireWordmarks(); wireTrade(); }, 3000);
     setInterval(async () => { await loadTicker(); applyPrices(); }, 5000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
