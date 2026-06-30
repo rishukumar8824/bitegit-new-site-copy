@@ -35,7 +35,6 @@
         <h1 style="font-size:30px;font-weight:700;color:#fff;margin:0 0 4px">${reg ? 'Register' : 'Login'}</h1>
         <input id="cvxEmail" type="email" placeholder="Email" autocomplete="email" style="${IN}"/>
         <input id="cvxPass" type="password" placeholder="Password (6+ chars)" style="${IN}"/>
-        ${reg ? `<div style="display:flex;gap:8px"><input id="cvxOtp" placeholder="Email code" style="${IN};flex:1"/><button id="cvxSend" type="button" style="${SBTN}">Send code</button></div>` : ''}
         <button id="cvxSubmit" type="button" style="${BTN}">${reg ? 'Create account' : 'Log in'}</button>
         <div id="cvxMsg" style="font-size:13px;min-height:18px;line-height:1.4"></div>
         <div style="color:#848e9c;font-size:13px">${reg ? "Already have an account? <a href='login.html' style='color:#f0b90b;text-decoration:none'>Login</a>" : "Don't have an account? <a href='register.html' style='color:#f0b90b;text-decoration:none'>Register</a>"}</div>
@@ -45,30 +44,20 @@
     const setMsg = (t, ok) => { msg.textContent = t; msg.style.color = ok ? '#2ebd85' : '#f6465d'; };
     const val = (id) => (document.getElementById(id).value || '').trim();
 
-    if (reg) {
-      document.getElementById('cvxSend').onclick = async () => {
-        const email = val('cvxEmail').toLowerCase();
-        if (!email) return setMsg('Enter your email first');
-        setMsg('Sending code...', true);
-        const { r, d } = await post('/auth/signup/send-otp', { email });
-        setMsg(r.ok ? ((d.message || 'Code sent.') + (d.devCode ? ' (demo code: ' + d.devCode + ')' : '')) : (d.message || 'Could not send code'), r.ok);
-      };
-    }
-
     document.getElementById('cvxSubmit').onclick = async () => {
       const email = val('cvxEmail').toLowerCase();
       const password = val('cvxPass');
       if (!/.+@.+\..+/.test(email)) return setMsg('Enter a valid email');
       if (password.length < 6) return setMsg('Password must be 6+ characters');
       setMsg(reg ? 'Creating account...' : 'Logging in...', true);
-      let path = '/auth/login', body = { email, password };
-      if (reg) { body = { email, password, otpCode: val('cvxOtp') }; path = '/auth/register'; }
+      // MongoDB-based P2P auth: logs in existing user, auto-creates if new
       try {
-        const { r, d } = await post(path, body);
+        const { r, d } = await post('/api/p2p/login', { email, password });
         if (!r.ok) return setMsg(d.message || 'Failed. Please try again.');
         const tok = d.accessToken || d.token;
         if (tok) localStorage.setItem('bitegit_token', tok);
         if (d.refreshToken) localStorage.setItem('bitegit_refresh_token', d.refreshToken);
+        if (d.user) localStorage.setItem('bitegit_user', JSON.stringify(d.user));
         setMsg('Success! Redirecting...', true);
         setTimeout(() => { location.href = 'index.html'; }, 700);
       } catch (e) { setMsg('Network error. Try again.'); }
