@@ -24,7 +24,13 @@
     document.querySelectorAll('svg[viewBox="0 0 131 26"]').forEach((s) => {
       if (s.dataset.cvxWm) return;
       s.dataset.cvxWm = '1';
-      const h = s.getBoundingClientRect().height || parseFloat(s.getAttribute('height')) || 22;
+      // skip hidden wordmarks (e.g. header logo already shown as text) to avoid duplicates
+      const cs = getComputedStyle(s);
+      const rect = s.getBoundingClientRect();
+      if (cs.display === 'none' || cs.visibility === 'hidden' || rect.width === 0 || rect.height === 0) return;
+      // skip if an ancestor already contains a Bitcovex text node
+      if (s.closest('a, header') && /Bitcovex/.test((s.closest('a, header') || {}).textContent || '')) return;
+      const h = rect.height || parseFloat(s.getAttribute('height')) || 22;
       const span = document.createElement('span');
       span.textContent = 'Bitcovex';
       span.style.cssText = 'font-weight:800;font-size:' + (h * 0.92) + 'px;letter-spacing:-0.5px;color:currentColor;white-space:nowrap;line-height:1;display:inline-block';
