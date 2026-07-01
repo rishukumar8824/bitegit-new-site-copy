@@ -4367,3 +4367,97 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 .sp-connect-btn:active { opacity: 0.75; }
 .sp-connect-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── BYBIT-STYLE P2P UI ───────────────────────────────────────────── */
+
+/* ── Desktop table rows ── */
+.bbt-row { border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.15s; }
+.bbt-row:hover { background: rgba(255,255,255,0.03); }
+.bbt-row td { padding: 18px 16px; vertical-align: middle; }
+
+.bbt-td-adv { min-width: 180px; }
+.bbt-adv-wrap { display: flex; align-items: center; gap: 12px; }
+.bbt-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #2b2f36; color: #eaecef;
+  font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.bbt-adv-name { font-size: 14px; font-weight: 600; color: #eaecef; display: flex; align-items: center; gap: 4px; }
+.bbt-adv-stats { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+.bbt-td-price { white-space: nowrap; }
+.bbt-price-num { font-size: 20px; font-weight: 700; color: #eaecef; }
+.bbt-price-cur { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+.bbt-td-avail {}
+.bbt-avail-usdt { font-size: 13px; color: #eaecef; font-weight: 500; }
+.bbt-avail-limit { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+.bbt-td-pay { min-width: 140px; }
+.bbt-pay-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
+.bbt-pay-row:last-child { margin-bottom: 0; }
+.bbt-pay-dot { width: 6px; height: 6px; border-radius: 50%; background: #F0B90B; flex-shrink: 0; }
+
+.bbt-td-action { text-align: right; }
+.bbt-buy-btn {
+  padding: 9px 22px; border-radius: 20px; border: none; cursor: pointer;
+  font-size: 14px; font-weight: 700; white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.bbt-buy-btn.bbt-buy { background: #2ebd85; color: #fff; }
+.bbt-buy-btn.bbt-sell { background: #f6465d; color: #fff; }
+.bbt-buy-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.bbt-buy-btn:not(:disabled):hover { opacity: 0.88; }
+
+/* ── Mobile cards ── */
+.bbt-card {
+  background: #1e2026;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.bbt-card-top {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.bbt-card-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: #2b2f36; color: #eaecef;
+  font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.bbt-card-user { flex: 1; min-width: 0; }
+.bbt-card-name { font-size: 14px; font-weight: 600; color: #eaecef; display: flex; align-items: center; gap: 4px; }
+.bbt-card-stats { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.bbt-card-time { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; flex-shrink: 0; }
+
+.bbt-card-price { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 6px; }
+.bbt-card-price-val { font-size: 22px; font-weight: 700; color: #eaecef; }
+
+.bbt-card-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; margin-bottom: 4px;
+}
+.bbt-card-lbl { color: rgba(255,255,255,0.4); }
+.bbt-card-val { color: rgba(255,255,255,0.75); font-weight: 500; }
+
+.bbt-card-pays { margin: 10px 0; }
+.bbt-mob-pay { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 3px; }
+.bbt-mob-pay:last-child { margin-bottom: 0; }
+
+.bbt-card-btn {
+  display: block; width: 100%;
+  margin-top: 12px; padding: 12px 0;
+  border-radius: 8px; border: none; cursor: pointer;
+  font-size: 15px; font-weight: 700;
+  background: #2ebd85; color: #fff;
+  transition: opacity 0.15s;
+}
+.bbt-card-btn.bbt-card-btn-sell { background: #f6465d; }
+.bbt-card-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.bbt-card-btn:not(:disabled):active { opacity: 0.82; }

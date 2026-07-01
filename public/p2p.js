@@ -3104,30 +3104,35 @@ function renderOffers(data, append) {
       .slice(0, 1)
       .toUpperCase();
 
+    const bybitPayRows = offerPayments.map(m =>
+      `<div class="bbt-pay-row"><span class="bbt-pay-dot"></span><span>${escapeHtml(m)}</span></div>`
+    ).join('');
     rowsHtml.push(`
-      <tr class="${rowClass}">
-        <td>
-          <div class="table-user-cell">
-            <span class="table-user-avatar">${escapeHtml(initial)}</span>
-            <div>
-              <p class="adv-name">${escapeHtml(offer.advertiser)} ${verificationBadge}</p>
-              <p class="adv-meta">${(offer.baseOrders||0) + ((offer.reputation && offer.reputation.completedOrders != null) ? offer.reputation.completedOrders : (offer.orders||0))} Orders | ${Math.max(90,(offer.reputation && offer.reputation.completionRate != null) ? offer.reputation.completionRate : (offer.completionRate||100))}% | <span style="color:${offer.onlineStatus==='online'?'#2ebd85':offer.onlineStatus==='away'?'#a8ff3e':'#888'}">${offer.onlineStatus==='online'?'● Online':offer.onlineStatus==='away'?'● Away':'● Offline'}</span></p>
+      <tr class="bbt-row ${rowClass}">
+        <td class="bbt-td-adv">
+          <div class="bbt-adv-wrap">
+            <div class="bbt-avatar">${escapeHtml(initial)}</div>
+            <div class="bbt-adv-info">
+              <div class="bbt-adv-name">${escapeHtml(offer.advertiser)}${verificationBadge}</div>
+              <div class="bbt-adv-stats">${repOrders} Order(s)&nbsp;&nbsp;|&nbsp;&nbsp;${repRate} %</div>
             </div>
           </div>
         </td>
-        <td class="p2p-price">₹${formatNumber(offer.price)}</td>
-        <td class="cell-main">${limits}</td>
-        <td class="cell-main">${quantity}</td>
-        <td><div class="payment-cell">${payments}</div></td>
-        <td class="table-action-cell">
-          ${topPickTag}
-          <button
-            type="button"
-            class="offer-action-btn ${data.side === 'buy' ? 'buy-offer-btn' : 'sell-offer-btn'}"
+        <td class="bbt-td-price">
+          <span class="bbt-price-num">${formatNumber(offer.price)}</span>
+          <span class="bbt-price-cur"> INR</span>
+        </td>
+        <td class="bbt-td-avail">
+          <div class="bbt-avail-usdt">${formatNumber(offer.available)} ${offer.asset}</div>
+          <div class="bbt-avail-limit">₹${formatNumber(offer.minLimit)} ~ ₹${formatNumber(offer.maxLimit)}</div>
+        </td>
+        <td class="bbt-td-pay">${bybitPayRows}</td>
+        <td class="bbt-td-action">
+          <button type="button"
+            class="bbt-buy-btn offer-action-btn ${data.side==='buy'?'bbt-buy':'bbt-sell'}"
             data-offer-id="${offer.id}"
-            ${isOwnAd ? 'disabled' : ''}
-          >
-            ${actionText}
+            ${isOwnAd ? 'disabled' : ''}>
+            ${data.side==='buy'?'Buy':'Sell'} ${offer.asset}
           </button>
         </td>
       </tr>
@@ -3143,34 +3148,31 @@ function renderOffers(data, append) {
     const onlineLabel = onlineStatus === 'online' ? 'Online' : onlineStatus === 'away' ? 'Away' : 'Offline';
     const paymentGate = offerPayments.map(m => `<span class="gt-pay">${escapeHtml(m)}</span>`).join('');
 
+    const mobPayRows = offerPayments.map(m =>
+      `<div class="bbt-mob-pay"><span class="bbt-pay-dot"></span><span>${escapeHtml(m)}</span></div>`
+    ).join('');
     cardsHtml.push(`
-      <article class="gt-card">
-        <div class="gt-left">
-          <div class="gt-user-row">
-            <span class="gt-username">${escapeHtml(offer.advertiser)}</span>
-            ${verificationBadge}
+      <article class="bbt-card">
+        <div class="bbt-card-top">
+          <div class="bbt-card-avatar">${escapeHtml(initial)}</div>
+          <div class="bbt-card-user">
+            <div class="bbt-card-name">${escapeHtml(offer.advertiser)}${verificationBadge}</div>
+            <div class="bbt-card-stats">${repOrders} Order(s)&nbsp;&nbsp;${repRate}%</div>
           </div>
-          <div class="gt-stats">
-            <span>${repOrders} Orders</span>
-            <span class="gt-div">|</span>
-            <span>${repRate}%</span>
-            <span class="gt-div">|</span>
-            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;opacity:0.75;margin-right:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${repTime}</span>
+          <div class="bbt-card-time">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;opacity:0.6"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${repTime}
           </div>
-          <div class="gt-online"><span class="gt-dot" style="background:${onlineDotColor};box-shadow:0 0 4px ${onlineDotColor};"></span>${onlineLabel}</div>
-          <p class="gt-price">₹${formatNumber(offer.price)} <span class="gt-cur">INR</span></p>
-          <div class="gt-row"><span class="gt-lbl">Quantity</span><span class="gt-val">${quantity}</span></div>
-          <div class="gt-row"><span class="gt-lbl">Limit</span><span class="gt-val">₹${formatNumber(offer.minLimit)}~₹${formatNumber(offer.maxLimit)}</span></div>
-          <div class="gt-pays">${paymentGate}</div>
         </div>
-        <div class="gt-right">
-          <button
-            type="button"
-            class="gt-btn offer-action-btn ${data.side === 'sell' ? 'gt-btn-sell' : ''}"
-            data-offer-id="${offer.id}"
-            ${isOwnAd ? 'disabled' : ''}
-          >${actionText}</button>
-        </div>
+        <div class="bbt-card-price">INR <span class="bbt-card-price-val">${formatNumber(offer.price)}</span></div>
+        <div class="bbt-card-row"><span class="bbt-card-lbl">Available</span><span class="bbt-card-val">${formatNumber(offer.available)} ${offer.asset}</span></div>
+        <div class="bbt-card-row"><span class="bbt-card-lbl">Limits</span><span class="bbt-card-val">₹${formatNumber(offer.minLimit)} - ₹${formatNumber(offer.maxLimit)}</span></div>
+        <div class="bbt-card-pays">${mobPayRows}</div>
+        <button type="button"
+          class="bbt-card-btn offer-action-btn ${data.side==='sell'?'bbt-card-btn-sell':''}"
+          data-offer-id="${offer.id}"
+          ${isOwnAd ? 'disabled' : ''}>
+          ${data.side==='buy'?'Buy':'Sell'} ${offer.asset}
+        </button>
       </article>
     `);
   });
