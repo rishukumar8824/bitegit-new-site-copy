@@ -18,18 +18,36 @@
     });
   }
 
-  // Replace any leftover "Bitbase" vector wordmark (viewBox 0 0 131 26) with
-  // "Bitcovex" text — covers the header logo and faint app-section watermark.
+  // Fix header logo: show the Bitbase gem icon (first 22px of 131px SVG) + our "Bitcovex" text.
+  // Bitbase layout: [B-gem icon] [Bitbase text]. We replicate: [B-gem icon] [Bitcovex text].
+  function fixHeaderLogo() {
+    const logoLink = document.querySelector('header a[href="index.html"]');
+    if (!logoLink || logoLink.dataset.cvxLogo) return;
+    logoLink.dataset.cvxLogo = '1';
+    const svg = logoLink.querySelector('svg[viewBox="0 0 131 26"]');
+    const span = logoLink.querySelector('.cvx-wordmark');
+    if (svg && span) {
+      // Clip SVG to just the gem icon (x=0–22 of the 131-wide coordinate space)
+      svg.setAttribute('viewBox', '0 0 22 26');
+      svg.setAttribute('width', '22');
+      svg.setAttribute('height', '22');
+      svg.style.cssText = 'flex-shrink:0;display:inline-block;vertical-align:middle;margin-right:6px;';
+      // Move icon before the text span
+      logoLink.insertBefore(svg, span);
+    }
+  }
+
+  // Replace any remaining visible "Bitbase" wordmark SVGs (not the header logo) with "Bitcovex" text.
   function wireWordmarks() {
     document.querySelectorAll('svg[viewBox="0 0 131 26"]').forEach((s) => {
       if (s.dataset.cvxWm) return;
       s.dataset.cvxWm = '1';
-      // skip hidden wordmarks (e.g. header logo already shown as text) to avoid duplicates
+      // skip the header logo gem (already handled by fixHeaderLogo, or hidden)
+      if (s.closest('header')) return;
       const cs = getComputedStyle(s);
       const rect = s.getBoundingClientRect();
       if (cs.display === 'none' || cs.visibility === 'hidden' || rect.width === 0 || rect.height === 0) return;
-      // skip if an ancestor already contains a Bitcovex text node
-      if (s.closest('a, header') && /Bitcovex/.test((s.closest('a, header') || {}).textContent || '')) return;
+      if (/Bitcovex/.test((s.closest('a, [class]') || {}).textContent || '')) return;
       const h = rect.height || parseFloat(s.getAttribute('height')) || 22;
       const span = document.createElement('span');
       span.textContent = 'Bitcovex';
@@ -103,11 +121,21 @@
 
   // Bitbase's React app transitions images from opacity-0 → opacity-100 on load.
   // Static HTML has no React, so images stay invisible. Fix: reveal them ourselves.
+  // Also hide the loading skeleton (animate-pulse) once its sibling image is visible.
   function revealImages() {
     document.querySelectorAll('img.opacity-0').forEach((img) => {
       const show = () => {
         img.classList.remove('opacity-0');
         img.classList.add('opacity-100');
+        // Hide the loading skeleton that is a sibling/cousin element
+        const wrapper = img.closest('span[class*="relative"]') || img.parentElement;
+        if (wrapper) {
+          const skeleton = wrapper.querySelector('.animate-pulse');
+          if (skeleton) skeleton.style.display = 'none';
+          // Also hide any absolute overlay with Bitbase SVG watermark
+          const overlay = wrapper.querySelector('span[class*="absolute"]');
+          if (overlay) overlay.style.display = 'none';
+        }
       };
       if (img.complete) { show(); }
       else { img.addEventListener('load', show); img.addEventListener('error', show); }
@@ -116,9 +144,9 @@
 
   async function tick() { if (!tickerMap) await loadTicker(); applyPrices(); }
   function start() {
-    wireTopNav(); wireWordmarks(); loadTicker().then(() => { applyPrices(); });
+    fixHeaderLogo(); wireTopNav(); wireWordmarks(); loadTicker().then(() => { applyPrices(); });
     wireTrade(); revealImages();
-    setInterval(() => { wireTopNav(); wireWordmarks(); wireTrade(); revealImages(); }, 3000);
+    setInterval(() => { fixHeaderLogo(); wireTopNav(); wireWordmarks(); wireTrade(); revealImages(); }, 3000);
     setInterval(async () => { await loadTicker(); applyPrices(); }, 5000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
