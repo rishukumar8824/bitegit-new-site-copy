@@ -3117,6 +3117,8 @@ function renderOffers(data, append) {
       .trim()
       .slice(0, 1)
       .toUpperCase();
+    const _avatarPalette = ['#1677ff','#f0a919','#7c3aed','#16b349','#ef4444','#0ea5e9','#d946ef','#f97316','#06b6d4','#84cc16'];
+    const _avatarBg = _avatarPalette[(offer.advertiser||'U').charCodeAt(0) % _avatarPalette.length];
 
     const rep = offer.reputation || {};
     const _base = offer.baseOrders || 0;
@@ -3130,7 +3132,7 @@ function renderOffers(data, append) {
       <tr class="bbt-row ${rowClass}">
         <td class="bbt-td-adv">
           <div class="bbt-adv-wrap">
-            <div class="bbt-avatar">${escapeHtml(initial)}</div>
+            <div class="bbt-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
             <div class="bbt-adv-info">
               <div class="bbt-adv-name">${escapeHtml(offer.advertiser)}${verificationBadge}</div>
               <div class="bbt-adv-stats">${repOrders} Order(s)&nbsp;&nbsp;|&nbsp;&nbsp;${repRate} %</div>
@@ -3168,7 +3170,7 @@ function renderOffers(data, append) {
     cardsHtml.push(`
       <article class="bbt-card">
         <div class="bbt-card-top">
-          <div class="bbt-card-avatar">${escapeHtml(initial)}</div>
+          <div class="bbt-card-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
           <div class="bbt-card-user">
             <div class="bbt-card-name">${escapeHtml(offer.advertiser)}${verificationBadge}</div>
             <div class="bbt-card-stats">${repOrders} Order(s)&nbsp;&nbsp;${repRate}%</div>

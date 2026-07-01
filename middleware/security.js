@@ -137,7 +137,8 @@ function applySecurityHeaders(app) {
                 'https://cdn.tailwindcss.com',
                 'https://cdn.jsdelivr.net',
                 'https://s3.tradingview.com',
-                'https://*.tradingview.com'
+                'https://*.tradingview.com',
+                'https://fonts.googleapis.com'
               ],
               imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
               connectSrc: [
