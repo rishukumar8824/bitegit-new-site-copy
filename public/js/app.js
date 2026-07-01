@@ -713,10 +713,13 @@
           container.style.setProperty('aspect-ratio', 'auto', 'important');
           container.style.setProperty('height', 'auto', 'important');
         }
-        // Make sure parent hidden md:flex div is visible
+        // Make sure parent hidden md:flex div is visible and centered
         const wrapper = desktopShield.closest('[class*="hidden md:flex"]');
         if (wrapper) {
           wrapper.style.setProperty('display', 'flex', 'important');
+          // Remove translate-y that pushes shield down, center it vertically
+          wrapper.style.setProperty('transform', 'translateY(-60px)', 'important');
+          wrapper.style.setProperty('align-self', 'center', 'important');
         }
       }
       const marker = document.createElement('span');
