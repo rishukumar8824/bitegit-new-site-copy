@@ -623,7 +623,7 @@
       return /shrink-0/.test(cls) && /w-\[320px\]/.test(cls);
     });
     if (rightCol) {
-      rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_v2.webp" alt="Security Shield" style="width:100%;height:auto;object-fit:contain;display:block;">';
+      rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_mobile.jpg" alt="Security Shield" style="width:100%;height:auto;object-fit:contain;display:block;">';
       rightCol.style.cssText = 'display:flex;flex-shrink:0;align-items:center;justify-content:center;width:420px;overflow:visible;transform:none;';
     }
 
@@ -642,7 +642,7 @@
 
       const shieldImg = document.createElement('img');
       shieldImg.id = 'cvx-mobile-shield';
-      shieldImg.src = '/cdn/imgs/index-web/home/shield_v2.webp';
+      shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
       shieldImg.alt = 'Security Shield';
       shieldImg.style.cssText = 'display:block;width:220px;height:auto;margin:24px auto 28px;object-fit:contain;';
 
