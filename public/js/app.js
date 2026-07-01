@@ -580,7 +580,7 @@
       @media (max-width: 767px) {
         footer .flex.w-full.justify-between { flex-direction: column !important; gap: 0 !important; padding: 0 !important; }
         footer .flex.w-full.justify-between > section:first-child { max-width: 100% !important; margin: 0 0 16px 0 !important; padding-bottom: 16px !important; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        [data-cvx-footer-section] { margin: 0 !important; padding: 0 !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
+        [data-cvx-footer-section] { margin: 0 !important; padding: 0 !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; width: 100% !important; }
         [data-cvx-footer-links] { display: none; padding: 0 0 4px !important; }
         [data-cvx-footer-links] a { padding: 10px 0 !important; display: block; font-size: 14px; color: rgba(255,255,255,0.6); }
         [data-cvx-footer-title] { display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; padding: 14px 0 !important; margin: 0 !important; cursor: pointer; font-size: 15px !important; font-weight: 600 !important; }
@@ -791,6 +791,10 @@
   function autoSlideCarousel() {
     if (document.getElementById('cvx-carousel-done')) return;
 
+    // Find "Trade with Confidence" section — must NOT be carousel-animated
+    const appH2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Trade with Confidence'));
+    const appSection = appH2 ? (appH2.closest('section') || appH2.parentElement) : null;
+
     const candidates = [...document.querySelectorAll('div')].filter(div => {
       const cs = getComputedStyle(div);
       if (cs.overflow !== 'hidden' && !/(overflow-hidden)/.test(div.className || '')) return false;
@@ -801,6 +805,8 @@
     });
 
     candidates.forEach(container => {
+      // Skip the app download section (Trade with Confidence)
+      if (appSection && appSection.contains(container)) return;
       const track = container.firstElementChild;
       const slides = [...track.children];
       if (slides.length < 2) return;
