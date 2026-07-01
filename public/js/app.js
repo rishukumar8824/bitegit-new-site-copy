@@ -741,9 +741,28 @@
 
     const marker = document.createElement('span');
     marker.id = 'cvx-security-done';
+    marker.dataset.mode = isMobile ? 'mobile' : 'desktop';
     marker.style.display = 'none';
     document.body.appendChild(marker);
   }
+
+  // Re-run security fix on resize (desktop↔mobile switch)
+  let _secResizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(_secResizeTimer);
+    _secResizeTimer = setTimeout(() => {
+      const marker = document.getElementById('cvx-security-done');
+      const prevMode = marker ? marker.dataset.mode : null;
+      const curMode = window.innerWidth <= 767 ? 'mobile' : 'desktop';
+      if (prevMode !== curMode) {
+        // Mode changed — reset and re-run
+        if (marker) marker.remove();
+        const mobileShield = document.getElementById('cvx-mobile-shield');
+        if (mobileShield) mobileShield.parentElement.remove();
+        fixSecuritySection();
+      }
+    }, 200);
+  });
 
   // ── 16. CAROUSEL AUTO-SLIDE ───────────────────────────────────────────────
   function autoSlideCarousel() {
