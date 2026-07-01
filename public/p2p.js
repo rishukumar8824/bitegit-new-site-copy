@@ -3118,6 +3118,11 @@ function renderOffers(data, append) {
       .slice(0, 1)
       .toUpperCase();
 
+    const rep = offer.reputation || {};
+    const _base = offer.baseOrders || 0;
+    const repOrders = _base + (rep.completedOrders != null ? rep.completedOrders : (offer.orders || 0));
+    const repRate = Math.max(90, rep.completionRate != null ? rep.completionRate : (offer.completionRate || 100));
+
     const bybitPayRows = offerPayments.map(m =>
       `<div class="bbt-pay-row"><span class="bbt-pay-dot"></span><span>${escapeHtml(m)}</span></div>`
     ).join('');
@@ -3151,11 +3156,6 @@ function renderOffers(data, append) {
         </td>
       </tr>
     `);
-
-    const rep = offer.reputation || {};
-    const _base = offer.baseOrders || 0;
-    const repOrders = _base + (rep.completedOrders != null ? rep.completedOrders : (offer.orders || 0));
-    const repRate = Math.max(90, rep.completionRate != null ? rep.completionRate : (offer.completionRate || 100));
     const repTime = offer.releaseTime ? offer.releaseTime + ' min' : (rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes + ' min' : '15 min');
     const onlineStatus = isOwnAd ? 'online' : (offer.onlineStatus || 'offline');
     const onlineDotColor = onlineStatus === 'online' ? '#2ebd85' : onlineStatus === 'away' ? '#a8ff3e' : '#555';
