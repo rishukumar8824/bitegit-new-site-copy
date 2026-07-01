@@ -1269,6 +1269,19 @@
               hide_top_toolbar:false, hide_side_toolbar:true,
               allow_symbol_change:false, enable_publishing:false,
               container_id:cid,
+              studies:[
+                { id:'MAExp@tv-basicstudies', inputs:{length:7},  overrides:{'Plot.color':'#f6a609','Plot.linewidth':1} },
+                { id:'MAExp@tv-basicstudies', inputs:{length:25}, overrides:{'Plot.color':'#9c27b0','Plot.linewidth':1} },
+                { id:'MAExp@tv-basicstudies', inputs:{length:99}, overrides:{'Plot.color':'#2196f3','Plot.linewidth':1} }
+              ],
+              overrides:{
+                'mainSeriesProperties.candleStyle.upColor':'#2ebd85',
+                'mainSeriesProperties.candleStyle.downColor':'#f6465d',
+                'mainSeriesProperties.candleStyle.borderUpColor':'#2ebd85',
+                'mainSeriesProperties.candleStyle.borderDownColor':'#f6465d',
+                'mainSeriesProperties.candleStyle.wickUpColor':'#2ebd85',
+                'mainSeriesProperties.candleStyle.wickDownColor':'#f6465d'
+              },
               loading_screen:{backgroundColor:'#0b0e11'}
             });
           } else {
