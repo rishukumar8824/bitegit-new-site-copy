@@ -652,15 +652,21 @@
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
 
-    // 1) Hide shrink-0 col (desktop right col) + md:hidden image wrapper (has aspect-square child causing 200px gap)
-    [...sec.querySelectorAll('div')].forEach(d => {
-      const cls = d.className || '';
-      if (/\bshrink-0\b/.test(cls) || /\bmd:hidden\b/.test(cls)) {
-        d.style.setProperty('display','none','important');
+    // 1) Hide shrink-0 col + md:hidden image wrapper (aspect-square = 200px gap root cause)
+    sec.querySelectorAll('div, span').forEach(el => {
+      const cls = el.className || '';
+      if (cls.includes('shrink-0') || cls.includes('md:hidden')) {
+        el.style.setProperty('display','none','important');
       }
     });
+    // Hide all existing imgs (including shield_v2.webp) — only our injected shield stays
     sec.querySelectorAll('img').forEach(img => {
-      if (!img.id || img.id !== 'cvx-mobile-shield') img.style.setProperty('display','none','important');
+      if (img.id !== 'cvx-mobile-shield') img.style.setProperty('display','none','important');
+    });
+    // Also zero any remaining height from hidden wrappers
+    sec.querySelectorAll('*').forEach(el => {
+      if (window.getComputedStyle(el).display === 'none') return;
+      el.style.setProperty('aspect-ratio','auto','important');
     });
 
     // 2) Section itself — no fixed height
