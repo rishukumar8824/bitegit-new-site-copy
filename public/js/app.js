@@ -655,6 +655,22 @@
       // Fix section padding
       sec.style.setProperty('padding-top','28px','important');
       sec.style.setProperty('padding-bottom','28px','important');
+      sec.style.setProperty('min-height','0','important');
+
+      // Find and fix the flex row container (parent of left+right cols)
+      const flexRow = [...sec.querySelectorAll('div')].find(d => {
+        const ch = [...d.children];
+        return ch.length >= 2 && ch.some(c => /shrink-0/.test(c.className||'')) && ch.some(c => c.contains(h2));
+      });
+      if (flexRow) {
+        flexRow.style.setProperty('display','flex','important');
+        flexRow.style.setProperty('flex-direction','column','important');
+        flexRow.style.setProperty('align-items','flex-start','important');
+        flexRow.style.setProperty('height','auto','important');
+        flexRow.style.setProperty('min-height','0','important');
+        flexRow.style.setProperty('gap','0','important');
+        flexRow.style.setProperty('padding','0','important');
+      }
 
       // Zero ALL padding/margin/gap/height inside section
       sec.querySelectorAll('*').forEach(el => {
