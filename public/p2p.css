@@ -4412,7 +4412,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-buy-btn:not(:disabled):hover { opacity: 0.88; }
 
 /* ── Mobile cards — Bybit-exact ── */
-.bbt-card { background:#161a1e; border-radius:0; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.bbt-card { background:#000; border-radius:0; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.07); }
 
 /* Top row: avatar + meta + time on one line */
 .bbt-card-top { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
@@ -4442,10 +4442,10 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-pay-bar { width:3px; height:13px; border-radius:2px; background:#F0B90B; flex-shrink:0; }
 
 /* Action button — right side, not full-width */
-.bbt-card-btn { display:block; width:88px; padding:10px 0; border-radius:6px; border:none; cursor:pointer; font-size:13px; font-weight:700; background:#2ebd85; color:#fff; transition:opacity 0.15s; white-space:nowrap; }
+.bbt-card-btn { display:block; width:88px; padding:10px 0; border-radius:6px; border:none; cursor:pointer; font-size:11px; font-weight:700; background:#2ebd85; color:#fff; transition:opacity 0.15s; white-space:nowrap; }
 .bbt-card-btn.bbt-card-btn-sell { background:#f6465d; }
 .bbt-card-btn:disabled { opacity:0.45; cursor:not-allowed; }
 .bbt-card-btn:not(:disabled):active { opacity:0.82; }
 
 /* Cards container on mobile — no gap between cards */
-#p2pCards { background: #161a1e; }
+#p2pCards { background: #000; }
