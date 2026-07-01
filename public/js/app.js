@@ -1,5 +1,8 @@
 // Bitcovex global connector — runs on EVERY page.
 (function () {
+  // Route API calls to dedicated Bitcovex backend
+  const API_BASE = 'https://bitcovex-backend.onrender.com';
+
   const fmt = (n, d = 2) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   const UP = '#2ebd85', DOWN = '#f6465d';
 
@@ -443,7 +446,7 @@
   async function loadTicker() {
     // Try backend first
     try {
-      const r = await fetch('/api/p2p/exchange-ticker').then((x) => x.json());
+      const r = await fetch(API_BASE + '/api/p2p/exchange-ticker').then((x) => x.json());
       if (r && r.ticker && r.source !== 'fallback') {
         tickerMap = {};
         r.ticker.forEach((t) => { tickerMap[t.symbol] = t; });
@@ -470,7 +473,7 @@
     } catch (e) {}
     // Last resort: use backend fallback data
     try {
-      const r = await fetch('/api/p2p/exchange-ticker').then((x) => x.json());
+      const r = await fetch(API_BASE + '/api/p2p/exchange-ticker').then((x) => x.json());
       if (r && r.ticker) { tickerMap = {}; r.ticker.forEach((t) => { tickerMap[t.symbol] = t; }); }
     } catch (e) {}
   }
