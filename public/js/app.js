@@ -516,7 +516,7 @@
     }
   }
 
-  // Fix security section — show security_v7.webp same as Bitbase (large shield on right)
+  // Fix security section — make shield_v2.webp visible like Bitbase
   function fixSecuritySection() {
     if (document.getElementById('cvx-security-done')) return;
     const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
@@ -524,53 +524,52 @@
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
 
-    // Ensure dark background
-    sec.style.backgroundColor = '#0b0e11';
+    // Fix the desktop shield: the img src=shield_v2.webp exists but its wrapping
+    // span.inline-block.overflow-hidden has no dimensions (React managed them).
+    // We fix every img in this section that points to shield_v2 or security_v7.
+    sec.querySelectorAll('img').forEach(img => {
+      const src = img.getAttribute('src') || '';
+      if (!src.includes('shield') && !src.includes('security')) return;
 
-    // Find the right-side image container — look for any flex child that contains the image placeholder
-    // It might be: div with aspect-square, or a flex-1/w-1/2 column on the right
-    let imgContainer = null;
+      // Make img visible & properly sized
+      img.classList.remove('opacity-0');
+      img.classList.add('opacity-100');
+      img.style.cssText = 'width:100%;height:auto;object-fit:contain;display:block;opacity:1;';
 
-    // Try 1: find the opacity-0 img (React placeholder pattern) and get its wrapper
-    const secImg = sec.querySelector('img[src*="security_v7"]');
-    if (secImg) {
-      secImg.classList.remove('opacity-0');
-      secImg.classList.add('opacity-100');
-      const skeleton = secImg.closest('span')?.querySelector('.animate-pulse');
-      if (skeleton) skeleton.style.display = 'none';
-      imgContainer = secImg.closest('span') || secImg.parentElement;
-    }
+      // Fix every ancestor span/div with overflow:hidden up to the section
+      let el = img.parentElement;
+      while (el && el !== sec) {
+        const cs = getComputedStyle(el);
+        if (cs.overflow === 'hidden' || /overflow-hidden/.test(el.className || '')) {
+          el.style.overflow = 'visible';
+        }
+        if (el.tagName === 'SPAN' && cs.display === 'inline-block') {
+          el.style.cssText = (el.style.cssText || '') + ';display:block!important;width:100%;';
+        }
+        // Hide the loading skeleton inside this ancestor
+        const skeleton = el.querySelector('.animate-pulse');
+        if (skeleton) skeleton.style.display = 'none';
+        const absOverlay = el.querySelector('span.absolute');
+        if (absOverlay && absOverlay !== img.parentElement) absOverlay.style.display = 'none';
+        el = el.parentElement;
+      }
 
-    // Try 2: find empty aspect-square div
-    if (!imgContainer) {
-      imgContainer = [...sec.querySelectorAll('div')].find(d =>
-        !d.children.length && !d.textContent.trim() && /aspect-square/.test(d.className || '')
+      // The absolute wrapper div needs height too
+      const absDiv = img.closest('div[class*="absolute"]');
+      if (absDiv) absDiv.style.cssText = (absDiv.style.cssText || '') + ';height:100%;';
+    });
+
+    // If no shield img found at all, inject one into the desktop right column
+    if (!sec.querySelector('img[src*="shield"], img[src*="security"]')) {
+      const rightCol = [...sec.querySelectorAll('[class*="md:flex"]')].find(d =>
+        !d.querySelector('h2') && /shrink-0|w-\[320/.test(d.className || '')
       );
-    }
-
-    // Try 3: find any flex child of section that has no text — the right column
-    if (!imgContainer) {
-      const secFlex = sec.querySelector('.flex');
-      if (secFlex) {
-        const cols = [...secFlex.children];
-        // Right column = last child that has no h2/p/bullet text
-        imgContainer = cols.find(c => !c.querySelector('h2') && !c.querySelector('p'));
-      }
-    }
-
-    if (imgContainer) {
-      // Size the container properly so shield is large like Bitbase
-      imgContainer.style.cssText = (imgContainer.style.cssText || '') +
-        ';min-width:380px;min-height:420px;max-width:480px;width:100%;position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:visible;';
-
-      // Only inject img if not already there
-      if (!imgContainer.querySelector('img[src*="security_v7"]')) {
-        const img = document.createElement('img');
-        img.src = '/cdn/imgs/index-web/home/security_v7.webp';
-        img.alt = 'Security Shield';
-        img.style.cssText = 'width:100%;max-width:460px;height:auto;object-fit:contain;display:block;';
-        imgContainer.appendChild(img);
-      }
+      const target = rightCol || sec;
+      const img = document.createElement('img');
+      img.src = '/cdn/imgs/index-web/home/shield_v2.webp';
+      img.alt = 'Security Shield';
+      img.style.cssText = 'width:100%;max-width:420px;height:auto;object-fit:contain;display:block;';
+      target.appendChild(img);
     }
 
     const marker = document.createElement('span');
