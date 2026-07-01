@@ -3171,20 +3171,17 @@ function renderOffers(data, append) {
       <article class="bbt-card">
         <div class="bbt-card-top">
           <div class="bbt-card-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
-          <div class="bbt-card-user">
-            <div class="bbt-card-name">${escapeHtml(offer.advertiser)}${verificationBadge}</div>
-            <div class="bbt-card-stats">${repOrders} Order(s)&nbsp;&nbsp;${repRate}%</div>
+          <div class="bbt-card-meta">
+            <span class="bbt-card-name">${escapeHtml(offer.advertiser)}${verificationBadge}</span>
+            <span class="bbt-card-stats">${repOrders} Order(s) | ${repRate}%</span>
           </div>
-          <div class="bbt-card-time">&#8987; ${repTime}</div>
+          <div class="bbt-card-time">&#8857; ${offer.releaseTime || (rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes : 15)}m</div>
         </div>
         <div class="bbt-card-body">
           <div class="bbt-card-left">
-            <div class="bbt-card-price-wrap">
-              <span class="bbt-card-price-lbl">INR</span>
-              <span class="bbt-card-price-val">${Number(offer.price).toFixed(2)}</span>
-            </div>
-            <div class="bbt-card-row"><span class="bbt-card-lbl">Available</span><span class="bbt-card-val">${Number(offer.available).toFixed(4)} ${offer.asset}</span></div>
-            <div class="bbt-card-row"><span class="bbt-card-lbl">Limits</span><span class="bbt-card-val">${Number(offer.minLimit).toFixed(2)} - ${Number(offer.maxLimit).toFixed(2)} INR</span></div>
+            <div class="bbt-card-price">INR <span class="bbt-card-price-num">${Number(offer.price).toFixed(2)}</span></div>
+            <div class="bbt-card-info-row"><span class="bbt-info-lbl">Available</span> <span class="bbt-info-val">${Number(offer.available).toFixed(4)} ${offer.asset}</span></div>
+            <div class="bbt-card-info-row"><span class="bbt-info-lbl">Limits</span> <span class="bbt-info-val">${Number(offer.minLimit).toFixed(2)} - ${Number(offer.maxLimit).toFixed(2)} INR</span></div>
             <div class="bbt-card-pays">${mobPayRows}</div>
           </div>
           <div class="bbt-card-right">
