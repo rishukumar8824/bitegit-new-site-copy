@@ -4411,53 +4411,65 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-buy-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .bbt-buy-btn:not(:disabled):hover { opacity: 0.88; }
 
-/* ── Mobile cards ── */
+/* ── Mobile cards — Bybit-exact ── */
 .bbt-card {
-  background: #1e2026;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255,255,255,0.07);
+  background: #161a1e;
+  border-radius: 0;
+  padding: 16px 16px 14px;
+  margin-bottom: 0;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
 .bbt-card-top {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 12px;
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 10px;
 }
 .bbt-card-avatar {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: #2b2f36; color: #eaecef;
-  font-size: 14px; font-weight: 700;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #333; color: #eaecef;
+  font-size: 15px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  flex-shrink: 0; margin-top: 1px;
 }
 .bbt-card-user { flex: 1; min-width: 0; }
-.bbt-card-name { font-size: 14px; font-weight: 600; color: #eaecef; display: flex; align-items: center; gap: 4px; }
-.bbt-card-stats { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
-.bbt-card-time { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; flex-shrink: 0; }
+.bbt-card-name { font-size: 14px; font-weight: 600; color: #eaecef; display: flex; align-items: center; gap: 4px; line-height: 1.3; }
+.bbt-card-stats { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+.bbt-card-time { font-size: 11px; color: rgba(255,255,255,0.35); white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
 
-.bbt-card-price { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 6px; }
-.bbt-card-price-val { font-size: 22px; font-weight: 700; color: #eaecef; }
+/* Price row */
+.bbt-card-price-wrap { display: flex; align-items: baseline; gap: 5px; margin: 10px 0 8px; }
+.bbt-card-price-lbl { font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 400; }
+.bbt-card-price-val { font-size: 28px; font-weight: 700; color: #eaecef; letter-spacing: -0.5px; line-height: 1; }
 
+/* Info rows */
 .bbt-card-row {
   display: flex; justify-content: space-between; align-items: center;
-  font-size: 12px; margin-bottom: 4px;
+  font-size: 12px; margin-bottom: 5px; line-height: 1.4;
 }
-.bbt-card-lbl { color: rgba(255,255,255,0.4); }
-.bbt-card-val { color: rgba(255,255,255,0.75); font-weight: 500; }
+.bbt-card-lbl { color: rgba(255,255,255,0.38); }
+.bbt-card-val { color: rgba(255,255,255,0.8); font-weight: 400; }
 
-.bbt-card-pays { margin: 10px 0; }
-.bbt-mob-pay { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 3px; }
-.bbt-mob-pay:last-child { margin-bottom: 0; }
+/* Payment methods */
+.bbt-card-pays { margin: 8px 0 12px; display: flex; flex-direction: column; gap: 5px; }
+.bbt-mob-pay { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.75); }
+.bbt-pay-bar {
+  width: 3px; height: 14px; border-radius: 2px;
+  background: #F0B90B; flex-shrink: 0;
+}
 
+/* Action button */
 .bbt-card-btn {
   display: block; width: 100%;
-  margin-top: 12px; padding: 12px 0;
-  border-radius: 8px; border: none; cursor: pointer;
-  font-size: 15px; font-weight: 700;
+  padding: 13px 0; margin-top: 4px;
+  border-radius: 6px; border: none; cursor: pointer;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.01em;
   background: #2ebd85; color: #fff;
   transition: opacity 0.15s;
 }
 .bbt-card-btn.bbt-card-btn-sell { background: #f6465d; }
 .bbt-card-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .bbt-card-btn:not(:disabled):active { opacity: 0.82; }
+
+/* Cards container on mobile — no gap between cards */
+#p2pCards { background: #161a1e; }

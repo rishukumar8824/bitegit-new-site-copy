@@ -3163,7 +3163,7 @@ function renderOffers(data, append) {
     const paymentGate = offerPayments.map(m => `<span class="gt-pay">${escapeHtml(m)}</span>`).join('');
 
     const mobPayRows = offerPayments.map(m =>
-      `<div class="bbt-mob-pay"><span class="bbt-pay-dot"></span><span>${escapeHtml(m)}</span></div>`
+      `<div class="bbt-mob-pay"><span class="bbt-pay-bar"></span><span>${escapeHtml(m)}</span></div>`
     ).join('');
     cardsHtml.push(`
       <article class="bbt-card">
@@ -3173,13 +3173,14 @@ function renderOffers(data, append) {
             <div class="bbt-card-name">${escapeHtml(offer.advertiser)}${verificationBadge}</div>
             <div class="bbt-card-stats">${repOrders} Order(s)&nbsp;&nbsp;${repRate}%</div>
           </div>
-          <div class="bbt-card-time">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;opacity:0.6"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${repTime}
-          </div>
+          <div class="bbt-card-time">&#8987; ${repTime}</div>
         </div>
-        <div class="bbt-card-price">INR <span class="bbt-card-price-val">${formatNumber(offer.price)}</span></div>
-        <div class="bbt-card-row"><span class="bbt-card-lbl">Available</span><span class="bbt-card-val">${formatNumber(offer.available)} ${offer.asset}</span></div>
-        <div class="bbt-card-row"><span class="bbt-card-lbl">Limits</span><span class="bbt-card-val">₹${formatNumber(offer.minLimit)} - ₹${formatNumber(offer.maxLimit)}</span></div>
+        <div class="bbt-card-price-wrap">
+          <span class="bbt-card-price-lbl">INR</span>
+          <span class="bbt-card-price-val">${Number(offer.price).toFixed(2)}</span>
+        </div>
+        <div class="bbt-card-row"><span class="bbt-card-lbl">Available</span><span class="bbt-card-val">${Number(offer.available).toFixed(4)} ${offer.asset}</span></div>
+        <div class="bbt-card-row"><span class="bbt-card-lbl">Limits</span><span class="bbt-card-val">${Number(offer.minLimit).toFixed(2)} - ${Number(offer.maxLimit).toFixed(2)} INR</span></div>
         <div class="bbt-card-pays">${mobPayRows}</div>
         <button type="button"
           class="bbt-card-btn offer-action-btn ${data.side==='sell'?'bbt-card-btn-sell':''}"
