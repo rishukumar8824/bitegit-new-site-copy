@@ -30,8 +30,8 @@
     BNB: '/cdn/1/currency/11628b76-313d-44a6-a87c-f2cc9e6ac75b-1774002833218.png',
     SOL: '/cdn/1/currency/0f9dbb43-7c86-456a-bcaa-64d5bb61a01e-1774002879582.png',
     ETH: '/cdn/1/currency/65b8e63b-5356-4d33-9cb8-aa19585ffaf0-1774002774151.png',
-    XRP: '/cdn/1/currency/xrp.png',
-    ADA: '/cdn/1/currency/ada.png',
+    XRP: 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png',
+    ADA: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
   };
   const SPOT_PAIRS = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA'];
   const COIN_COLORS = { BTC:'#F7931A',ETH:'#627EEA',BNB:'#F3BA2F',SOL:'#9945FF',XRP:'#346AA9',ADA:'#0033AD' };
@@ -121,12 +121,64 @@
     mobileOnlyStyle.textContent = '@media (min-width: 768px) { #cvx-mobile-market { display: none !important; } }';
     document.head.appendChild(mobileOnlyStyle);
 
+    // Main tabs
     const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking >'];
     const tabBar = document.createElement('div');
     tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:0;';
 
+    // Spot / Futures pill sub-tabs (like Bitbase)
+    const subTabBar = document.createElement('div');
+    subTabBar.style.cssText = 'display:flex;gap:8px;padding:10px 16px 6px;';
+    ['Spot', 'Futures'].forEach((label, i) => {
+      const st = document.createElement('div');
+      st.textContent = label;
+      st.style.cssText = 'padding:4px 14px;border-radius:20px;font-size:13px;cursor:pointer;transition:all 0.2s;' +
+        (i === 0 ? 'background:rgba(255,255,255,0.12);color:#fff;font-weight:600;' : 'background:transparent;color:rgba(255,255,255,0.4);font-weight:400;');
+      st.addEventListener('click', () => {
+        subTabBar.querySelectorAll('div').forEach((el, j) => {
+          el.style.background = j === i ? 'rgba(255,255,255,0.12)' : 'transparent';
+          el.style.color = j === i ? '#fff' : 'rgba(255,255,255,0.4)';
+          el.style.fontWeight = j === i ? '600' : '400';
+        });
+      });
+      subTabBar.appendChild(st);
+    });
+
     const rowsDiv = document.createElement('div');
     rowsDiv.style.cssText = 'display:flex;flex-direction:column;';
+
+    function fmtVol(v) {
+      const n = Number(v);
+      if (!n) return '—';
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+      return n.toFixed(2);
+    }
+
+    function makeIcon(sym) {
+      const iconColor = COIN_COLORS[sym] || '#888';
+      const imgSrc = COIN_IMG[sym] || '';
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'width:32px;height:32px;flex-shrink:0;';
+      if (imgSrc) {
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        img.alt = sym;
+        img.style.cssText = 'width:32px;height:32px;border-radius:50%;display:block;';
+        img.onerror = function() {
+          const circle = document.createElement('div');
+          circle.style.cssText = `width:32px;height:32px;border-radius:50%;background:${iconColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;`;
+          circle.textContent = sym[0];
+          wrap.replaceChild(circle, img);
+        };
+        wrap.appendChild(img);
+      } else {
+        wrap.style.cssText += `border-radius:50%;background:${iconColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;`;
+        wrap.textContent = sym[0];
+      }
+      return wrap;
+    }
 
     function renderRows() {
       rowsDiv.innerHTML = '';
@@ -135,30 +187,31 @@
         const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : '—';
         const chg = t ? Number(t.change24h) : 0;
         const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : '—';
-        const imgSrc = COIN_IMG[sym] || '';
-        const iconColor = COIN_COLORS[sym] || '#888';
-        const iconHtml = imgSrc
-          ? `<img src="${imgSrc}" alt="${sym}" style="width:32px;height:32px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
-             <div style="display:none;width:32px;height:32px;border-radius:50%;background:${iconColor};flex-shrink:0;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">${sym[0]}</div>`
-          : `<div style="width:32px;height:32px;border-radius:50%;background:${iconColor};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">${sym[0]}</div>`;
+        const vol = fmtVol(t ? (t.quoteVolume || t.volume || 0) : 0);
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:52px;';
-        row.innerHTML = `
-          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-            ${iconHtml}
-            <div>
-              <div style="font-size:14px;font-weight:500;line-height:1.2;">${sym}USDT</div>
-              <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">${COIN_NAME[sym] || sym}</div>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:14px;font-weight:500;">${price}</div>
-            <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};margin-top:2px;">${chgStr}</div>
-          </div>`;
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:52px;';
+
+        row.appendChild(makeIcon(sym));
+
+        // Name + volume (left column, flex:1)
+        const nameCol = document.createElement('div');
+        nameCol.style.cssText = 'flex:1;min-width:0;';
+        nameCol.innerHTML = `<div style="font-size:14px;font-weight:500;line-height:1.2;">${sym}USDT</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">${vol}</div>`;
+        row.appendChild(nameCol);
+
+        // Price + change (right column)
+        const priceCol = document.createElement('div');
+        priceCol.style.cssText = 'text-align:right;flex-shrink:0;';
+        priceCol.innerHTML = `<div style="font-size:14px;font-weight:500;">${price}</div>
+          <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};margin-top:2px;">${chgStr}</div>`;
+        row.appendChild(priceCol);
+
         rowsDiv.appendChild(row);
       });
+
       const more = document.createElement('a');
       more.href = 'market.html';
       more.textContent = 'More >';
@@ -187,6 +240,7 @@
     });
 
     wrapper.appendChild(tabBar);
+    wrapper.appendChild(subTabBar);
     wrapper.appendChild(rowsDiv);
     desktopPairs.parentElement.insertBefore(wrapper, desktopPairs);
   }
