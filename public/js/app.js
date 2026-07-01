@@ -1038,6 +1038,55 @@
     const onTrade = /trade\.html/.test(location.href);
     if (!onTrade) return;
 
+    // ── Patch desktop TradingView widget (from trade.js) to use Bitbase colors ──
+    (function patchDesktopTV() {
+      if (window._cvxTVPatched) return;
+      window._cvxTVPatched = true;
+
+      function applyPatch(tv) {
+        if (!tv || !tv.widget || tv.widget._cvxPatched) return;
+        const Orig = tv.widget;
+        function PatchedWidget(config) {
+          config = config || {};
+          config.overrides = Object.assign({
+            'mainSeriesProperties.candleStyle.upColor':        '#2ebd85',
+            'mainSeriesProperties.candleStyle.downColor':      '#f6465d',
+            'mainSeriesProperties.candleStyle.borderUpColor':  '#2ebd85',
+            'mainSeriesProperties.candleStyle.borderDownColor':'#f6465d',
+            'mainSeriesProperties.candleStyle.wickUpColor':    '#2ebd85',
+            'mainSeriesProperties.candleStyle.wickDownColor':  '#f6465d',
+          }, config.overrides || {});
+          config.studies = config.studies || [];
+          const hasEMA = config.studies.some(s => s && s.id && s.id.includes('MAExp'));
+          if (!hasEMA) {
+            config.studies.push(
+              { id:'MAExp@tv-basicstudies', inputs:{length:7},  overrides:{'Plot.color':'#f6a609','Plot.linewidth':1} },
+              { id:'MAExp@tv-basicstudies', inputs:{length:25}, overrides:{'Plot.color':'#9c27b0','Plot.linewidth':1} },
+              { id:'MAExp@tv-basicstudies', inputs:{length:99}, overrides:{'Plot.color':'#2196f3','Plot.linewidth':1} }
+            );
+          }
+          return new Orig(config);
+        }
+        PatchedWidget._cvxPatched = true;
+        PatchedWidget.prototype = Orig.prototype;
+        tv.widget = PatchedWidget;
+      }
+
+      if (window.TradingView) {
+        applyPatch(window.TradingView);
+        return;
+      }
+      // Intercept when TradingView library script sets window.TradingView
+      let _tv;
+      try {
+        Object.defineProperty(window, 'TradingView', {
+          configurable: true,
+          get() { return _tv; },
+          set(val) { _tv = val; applyPatch(_tv); }
+        });
+      } catch(e) {}
+    })();
+
     const SYMBOL = 'BTCUSDT';
     let livePrice = 0, livePct = 0, liveHigh = 0, liveLow = 0, liveVol = 0, liveQuoteVol = 0;
     let activeTab = 'chart';
