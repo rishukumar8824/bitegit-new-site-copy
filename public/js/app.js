@@ -805,8 +805,16 @@
     });
 
     candidates.forEach(container => {
-      // Skip the app download section (Trade with Confidence)
-      if (appSection && appSection.contains(container)) return;
+      // Skip any carousel that contains the app-download QR/phone content
+      const hasQR = container.querySelector('img[alt="qrcode"], img[src^="data:image"]');
+      const hasAppText = /scan.*download|ios.*android|trade with confidence/i.test(container.textContent || '');
+      const nearAppSection = appSection && (appSection.contains(container) || container.contains(appSection) || (container.closest && container.closest('section') === appSection));
+      if (hasQR || hasAppText || nearAppSection) {
+        // Freeze at first slide (no animation)
+        const track = container.firstElementChild;
+        if (track) { track.style.transform = 'translateX(0)'; track.style.transition = 'none'; }
+        return;
+      }
       const track = container.firstElementChild;
       const slides = [...track.children];
       if (slides.length < 2) return;
