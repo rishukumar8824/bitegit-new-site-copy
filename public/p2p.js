@@ -6122,7 +6122,10 @@ window.addEventListener('pagehide', () => {
 
 (async function init() {
   // Render demo ads instantly — before any network calls — so page never looks blank
-  renderOffers(Object.assign({}, _DEMO_OFFERS, { side: currentSide, asset: currentAsset }), false);
+  try {
+    renderOffers(Object.assign({}, _DEMO_OFFERS, { side: currentSide, asset: currentAsset }), false);
+    if (metaEl) metaEl.textContent = '';
+  } catch(e) { console.warn('[init] demo render failed', e); }
 
   initTheme();
   // loadCurrentUser MUST complete first so currentUser is set before other loads
