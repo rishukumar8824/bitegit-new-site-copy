@@ -583,7 +583,7 @@
         [data-cvx-footer-section] { margin: 0 !important; padding: 0 !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
         [data-cvx-footer-links] { display: none; padding: 0 0 4px !important; }
         [data-cvx-footer-links] a { padding: 10px 0 !important; display: block; font-size: 14px; color: rgba(255,255,255,0.6); }
-        [data-cvx-footer-title] { display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 14px 0 !important; margin: 0 !important; cursor: pointer; font-size: 15px !important; font-weight: 600 !important; }
+        [data-cvx-footer-title] { display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; padding: 14px 0 !important; margin: 0 !important; cursor: pointer; font-size: 15px !important; font-weight: 600 !important; }
         [data-cvx-footer-title] svg { flex-shrink: 0; transition: transform 0.2s; }
         [data-cvx-footer-title].open svg { transform: rotate(180deg); }
         footer .bg-bg_primary.w-full { padding-top: 20px !important; padding-bottom: 0 !important; }
@@ -596,26 +596,25 @@
     // Hide QR code and "Community" heading in footer logo section on mobile
     const logoSec = sections[0];
     if (logoSec) {
-      // Hide QR code image(s)
+      // Hide img with alt="qrcode" and its w-39 container
       logoSec.querySelectorAll('img').forEach(img => {
-        if (img.src && (img.src.includes('qr') || img.src.includes('QR') || img.alt && img.alt.toLowerCase().includes('scan'))) {
+        const alt = (img.alt || '').toLowerCase();
+        if (alt === 'qrcode' || alt.includes('qr') || alt.includes('scan')) {
+          // Walk up to find the outermost container of size (w-39 or similar)
+          let container = img;
+          for (let i = 0; i < 4; i++) {
+            if (container.parentElement && container.parentElement !== logoSec) {
+              container = container.parentElement;
+            }
+          }
+          container.setAttribute('data-cvx-footer-qr', '1');
           img.setAttribute('data-cvx-footer-qr', '1');
         }
-        // Also hide any img inside a div that has scan/download text nearby
-        const parent = img.parentElement;
-        if (parent) {
-          const txt = (parent.textContent || '').toLowerCase();
-          if (txt.includes('scan') || txt.includes('download the app') || txt.includes('qr')) {
-            parent.setAttribute('data-cvx-footer-qr', '1');
-          }
-        }
       });
-      // Hide divs/sections containing QR or scan text
-      logoSec.querySelectorAll('div, section').forEach(el => {
-        const txt = (el.textContent || '').toLowerCase().trim();
-        if ((txt.includes('scan') && txt.includes('download')) || txt.includes('scan to download')) {
-          el.setAttribute('data-cvx-footer-qr', '1');
-        }
+      // Also hide any div containing base64 PNG (QR is base64 encoded)
+      logoSec.querySelectorAll('div').forEach(el => {
+        const img = el.querySelector('img[src^="data:image"]');
+        if (img) el.setAttribute('data-cvx-footer-qr', '1');
       });
       // Hide "Community" heading text
       logoSec.querySelectorAll('h1,h2,h3,h4,h5,p,span,div').forEach(el => {
@@ -630,7 +629,7 @@
       const titleEl = sec.querySelector('h2, h3, h4, p, div.font-semibold, div.font-medium');
       if (!titleEl) return;
       titleEl.setAttribute('data-cvx-footer-title', '1');
-      titleEl.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4"/></svg>');
+      titleEl.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 6l4 4 4-4"/></svg>');
 
       const linksWrap = document.createElement('div');
       linksWrap.setAttribute('data-cvx-footer-links', '1');
