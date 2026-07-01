@@ -7,10 +7,10 @@
   --p2p-line: rgba(255, 255, 255, 0.07);
   --p2p-text: #f4f8ff;
   --p2p-muted: #6b7a99;
-  --p2p-green: #00b8d4;
+  --p2p-green: #F0B90B;
   --p2p-red: #ff5f82;
-  --p2p-accent: #00b8d4;
-  --p2p-brand: #00b8d4;
+  --p2p-accent: #F0B90B;
+  --p2p-brand: #F0B90B;
   --p2p-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
@@ -377,17 +377,17 @@ body.p2p-kyc-open { overflow: hidden; }
 .merch-card { background: #111; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1rem 1.1rem; margin-bottom: 0.9rem; }
 .merch-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.7rem; font-size: 0.92rem; font-weight: 700; color: #fff; }
 .merch-badge { font-size: 1rem; }
-.merch-badge-cert { color: #00b8d4; }
+.merch-badge-cert { color: #F0B90B; }
 .merch-badge-blue { color: #2563eb; }
-.merch-badge-crown { color: #00b8d4; }
+.merch-badge-crown { color: #F0B90B; }
 .merch-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
 .merch-list li { font-size: 0.78rem; color: #8a97ae; padding-left: 1.2rem; position: relative; line-height: 1.5; }
-.merch-list li::before { content: '✓'; position: absolute; left: 0; color: #00b8d4; font-size: 0.7rem; }
+.merch-list li::before { content: '✓'; position: absolute; left: 0; color: #F0B90B; font-size: 0.7rem; }
 .merch-steps { display: flex; flex-direction: column; align-items: center; gap: 0; }
 .merch-step { text-align: center; padding: 0.6rem 0; }
 .merch-step-icon { font-size: 1.8rem; margin-bottom: 0.3rem; }
 .merch-step p { font-size: 0.8rem; color: #8a97ae; margin: 0; }
-.merch-step-divider { width: 2px; height: 24px; background: rgba(0,184,212,0.3); }
+.merch-step-divider { width: 2px; height: 24px; background: rgba(240,185,11,0.3); }
 
 /* ── FAQ accordion ── */
 .faq-section { border-bottom: 1px solid rgba(255,255,255,0.07); }
@@ -409,7 +409,7 @@ body.p2p-kyc-open { overflow: hidden; }
 .pm-detail { font-size:0.73rem; color:#6b7690; margin-top:2px; }
 .pm-card-actions { display:flex; gap:0.4rem; flex-shrink:0; }
 .pm-btn { height:28px; padding:0 0.7rem; border:none; border-radius:6px; font-size:0.72rem; font-weight:700; cursor:pointer; font-family:'Manrope',sans-serif; -webkit-tap-highlight-color:transparent; }
-.pm-edit { background:rgba(0,184,212,0.15); color:#00b8d4; }
+.pm-edit { background:rgba(240,185,11,0.15); color:#F0B90B; }
 .pm-del { background:rgba(246,70,93,0.12); color:#f6465d; }
 
 /* ── Main wrap ── */
@@ -440,14 +440,14 @@ body.p2p-kyc-open { overflow: hidden; }
 .p2p-bh-name {
   font-size: 2.2rem;
   font-weight: 900;
-  color: #00b8d4;
+  color: #F0B90B;
   letter-spacing: 0.06em;
   font-family: 'Manrope', sans-serif;
 }
 .p2p-bh-tag {
   font-size: 0.9rem;
   font-weight: 700;
-  color: rgba(0,184,212,0.55);
+  color: rgba(240,185,11,0.55);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 0.15rem;
@@ -1020,7 +1020,7 @@ body.p2p-kyc-open { overflow: hidden; }
 .gt-val { color: #d0d5e0; font-weight: 500; }
 .gt-pays { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.05rem; }
 .gt-pay { font-size: 0.73rem; color: #c8cdd8; padding-left: 5px; border-left: 1.5px solid rgba(37,99,235,0.7); line-height: 1.4; }
-.gt-btn { min-width: 64px; height: 33px; border: none; border-radius: 999px; background: linear-gradient(135deg,#00b8d4,#0288d1); color: #fff; font-size: 0.8rem; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 0 1rem; font-family: 'Manrope', sans-serif; box-shadow: 0 2px 10px rgba(0,184,212,0.3); transition: transform 0.1s ease, opacity 0.12s; user-select: none; }
+.gt-btn { min-width: 64px; height: 33px; border: none; border-radius: 999px; background: linear-gradient(135deg,#F0B90B,#d4a00b); color: #fff; font-size: 0.8rem; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 0 1rem; font-family: 'Manrope', sans-serif; box-shadow: 0 2px 10px rgba(240,185,11,0.3); transition: transform 0.1s ease, opacity 0.12s; user-select: none; }
 .gt-btn-sell { background: linear-gradient(96deg,#f6465d,#ff6b81); color: #fff; box-shadow: 0 2px 10px rgba(246,70,93,0.25); }
 .gt-btn:active  { transform: scale(0.93); opacity: 0.78; }
 .gt-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
@@ -1358,20 +1358,20 @@ body.p2p-kyc-open { overflow: hidden; }
 }
 .my-ad-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
 .my-ad-type { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-right: 0.4rem; }
-.ad-buy { background: rgba(0,184,212,0.15); color: #00b8d4; }
+.ad-buy { background: rgba(240,185,11,0.15); color: #F0B90B; }
 .ad-sell { background: rgba(246,70,93,0.15); color: #f6465d; }
 .my-ad-asset { font-size: 0.85rem; font-weight: 700; color: #fff; }
 .my-ad-status { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
-.my-ad-status.active { background: rgba(0,184,212,0.12); color: #00b8d4; }
-.my-ad-status.paused { background: rgba(168,255,62,0.12); color: #00b8d4; }
+.my-ad-status.active { background: rgba(240,185,11,0.12); color: #F0B90B; }
+.my-ad-status.paused { background: rgba(168,255,62,0.12); color: #F0B90B; }
 .my-ad-price { font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0.1rem 0; }
 .my-ad-cur { font-size: 0.75rem; color: #6b7690; font-weight: 500; }
 .my-ad-row { display: flex; justify-content: space-between; font-size: 0.76rem; color: #8a97ae; }
 .my-ad-row span:last-child { color: #d0d5e0; font-weight: 500; }
 .my-ad-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 .my-ad-btn { flex: 1; height: 30px; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; font-family: 'Manrope', sans-serif; -webkit-tap-highlight-color: transparent; }
-.my-ad-edit { background: rgba(0,184,212,0.15); color: #00b8d4; }
-.my-ad-pause { background: rgba(168,255,62,0.12); color: #00b8d4; }
+.my-ad-edit { background: rgba(240,185,11,0.15); color: #F0B90B; }
+.my-ad-pause { background: rgba(168,255,62,0.12); color: #F0B90B; }
 .my-ad-delete { background: rgba(246,70,93,0.12); color: #f6465d; }
 
 /* Edit Ad Modal */
@@ -1402,14 +1402,14 @@ body.p2p-kyc-open { overflow: hidden; }
 }
 .edit-ad-close:active { color: #fff; }
 .edit-ad-body { padding: 0.8rem 1rem; display: flex; flex-direction: column; gap: 0.65rem; }
-.edit-ad-label { font-size: 0.72rem; color: #00b8d4; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.edit-ad-label { font-size: 0.72rem; color: #F0B90B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
 .edit-ad-input {
   background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
   color: #fff; font-size: 16px; padding: 0.6rem 0.8rem;
   font-family: 'Manrope', sans-serif; outline: none; width: 100%; box-sizing: border-box;
   transition: border-color 0.15s; -webkit-appearance: none;
 }
-.edit-ad-input:focus { border-color: #00b8d4; }
+.edit-ad-input:focus { border-color: #F0B90B; }
 
 .my-ad-card p { margin: 0; color: var(--p2p-muted); font-size: 0.78rem; }
 .my-ad-card strong { color: var(--p2p-text); }
@@ -1603,7 +1603,7 @@ body.p2p-kyc-open { overflow: hidden; }
 
 /* Release mode — seller releasing crypto: gold/green highlight like Bybit */
 #markPaidBtn.release-mode {
-  background: linear-gradient(96deg, #00b8d4, #00b8d4);
+  background: linear-gradient(96deg, #F0B90B, #F0B90B);
   color: #fff;
   border-color: transparent;
   font-weight: 700;
@@ -2399,7 +2399,7 @@ body.mob-screen-open .p2p-secondary-nav {
   width: 42px;
   height: 42px;
   border-radius: 14px;
-  background: linear-gradient(135deg,#00b8d4,#0288d1);
+  background: linear-gradient(135deg,#F0B90B,#d4a00b);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3628,7 +3628,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .mob-kyc-fp-label {
   font-size: 0.73rem;
   font-weight: 600;
-  color: #00b8d4;
+  color: #F0B90B;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -3650,7 +3650,7 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 
 .mob-kyc-fp-input:focus {
-  border-color: #00b8d4;
+  border-color: #F0B90B;
   background: #161618;
 }
 .mob-kyc-fp-input option { background: #111114; color: #fff; }
@@ -3660,7 +3660,7 @@ body.mob-screen-open .p2p-secondary-nav {
   min-height: 54px;
   border: 0;
   border-radius: 14px;
-  background: linear-gradient(96deg,#00b8d4,#00b8d4);
+  background: linear-gradient(96deg,#F0B90B,#F0B90B);
   color: #000;
   font-size: 1.02rem;
   font-weight: 800;
@@ -3710,7 +3710,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .mob-kyc-fp-consent input {
   margin-top: 3px;
   flex-shrink: 0;
-  accent-color: #00b8d4;
+  accent-color: #F0B90B;
   width: 16px;
   height: 16px;
 }
@@ -3771,7 +3771,7 @@ body.mob-screen-open .p2p-secondary-nav {
   border-radius: 8px;
   background: rgba(240,185,11,0.15);
   border: 1.5px solid rgba(240,185,11,0.4);
-  color: #00b8d4;
+  color: #F0B90B;
   font-size: 0.8rem;
   font-weight: 700;
   display: flex;
@@ -3840,7 +3840,7 @@ body.mob-screen-open .p2p-secondary-nav {
   margin-bottom: 1rem;
 }
 .p2p-post-ad-cta {
-  background: linear-gradient(135deg, #00b8d4, #0288d1);
+  background: linear-gradient(135deg, #F0B90B, #d4a00b);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -3849,8 +3849,8 @@ body.mob-screen-open .p2p-secondary-nav {
   font-weight: 600;
   cursor: pointer;
 }
-.mob-tab-post-ad svg { stroke: #00b8d4; }
-.mob-tab-post-ad span { color: #00b8d4; }
+.mob-tab-post-ad svg { stroke: #F0B90B; }
+.mob-tab-post-ad span { color: #F0B90B; }
 
 /* ══ Mobile Post Ad Screen ══ */
 .mob-post-tabs {
@@ -3869,8 +3869,8 @@ body.mob-screen-open .p2p-secondary-nav {
   border-bottom: 2px solid transparent;
 }
 .mob-ptab.active {
-  color: #00b8d4;
-  border-bottom-color: #00b8d4;
+  color: #F0B90B;
+  border-bottom-color: #F0B90B;
 }
 .mob-post-section {
   padding: 1rem;
@@ -3905,7 +3905,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .mob-ad-form input:focus,
 .mob-ad-form select:focus {
   outline: none;
-  border-color: #00b8d4;
+  border-color: #F0B90B;
 }
 .mob-ad-row {
   display: grid;
@@ -3915,7 +3915,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .mob-ad-submit-btn {
   width: 100%;
   padding: 0.85rem;
-  background: linear-gradient(135deg, #00b8d4, #0288d1);
+  background: linear-gradient(135deg, #F0B90B, #d4a00b);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -3961,7 +3961,7 @@ body.mob-screen-open .p2p-secondary-nav {
   cursor: pointer;
 }
 .mob-myad-btn.danger { border-color: rgba(246,70,93,0.4); color: #f6465d; background: rgba(246,70,93,0.08); }
-.mob-myad-btn.edit { border-color: rgba(0,184,212,0.4); color: #00b8d4; background: rgba(0,184,212,0.08); }
+.mob-myad-btn.edit { border-color: rgba(240,185,11,0.4); color: #F0B90B; background: rgba(240,185,11,0.08); }
 
 /* ══════════════════════════════════════
    SUPPORT SCREEN (Bitget-style, dark)
@@ -4132,7 +4132,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .sp-faq-cat.open .sp-faq-items { display: flex; }
 .sp-faq-item {
   padding: 0.65rem 0.1rem 0.65rem 0.85rem;
-  border-left: 2px solid rgba(0,184,212,0.3);
+  border-left: 2px solid rgba(240,185,11,0.3);
   margin-bottom: 0.5rem;
   border-radius: 0 6px 6px 0;
 }
@@ -4217,7 +4217,7 @@ body.mob-screen-open .p2p-secondary-nav {
   font-family: 'Manrope', sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
-.sp-topic-chip:active { background: rgba(0,184,212,0.15); border-color: #00b8d4; color: #00b8d4; }
+.sp-topic-chip:active { background: rgba(240,185,11,0.15); border-color: #F0B90B; color: #F0B90B; }
 
 /* Chat input area */
 .sp-chat-input-area {
@@ -4270,7 +4270,7 @@ body.mob-screen-open .p2p-secondary-nav {
   align-items: center;
   padding: 4px;
 }
-.sp-send-btn:active { color: #00b8d4; }
+.sp-send-btn:active { color: #F0B90B; }
 
 /* ── Chat screen ── */
 #mobSupportChatScreen {
@@ -4310,8 +4310,8 @@ body.mob-screen-open .p2p-secondary-nav {
   transition: background 0.25s, color 0.25s;
 }
 .sp-agent-status.active {
-  background: rgba(0,184,212,0.12);
-  color: #00b8d4;
+  background: rgba(240,185,11,0.12);
+  color: #F0B90B;
 }
 .sp-agent-status.waiting {
   background: rgba(240,185,11,0.1);
@@ -4324,8 +4324,8 @@ body.mob-screen-open .p2p-secondary-nav {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  background: rgba(0,184,212,0.05);
-  border-top: 1px solid rgba(0,184,212,0.18);
+  background: rgba(240,185,11,0.05);
+  border-top: 1px solid rgba(240,185,11,0.18);
   padding: 0.7rem 1rem;
   flex-shrink: 0;
 }
@@ -4352,7 +4352,7 @@ body.mob-screen-open .p2p-secondary-nav {
   margin-top: 0.1rem;
 }
 .sp-connect-btn {
-  background: #00b8d4;
+  background: #F0B90B;
   color: #000;
   border: none;
   border-radius: 8px;

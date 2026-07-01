@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
-    <title>BITEGIT P2P | Buy &amp; Sell Crypto</title>
+    <title>BITCOVEX P2P | Buy &amp; Sell Crypto</title>
     <link rel="stylesheet" href="/mobile-nav.css?v=20260416c" />
     <link rel="stylesheet" href="/p2p.css?v=20260416c" />
   </head>
@@ -11,7 +11,7 @@
 
     <!-- App mount guard: hide raw HTML until JS initializes -->
     <div id="appInitLoader" style="position:fixed;inset:0;background:#0b0e11;z-index:99999;display:flex;align-items:center;justify-content:center;">
-      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#00b8d4;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
+      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#F0B90B;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
     </div>
     <style>@keyframes _apl_spin{to{transform:rotate(360deg)}} body{visibility:hidden!important;} body.app-ready{visibility:visible!important;}</style>
     <script>
@@ -29,8 +29,11 @@
     <header class="p2p-header" id="p2pHeader">
       <div class="p2p-header-inner">
         <div class="p2p-brand-wrap">
-          <a href="/" class="p2p-brand">
-            <span class="p2p-brand-word" style="color:#00b8d4;letter-spacing:0.04em;">BITEGIT</span>
+          <a href="index.html" class="p2p-brand" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+            <svg viewBox="0 0 22 26" width="22" height="26" fill="none" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:#fff;">
+              <path d="M5.40038 0H0.73112C0.327217 0 0 0.326486 0 0.729486V6.91749C0 7.32049 0.327217 7.64697 0.73112 7.64697H6.1315V0.729486C6.1315 0.326486 5.80429 0 5.40038 0Z" fill="#F68F15"/>
+              <path d="M6.13151 7.64698V13.0353C6.13151 13.4383 6.45872 13.7648 6.86262 13.7648H12.2891C13.9821 13.7648 15.3546 15.1342 15.3546 16.8235C15.3546 18.5127 13.9821 19.8822 12.2891 19.8822H7.6641C6.81758 19.8822 6.1315 19.1977 6.13113 18.353V14.4939C6.13113 14.0909 5.80392 13.7644 5.40001 13.7644H0.73112C0.327217 13.7644 0 14.0909 0 14.4939V19.1523C0 19.5553 0.327217 19.8818 0.73112 19.8818H4.59854C5.44506 19.8818 6.13151 20.5667 6.13151 21.4114V25.2701C6.13151 25.6731 6.45872 25.9996 6.86262 25.9996H11.9235C17.2048 25.9996 21.4861 21.7278 21.4861 16.4584C21.4861 11.5919 17.532 7.64661 12.6546 7.64661H6.13151V7.64698Z" fill="currentColor"/>
+            </svg>
           </a>
         </div>
         <nav class="p2p-main-nav" aria-label="Primary navigation">
@@ -82,9 +85,12 @@
     <div id="p2pNavOverlay" class="p2p-nav-overlay hidden" aria-hidden="true"></div>
     <aside id="p2pNavDrawer" class="p2p-nav-drawer" aria-hidden="true">
       <div class="p2p-drawer-head">
-        <strong>
-          <a href="/" style="color:#00b8d4;font-weight:800;font-size:1.1rem;letter-spacing:0.04em;text-decoration:none;">BITEGIT</a>
-        </strong>
+        <a href="index.html" style="display:flex;align-items:center;gap:7px;text-decoration:none;color:#fff;">
+          <svg viewBox="0 0 22 26" width="20" height="24" fill="none" style="flex-shrink:0;color:#fff;">
+            <path d="M5.40038 0H0.73112C0.327217 0 0 0.326486 0 0.729486V6.91749C0 7.32049 0.327217 7.64697 0.73112 7.64697H6.1315V0.729486C6.1315 0.326486 5.80429 0 5.40038 0Z" fill="#F68F15"/>
+            <path d="M6.13151 7.64698V13.0353C6.13151 13.4383 6.45872 13.7648 6.86262 13.7648H12.2891C13.9821 13.7648 15.3546 15.1342 15.3546 16.8235C15.3546 18.5127 13.9821 19.8822 12.2891 19.8822H7.6641C6.81758 19.8822 6.1315 19.1977 6.13113 18.353V14.4939C6.13113 14.0909 5.80392 13.7644 5.40001 13.7644H0.73112C0.327217 13.7644 0 14.0909 0 14.4939V19.1523C0 19.5553 0.327217 19.8818 0.73112 19.8818H4.59854C5.44506 19.8818 6.13151 20.5667 6.13151 21.4114V25.2701C6.13151 25.6731 6.45872 25.9996 6.86262 25.9996H11.9235C17.2048 25.9996 21.4861 21.7278 21.4861 16.4584C21.4861 11.5919 17.532 7.64661 12.6546 7.64661H6.13151V7.64698Z" fill="currentColor"/>
+          </svg>
+        </a>
         <button id="p2pNavClose" type="button" aria-label="Close">✕</button>
       </div>
       <nav class="p2p-drawer-links" aria-label="Mobile navigation">
@@ -189,7 +195,7 @@
 
         <!-- Alert -->
         <div class="p2p-alert-bar" id="p2pAlertBar" style="position:relative;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00b8d4" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0B90B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span>Do not share personal contact details. Always verify payment information independently.</span>
           <button onclick="document.getElementById('p2pAlertBar').style.display='none'" type="button" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.5);font-size:14px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;">✕</button>
         </div>
@@ -345,7 +351,7 @@
 
       <!-- Main tabs: Pending | Ended -->
       <div id="ordMainTabs" style="display:flex;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;">
-        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #00b8d4;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
+        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #F0B90B;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
         <button id="ordTabEnded" data-ord-main="ended" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.4);font-size:14px;font-weight:500;cursor:pointer;touch-action:manipulation;">Ended</button>
       </div>
 
@@ -524,7 +530,7 @@
         <p id="editNicknameChangesLeft" style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 4px;"></p>
         <p id="editNicknameMsg" style="font-size:13px;min-height:18px;margin:0 0 28px;"></p>
 
-        <button id="editNicknameSaveBtn" onclick="saveProfileNickname()" style="width:100%;padding:15px;border-radius:14px;background:#00b8d4;border:none;color:#000;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.02em;">
+        <button id="editNicknameSaveBtn" onclick="saveProfileNickname()" style="width:100%;padding:15px;border-radius:14px;background:#F0B90B;border:none;color:#000;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.02em;">
           Save Username
         </button>
       </div>
@@ -589,7 +595,7 @@
         </button>
         <div class="sp-head-center">
           <span class="sp-bot-icon">🤖</span>
-          <span class="sp-head-title">BITEGIT Support</span>
+          <span class="sp-head-title">BITCOVEX Support</span>
         </div>
         <button class="sp-close-btn" onclick="window.showMobScreen && window.showMobScreen('mobProfileScreen')" aria-label="Close">✕</button>
       </div>
@@ -711,7 +717,7 @@
                 <svg class="sp-faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               </div>
               <div class="sp-faq-items">
-                <div class="sp-faq-item"><strong>How does P2P trading work?</strong><p>You trade directly with other users at negotiated prices. BITEGIT acts as an escrow — USDT is locked when an order is created and released only after payment confirmation.</p></div>
+                <div class="sp-faq-item"><strong>How does P2P trading work?</strong><p>You trade directly with other users at negotiated prices. BITCOVEX acts as an escrow — USDT is locked when an order is created and released only after payment confirmation.</p></div>
                 <div class="sp-faq-item"><strong>What is a security deposit?</strong><p>To post P2P ads, you must lock a minimum of 200 USDT as a security deposit. This deposit protects buyers in case of disputes. Merchant badge requires 500 USDT + admin approval.</p></div>
                 <div class="sp-faq-item"><strong>How do I post a P2P ad?</strong><p>Go to P2P → My Ads → Post Ad. Set your price, limits, payment method and terms. Your security deposit must be ≥ 200 USDT to post ads.</p></div>
                 <div class="sp-faq-item"><strong>What happens if there is a dispute?</strong><p>Either party can raise a dispute during an active order. Our support team will review evidence (chat, payment proof) and release funds to the rightful party within 24 hours.</p></div>
@@ -729,7 +735,7 @@
                 <div class="sp-faq-item"><strong>How do I buy USDT with INR?</strong><p>On the P2P page, select "Buy" and choose USDT. Browse merchant ads, pick one matching your amount and preferred payment method, then click Buy and follow the order steps.</p></div>
                 <div class="sp-faq-item"><strong>Which payment methods are supported?</strong><p>UPI, IMPS, NEFT, bank transfer, Paytm, PhonePe, and other methods as listed by individual merchants. Each ad shows its accepted payment options.</p></div>
                 <div class="sp-faq-item"><strong>What are the trading limits?</strong><p>Limits vary per merchant ad (shown as Min–Max on each card). Your KYC status determines your overall daily limit. Complete KYC to unlock higher limits.</p></div>
-                <div class="sp-faq-item"><strong>Is my fiat payment safe?</strong><p>BITEGIT escrow locks the USDT before you pay. Only pay the amount shown — never pay extra or outside the order. Mark payment only after actual transfer. Never cancel after paying.</p></div>
+                <div class="sp-faq-item"><strong>Is my fiat payment safe?</strong><p>BITCOVEX escrow locks the USDT before you pay. Only pay the amount shown — never pay extra or outside the order. Mark payment only after actual transfer. Never cancel after paying.</p></div>
               </div>
             </div>
 
@@ -756,7 +762,7 @@
                 <div class="sp-faq-item"><strong>What is futures trading?</strong><p>Futures trading lets you speculate on crypto price movements using leverage, without owning the underlying asset. You can go Long (profit if price rises) or Short (profit if price falls).</p></div>
                 <div class="sp-faq-item"><strong>What is leverage?</strong><p>Leverage amplifies your position size. For example, 10× leverage means a 1% price move equals a 10% gain or loss on your margin. Higher leverage = higher risk of liquidation.</p></div>
                 <div class="sp-faq-item"><strong>What is liquidation?</strong><p>If your position losses exceed your available margin, the position is automatically liquidated (closed) to prevent negative balance. Always use stop-loss orders to manage risk.</p></div>
-                <div class="sp-faq-item"><strong>Are futures available on BITEGIT?</strong><p>Futures trading is coming soon on BITEGIT. Currently P2P and spot trading are available. Stay tuned for the launch announcement.</p></div>
+                <div class="sp-faq-item"><strong>Are futures available on BITCOVEX?</strong><p>Futures trading is coming soon on BITCOVEX. Currently P2P and spot trading are available. Stay tuned for the launch announcement.</p></div>
               </div>
             </div>
 
@@ -784,7 +790,7 @@
         <div class="sp-head-center">
           <span class="sp-bot-icon">🤖</span>
           <div>
-            <div class="sp-head-title">BITEGIT Support</div>
+            <div class="sp-head-title">BITCOVEX Support</div>
             <div id="spAgentStatus" class="sp-agent-status">Bot Assistant</div>
           </div>
         </div>
@@ -795,7 +801,7 @@
       <div class="sp-chat-body" id="spChatMessages">
         <div class="sp-chat-time">Just now</div>
         <div class="sp-bot-bubble">
-          <p><strong>👋 Hey BITEGIT user!</strong></p>
+          <p><strong>👋 Hey BITCOVEX user!</strong></p>
           <p>I'm Bunz Support. Select a topic or connect to a live agent.</p>
           <div class="sp-topic-chips">
             <button class="sp-topic-chip" onclick="spSendTopic(this,'Account &amp; security')">Account &amp; security</button>
@@ -1242,7 +1248,7 @@
           <h2 id="orderTitle" style="margin:0 0 0.3rem;font-size:1.05rem;font-weight:700;line-height:1.4;color:#fff;">Waiting for seller to release crypto</h2>
           <p style="margin:0;font-size:0.81rem;color:rgba(255,255,255,0.45);">
             <span id="orderTimerLabel" style="margin-right:4px;">Pay before timer expires</span>
-            <strong id="orderTimer" style="color:#00b8d4;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
+            <strong id="orderTimer" style="color:#F0B90B;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
           </p>
         </div>
 
@@ -1250,11 +1256,11 @@
         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;margin-bottom:0.85rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
-              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#00b8d4;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
+              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#F0B90B;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
               <div>
                 <div style="display:flex;align-items:center;gap:0.35rem;">
                   <h3 id="orderMerchant" style="margin:0;font-size:0.88rem;font-weight:700;color:#fff;"></h3>
-                  <span style="color:#00b8d4;font-size:0.75rem;">⚡</span>
+                  <span style="color:#F0B90B;font-size:0.75rem;">⚡</span>
                 </div>
                 <p id="orderCounterpartyMeta" style="margin:0;font-size:0.72rem;color:rgba(255,255,255,0.4);"></p>
               </div>
@@ -1295,7 +1301,7 @@
             <button id="chatImageBtn" type="button" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:1rem;padding:0;flex-shrink:0;">📎</button>
             <input id="chatImageInput" class="hidden-control" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" />
           </div>
-          <button id="chatSendBtn" type="button" style="background:#00b8d4;border:none;color:#000;width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
+          <button id="chatSendBtn" type="button" style="background:#F0B90B;border:none;color:#000;width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
         </div>
         <form id="chatForm" style="display:none;"></form>
         <p id="chatUploadState" class="hidden"></p>
@@ -1432,7 +1438,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:50%;height:100%;background:linear-gradient(90deg,#00b8d4,#00b8d4);border-radius:99px;"></div>
+          <div style="width:50%;height:100%;background:linear-gradient(90deg,#F0B90B,#F0B90B);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1480,7 +1486,7 @@
 
         <p class="mob-kyc-fp-note">🔒 Your data is encrypted and used only for verification</p>
         <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
-          Powered by <span style="color:#00b8d4;font-weight:700;">Sumsub</span>
+          Powered by <span style="color:#F0B90B;font-weight:700;">Sumsub</span>
         </p>
       </div>
     </div>
@@ -1498,7 +1504,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:100%;height:100%;background:linear-gradient(90deg,#00b8d4,#00b8d4);border-radius:99px;"></div>
+          <div style="width:100%;height:100%;background:linear-gradient(90deg,#F0B90B,#F0B90B);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1581,7 +1587,7 @@
 
         <p class="mob-kyc-fp-note">🔒 Review takes 24–48 hours. You'll be notified on approval.</p>
         <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
-          Powered by <span style="color:#00b8d4;font-weight:700;">Sumsub</span>
+          Powered by <span style="color:#F0B90B;font-weight:700;">Sumsub</span>
         </p>
       </div>
     </div>
@@ -1598,18 +1604,18 @@
       <div class="mob-kyc-fp-body" style="justify-content:center;align-items:center;text-align:center;gap:1.5rem;">
         <div style="font-size:4rem;">⏳</div>
         <div>
-          <p style="font-size:1.1rem;font-weight:800;color:#00b8d4;margin:0 0 0.5rem;">Documents Under Review</p>
+          <p style="font-size:1.1rem;font-weight:800;color:#F0B90B;margin:0 0 0.5rem;">Documents Under Review</p>
           <p style="font-size:0.82rem;color:#8a97ae;line-height:1.6;margin:0;">Your KYC documents have been submitted successfully.<br/>Our team will verify them within <strong style="color:#fff;">24–48 hours</strong>.<br/>You'll be notified once verified.</p>
         </div>
-        <div style="background:rgba(0,184,212,0.08);border:1.5px solid rgba(0,184,212,0.25);border-radius:14px;padding:1rem 1.2rem;width:100%;box-sizing:border-box;">
-          <p style="font-size:0.78rem;color:#00b8d4;margin:0;font-weight:600;">What happens next?</p>
+        <div style="background:rgba(240,185,11,0.08);border:1.5px solid rgba(240,185,11,0.25);border-radius:14px;padding:1rem 1.2rem;width:100%;box-sizing:border-box;">
+          <p style="font-size:0.78rem;color:#F0B90B;margin:0;font-weight:600;">What happens next?</p>
           <ul style="font-size:0.75rem;color:#8a97ae;margin:0.5rem 0 0;padding-left:1.2rem;line-height:1.8;text-align:left;">
             <li>Admin reviews your Aadhaar &amp; selfie</li>
             <li>Verification takes 24–48 hours</li>
             <li>You can trade once approved</li>
           </ul>
         </div>
-        <button onclick="document.getElementById('kycUnderReviewScreen').style.display='none'; window.showMobScreen && window.showMobScreen('mobProfileScreen'); window.loadProfilePanel && window.loadProfilePanel();" class="mob-kyc-fp-btn" style="margin-top:0.5rem;background:linear-gradient(135deg,#00b8d4,#0288d1);box-shadow:0 2px 14px rgba(0,184,212,0.3);">Got it</button>
+        <button onclick="document.getElementById('kycUnderReviewScreen').style.display='none'; window.showMobScreen && window.showMobScreen('mobProfileScreen'); window.loadProfilePanel && window.loadProfilePanel();" class="mob-kyc-fp-btn" style="margin-top:0.5rem;background:linear-gradient(135deg,#F0B90B,#d4a00b);box-shadow:0 2px 14px rgba(240,185,11,0.3);">Got it</button>
       </div>
     </div>
 
@@ -1639,7 +1645,7 @@
               <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="4">0</text>
               <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="rgba(255,255,255,0.08)">0</text>
               <!-- % teal -->
-              <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#00b8d4">%</text>
+              <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#F0B90B">%</text>
             </svg>
           </div>
           <h1 style="font-size:1.6rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;line-height:1.25;">Become a Merchant</h1>
@@ -1800,7 +1806,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;">
               <div style="display:flex;align-items:center;gap:12px;">
                 <span id="merchantCurrencyCheck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Select a currency <span id="merchantCurrencyLabel" style="color:#00b8d4;font-weight:700;"></span> <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
+                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Select a currency <span id="merchantCurrencyLabel" style="color:#F0B90B;font-weight:700;"></span> <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
               </div>
               <button id="merchantCurrencyAddBtn" onclick="merchantToggleCurrency()" style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
             </div>
@@ -1856,7 +1862,7 @@
                   <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:0.75rem;color:rgba(255,255,255,0.35);pointer-events:none;">Instagram</span>
                   <input id="merchantInstagram" type="text" placeholder="@username" style="width:100%;padding:12px 12px 12px 82px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.88rem;box-sizing:border-box;outline:none;">
                 </div>
-                <button onclick="merchantSaveSocial()" style="width:100%;padding:12px;border-radius:10px;background:#00b8d4;color:#000;font-size:0.9rem;font-weight:700;border:none;cursor:pointer;margin-top:2px;">Save</button>
+                <button onclick="merchantSaveSocial()" style="width:100%;padding:12px;border-radius:10px;background:#F0B90B;color:#000;font-size:0.9rem;font-weight:700;border:none;cursor:pointer;margin-top:2px;">Save</button>
               </div>
             </div>
           </div>
@@ -1866,8 +1872,8 @@
         <!-- Agreement + Submit -->
         <div style="margin-top:1.8rem;">
           <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:1.5rem;">
-            <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#00b8d4;flex-shrink:0;" />
-            <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#00b8d4;cursor:pointer;">Merchant Service Agreement</span></span>
+            <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#F0B90B;flex-shrink:0;" />
+            <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#F0B90B;cursor:pointer;">Merchant Service Agreement</span></span>
           </label>
           <button onclick="submitMerchantApp()" style="width:100%;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;">Submit Application</button>
         </div>
@@ -1887,7 +1893,7 @@
         <!-- Icon -->
         <div style="display:flex;justify-content:center;margin-bottom:1.5rem;">
           <div style="width:72px;height:72px;border-radius:50%;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.25);display:flex;align-items:center;justify-content:center;">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#00b8d4" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#00b8d4"/></svg>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#F0B90B" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#F0B90B"/></svg>
           </div>
         </div>
         <h2 style="font-size:1.3rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;">Two-Factor Authentication</h2>
@@ -1897,7 +1903,7 @@
         <div style="border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:1rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:.8rem;">
             <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,229,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00b8d4" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0B90B" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </div>
             <div>
               <div style="font-weight:700;color:#fff;font-size:.9rem;">Email OTP</div>
@@ -1918,7 +1924,7 @@
               <div style="font-size:.75rem;color:#848e9c;margin-top:2px;">TOTP-based 2FA</div>
             </div>
           </div>
-          <button onclick="(function(b){var t=document.createElement('div');t.textContent='Google Authenticator coming soon';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap;';document.body.appendChild(t);setTimeout(function(){t.remove();},2000);})(this)" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#00b8d4;font-weight:600;cursor:pointer;">Enable</button>
+          <button onclick="(function(b){var t=document.createElement('div');t.textContent='Google Authenticator coming soon';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap;';document.body.appendChild(t);setTimeout(function(){t.remove();},2000);})(this)" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#F0B90B;font-weight:600;cursor:pointer;">Enable</button>
         </div>
 
         <!-- Security tips -->
@@ -1926,7 +1932,7 @@
           <div style="font-size:.82rem;font-weight:700;color:#848e9c;margin-bottom:.6rem;">Security Tips</div>
           <div style="font-size:.78rem;color:#848e9c;line-height:1.7;">
             • Never share your OTP with anyone<br>
-            • BITEGIT will never ask for your password<br>
+            • BITCOVEX will never ask for your password<br>
             • Use a strong unique password<br>
             • Always logout from shared devices
           </div>
@@ -1946,7 +1952,7 @@
       <div style="padding:1.2rem 1rem 3rem;">
         <div class="faq-section">
           <div class="faq-section-head" onclick="toggleFaqSection(this)"><span>What is P2P Trading?</span><svg class="faq-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
-          <div class="faq-section-body">P2P (Peer-to-Peer) trading lets you buy and sell crypto directly with other users at agreed prices, with BITEGIT acting as an escrow to keep your funds safe.</div>
+          <div class="faq-section-body">P2P (Peer-to-Peer) trading lets you buy and sell crypto directly with other users at agreed prices, with BITCOVEX acting as an escrow to keep your funds safe.</div>
         </div>
         <div class="faq-section">
           <div class="faq-section-head" onclick="toggleFaqSection(this)"><span>How to Buy USDT on P2P?</span><svg class="faq-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
@@ -1962,7 +1968,7 @@
         </div>
         <div class="faq-section">
           <div class="faq-section-head" onclick="toggleFaqSection(this)"><span>Deposit &amp; Withdrawal</span><svg class="faq-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
-          <div class="faq-section-body">Deposit crypto from any wallet to your BITEGIT address. Withdrawals are processed after identity verification. Minimum withdrawal limits apply per asset.</div>
+          <div class="faq-section-body">Deposit crypto from any wallet to your BITCOVEX address. Withdrawals are processed after identity verification. Minimum withdrawal limits apply per asset.</div>
         </div>
       </div>
     </div>
@@ -2183,7 +2189,7 @@
             chips: ['✅ Appeal submitted','🚨 Seller is threatening me','🎧 Urgent agent help']
           },
           'Paid but order stuck': {
-            msg: '🔄 Order stuck after payment?\n\n• Tap <b>"I\'ve Paid"</b> in the order if not done yet\n• Attach <b>payment screenshot</b> as proof\n• Check if the <b>timer</b> has expired — if yes, tap Appeal\n• Do NOT cancel — your funds are safe in escrow\n\n🛡️ Your crypto is held in BITEGIT escrow. It won\'t be lost. Wait for seller to confirm or appeal.',
+            msg: '🔄 Order stuck after payment?\n\n• Tap <b>"I\'ve Paid"</b> in the order if not done yet\n• Attach <b>payment screenshot</b> as proof\n• Check if the <b>timer</b> has expired — if yes, tap Appeal\n• Do NOT cancel — your funds are safe in escrow\n\n🛡️ Your crypto is held in BITCOVEX escrow. It won\'t be lost. Wait for seller to confirm or appeal.',
             follow: 'Is the order still stuck?',
             chips: ['✅ Order released now','⏳ Still stuck — need help','🎧 Agent please']
           },
@@ -2275,7 +2281,7 @@
             chips: ['✅ Makes sense now','❓ My cashback is missing','🎧 Agent review']
           },
           'VIP benefits': {
-            msg: '⭐ BITEGIT VIP Tiers:\n\n🥉 <b>VIP 1</b> — 500 USDT volume: 5% fee discount\n🥈 <b>VIP 2</b> — 5,000 USDT: 10% discount + priority support\n🥇 <b>VIP 3</b> — 50,000 USDT: 20% discount + dedicated manager\n💎 <b>VIP 4</b> — 500,000 USDT: 30% discount + all perks\n\n📊 Volume resets monthly. Benefits apply next month after qualification.\n\nCheck current tier: Profile → VIP Status',
+            msg: '⭐ BITCOVEX VIP Tiers:\n\n🥉 <b>VIP 1</b> — 500 USDT volume: 5% fee discount\n🥈 <b>VIP 2</b> — 5,000 USDT: 10% discount + priority support\n🥇 <b>VIP 3</b> — 50,000 USDT: 20% discount + dedicated manager\n💎 <b>VIP 4</b> — 500,000 USDT: 30% discount + all perks\n\n📊 Volume resets monthly. Benefits apply next month after qualification.\n\nCheck current tier: Profile → VIP Status',
             follow: 'Any specific VIP question?',
             chips: ['✅ Got it!','❓ My tier is wrong','🎧 VIP manager please']
           }
@@ -2314,7 +2320,7 @@
             // Another sub-level chip — look for deeper data or fallback
             spAddUserBubble(label);
             var deepMsg = {
-              '📧 Email not received': '📧 Email not arriving? Check spam/junk folder. Add noreply@bitegit.com to contacts. Wait 5 minutes and retry. If still nothing, use "Resend" option.',
+              '📧 Email not received': '📧 Email not arriving? Check spam/junk folder. Add noreply@bitcovex.com to contacts. Wait 5 minutes and retry. If still nothing, use "Resend" option.',
               '🔒 Still locked': '🔒 If still locked after 30 mins, try password reset. If that fails too, your account may have a security hold — our agent can lift it.',
               '🔑 Lost backup codes': '🔑 Without backup codes, you\'ll need identity verification to regain access. Our agent will guide you through the manual process.',
               '💸 Funds missing — urgent!': '🚨 URGENT: If funds are missing after suspicious login, we must act immediately. An agent will freeze and investigate your account.',
@@ -2439,7 +2445,7 @@
       if (!msgs) return;
       var ub = document.createElement('div');
       ub.style.cssText = 'display:flex;justify-content:flex-end;margin:0.35rem 1rem;';
-      ub.innerHTML = '<span style="background:#00b8d4;color:#fff;border-radius:14px 14px 2px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;font-weight:600;max-width:78%;display:inline-block;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</span>';
+      ub.innerHTML = '<span style="background:#F0B90B;color:#fff;border-radius:14px 14px 2px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;font-weight:600;max-width:78%;display:inline-block;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</span>';
       msgs.appendChild(ub);
       spScroll();
     }
@@ -2460,8 +2466,8 @@
       var name = senderName || _spAgentName || 'Support Agent';
       var wrap = document.createElement('div');
       wrap.style.cssText = 'margin:0.35rem 1rem;';
-      wrap.innerHTML = '<div style="font-size:0.68rem;color:#00b8d4;font-weight:700;margin-bottom:3px;">🎧 ' + name + '</div>'
-        + '<div style="background:rgba(0,184,212,0.1);border:1px solid rgba(0,184,212,0.25);border-radius:2px 14px 14px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;color:#fff;max-width:78%;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</div>';
+      wrap.innerHTML = '<div style="font-size:0.68rem;color:#F0B90B;font-weight:700;margin-bottom:3px;">🎧 ' + name + '</div>'
+        + '<div style="background:rgba(240,185,11,0.1);border:1px solid rgba(240,185,11,0.25);border-radius:2px 14px 14px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;color:#fff;max-width:78%;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</div>';
       msgs.appendChild(wrap);
       spScroll();
     }
@@ -2516,7 +2522,7 @@
       _spSubTopic = '';
       _spBotActive = true;
       var msgs = document.getElementById('spChatMessages');
-      if (msgs) msgs.innerHTML = '<div class="sp-chat-time">Just now</div><div class="sp-bot-bubble"><p><strong>👋 Hey BITEGIT user!</strong></p><p>I\'m Bunz Support. Select a topic or connect to a live agent.</p><div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spSendTopic(this,\'Account &amp; security\')">Account &amp; security</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Deposit &amp; withdrawal\')">Deposit &amp; withdrawal</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'P2P\')">P2P</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Identity verification\')">Identity verification</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Promotion &amp; bonus\')">Promotion &amp; bonus</button></div></div>';
+      if (msgs) msgs.innerHTML = '<div class="sp-chat-time">Just now</div><div class="sp-bot-bubble"><p><strong>👋 Hey BITCOVEX user!</strong></p><p>I\'m Bunz Support. Select a topic or connect to a live agent.</p><div class="sp-topic-chips"><button class="sp-topic-chip" onclick="spSendTopic(this,\'Account &amp; security\')">Account &amp; security</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Deposit &amp; withdrawal\')">Deposit &amp; withdrawal</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'P2P\')">P2P</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Identity verification\')">Identity verification</button><button class="sp-topic-chip" onclick="spSendTopic(this,\'Promotion &amp; bonus\')">Promotion &amp; bonus</button></div></div>';
       spSetStatus('Bot Assistant', 'bot');
       var banner = document.getElementById('spConnectBanner');
       if (banner) { banner.style.display = ''; var cb = banner.querySelector('.sp-connect-btn'); if(cb){cb.disabled=false;cb.textContent='Connect';} }
@@ -2538,7 +2544,7 @@
       // Show queue position immediately
       var queuePos = Math.floor(Math.random()*8)+2;
       var waitMin = Math.ceil(queuePos * 1.5);
-      spAddBotBubble('<p>🎧 <strong>Connecting you to a live agent…</strong></p><p style="font-size:0.82rem;opacity:0.8;">📋 Your position in queue: <strong style="color:#00b8d4;">#' + queuePos + '</strong><br>⏱️ Estimated wait: ~' + waitMin + ' min<br><span style="font-size:0.75rem;opacity:0.55;">Please describe your issue while you wait.</span></p>');
+      spAddBotBubble('<p>🎧 <strong>Connecting you to a live agent…</strong></p><p style="font-size:0.82rem;opacity:0.8;">📋 Your position in queue: <strong style="color:#F0B90B;">#' + queuePos + '</strong><br>⏱️ Estimated wait: ~' + waitMin + ' min<br><span style="font-size:0.75rem;opacity:0.55;">Please describe your issue while you wait.</span></p>');
       spSetStatus('🟡 Queue #' + queuePos + ' — Waiting…', 'waiting');
 
       try {
@@ -2557,7 +2563,7 @@
           if (banner) banner.style.display = 'none';
           // Simulate agent joining after short delay
           setTimeout(function(){
-            spAddAdminBubble('Hi! I\'m ' + _spAgentName + ' from BITEGIT Support 👋 How can I assist you today?', _spAgentName);
+            spAddAdminBubble('Hi! I\'m ' + _spAgentName + ' from BITCOVEX Support 👋 How can I assist you today?', _spAgentName);
             spSetStatus('🟢 ' + _spAgentName + ' — Live Agent', 'connected');
             _spAgentConnected = true;
           }, Math.random()*3000 + 2000);
