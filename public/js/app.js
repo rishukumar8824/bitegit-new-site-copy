@@ -25,30 +25,27 @@
     });
   }
 
-  // Coin image map for mobile market rows
   const COIN_IMG = {
     BTC: '/cdn/1/currency/33ebcaab-99c9-47e0-a916-c08bada02cac-1774002719227.png',
     BNB: '/cdn/1/currency/11628b76-313d-44a6-a87c-f2cc9e6ac75b-1774002833218.png',
     SOL: '/cdn/1/currency/0f9dbb43-7c86-456a-bcaa-64d5bb61a01e-1774002879582.png',
     ETH: '/cdn/1/currency/65b8e63b-5356-4d33-9cb8-aa19585ffaf0-1774002774151.png',
-    XRP: 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png',
-    ADA: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
+    XRP: '/cdn/1/currency/xrp.png',
+    ADA: '/cdn/1/currency/ada.png',
   };
   const SPOT_PAIRS = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA'];
+  const COIN_COLORS = { BTC:'#F7931A',ETH:'#627EEA',BNB:'#F3BA2F',SOL:'#9945FF',XRP:'#346AA9',ADA:'#0033AD' };
 
-  // Inject one-time CSS for mobile header cleanup and desktop pairs section hide on mobile
+  // ── 1. MOBILE CSS — hide desktop elements on mobile ──────────────────────
   function injectMobileCSS() {
     if (document.getElementById('cvx-mobile-css')) return;
 
-    // Mark the desktop Popular Pairs flex container
     document.querySelectorAll('div').forEach(div => {
       const cls = div.className || '';
-      if (cls.includes('justify-between') && cls.includes('max-w-[1200px]') && cls.includes('mx-auto') && cls.includes('gap-5') && !div.id) {
+      if (cls.includes('justify-between') && cls.includes('max-w-[1200px]') && cls.includes('mx-auto') && cls.includes('gap-5') && !div.id)
         div.id = 'cvx-desktop-pairs';
-      }
     });
 
-    // Mark desktop nav links container (first div inside left-main)
     const leftMain = document.querySelector('[data-nav-left-main="true"]');
     if (leftMain) {
       leftMain.id = 'cvx-nav-left-main';
@@ -56,24 +53,18 @@
       if (navLinksDiv) navLinksDiv.setAttribute('data-cvx-nav-links', '1');
     }
 
-    // Mark download + globe icon buttons in right box (they have .relative.group class)
     const rightBox = document.querySelector('[data-nav-right-box]');
     if (rightBox) {
       rightBox.querySelectorAll('.relative.group').forEach(el => el.setAttribute('data-cvx-icon-btn', '1'));
-      // Also mark the lang-currency-picker (globe icon) which uses a different class
       const langPicker = rightBox.querySelector('.lang-currency-picker');
       if (langPicker) langPicker.setAttribute('data-cvx-icon-btn', '1');
     }
 
-    // Mark the mobile "More >" link that comes from existing HTML (below the desktop pairs / mobile coin rows area)
-    // It's a div.mt-4 with text-center containing an <a href="market.html"> with "More" text
     document.querySelectorAll('div').forEach(div => {
       const cls = div.className || '';
       if ((cls.includes('mt-4') || cls.includes('mt-6')) && cls.includes('text-center')) {
         const link = div.querySelector('a[href="market.html"]');
-        if (link && /More/.test(link.textContent)) {
-          div.setAttribute('data-cvx-html-more', '1');
-        }
+        if (link && /More/.test(link.textContent)) div.setAttribute('data-cvx-html-more', '1');
       }
     });
 
@@ -92,12 +83,32 @@
     document.head.appendChild(s);
   }
 
-  // Build mobile-only market section (Spot/Futures/TradFi tabs + coin rows from ticker)
+  // ── 2. MOBILE APP BANNER (like Bitbase top banner) ────────────────────────
+  function addMobileAppBanner() {
+    if (document.getElementById('cvx-app-banner')) return;
+    if (window.innerWidth > 767) return;
+    const banner = document.createElement('div');
+    banner.id = 'cvx-app-banner';
+    banner.style.cssText = 'display:flex;align-items:center;padding:8px 12px;background:#1e2329;border-bottom:1px solid rgba(255,255,255,0.08);gap:10px;position:relative;z-index:9999;';
+    banner.innerHTML = `
+      <div style="width:36px;height:36px;border-radius:8px;background:#F0B90B;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="20" height="24" viewBox="0 0 22 26" fill="none"><path d="M5.40038 0H0.73112C0.327217 0 0 0.326486 0 0.729486V6.91749C0 7.32049 0.327217 7.64697 0.73112 7.64697H6.1315V0.729486C6.1315 0.326486 5.80429 0 5.40038 0Z" fill="#fff"/><path d="M6.13151 7.64698V13.0353C6.13151 13.4383 6.45872 13.7648 6.86262 13.7648H12.2891C13.9821 13.7648 15.3546 15.1342 15.3546 16.8235C15.3546 18.5127 13.9821 19.8822 12.2891 19.8822H7.6641C6.81758 19.8822 6.1315 19.1977 6.13113 18.353V14.4939C6.13113 14.0909 5.80392 13.7644 5.40001 13.7644H0.73112C0.327217 13.7644 0 14.0909 0 14.4939V19.1523C0 19.5553 0.327217 19.8818 0.73112 19.8818H4.59854C5.44506 19.8818 6.13151 20.5667 6.13151 21.4114V25.2701C6.13151 25.6731 6.45872 25.9996 6.86262 25.9996H11.9235C17.2048 25.9996 21.4861 21.7278 21.4861 16.4584C21.4861 11.5919 17.532 7.64661 12.6546 7.64661H6.13151V7.64698Z" fill="#fff"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;color:#fff;font-size:13px;line-height:1.3;">Bitcovex App</div>
+        <div style="color:rgba(255,255,255,0.5);font-size:11px;">Trade Anywhere, Anytime</div>
+      </div>
+      <a href="app_download.html" style="padding:7px 16px;background:#F0B90B;color:#000;border-radius:6px;font-size:13px;font-weight:700;text-decoration:none;flex-shrink:0;">Open</a>
+      <button id="cvx-banner-close" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;padding:4px 4px;font-size:20px;flex-shrink:0;line-height:1;">×</button>
+    `;
+    document.body.insertBefore(banner, document.body.firstChild);
+    document.getElementById('cvx-banner-close').addEventListener('click', () => banner.remove());
+  }
+
+  // ── 3. MOBILE MARKET (Spot/Futures/TradFi tabs + live prices) ─────────────
   function buildMobileMarket() {
     if (document.getElementById('cvx-mobile-market')) return;
     if (!tickerMap) return;
-
-    // Find insertion point: after the desktop pairs container or its parent
     const desktopPairs = document.getElementById('cvx-desktop-pairs');
     if (!desktopPairs) return;
 
@@ -105,36 +116,30 @@
     wrapper.id = 'cvx-mobile-market';
     wrapper.style.cssText = 'display:block;padding:0 0 8px;';
 
-    // CSS to hide this on desktop
     const mobileOnlyStyle = document.createElement('style');
     mobileOnlyStyle.textContent = '@media (min-width: 768px) { #cvx-mobile-market { display: none !important; } }';
     document.head.appendChild(mobileOnlyStyle);
 
-    // Tab bar
-    const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking >'];
+    const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking >'];
     const tabBar = document.createElement('div');
     tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:0;';
 
     const rowsDiv = document.createElement('div');
     rowsDiv.style.cssText = 'display:flex;flex-direction:column;';
 
-    let activeTab = 0;
     function renderRows() {
       rowsDiv.innerHTML = '';
-      const pairs = SPOT_PAIRS;
-      pairs.forEach(sym => {
+      SPOT_PAIRS.forEach(sym => {
         const t = tickerMap ? tickerMap[sym + 'USDT'] : null;
         const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : '—';
         const chg = t ? Number(t.change24h) : 0;
         const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : '—';
         const imgSrc = COIN_IMG[sym] || '';
-
-        const COLORS = { BTC:'#F7931A',ETH:'#627EEA',BNB:'#F3BA2F',SOL:'#9945FF',XRP:'#346AA9',ADA:'#0033AD' };
-        const iconColor = COLORS[sym] || '#888';
+        const iconColor = COIN_COLORS[sym] || '#888';
         const iconHtml = imgSrc
-          ? `<img src="${imgSrc}" alt="${sym}" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
-            + `<div style="display:none;width:36px;height:36px;border-radius:50%;background:${iconColor};flex-shrink:0;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${sym.slice(0,1)}</div>`
-          : `<div style="width:36px;height:36px;border-radius:50%;background:${iconColor};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${sym.slice(0,1)}</div>`;
+          ? `<img src="${imgSrc}" alt="${sym}" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+             <div style="display:none;width:36px;height:36px;border-radius:50%;background:${iconColor};flex-shrink:0;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${sym[0]}</div>`
+          : `<div style="width:36px;height:36px;border-radius:50%;background:${iconColor};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${sym[0]}</div>`;
 
         const row = document.createElement('a');
         row.href = 'trade.html';
@@ -150,7 +155,6 @@
           </div>`;
         rowsDiv.appendChild(row);
       });
-      // More link
       const more = document.createElement('a');
       more.href = 'market.html';
       more.textContent = 'More >';
@@ -158,6 +162,7 @@
       rowsDiv.appendChild(more);
     }
 
+    let activeTab = 0;
     TABS.forEach((label, i) => {
       const tab = document.createElement('div');
       tab.textContent = label;
@@ -182,7 +187,31 @@
     desktopPairs.parentElement.insertBefore(wrapper, desktopPairs);
   }
 
-  // Create the gem SVG element (two paths only, no text bleed)
+  // ── 4. DESKTOP PAIRS — hide unsupported pairs (DOT/HBAR/LINK/XLM) ─────────
+  function fixDesktopPairs() {
+    if (document.getElementById('cvx-dp-fixed')) return;
+    const dp = document.getElementById('cvx-desktop-pairs');
+    if (!dp) return;
+    const UNSUPPORTED = ['DOT', 'HBAR', 'LINK', 'XLM'];
+    dp.querySelectorAll('div, a').forEach(el => {
+      const txt = el.textContent || '';
+      if (UNSUPPORTED.some(s => new RegExp('\\b' + s + '\\b').test(txt))) {
+        const parent = el.parentElement;
+        if (parent && parent !== dp) {
+          const isSelf = UNSUPPORTED.some(s => new RegExp('\\b' + s + '\\b').test(el.className || ''));
+          if (txt.length < 200 && txt.includes('USDT')) {
+            el.style.display = 'none';
+          }
+        }
+      }
+    });
+    const marker = document.createElement('span');
+    marker.id = 'cvx-dp-fixed';
+    marker.style.display = 'none';
+    document.body.appendChild(marker);
+  }
+
+  // ── 5. GEM SVG ────────────────────────────────────────────────────────────
   function makeGemSVG(w, h) {
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
@@ -200,7 +229,7 @@
     return svg;
   }
 
-  // Header: show only the B-gem icon — no text
+  // ── 6. HEADER LOGO ────────────────────────────────────────────────────────
   function fixHeaderLogo() {
     const logoLink = document.querySelector('header a[href="index.html"]');
     if (!logoLink || logoLink.dataset.cvxLogo) return;
@@ -209,7 +238,7 @@
     logoLink.appendChild(makeGemSVG('22', '26'));
   }
 
-  // Hamburger ≡ button + full Bitbase-style slide panel
+  // ── 7. HAMBURGER MENU ─────────────────────────────────────────────────────
   function addHamburger() {
     const header = document.querySelector('header');
     if (!header || header.dataset.cvxBurger) return;
@@ -230,7 +259,6 @@
       panel.id = 'cvx-mobile-nav';
       panel.style.cssText = 'position:fixed;inset:0;z-index:10000;background:#161A1E;display:flex;flex-direction:column;overflow-y:auto;font-family:inherit;';
 
-      // Top bar
       const topBar = document.createElement('div');
       topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0;';
       const logoEl = makeGemSVG('22', '26');
@@ -242,7 +270,6 @@
       topBar.appendChild(logoEl); topBar.appendChild(closeBtn);
       panel.appendChild(topBar);
 
-      // Auth buttons
       const authRow = document.createElement('div');
       authRow.style.cssText = 'display:flex;gap:10px;padding:16px;flex-shrink:0;';
       const loginBtn = document.createElement('a');
@@ -254,7 +281,6 @@
       authRow.appendChild(loginBtn); authRow.appendChild(signupBtn);
       panel.appendChild(authRow);
 
-      // Nav links
       const navList = document.createElement('div');
       navList.style.cssText = 'flex:1;padding:0 0 24px;';
       NAV.forEach(({ label, href, arrow }) => {
@@ -272,7 +298,7 @@
     rightBox.appendChild(btn);
   }
 
-  // Add earth video to "Built on Stability" section
+  // ── 8. EARTH VIDEO ────────────────────────────────────────────────────────
   function addEarthVideo() {
     if (document.getElementById('cvx-globe-done')) return;
     const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Built on Stability'));
@@ -292,27 +318,23 @@
       return v;
     };
 
-    // Desktop: empty span inside a flex-1 div
     section.querySelectorAll('span').forEach(span => {
       if (!span.children.length && !span.textContent.trim()) {
         const p = span.parentElement;
-        if (p && /flex-1/.test(p.className) && /opacity/.test(p.className)) {
+        if (p && /flex-1/.test(p.className) && /opacity/.test(p.className))
           span.appendChild(makeVideo('width:100%;height:auto;max-height:580px;object-fit:contain;'));
-        }
       }
     });
 
-    // Mobile: empty inner div
     section.querySelectorAll('div > div').forEach(d => {
       if (!d.children.length && !d.textContent.trim()) {
-        if (/absolute/.test(d.className) || /absolute/.test((d.parentElement || {}).className || '')) {
+        if (/absolute/.test(d.className) || /absolute/.test((d.parentElement || {}).className || ''))
           d.appendChild(makeVideo('width:220px;height:220px;object-fit:contain;'));
-        }
       }
     });
   }
 
-  // Make pairs tabs (Spot / Futures / TradFi / Volume Ranking) clickable
+  // ── 9. PAIRS TABS ─────────────────────────────────────────────────────────
   function wirePairsTabs() {
     if (document.getElementById('cvx-tabs-done')) return;
     const tabWrap = [...document.querySelectorAll('[class*="cursor-pointer"]')].find(el =>
@@ -326,33 +348,17 @@
 
     const tabContainer = tabWrap.parentElement;
     const tabs = [...tabContainer.querySelectorAll('[class*="cursor-pointer"]')];
-
-    // Find the rows container (parent section that holds the coin rows)
-    const section = tabWrap.closest('section') || tabWrap.closest('[class*="container"]');
-    const coinRows = section ? [...section.querySelectorAll('[class*="cursor-pointer"]')].filter(el => /USDT/.test(el.innerText || '')) : [];
-
-    tabs.forEach((tab, i) => {
+    tabs.forEach((tab) => {
       tab.addEventListener('click', () => {
-        // Update active tab styling
-        tabs.forEach(t => {
-          t.style.color = '';
-          t.style.borderBottom = '';
-          t.style.fontWeight = '';
-          const inner = t.querySelector('div');
-          if (inner) { inner.style.color = ''; inner.style.fontWeight = ''; }
-        });
+        tabs.forEach(t => { t.style.color = ''; t.style.borderBottom = ''; t.style.fontWeight = ''; });
         tab.style.color = 'var(--text_primary, #fff)';
         tab.style.fontWeight = '700';
-        const inner = tab.querySelector('div');
-        if (inner) { inner.style.color = 'var(--text_primary, #fff)'; inner.style.fontWeight = '700'; }
       });
     });
-
-    // Activate first tab by default
     if (tabs[0]) tabs[0].click();
   }
 
-  // Replace Bitbase wordmark SVGs (outside header) with Bitcovex text
+  // ── 10. WORDMARKS ─────────────────────────────────────────────────────────
   function wireWordmarks() {
     document.querySelectorAll('svg[viewBox="0 0 131 26"]').forEach((s) => {
       if (s.dataset.cvxWm) return;
@@ -370,6 +376,7 @@
     });
   }
 
+  // ── 11. TICKER / PRICES ───────────────────────────────────────────────────
   let tickerMap = null;
   async function loadTicker() {
     try {
@@ -399,8 +406,7 @@
       for (const el of leaves) {
         const tx = el.textContent.trim().replace(/[$,]/g, '');
         if (/^\d+(\.\d+)?$/.test(tx) && parseFloat(tx) > 0) {
-          const dollar = el.textContent.trim().startsWith('$') ? '$' : '';
-          el.textContent = dollar + fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2);
+          el.textContent = (el.textContent.trim().startsWith('$') ? '$' : '') + fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2);
           break;
         }
       }
@@ -430,7 +436,7 @@
     });
   }
 
-  // Reveal images stuck at opacity-0 (Bitbase React fade-in replacement)
+  // ── 12. REVEAL IMAGES ─────────────────────────────────────────────────────
   function revealImages() {
     document.querySelectorAll('img.opacity-0').forEach((img) => {
       const show = () => {
@@ -444,27 +450,41 @@
           if (overlay) overlay.style.display = 'none';
         }
       };
-      if (img.complete) { show(); }
-      else { img.addEventListener('load', show); img.addEventListener('error', show); }
+      if (img.complete) show(); else { img.addEventListener('load', show); img.addEventListener('error', show); }
     });
   }
 
-  // Fix footer mobile layout — desktop uses flex justify-between (horizontal columns)
-  // which breaks on mobile. Convert to vertical accordion sections.
+  // ── 13. APP SECTION — fix text overflow ───────────────────────────────────
+  function fixAppSection() {
+    if (document.getElementById('cvx-app-fixed')) return;
+    const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Trade with Confidence'));
+    if (!h2) return;
+    // Walk up and fix any overflow:hidden ancestor within max-w-[1200px] container
+    let el = h2.parentElement;
+    for (let i = 0; i < 6; i++) {
+      if (!el) break;
+      const cs = getComputedStyle(el);
+      if (cs.overflow === 'hidden') el.style.overflow = 'visible';
+      if (/max-w-\[1200px\]/.test(el.className || '')) break;
+      el = el.parentElement;
+    }
+    const marker = document.createElement('span');
+    marker.id = 'cvx-app-fixed';
+    marker.style.display = 'none';
+    document.body.appendChild(marker);
+  }
+
+  // ── 14. FOOTER ────────────────────────────────────────────────────────────
   function fixFooter() {
     const footer = document.querySelector('footer');
     if (!footer || footer.dataset.cvxFooter) return;
     footer.dataset.cvxFooter = '1';
 
-    // The main footer flex container
     const flex = footer.querySelector('.flex.w-full.justify-between');
     if (!flex) return;
-
-    // Get all section children: first is logo+social, rest are link columns
     const sections = [...flex.children];
     if (sections.length < 2) return;
 
-    // On mobile: make the container vertical
     const mobileStyle = document.createElement('style');
     mobileStyle.textContent = `
       @media (max-width: 767px) {
@@ -479,7 +499,6 @@
     `;
     document.head.appendChild(mobileStyle);
 
-    // Wire accordion click for each nav section (skip first = logo section)
     sections.slice(1).forEach(sec => {
       sec.setAttribute('data-cvx-footer-section', '1');
       const titleEl = sec.querySelector('p, h3, h4, div.font-semibold, div.font-medium, div.text-sm, div:first-child');
@@ -487,10 +506,9 @@
       titleEl.setAttribute('data-cvx-footer-title', '1');
       titleEl.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4"/></svg>');
 
-      // Wrap all links in a collapsible div — collapsed by default
       const linksWrap = document.createElement('div');
       linksWrap.setAttribute('data-cvx-footer-links', '1');
-      linksWrap.style.display = 'none'; // explicitly collapsed on init
+      linksWrap.style.display = 'none';
       const links = [...sec.children].slice(1);
       links.forEach(l => linksWrap.appendChild(l));
       sec.appendChild(linksWrap);
@@ -502,7 +520,6 @@
       });
     });
 
-    // Replace Bitbase SVG wordmark in footer logo with gem icon + "Bitcovex" text
     const footerLogoSection = sections[0];
     const footerSVG = footerLogoSection.querySelector('svg[viewBox="0 0 131 26"]');
     if (footerSVG) {
@@ -517,7 +534,7 @@
     }
   }
 
-  // Fix security section — replace broken React shell with clean img tag
+  // ── 15. SECURITY SHIELD ───────────────────────────────────────────────────
   function fixSecuritySection() {
     if (document.getElementById('cvx-security-done')) return;
     const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
@@ -525,14 +542,12 @@
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
 
-    // Find right column (shrink-0 + w-[320px])
     const rightCol = [...sec.querySelectorAll('div')].find(d => {
       const cls = d.className || '';
       return /shrink-0/.test(cls) && /w-\[320px\]/.test(cls);
     });
 
     if (rightCol) {
-      // Completely replace broken React structure with a clean img
       rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_v2.webp" alt="Security Shield" style="width:100%;height:auto;object-fit:contain;display:block;">';
       rightCol.style.cssText = 'display:flex;flex-shrink:0;align-items:center;justify-content:center;width:420px;overflow:visible;transform:none;';
     }
@@ -543,11 +558,10 @@
     document.body.appendChild(marker);
   }
 
-  // Auto-slide promo banner carousel right-to-left (like Bitbase)
+  // ── 16. CAROUSEL AUTO-SLIDE ───────────────────────────────────────────────
   function autoSlideCarousel() {
     if (document.getElementById('cvx-carousel-done')) return;
 
-    // Find all overflow-hidden containers that wrap a horizontal flex of multiple children
     const candidates = [...document.querySelectorAll('div')].filter(div => {
       const cs = getComputedStyle(div);
       if (cs.overflow !== 'hidden' && !/(overflow-hidden)/.test(div.className || '')) return false;
@@ -561,21 +575,17 @@
       const track = container.firstElementChild;
       const slides = [...track.children];
       if (slides.length < 2) return;
-
-      // Already wired?
       if (container.dataset.cvxCarousel) return;
       container.dataset.cvxCarousel = '1';
 
-      // Make sure track has transition
       track.style.transition = 'transform 0.5s ease';
       track.style.willChange = 'transform';
 
       let current = 0;
       const total = slides.length;
 
-      // Find dot indicators if any (siblings of container)
       const parent = container.parentElement;
-      const dots = parent ? [...parent.querySelectorAll('[class*="rounded-full"], [class*="dot"]')].filter(d => {
+      const dots = parent ? [...parent.querySelectorAll('[class*="rounded-full"],[class*="dot"]')].filter(d => {
         const r = d.getBoundingClientRect();
         return r.width <= 12 && r.height <= 12;
       }) : [];
@@ -583,17 +593,13 @@
       const goTo = (idx) => {
         current = (idx + total) % total;
         track.style.transform = `translateX(-${current * (100 / total)}%)`;
-        // Update dots if found
         dots.forEach((dot, i) => {
           dot.style.opacity = i === current ? '1' : '0.4';
           dot.style.transform = i === current ? 'scaleX(2.5)' : 'scaleX(1)';
         });
       };
 
-      // Set initial dot state
       goTo(0);
-
-      // Auto-advance every 3 seconds
       setInterval(() => goTo(current + 1), 3000);
     });
 
@@ -603,16 +609,38 @@
     document.body.appendChild(marker);
   }
 
+  // ── 17. HIDE BROKEN ELEMENTS ──────────────────────────────────────────────
+  function hideBrokenElements() {
+    // Hide any element showing garbled "33333..." exchange rate data
+    document.querySelectorAll('div, p, span').forEach(el => {
+      if (el.dataset.cvxChecked) return;
+      el.dataset.cvxChecked = '1';
+      const txt = (el.textContent || '').trim();
+      // Garbled repeated characters (exchange rate ticker broken)
+      if (txt.length > 20 && /^3+$/.test(txt.replace(/[.\s,]/g, ''))) {
+        el.style.display = 'none';
+      }
+    });
+  }
+
+  // ── START ─────────────────────────────────────────────────────────────────
   function start() {
     injectMobileCSS();
+    addMobileAppBanner();
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
     fixFooter(); fixSecuritySection(); autoSlideCarousel();
+    fixAppSection(); hideBrokenElements();
     wireTopNav(); wireWordmarks();
-    loadTicker().then(() => { applyPrices(); buildMobileMarket(); });
+    loadTicker().then(() => { applyPrices(); buildMobileMarket(); fixDesktopPairs(); });
     wireTrade(); revealImages();
-    setInterval(() => { fixHeaderLogo(); addHamburger(); wireTopNav(); wireWordmarks(); wireTrade(); revealImages(); wirePairsTabs(); autoSlideCarousel(); }, 3000);
+    setInterval(() => {
+      fixHeaderLogo(); addHamburger(); wireTopNav(); wireWordmarks();
+      wireTrade(); revealImages(); wirePairsTabs(); autoSlideCarousel();
+      hideBrokenElements(); fixAppSection();
+    }, 3000);
     setInterval(async () => { await loadTicker(); applyPrices(); }, 5000);
   }
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 })();
