@@ -587,9 +587,43 @@
         [data-cvx-footer-title] svg { flex-shrink: 0; transition: transform 0.2s; }
         [data-cvx-footer-title].open svg { transform: rotate(180deg); }
         footer .bg-bg_primary.w-full { padding-top: 20px !important; padding-bottom: 0 !important; }
+        [data-cvx-footer-qr] { display: none !important; }
+        [data-cvx-footer-community] { display: none !important; }
       }
     `;
     document.head.appendChild(mobileStyle);
+
+    // Hide QR code and "Community" heading in footer logo section on mobile
+    const logoSec = sections[0];
+    if (logoSec) {
+      // Hide QR code image(s)
+      logoSec.querySelectorAll('img').forEach(img => {
+        if (img.src && (img.src.includes('qr') || img.src.includes('QR') || img.alt && img.alt.toLowerCase().includes('scan'))) {
+          img.setAttribute('data-cvx-footer-qr', '1');
+        }
+        // Also hide any img inside a div that has scan/download text nearby
+        const parent = img.parentElement;
+        if (parent) {
+          const txt = (parent.textContent || '').toLowerCase();
+          if (txt.includes('scan') || txt.includes('download the app') || txt.includes('qr')) {
+            parent.setAttribute('data-cvx-footer-qr', '1');
+          }
+        }
+      });
+      // Hide divs/sections containing QR or scan text
+      logoSec.querySelectorAll('div, section').forEach(el => {
+        const txt = (el.textContent || '').toLowerCase().trim();
+        if ((txt.includes('scan') && txt.includes('download')) || txt.includes('scan to download')) {
+          el.setAttribute('data-cvx-footer-qr', '1');
+        }
+      });
+      // Hide "Community" heading text
+      logoSec.querySelectorAll('h1,h2,h3,h4,h5,p,span,div').forEach(el => {
+        if (el.children.length === 0 && (el.textContent || '').trim().toLowerCase() === 'community') {
+          el.setAttribute('data-cvx-footer-community', '1');
+        }
+      });
+    }
 
     sections.slice(1).forEach(sec => {
       sec.setAttribute('data-cvx-footer-section', '1');
