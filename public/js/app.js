@@ -652,9 +652,9 @@
       wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:8px 0 12px;';
       const shieldImg = document.createElement('img');
       shieldImg.id = 'cvx-mobile-shield';
-      shieldImg.src = '/cdn/imgs/index-web/home/shield_v2.webp';
+      shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
       shieldImg.alt = 'Security Shield';
-      shieldImg.style.cssText = 'display:block;width:260px;height:auto;';
+      shieldImg.style.cssText = 'display:block;width:240px;height:auto;border-radius:6px;';
       wrap.appendChild(shieldImg);
 
       // Step 5: insert BEFORE the ul (above bullets)
