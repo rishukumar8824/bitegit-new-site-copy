@@ -449,9 +449,102 @@
     });
   }
 
+  // Fix footer mobile layout — desktop uses flex justify-between (horizontal columns)
+  // which breaks on mobile. Convert to vertical accordion sections.
+  function fixFooter() {
+    const footer = document.querySelector('footer');
+    if (!footer || footer.dataset.cvxFooter) return;
+    footer.dataset.cvxFooter = '1';
+
+    // The main footer flex container
+    const flex = footer.querySelector('.flex.w-full.justify-between');
+    if (!flex) return;
+
+    // Get all section children: first is logo+social, rest are link columns
+    const sections = [...flex.children];
+    if (sections.length < 2) return;
+
+    // On mobile: make the container vertical
+    const mobileStyle = document.createElement('style');
+    mobileStyle.textContent = `
+      @media (max-width: 767px) {
+        footer .flex.w-full.justify-between { flex-direction: column !important; gap: 0 !important; }
+        footer .flex.w-full.justify-between > section:first-child { max-width: 100% !important; margin-bottom: 24px; }
+        [data-cvx-footer-links] { display: none; padding: 0 0 8px; }
+        [data-cvx-footer-section] { border-bottom: 1px solid rgba(255,255,255,0.1); }
+        [data-cvx-footer-title] { display: flex !important; align-items: center; justify-content: space-between; padding: 16px 0; cursor: pointer; font-size: 15px; font-weight: 500; }
+        [data-cvx-footer-title] svg { flex-shrink: 0; transition: transform 0.2s; }
+        [data-cvx-footer-title].open svg { transform: rotate(180deg); }
+      }
+    `;
+    document.head.appendChild(mobileStyle);
+
+    // Wire accordion click for each nav section (skip first = logo section)
+    sections.slice(1).forEach(sec => {
+      sec.setAttribute('data-cvx-footer-section', '1');
+      const titleEl = sec.querySelector('p, h3, h4, div.font-semibold, div.font-medium, div.text-sm, div:first-child');
+      if (!titleEl) return;
+      titleEl.setAttribute('data-cvx-footer-title', '1');
+      titleEl.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4"/></svg>');
+
+      // Wrap all links in a collapsible div
+      const linksWrap = document.createElement('div');
+      linksWrap.setAttribute('data-cvx-footer-links', '1');
+      const links = [...sec.children].slice(1);
+      links.forEach(l => linksWrap.appendChild(l));
+      sec.appendChild(linksWrap);
+
+      titleEl.addEventListener('click', () => {
+        const isOpen = linksWrap.style.display === 'block';
+        linksWrap.style.display = isOpen ? 'none' : 'block';
+        titleEl.classList.toggle('open', !isOpen);
+      });
+    });
+
+    // Replace Bitbase SVG wordmark in footer logo with gem icon + "Bitcovex" text
+    const footerLogoSection = sections[0];
+    const footerSVG = footerLogoSection.querySelector('svg[viewBox="0 0 131 26"]');
+    if (footerSVG) {
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display:flex;align-items:center;gap:8px;';
+      const gem = makeGemSVG('20', '24');
+      const name = document.createElement('span');
+      name.textContent = 'Bitcovex';
+      name.style.cssText = 'font-weight:800;font-size:18px;letter-spacing:-0.5px;color:currentColor;';
+      wrapper.appendChild(gem); wrapper.appendChild(name);
+      footerSVG.replaceWith(wrapper);
+    }
+  }
+
+  // Inject the security shield GIF into the security section empty div
+  function fixSecuritySection() {
+    if (document.getElementById('cvx-security-done')) return;
+    // Find security section by heading
+    const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
+    if (!h2) return;
+    const sec = h2.closest('section') || h2.closest('[class*="relative"]');
+    if (!sec) return;
+    // Find the empty aspect-square div (was 3D canvas in React)
+    const emptyDiv = [...sec.querySelectorAll('div')].find(d =>
+      !d.children.length && !d.textContent.trim() && /aspect-square/.test(d.className)
+    );
+    if (emptyDiv) {
+      const img = document.createElement('img');
+      img.src = '/cdn/imgs/index-web/home/security_shield.gif';
+      img.alt = 'Security Shield';
+      img.style.cssText = 'width:180px;height:180px;object-fit:contain;display:block;margin:0 auto;';
+      emptyDiv.appendChild(img);
+      const marker = document.createElement('span');
+      marker.id = 'cvx-security-done';
+      marker.style.display = 'none';
+      document.body.appendChild(marker);
+    }
+  }
+
   function start() {
     injectMobileCSS();
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
+    fixFooter(); fixSecuritySection();
     wireTopNav(); wireWordmarks();
     loadTicker().then(() => { applyPrices(); buildMobileMarket(); });
     wireTrade(); revealImages();
