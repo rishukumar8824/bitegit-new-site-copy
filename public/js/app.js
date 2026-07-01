@@ -1151,11 +1151,82 @@
         </div>
         <!-- Bottom action buttons -->
         <div style="flex-shrink:0;display:flex;gap:8px;padding:10px 12px 14px;background:#161a1e;border-top:1px solid rgba(255,255,255,0.08);">
-          <button onclick="location.href='register.html'" style="flex:1;height:46px;background:#2ebd85;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Long</button>
-          <button onclick="location.href='register.html'" style="flex:1;height:46px;background:#f6465d;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Short</button>
+          <button id="cvx-btn-long" style="flex:1;height:46px;background:#2ebd85;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Long</button>
+          <button id="cvx-btn-short" style="flex:1;height:46px;background:#f6465d;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Short</button>
+        </div>
+        <!-- Order Placement panel (hidden by default) -->
+        <div id="cvx-order-panel" style="display:none;position:absolute;left:0;right:0;bottom:0;background:#161a1e;border-top:1px solid rgba(255,255,255,0.1);z-index:10;padding:0 12px 16px;">
+          <div style="display:flex;align-items:center;padding:12px 0 10px;">
+            <span style="font-size:15px;font-weight:700;flex:1;">Order Placement</span>
+            <button id="cvx-order-close" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;padding:0;line-height:1;">&times;</button>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button style="flex:1;padding:7px;background:#2b2f36;border:none;border-radius:6px;color:#fff;font-size:13px;cursor:pointer;">Cross ▾</button>
+            <button style="flex:1;padding:7px;background:#2b2f36;border:none;border-radius:6px;color:#fff;font-size:13px;cursor:pointer;">20X ▾</button>
+          </div>
+          <div style="display:flex;gap:0;margin-bottom:10px;background:#2b2f36;border-radius:6px;overflow:hidden;">
+            <button id="cvx-op-open" style="flex:1;padding:8px;background:#fff;border:none;color:#000;font-size:13px;font-weight:600;cursor:pointer;">Open</button>
+            <button id="cvx-op-close" style="flex:1;padding:8px;background:transparent;border:none;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;">Close</button>
+          </div>
+          <div style="display:flex;gap:16px;margin-bottom:10px;">
+            <button id="cvx-type-limit" style="font-size:13px;font-weight:600;color:#fff;background:none;border:none;border-bottom:2px solid #F0B90B;padding:0 0 4px;cursor:pointer;">Limit</button>
+            <button style="font-size:13px;color:rgba(255,255,255,0.4);background:none;border:none;border-bottom:2px solid transparent;padding:0 0 4px;cursor:pointer;">Market</button>
+            <button style="font-size:13px;color:rgba(255,255,255,0.4);background:none;border:none;border-bottom:2px solid transparent;padding:0 0 4px;cursor:pointer;">Conditional ▾</button>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:8px;">Available <span style="color:#fff;">0.0000 USDT</span></div>
+          <div style="display:flex;align-items:center;background:#2b2f36;border-radius:6px;padding:8px 10px;margin-bottom:8px;">
+            <span style="font-size:12px;color:rgba(255,255,255,0.4);flex:1;">Last Price</span>
+            <span id="cvx-op-price" style="font-size:13px;font-weight:600;">--</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:6px;">Last</span>
+            <span style="font-size:14px;margin-left:6px;color:rgba(255,255,255,0.5);">⚡</span>
+          </div>
+          <div style="display:flex;align-items:center;background:#2b2f36;border-radius:6px;padding:8px 10px;margin-bottom:10px;">
+            <span style="font-size:12px;color:rgba(255,255,255,0.4);flex:1;">Size</span>
+            <span style="font-size:13px;color:rgba(255,255,255,0.3);">BTC ▾</span>
+          </div>
+          <input type="range" min="0" max="100" value="0" style="width:100%;accent-color:#F0B90B;margin-bottom:6px;"/>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:10px;">
+            <span id="cvx-op-sell-qty">Sell 0.0000 BTC</span>
+            <span id="cvx-op-buy-qty">Buy 0.0000 BTC</span>
+          </div>
+          <button onclick="location.href='register.html'" style="width:100%;padding:13px;background:#fff;border:none;border-radius:8px;color:#000;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">Register Now</button>
+          <div style="text-align:center;"><a href="login.html" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;">Login</a></div>
         </div>
       `;
       document.body.appendChild(ov);
+
+      // Order placement panel
+      const orderPanel = document.getElementById('cvx-order-panel');
+      const orderClose = document.getElementById('cvx-order-close');
+      const opOpen = document.getElementById('cvx-op-open');
+      const opClose = document.getElementById('cvx-op-close');
+      function showOrderPanel(side) {
+        if (!orderPanel) return;
+        orderPanel.style.display = 'block';
+        // Toggle Open/Close visual state based on long/short
+        if (opOpen && opClose) {
+          if (side === 'long') {
+            opOpen.style.background = '#2ebd85'; opOpen.style.color = '#fff';
+            opClose.style.background = 'transparent'; opClose.style.color = 'rgba(255,255,255,0.5)';
+          } else {
+            opOpen.style.background = '#fff'; opOpen.style.color = '#000';
+            opClose.style.background = '#f6465d'; opClose.style.color = '#fff';
+          }
+        }
+        const prEl = document.getElementById('cvx-op-price');
+        if (prEl && livePrice) prEl.textContent = livePrice.toFixed(1);
+      }
+      document.getElementById('cvx-btn-long')?.addEventListener('click', () => showOrderPanel('long'));
+      document.getElementById('cvx-btn-short')?.addEventListener('click', () => showOrderPanel('short'));
+      orderClose?.addEventListener('click', () => { if (orderPanel) orderPanel.style.display = 'none'; });
+      if (opOpen) opOpen.addEventListener('click', () => {
+        opOpen.style.background='#fff'; opOpen.style.color='#000';
+        if(opClose){opClose.style.background='transparent'; opClose.style.color='rgba(255,255,255,0.5)';}
+      });
+      if (opClose) opClose.addEventListener('click', () => {
+        opClose.style.background='#f6465d'; opClose.style.color='#fff';
+        if(opOpen){opOpen.style.background='transparent'; opOpen.style.color='rgba(255,255,255,0.5)';}
+      });
 
       // Tab switching
       ov.querySelectorAll('[data-cvx-tab]').forEach(btn => {
@@ -1197,7 +1268,7 @@
               timezone:'Etc/UTC', theme:'dark', style:'1', locale:'en',
               hide_top_toolbar:false, hide_side_toolbar:true,
               allow_symbol_change:false, enable_publishing:false,
-              container_id:cid, studies:['Volume@tv-basicstudies'],
+              container_id:cid,
               loading_screen:{backgroundColor:'#0b0e11'}
             });
           } else {
@@ -1268,7 +1339,7 @@
       const setTxt=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
       setTxt('cvx-t-high',liveHigh.toFixed(1)); setTxt('cvx-t-low',liveLow.toFixed(1));
       setTxt('cvx-t-vol',fmtP(liveVol)); setTxt('cvx-t-qvol',fmtP(liveQuoteVol));
-      setTxt('cvx-mid',priceStr);
+      setTxt('cvx-mid',priceStr); setTxt('cvx-op-price',livePrice.toFixed(1));
       if(activeTab==='book' && window._cvxRenderBook) window._cvxRenderBook();
       // Also update desktop price elements
       updateDesktopPrices(isUp, color, priceStr);
