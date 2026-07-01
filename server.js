@@ -297,14 +297,13 @@ function broadcastUserEvent(userId, eventName, payload) {
   const data = `event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
   for (const stream of streams) stream.write(data);
 }
-const DEFAULT_TICKER_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT'];
+const DEFAULT_TICKER_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'HYPEUSDT', 'XAUUSDT'];
 const DEFAULT_SYMBOL_PRICES = {
   BTCUSDT: 63000,
   ETHUSDT: 3200,
-  BNBUSDT: 590,
-  XRPUSDT: 0.62,
   SOLUSDT: 145,
-  ADAUSDT: 0.78
+  HYPEUSDT: 28,
+  XAUUSDT: 3300
 };
 
 const KYC_ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
@@ -1006,8 +1005,8 @@ function createStableSymbolDrift(symbol, minuteBucket = Math.floor(Date.now() / 
 }
 
 const FALLBACK_QUOTE_VOLUMES = {
-  BTCUSDT: 1_650_000_000, ETHUSDT: 980_000_000, BNBUSDT: 210_000_000,
-  SOLUSDT: 340_000_000,   XRPUSDT: 145_000_000, ADAUSDT: 72_000_000,
+  BTCUSDT: 1_650_000_000, ETHUSDT: 980_000_000, SOLUSDT: 340_000_000,
+  HYPEUSDT: 120_000_000,  XAUUSDT: 79_000_000,
 };
 
 function createFallbackTickerSnapshot(symbols) {

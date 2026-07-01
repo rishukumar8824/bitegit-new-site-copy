@@ -26,16 +26,15 @@
   }
 
   const COIN_IMG = {
-    BTC: '/cdn/1/currency/33ebcaab-99c9-47e0-a916-c08bada02cac-1774002719227.png',
-    BNB: '/cdn/1/currency/11628b76-313d-44a6-a87c-f2cc9e6ac75b-1774002833218.png',
-    SOL: '/cdn/1/currency/0f9dbb43-7c86-456a-bcaa-64d5bb61a01e-1774002879582.png',
-    ETH: '/cdn/1/currency/65b8e63b-5356-4d33-9cb8-aa19585ffaf0-1774002774151.png',
-    XRP: 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png',
-    ADA: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
+    BTC:  '/cdn/1/currency/33ebcaab-99c9-47e0-a916-c08bada02cac-1774002719227.png',
+    ETH:  '/cdn/1/currency/65b8e63b-5356-4d33-9cb8-aa19585ffaf0-1774002774151.png',
+    SOL:  '/cdn/1/currency/0f9dbb43-7c86-456a-bcaa-64d5bb61a01e-1774002879582.png',
+    HYPE: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32196.png',
+    XAU:  'https://s2.coinmarketcap.com/static/img/coins/64x64/4705.png',
   };
-  const SPOT_PAIRS = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA'];
-  const COIN_COLORS = { BTC:'#F7931A',ETH:'#627EEA',BNB:'#F3BA2F',SOL:'#9945FF',XRP:'#346AA9',ADA:'#0033AD' };
-  const COIN_NAME = { BTC:'Bitcoin',ETH:'Ethereum',BNB:'BNB',SOL:'Solana',XRP:'XRP',ADA:'Cardano' };
+  const SPOT_PAIRS = ['BTC', 'ETH', 'SOL', 'HYPE', 'XAU'];
+  const COIN_COLORS = { BTC:'#F7931A', ETH:'#627EEA', SOL:'#9945FF', HYPE:'#4FAAFF', XAU:'#E5C55A' };
+  const COIN_NAME = { BTC:'Bitcoin', ETH:'Ethereum', SOL:'Solana', HYPE:'Hyperliquid', XAU:'Gold' };
 
   // ── 1. MOBILE CSS — hide desktop elements on mobile ──────────────────────
   function injectMobileCSS() {
@@ -200,17 +199,17 @@
         nameCol.innerHTML = `<div style="font-size:13.5px;font-weight:500;line-height:1.2;letter-spacing:0.01em;">${sym}USDT</div>`;
         row.appendChild(nameCol);
 
-        // Col 2: volume (center, fixed width)
+        // Col 2: volume
         const volCol = document.createElement('div');
-        volCol.style.cssText = 'width:80px;text-align:left;flex-shrink:0;';
-        volCol.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.45);">${vol}</div>`;
+        volCol.style.cssText = 'width:90px;text-align:left;flex-shrink:0;padding-left:4px;';
+        volCol.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.5);">${vol}</div>`;
         row.appendChild(volCol);
 
         // Col 3: price + change% (right)
         const priceCol = document.createElement('div');
-        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:70px;';
-        priceCol.innerHTML = `<div style="font-size:13.5px;font-weight:500;">${price}</div>
-          <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};margin-top:1px;">${chgStr}</div>`;
+        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:80px;';
+        priceCol.innerHTML = `<div style="font-size:13.5px;font-weight:500;letter-spacing:-0.3px;">${price}</div>
+          <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};margin-top:2px;">${chgStr}</div>`;
         row.appendChild(priceCol);
 
         rowsDiv.appendChild(row);
@@ -441,6 +440,34 @@
   // ── 11. TICKER / PRICES ───────────────────────────────────────────────────
   let tickerMap = null;
   async function loadTicker() {
+    // Try backend first
+    try {
+      const r = await fetch('/api/p2p/exchange-ticker').then((x) => x.json());
+      if (r && r.ticker && r.source !== 'fallback') {
+        tickerMap = {};
+        r.ticker.forEach((t) => { tickerMap[t.symbol] = t; });
+        return;
+      }
+    } catch (e) {}
+    // Backend fallback or error → fetch directly from Binance for live prices
+    try {
+      const syms = SPOT_PAIRS.map(s => s + 'USDT');
+      const url = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(syms));
+      const data = await fetch(url).then(x => x.json());
+      if (Array.isArray(data) && data.length) {
+        tickerMap = {};
+        data.forEach(item => {
+          tickerMap[item.symbol] = {
+            symbol: item.symbol,
+            lastPrice: Number(item.lastPrice),
+            change24h: Number(item.priceChangePercent),
+            quoteVolume: Number(item.quoteVolume)
+          };
+        });
+        return;
+      }
+    } catch (e) {}
+    // Last resort: use backend fallback data
     try {
       const r = await fetch('/api/p2p/exchange-ticker').then((x) => x.json());
       if (r && r.ticker) { tickerMap = {}; r.ticker.forEach((t) => { tickerMap[t.symbol] = t; }); }
