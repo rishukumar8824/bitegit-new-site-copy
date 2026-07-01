@@ -617,69 +617,70 @@
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
 
-    // Desktop: replace right column (w-[320px] shrink-0)
-    const rightCol = [...sec.querySelectorAll('div')].find(d => {
-      const cls = d.className || '';
-      return /shrink-0/.test(cls) && /w-\[320px\]/.test(cls);
-    });
-    if (rightCol) {
-      rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_mobile.jpg" alt="Security Shield" style="width:100%;height:auto;object-fit:contain;display:block;">';
-      rightCol.style.cssText = 'display:flex;flex-shrink:0;align-items:center;justify-content:center;width:420px;overflow:visible;transform:none;';
-    }
+    const isMobile = window.innerWidth <= 767;
 
-    // Mobile: hide old shield, inject new one above bullets
-    if (window.innerWidth <= 767 && !document.getElementById('cvx-mobile-shield')) {
-      // Step 1: find and HIDE the entire right column (shrink-0) container
-      [...sec.querySelectorAll('div')].forEach(d => {
-        if (/shrink-0/.test(d.className || '')) d.style.display = 'none';
-      });
-      // Also hide any remaining img in section
-      sec.querySelectorAll('img').forEach(img => { img.style.display = 'none'; });
+    if (!isMobile) {
+      // ── DESKTOP: rebuild as flex-row — left col (text+bullets) | right col (big shield) ──
+      // Find the inner flex container (direct child of sec or grandchild)
+      let flexRow = [...sec.querySelectorAll('div')].find(d => {
+        const cs = getComputedStyle(d);
+        return (cs.display === 'flex' || /\bflex\b/.test(d.className || '')) && d.children.length >= 2;
+      }) || sec;
 
-      // Step 2: NUCLEAR — kill every source of gap between text and shield
-      // Overflow fix
-      let sp = sec;
-      for (let i = 0; i < 6; i++) {
-        if (!sp || sp === document.body) break;
-        sp.style.overflow = 'visible';
-        sp = sp.parentElement;
+      // Make sure the flex row is proper row layout
+      flexRow.style.cssText = 'display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:40px;max-width:1200px;margin:0 auto;padding:60px 40px;';
+
+      // Left col = the child that contains h2
+      const leftCol = [...flexRow.children].find(c => c.contains(h2));
+      if (leftCol) leftCol.style.cssText = 'flex:1;min-width:0;';
+
+      // Right col = other child (has the shield img or is shrink-0)
+      const rightCol = [...flexRow.children].find(c => !c.contains(h2));
+      if (rightCol) {
+        rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_mobile.jpg" alt="Security Shield" style="width:420px;height:auto;display:block;object-fit:contain;">';
+        rightCol.style.cssText = 'flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:visible;';
       }
-      // Zero ALL padding/margin/gap on EVERY element inside section
+
+      // Make sec itself full-width
+      sec.style.cssText = 'background:inherit;overflow:visible;';
+
+    } else {
+      // ── MOBILE: hide right col, inject shield above bullets ──
+      // Hide every shrink-0 div (right col)
+      [...sec.querySelectorAll('div')].forEach(d => {
+        if (/shrink-0/.test(d.className || '')) d.setProperty ? d.style.setProperty('display','none','important') : (d.style.display = 'none');
+      });
+      sec.querySelectorAll('img').forEach(img => img.style.setProperty('display','none','important'));
+
+      // Fix section padding
+      sec.style.setProperty('padding-top','28px','important');
+      sec.style.setProperty('padding-bottom','28px','important');
+
+      // Zero ALL padding/margin/gap inside section
       sec.querySelectorAll('*').forEach(el => {
         const cs = window.getComputedStyle(el);
-        if (parseFloat(cs.paddingTop) > 8)    el.style.setProperty('padding-top',    '0',    'important');
-        if (parseFloat(cs.paddingBottom) > 8)  el.style.setProperty('padding-bottom', '0',    'important');
-        if (parseFloat(cs.marginTop) > 4)      el.style.setProperty('margin-top',     '0',    'important');
-        if (parseFloat(cs.marginBottom) > 4)   el.style.setProperty('margin-bottom',  '4px',  'important');
-        const g = parseFloat(cs.gap || cs.rowGap || 0);
-        if (g > 4) { el.style.setProperty('gap', '0', 'important'); el.style.setProperty('row-gap', '0', 'important'); }
-        el.style.setProperty('min-height', '0', 'important');
-        el.style.setProperty('height', 'auto', 'important');
+        if (parseFloat(cs.paddingTop) > 8)   el.style.setProperty('padding-top','0','important');
+        if (parseFloat(cs.paddingBottom) > 8) el.style.setProperty('padding-bottom','0','important');
+        if (parseFloat(cs.marginTop) > 4)     el.style.setProperty('margin-top','0','important');
+        if (parseFloat(cs.marginBottom) > 8)  el.style.setProperty('margin-bottom','4px','important');
+        const g = parseFloat(cs.rowGap || cs.gap || 0);
+        if (g > 4) { el.style.setProperty('row-gap','0','important'); el.style.setProperty('gap','0','important'); }
+        el.style.setProperty('min-height','0','important');
       });
-      // Section itself
-      sec.style.setProperty('padding-top', '28px', 'important');
-      sec.style.setProperty('padding-bottom', '28px', 'important');
 
-      // Step 3: find the <ul> that contains bullets
+      // Find ul and insert shield BEFORE it
       const ul = sec.querySelector('ul');
-
-      // Step 4: build centered shield wrapper
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:4px 0 0;';
-      const shieldImg = document.createElement('img');
-      shieldImg.id = 'cvx-mobile-shield';
-      shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
-      shieldImg.alt = 'Security Shield';
-      shieldImg.style.cssText = 'display:block;width:240px;height:auto;border-radius:6px;';
-      wrap.appendChild(shieldImg);
-
-      // Step 5: insert BEFORE the ul (above bullets)
-      if (ul) {
-        ul.parentNode.insertBefore(wrap, ul);
-      } else {
-        // fallback: insert after h2's parent div
-        const headDiv = h2.closest('div') || h2.parentElement;
-        headDiv.parentNode.insertBefore(wrap, headDiv.nextSibling);
+      if (!document.getElementById('cvx-mobile-shield')) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:12px 0 8px;';
+        const shieldImg = document.createElement('img');
+        shieldImg.id = 'cvx-mobile-shield';
+        shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
+        shieldImg.alt = 'Security Shield';
+        shieldImg.style.cssText = 'display:block !important;width:240px;height:auto;border-radius:6px;';
+        wrap.appendChild(shieldImg);
+        if (ul) ul.parentNode.insertBefore(wrap, ul);
+        else sec.appendChild(wrap);
       }
     }
 
