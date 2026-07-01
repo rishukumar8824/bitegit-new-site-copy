@@ -111,9 +111,9 @@
     document.head.appendChild(mobileOnlyStyle);
 
     // Tab bar
-    const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking'];
+    const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking >'];
     const tabBar = document.createElement('div');
-    tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:4px;';
+    tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:0;';
 
     const rowsDiv = document.createElement('div');
     rowsDiv.style.cssText = 'display:flex;flex-direction:column;';
@@ -131,17 +131,15 @@
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;color:inherit;cursor:pointer;';
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:64px;';
         row.innerHTML = `
-          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-            <img src="${imgSrc}" alt="${sym}" style="width:32px;height:32px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'">
-            <div>
-              <div style="font-size:14px;font-weight:600;">${sym}<span style="color:rgba(255,255,255,0.4);font-weight:400;">/USDT</span></div>
-            </div>
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+            <img src="${imgSrc}" alt="${sym}" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'">
+            <div style="font-size:15px;font-weight:600;letter-spacing:0.1px;">${sym}USDT</div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:14px;">${price}</div>
-            <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};">${chgStr}</div>
+            <div style="font-size:15px;font-weight:500;">${price}</div>
+            <div style="font-size:13px;color:${chg >= 0 ? UP : DOWN};margin-top:2px;">${chgStr}</div>
           </div>`;
         rowsDiv.appendChild(row);
       });
@@ -166,7 +164,7 @@
         renderRows();
       };
       tab.setAttribute('data-cvxtab', i);
-      tab.style.cssText = 'padding:10px 10px;font-size:14px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;color:rgba(255,255,255,0.4);font-weight:400;';
+      tab.style.cssText = 'padding:12px 10px;font-size:15px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;color:rgba(255,255,255,0.4);font-weight:500;';
       tab.addEventListener('click', setActive);
       tabBar.appendChild(tab);
       if (i === 0) setTimeout(setActive, 0);
