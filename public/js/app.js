@@ -1035,311 +1035,255 @@
 
   // ── 17. TRADE PAGE: LIVE PRICES + MOBILE UI ───────────────────────────────
   function fixTradePage() {
-    const onTrade = /trade\.html|\/trade\b/.test(location.pathname + location.search + location.href);
+    const onTrade = /trade\.html/.test(location.href);
     if (!onTrade) return;
 
     const SYMBOL = 'BTCUSDT';
     let livePrice = 0, livePct = 0, liveHigh = 0, liveLow = 0, liveVol = 0, liveQuoteVol = 0;
+    let activeTab = 'chart';
+    let tvLoaded = false;
 
     async function fetchTradeTicker() {
       try {
-        const d = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${SYMBOL}`).then(r => r.json());
-        livePrice = Number(d.lastPrice || 0);
-        livePct = Number(d.priceChangePercent || 0);
-        liveHigh = Number(d.highPrice || 0);
-        liveLow = Number(d.lowPrice || 0);
-        liveVol = Number(d.volume || 0);
-        liveQuoteVol = Number(d.quoteVolume || 0);
+        const d = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${SYMBOL}`).then(r=>r.json());
+        livePrice = Number(d.lastPrice||0); livePct = Number(d.priceChangePercent||0);
+        liveHigh = Number(d.highPrice||0); liveLow = Number(d.lowPrice||0);
+        liveVol = Number(d.volume||0); liveQuoteVol = Number(d.quoteVolume||0);
       } catch(e) {}
     }
-
     async function fetchRecentTrades() {
-      try {
-        return await fetch(`https://api.binance.com/api/v3/trades?symbol=${SYMBOL}&limit=30`).then(r => r.json());
-      } catch(e) { return []; }
+      try { return await fetch(`https://api.binance.com/api/v3/trades?symbol=${SYMBOL}&limit=30`).then(r=>r.json()); }
+      catch(e) { return []; }
     }
-
     function fmtP(p) {
-      const n = Number(p);
-      if (n >= 1e9) return (n/1e9).toFixed(2)+'B';
-      if (n >= 1e6) return (n/1e6).toFixed(2)+'M';
-      if (n >= 1e3) return (n/1e3).toFixed(2)+'K';
+      const n=Number(p);
+      if(n>=1e9) return (n/1e9).toFixed(2)+'B';
+      if(n>=1e6) return (n/1e6).toFixed(2)+'M';
+      if(n>=1e3) return (n/1e3).toFixed(2)+'K';
       return n.toFixed(2);
     }
     function fmtTime(ts) {
-      return new Date(ts).toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      return new Date(ts).toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
     }
-
-    // Update desktop static prices
-    function updateDesktopPrices() {
-      if (!livePrice) return;
-      const isUp = livePct >= 0;
-      const color = isUp ? '#2ebd85' : '#f6465d';
-      const priceStr = livePrice.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-      const pctStr = (isUp?'+':'') + livePct.toFixed(2) + '%';
-
-      // Main price display
-      const priceEl = document.querySelector('.ticker_price__pzh7e .up-color, .ticker_price__pzh7e .down-color');
-      if (priceEl) {
-        priceEl.textContent = priceStr;
-        priceEl.className = priceEl.className.replace(/up-color|down-color/, isUp ? 'up-color' : 'down-color');
+    function genOrderBook(midPrice, numRows=14) {
+      const tick = midPrice>10000?0.1:0.01;
+      const asks=[],bids=[];
+      let ra=0,rb=0;
+      for(let i=1;i<=numRows;i++){
+        const ap=(midPrice+i*tick).toFixed(2), bp=(midPrice-i*tick).toFixed(2);
+        const aa=(Math.random()*2+0.01).toFixed(6), ba=(Math.random()*2+0.01).toFixed(6);
+        ra+=Number(aa); rb+=Number(ba);
+        asks.push({p:ap,a:aa,t:ra.toFixed(6)}); bids.push({p:bp,a:ba,t:rb.toFixed(6)});
       }
-      // Stats row
-      const statDivs = document.querySelectorAll('.arrow_content__rBT_Q .arrow_content__rBT_Q > div');
-      if (statDivs.length >= 4) {
-        statDivs[0]?.querySelector('div')?.setAttribute && (statDivs[0].querySelector('div').textContent = (isUp?'+':'')+livePct.toFixed(2)+'%');
-        statDivs[1]?.querySelector('div')?.setAttribute && (statDivs[1].querySelector('div').textContent = liveHigh.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));
-        statDivs[2]?.querySelector('div')?.setAttribute && (statDivs[2].querySelector('div').textContent = liveLow.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));
-        statDivs[3]?.querySelector('div')?.setAttribute && (statDivs[3].querySelector('div').textContent = fmtP(liveVol));
-      }
-      // Update order book rows with realistic spread
-      updateOrderBook();
+      return {asks:asks.reverse(), bids};
     }
 
-    function genOrderBook(midPrice, numRows = 14) {
-      const tickSize = midPrice > 10000 ? 0.1 : midPrice > 100 ? 0.01 : 0.0001;
-      const asks = [], bids = [];
-      let runningAsk = 0, runningBid = 0;
-      for (let i = 1; i <= numRows; i++) {
-        const askP = midPrice + i * tickSize + (Math.random() * tickSize * 0.5);
-        const bidP = midPrice - i * tickSize - (Math.random() * tickSize * 0.5);
-        const askAmt = (Math.random() * 2 + 0.01).toFixed(6);
-        const bidAmt = (Math.random() * 2 + 0.01).toFixed(6);
-        runningAsk += Number(askAmt); runningBid += Number(bidAmt);
-        asks.push({ p: askP.toFixed(2), a: askAmt, t: runningAsk.toFixed(6) });
-        bids.push({ p: bidP.toFixed(2), a: bidAmt, t: runningBid.toFixed(6) });
-      }
-      return { asks: asks.reverse(), bids };
-    }
+    // ── BUILD MOBILE OVERLAY (always, hidden on desktop via CSS) ─────────────
+    if (!document.getElementById('cvx-mobile-trade')) {
+      // Inject CSS to hide overlay on desktop and original content on mobile
+      const style = document.createElement('style');
+      style.textContent = `
+        #cvx-mobile-trade { display:flex!important; }
+        @media(min-width:768px){ #cvx-mobile-trade { display:none!important; } }
+        @media(max-width:767px){ #__next { display:none!important; } body>*:not(#cvx-mobile-trade):not(script):not(style) { visibility:hidden!important; } }
+      `;
+      document.head.appendChild(style);
 
-    function updateOrderBook() {
-      if (!livePrice) return;
-      const { asks, bids } = genOrderBook(livePrice);
-      // Desktop ask rows
-      const askContainer = document.querySelector('.list_ask__LNXO5') || document.querySelector('.depthNormal_scrollWindowAsk__hke1X');
-      if (askContainer) {
-        const rows = askContainer.querySelectorAll('.list_main__zCJtr');
-        rows.forEach((row, i) => {
-          const cells = row.querySelectorAll('.fontScale_sub__PN1Es');
-          if (asks[i] && cells.length >= 2) {
-            cells[0].textContent = asks[i].p;
-            cells[1].textContent = asks[i].a;
-            if (cells[2]) cells[2].textContent = asks[i].t;
-          }
-        });
-      }
-    }
-
-    // ── MOBILE OVERLAY ────────────────────────────────────────────────────────
-    if (window.innerWidth > 767) {
-      // Desktop: just live prices
-      fetchTradeTicker().then(updateDesktopPrices);
-      setInterval(async () => { await fetchTradeTicker(); updateDesktopPrices(); }, 3000);
-      return;
-    }
-
-    // Build full mobile trade UI
-    if (document.getElementById('cvx-mobile-trade')) return;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'cvx-mobile-trade';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0b0e11;display:flex;flex-direction:column;overflow:hidden;font-family:system-ui,sans-serif;color:#fff;';
-
-    overlay.innerHTML = `
-      <!-- TOP HEADER -->
-      <div id="cvx-trade-hdr" style="flex-shrink:0;background:#0b0e11;border-bottom:1px solid rgba(255,255,255,0.08);">
-        <div style="display:flex;align-items:center;padding:8px 12px 6px;gap:8px;">
-          <a href="index.html" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:20px;line-height:1;margin-right:2px;">&#8592;</a>
-          <img src="https://assets.coincap.io/assets/icons/btc@2x.png" width="22" height="22" style="border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'"/>
-          <span style="font-size:15px;font-weight:700;">BTC/USDT</span>
-          <span style="background:rgba(240,185,11,0.15);color:#F0B90B;font-size:11px;padding:2px 6px;border-radius:3px;font-weight:600;">Perpetual</span>
-          <div style="flex:1;"></div>
-          <a href="index.html" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:13px;">Sign up</a>
-        </div>
-        <!-- Price row -->
-        <div style="padding:0 12px 6px;display:flex;align-items:baseline;gap:10px;">
-          <span id="cvx-trade-price" style="font-size:26px;font-weight:700;color:#2ebd85;letter-spacing:-0.5px;">--</span>
-          <span id="cvx-trade-pct" style="font-size:13px;color:#2ebd85;font-weight:500;">--</span>
-        </div>
-        <!-- Stats scroll row -->
-        <div style="display:flex;gap:0;overflow-x:auto;scrollbar-width:none;padding:0 12px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <div style="flex-shrink:0;margin-right:16px;"><div style="font-size:10px;color:rgba(255,255,255,0.4);">Index</div><div id="cvx-t-idx" style="font-size:11px;font-weight:500;">--</div></div>
-          <div style="flex-shrink:0;margin-right:16px;"><div style="font-size:10px;color:rgba(255,255,255,0.4);">Mark</div><div id="cvx-t-mark" style="font-size:11px;font-weight:500;">--</div></div>
-          <div style="flex-shrink:0;margin-right:16px;"><div style="font-size:10px;color:rgba(255,255,255,0.4);">Funding Rate</div><div style="font-size:11px;color:#2ebd85;">0.0074%</div></div>
-          <div style="flex-shrink:0;margin-right:16px;"><div style="font-size:10px;color:rgba(255,255,255,0.4);">24H High</div><div id="cvx-t-high" style="font-size:11px;">--</div></div>
-          <div style="flex-shrink:0;margin-right:16px;"><div style="font-size:10px;color:rgba(255,255,255,0.4);">24H Low</div><div id="cvx-t-low" style="font-size:11px;">--</div></div>
-          <div style="flex-shrink:0;margin-right:16px;"><div style="font-size:10px;color:rgba(255,255,255,0.4);">24H Vol (BTC)</div><div id="cvx-t-vol" style="font-size:11px;">--</div></div>
-          <div style="flex-shrink:0;"><div style="font-size:10px;color:rgba(255,255,255,0.4);">24H Vol (USDT)</div><div id="cvx-t-qvol" style="font-size:11px;">--</div></div>
-        </div>
-        <!-- Tabs -->
-        <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.08);">
-          <button data-cvx-tab="chart" style="flex:1;padding:10px 0;font-size:13px;font-weight:600;background:none;border:none;color:#fff;border-bottom:2px solid #F0B90B;cursor:pointer;">Chart</button>
-          <button data-cvx-tab="book" style="flex:1;padding:10px 0;font-size:13px;background:none;border:none;color:rgba(255,255,255,0.45);border-bottom:2px solid transparent;cursor:pointer;">Order Book</button>
-          <button data-cvx-tab="trades" style="flex:1;padding:10px 0;font-size:13px;background:none;border:none;color:rgba(255,255,255,0.45);border-bottom:2px solid transparent;cursor:pointer;">Trades</button>
-        </div>
-      </div>
-
-      <!-- CONTENT AREA -->
-      <div id="cvx-trade-content" style="flex:1;overflow:hidden;position:relative;">
-        <!-- CHART TAB -->
-        <div id="cvx-tab-chart" style="position:absolute;inset:0;">
-          <div id="cvx-tv-container" style="width:100%;height:100%;"></div>
-        </div>
-        <!-- ORDER BOOK TAB -->
-        <div id="cvx-tab-book" style="position:absolute;inset:0;display:none;overflow-y:auto;">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:11px;color:rgba(255,255,255,0.4);padding:8px 12px 4px;border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span>Price(USDT)</span><span style="text-align:center;">Size(BTC)</span><span style="text-align:right;">Total(BTC)</span>
+      const ov = document.createElement('div');
+      ov.id = 'cvx-mobile-trade';
+      ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:#0b0e11;flex-direction:column;overflow:hidden;font-family:-apple-system,system-ui,sans-serif;color:#fff;-webkit-font-smoothing:antialiased;';
+      ov.innerHTML = `
+        <div style="flex-shrink:0;background:#161a1e;">
+          <!-- Row 1: pair + nav -->
+          <div style="display:flex;align-items:center;padding:10px 12px 8px;gap:8px;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <img src="https://assets.coincap.io/assets/icons/btc@2x.png" width="24" height="24" style="border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'"/>
+            <div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:15px;font-weight:700;line-height:1.2;">BTC/USDT</span>
+                <span style="background:rgba(240,185,11,0.15);color:#F0B90B;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:600;">Perpetual</span>
+              </div>
+              <div id="cvx-t-idx-mark" style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:1px;">Index -- &nbsp;|&nbsp; Mark --</div>
+            </div>
+            <div style="flex:1;"></div>
+            <a href="register.html" style="background:#F0B90B;color:#000;font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;text-decoration:none;">Sign up</a>
           </div>
-          <!-- Asks (red, sell orders) -->
-          <div id="cvx-asks" style="display:flex;flex-direction:column;"></div>
-          <!-- Mid price -->
-          <div id="cvx-mid" style="padding:8px 12px;font-size:15px;font-weight:700;color:#2ebd85;border-top:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05);">--</div>
-          <!-- Bids (green, buy orders) -->
-          <div id="cvx-bids" style="display:flex;flex-direction:column;"></div>
-        </div>
-        <!-- TRADES TAB -->
-        <div id="cvx-tab-trades" style="position:absolute;inset:0;display:none;overflow-y:auto;">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:11px;color:rgba(255,255,255,0.4);padding:8px 12px 4px;border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span>Price(USDT)</span><span style="text-align:center;">Size(BTC)</span><span style="text-align:right;">Date</span>
+          <!-- Row 2: price + stats grid -->
+          <div style="display:flex;padding:8px 12px 8px;gap:0;align-items:flex-start;">
+            <div style="flex:1;">
+              <div id="cvx-trade-price" style="font-size:28px;font-weight:700;color:#2ebd85;letter-spacing:-0.5px;line-height:1.1;">--</div>
+              <div id="cvx-trade-pct" style="font-size:12px;color:#2ebd85;margin-top:2px;">--</div>
+              <div style="margin-top:6px;">
+                <div style="font-size:10px;color:rgba(255,255,255,0.4);">Funding Rate / Countdown</div>
+                <div style="font-size:11px;color:#2ebd85;margin-top:1px;">0.0075% / <span id="cvx-countdown">02:34:55</span></div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;font-size:10px;text-align:right;min-width:140px;">
+              <div style="color:rgba(255,255,255,0.4);">24H High</div><div style="color:rgba(255,255,255,0.4);">24H Low</div>
+              <div id="cvx-t-high" style="font-weight:500;">--</div><div id="cvx-t-low" style="font-weight:500;">--</div>
+              <div style="color:rgba(255,255,255,0.4);">24H Vol (BTC)</div><div style="color:rgba(255,255,255,0.4);">24H Vol (USDT)</div>
+              <div id="cvx-t-vol" style="font-weight:500;">--</div><div id="cvx-t-qvol" style="font-weight:500;">--</div>
+            </div>
           </div>
-          <div id="cvx-trade-rows"></div>
+          <!-- Tab bar -->
+          <div style="display:flex;border-top:1px solid rgba(255,255,255,0.06);">
+            <button data-cvx-tab="chart" style="flex:1;padding:9px 0;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid #F0B90B;color:#fff;cursor:pointer;">Chart</button>
+            <button data-cvx-tab="book" style="flex:1;padding:9px 0;font-size:13px;font-weight:400;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.45);cursor:pointer;">Order Book</button>
+            <button data-cvx-tab="trades" style="flex:1;padding:9px 0;font-size:13px;font-weight:400;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.45);cursor:pointer;">Trades</button>
+          </div>
         </div>
-      </div>
+        <!-- Content area -->
+        <div style="flex:1;position:relative;overflow:hidden;min-height:0;">
+          <div id="cvx-tab-chart" style="position:absolute;inset:0;"><div id="cvx-tv-container" style="width:100%;height:100%;"></div></div>
+          <div id="cvx-tab-book" style="position:absolute;inset:0;display:none;overflow-y:auto;background:#0b0e11;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:11px;color:rgba(255,255,255,0.4);padding:8px 12px 6px;position:sticky;top:0;background:#0b0e11;z-index:1;">
+              <span>Price(USDT)</span><span style="text-align:center;">Size(BTC)</span><span style="text-align:right;">Total(BTC)</span>
+            </div>
+            <div id="cvx-asks"></div>
+            <div id="cvx-mid" style="padding:7px 12px;font-size:15px;font-weight:700;color:#2ebd85;background:rgba(46,189,133,0.06);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">--</div>
+            <div id="cvx-bids"></div>
+          </div>
+          <div id="cvx-tab-trades" style="position:absolute;inset:0;display:none;overflow-y:auto;background:#0b0e11;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:11px;color:rgba(255,255,255,0.4);padding:8px 12px 6px;position:sticky;top:0;background:#0b0e11;z-index:1;">
+              <span>Price(USDT)</span><span style="text-align:center;">Size(BTC)</span><span style="text-align:right;">Date</span>
+            </div>
+            <div id="cvx-trade-rows"></div>
+          </div>
+        </div>
+        <!-- Bottom action buttons -->
+        <div style="flex-shrink:0;display:flex;gap:8px;padding:10px 12px 14px;background:#161a1e;border-top:1px solid rgba(255,255,255,0.08);">
+          <button onclick="location.href='register.html'" style="flex:1;height:46px;background:#2ebd85;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Long</button>
+          <button onclick="location.href='register.html'" style="flex:1;height:46px;background:#f6465d;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Short</button>
+        </div>
+      `;
+      document.body.appendChild(ov);
 
-      <!-- BOTTOM BUTTONS -->
-      <div style="flex-shrink:0;display:flex;gap:8px;padding:10px 12px;background:#0b0e11;border-top:1px solid rgba(255,255,255,0.08);">
-        <button onclick="alert('Please register to trade')" style="flex:1;height:44px;background:#2ebd85;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">Open Long</button>
-        <button onclick="alert('Please register to trade')" style="flex:1;height:44px;background:#f6465d;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">Open Short</button>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    // Tab switching
-    let activeTab = 'chart';
-    overlay.querySelectorAll('[data-cvx-tab]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        activeTab = btn.dataset.cvxTab;
-        overlay.querySelectorAll('[data-cvx-tab]').forEach(b => {
-          const active = b.dataset.cvxTab === activeTab;
-          b.style.color = active ? '#fff' : 'rgba(255,255,255,0.45)';
-          b.style.fontWeight = active ? '600' : '400';
-          b.style.borderBottom = active ? '2px solid #F0B90B' : '2px solid transparent';
-        });
-        document.getElementById('cvx-tab-chart').style.display = activeTab === 'chart' ? 'block' : 'none';
-        document.getElementById('cvx-tab-book').style.display = activeTab === 'book' ? 'block' : 'none';
-        document.getElementById('cvx-tab-trades').style.display = activeTab === 'trades' ? 'block' : 'none';
-        if (activeTab === 'book') renderBook();
-        if (activeTab === 'trades') loadTrades();
-      });
-    });
-
-    // TradingView chart
-    function loadTVChart() {
-      const host = document.getElementById('cvx-tv-container');
-      if (!host) return;
-      const cid = 'cvx-tv-' + Date.now();
-      host.innerHTML = `<div id="${cid}" style="width:100%;height:100%;"></div>`;
-      function tryCreate() {
-        if (window.TradingView && window.TradingView.widget) {
-          new window.TradingView.widget({
-            autosize: true, symbol: 'BINANCE:BTCUSDT', interval: '15',
-            timezone: 'Etc/UTC', theme: 'dark', style: '1', locale: 'en',
-            hide_top_toolbar: false, hide_side_toolbar: true,
-            allow_symbol_change: false, enable_publishing: false,
-            container_id: cid, studies: ['Volume@tv-basicstudies'],
-            loading_screen: { backgroundColor: '#0b0e11' }
+      // Tab switching
+      ov.querySelectorAll('[data-cvx-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeTab = btn.dataset.cvxTab;
+          ov.querySelectorAll('[data-cvx-tab]').forEach(b => {
+            const on = b.dataset.cvxTab === activeTab;
+            b.style.color = on ? '#fff' : 'rgba(255,255,255,0.45)';
+            b.style.fontWeight = on ? '600' : '400';
+            b.style.borderBottom = on ? '2px solid #F0B90B' : '2px solid transparent';
           });
-        } else {
-          // Load tv.js if not already loading
-          if (!document.querySelector('script[data-tv-widget]')) {
-            const s = document.createElement('script');
-            s.src = 'https://s3.tradingview.com/tv.js';
-            s.dataset.tvWidget = '1';
-            s.onload = tryCreate;
-            document.head.appendChild(s);
+          document.getElementById('cvx-tab-chart').style.display = activeTab==='chart' ? 'block' : 'none';
+          document.getElementById('cvx-tab-book').style.display  = activeTab==='book'  ? 'block' : 'none';
+          document.getElementById('cvx-tab-trades').style.display= activeTab==='trades'? 'block' : 'none';
+          if (activeTab==='book') renderBook();
+          if (activeTab==='trades') loadTrades();
+          if (activeTab==='chart' && !tvLoaded) { tvLoaded=true; loadTVChart(); }
+        });
+      });
+
+      // Countdown timer
+      let cd = 2*3600+34*60+55;
+      setInterval(()=>{
+        cd = (cd-1+86400)%86400;
+        const el = document.getElementById('cvx-countdown');
+        if(el) el.textContent = [Math.floor(cd/3600),Math.floor((cd%3600)/60),cd%60].map(n=>String(n).padStart(2,'0')).join(':');
+      }, 1000);
+
+      // Load TradingView chart
+      function loadTVChart() {
+        const host = document.getElementById('cvx-tv-container');
+        if (!host) return;
+        const cid = 'cvx-tv-' + Date.now();
+        host.innerHTML = `<div id="${cid}" style="width:100%;height:100%;"></div>`;
+        function tryCreate() {
+          if (window.TradingView && window.TradingView.widget) {
+            new window.TradingView.widget({
+              autosize:true, symbol:'BINANCE:BTCUSDT', interval:'15',
+              timezone:'Etc/UTC', theme:'dark', style:'1', locale:'en',
+              hide_top_toolbar:false, hide_side_toolbar:true,
+              allow_symbol_change:false, enable_publishing:false,
+              container_id:cid, studies:['Volume@tv-basicstudies'],
+              loading_screen:{backgroundColor:'#0b0e11'}
+            });
           } else {
-            setTimeout(tryCreate, 500);
+            const existing = document.querySelector('script[src*="tradingview.com/tv.js"]');
+            if (!existing) {
+              const s = document.createElement('script');
+              s.src = 'https://s3.tradingview.com/tv.js';
+              s.onload = tryCreate;
+              document.head.appendChild(s);
+            } else { setTimeout(tryCreate, 400); }
           }
         }
+        tryCreate();
       }
-      tryCreate();
-    }
-    loadTVChart();
+      tvLoaded = true;
+      loadTVChart();
 
-    // Order book renderer
-    function renderBook() {
-      if (!livePrice) return;
-      const { asks, bids } = genOrderBook(livePrice, 14);
-      const askDiv = document.getElementById('cvx-asks');
-      const bidDiv = document.getElementById('cvx-bids');
-      const midDiv = document.getElementById('cvx-mid');
-      if (!askDiv) return;
-      if (midDiv) midDiv.textContent = livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-      askDiv.innerHTML = asks.map(r => `
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:12px;padding:4px 12px;position:relative;">
-          <div style="position:absolute;right:0;top:0;bottom:0;background:rgba(246,70,93,0.1);width:${Math.min(90,Math.random()*60+10)}%;"></div>
-          <span style="color:#f6465d;font-weight:500;z-index:1;position:relative;">${r.p}</span>
+      // Order book
+      function renderBook() {
+        if (!livePrice) return;
+        const {asks,bids} = genOrderBook(livePrice,14);
+        const askDiv=document.getElementById('cvx-asks');
+        const bidDiv=document.getElementById('cvx-bids');
+        const midDiv=document.getElementById('cvx-mid');
+        if (!askDiv) return;
+        const mkRow = (r, color, bg) => `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:12px;padding:4px 12px;position:relative;">
+          <div style="position:absolute;right:0;top:0;bottom:0;background:${bg};width:${Math.min(85,Math.random()*60+15)}%;z-index:0;"></div>
+          <span style="color:${color};font-weight:500;z-index:1;position:relative;">${r.p}</span>
           <span style="text-align:center;z-index:1;position:relative;">${r.a}</span>
           <span style="text-align:right;color:rgba(255,255,255,0.5);z-index:1;position:relative;">${r.t}</span>
-        </div>`).join('');
-      bidDiv.innerHTML = bids.map(r => `
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:12px;padding:4px 12px;position:relative;">
-          <div style="position:absolute;right:0;top:0;bottom:0;background:rgba(46,189,133,0.1);width:${Math.min(90,Math.random()*60+10)}%;"></div>
-          <span style="color:#2ebd85;font-weight:500;z-index:1;position:relative;">${r.p}</span>
-          <span style="text-align:center;z-index:1;position:relative;">${r.a}</span>
-          <span style="text-align:right;color:rgba(255,255,255,0.5);z-index:1;position:relative;">${r.t}</span>
-        </div>`).join('');
-    }
-
-    // Recent trades renderer
-    async function loadTrades() {
-      const rowDiv = document.getElementById('cvx-trade-rows');
-      if (!rowDiv) return;
-      rowDiv.innerHTML = '<div style="padding:16px;color:rgba(255,255,255,0.3);font-size:12px;text-align:center;">Loading...</div>';
-      const trades = await fetchRecentTrades();
-      if (!trades.length) { rowDiv.innerHTML = ''; return; }
-      rowDiv.innerHTML = [...trades].reverse().map(t => {
-        const isBuy = t.isBuyerMaker === false;
-        const color = isBuy ? '#2ebd85' : '#f6465d';
-        return `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:12px;padding:5px 12px;">
-          <span style="color:${color};font-weight:500;">${Number(t.price).toFixed(2)}</span>
-          <span style="text-align:center;">${Number(t.qty).toFixed(4)}</span>
-          <span style="text-align:right;color:rgba(255,255,255,0.4);">${fmtTime(t.time)}</span>
         </div>`;
-      }).join('');
+        if (midDiv) midDiv.textContent = livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+        askDiv.innerHTML = asks.map(r=>mkRow(r,'#f6465d','rgba(246,70,93,0.08)')).join('');
+        bidDiv.innerHTML = bids.map(r=>mkRow(r,'#2ebd85','rgba(46,189,133,0.08)')).join('');
+      }
+
+      // Recent trades
+      async function loadTrades() {
+        const rowDiv=document.getElementById('cvx-trade-rows');
+        if (!rowDiv) return;
+        rowDiv.innerHTML='<div style="padding:16px;color:rgba(255,255,255,0.3);font-size:12px;text-align:center;">Loading...</div>';
+        const trades=await fetchRecentTrades();
+        rowDiv.innerHTML=[...trades].reverse().map(t=>{
+          const buy=t.isBuyerMaker===false;
+          return `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:12px;padding:5px 12px;">
+            <span style="color:${buy?'#2ebd85':'#f6465d'};font-weight:500;">${Number(t.price).toFixed(2)}</span>
+            <span style="text-align:center;">${Number(t.qty).toFixed(4)}</span>
+            <span style="text-align:right;color:rgba(255,255,255,0.4);">${fmtTime(t.time)}</span>
+          </div>`;
+        }).join('');
+      }
+
+      // Store render functions on window for price update access
+      window._cvxRenderBook = renderBook;
     }
 
-    // Update mobile price display
+    // Update prices in overlay
     function updateMobilePrices() {
       if (!livePrice) return;
-      const isUp = livePct >= 0;
-      const color = isUp ? '#2ebd85' : '#f6465d';
-      const priceStr = livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-      const el = document.getElementById('cvx-trade-price');
-      const pctEl = document.getElementById('cvx-trade-pct');
-      if (el) { el.textContent = priceStr; el.style.color = color; }
-      if (pctEl) { pctEl.textContent = (isUp?'+':'')+livePct.toFixed(2)+'%'; pctEl.style.color = color; }
-      const idx = document.getElementById('cvx-t-idx');
-      const mark = document.getElementById('cvx-t-mark');
-      const high = document.getElementById('cvx-t-high');
-      const low = document.getElementById('cvx-t-low');
-      const vol = document.getElementById('cvx-t-vol');
-      const qvol = document.getElementById('cvx-t-qvol');
-      const approx = livePrice + (Math.random()-0.5)*2;
-      if (idx) idx.textContent = approx.toFixed(1);
-      if (mark) mark.textContent = (approx+Math.random()*0.5).toFixed(1);
-      if (high) high.textContent = liveHigh.toFixed(1);
-      if (low) low.textContent = liveLow.toFixed(1);
-      if (vol) vol.textContent = fmtP(liveVol);
-      if (qvol) qvol.textContent = fmtP(liveQuoteVol);
-      const mid = document.getElementById('cvx-mid');
-      if (mid) mid.textContent = priceStr;
-      if (activeTab === 'book') renderBook();
+      const isUp=livePct>=0, color=isUp?'#2ebd85':'#f6465d';
+      const priceStr=livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      const prEl=document.getElementById('cvx-trade-price');
+      const ptEl=document.getElementById('cvx-trade-pct');
+      if(prEl){prEl.textContent=priceStr;prEl.style.color=color;}
+      if(ptEl){ptEl.textContent=(isUp?'+':'')+livePct.toFixed(2)+'%';ptEl.style.color=color;}
+      const imEl=document.getElementById('cvx-t-idx-mark');
+      if(imEl) imEl.textContent=`Index ${livePrice.toFixed(1)} | Mark ${(livePrice+0.3).toFixed(1)}`;
+      const setTxt=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+      setTxt('cvx-t-high',liveHigh.toFixed(1)); setTxt('cvx-t-low',liveLow.toFixed(1));
+      setTxt('cvx-t-vol',fmtP(liveVol)); setTxt('cvx-t-qvol',fmtP(liveQuoteVol));
+      setTxt('cvx-mid',priceStr);
+      if(activeTab==='book' && window._cvxRenderBook) window._cvxRenderBook();
+      // Also update desktop price elements
+      updateDesktopPrices(isUp, color, priceStr);
+    }
+
+    function updateDesktopPrices(isUp, color, priceStr) {
+      const priceEl=document.querySelector('.ticker_price__pzh7e .up-color,.ticker_price__pzh7e .down-color');
+      if(priceEl){
+        priceEl.textContent=priceStr||livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+        priceEl.className=priceEl.className.replace(/up-color|down-color/,isUp!==false?(livePct>=0?'up-color':'down-color'):'down-color');
+      }
     }
 
     fetchTradeTicker().then(updateMobilePrices);
-    setInterval(async () => { await fetchTradeTicker(); updateMobilePrices(); }, 3000);
+    setInterval(async()=>{ await fetchTradeTicker(); updateMobilePrices(); }, 3000);
   }
 
   // ── 17. HIDE BROKEN ELEMENTS ──────────────────────────────────────────────
