@@ -25,9 +25,35 @@
     });
   }
 
-  // Inject one-time CSS for mobile header cleanup (hide Login, separators, download/globe on mobile)
+  // Coin image map for mobile market rows
+  const COIN_IMG = {
+    BTC: '/cdn/1/currency/33ebcaab-99c9-47e0-a916-c08bada02cac-1774002719227.png',
+    BNB: '/cdn/1/currency/11628b76-313d-44a6-a87c-f2cc9e6ac75b-1774002833218.png',
+    SOL: '/cdn/1/currency/0f9dbb43-7c86-456a-bcaa-64d5bb61a01e-1774002879582.png',
+    ETH: '/cdn/1/currency/65b8e63b-5356-4d33-9cb8-aa19585ffaf0-1774002774151.png',
+    DOT: '/cdn/1/currency/bb4a7896-ae19-4984-93a2-faa929232511-1774003142263.png',
+    HBAR: '/cdn/1/currency/3772da34-bdb1-4957-b64d-aa82d45986f4-1774003084075.png',
+    LINK: '/cdn/1/currency/4ce211ab-484f-4c97-94a8-6f06b276350f-1774003060941.png',
+    XLM: '/cdn/1/currency/711e7039-09f0-455a-bfb2-e77092318b05-1774003037416.png',
+  };
+  const SPOT_PAIRS = ['BTC', 'ETH', 'BNB', 'SOL', 'LINK', 'DOT', 'XLM', 'HBAR'];
+
+  // Inject one-time CSS for mobile header cleanup and desktop pairs section hide on mobile
   function injectMobileCSS() {
     if (document.getElementById('cvx-mobile-css')) return;
+
+    // Mark the desktop Popular Pairs flex container so we can target it in CSS
+    document.querySelectorAll('div').forEach(div => {
+      const cls = div.className || '';
+      if (cls.includes('justify-between') && cls.includes('max-w-[1200px]') && cls.includes('mx-auto') && cls.includes('gap-5') && !div.id) {
+        div.id = 'cvx-desktop-pairs';
+      }
+    });
+
+    // Mark desktop left nav links (shown on desktop, should be hidden on mobile)
+    const leftMain = document.querySelector('[data-nav-left-main="true"]');
+    if (leftMain) leftMain.id = 'cvx-nav-left-main';
+
     const s = document.createElement('style');
     s.id = 'cvx-mobile-css';
     s.textContent = `
@@ -35,9 +61,96 @@
         [data-nav-right-box] [role="separator"] { display: none !important; }
         header a[href="login.html"] { display: none !important; }
         [data-nav-right-box] .relative.group { display: none !important; }
+        #cvx-desktop-pairs { display: none !important; }
+        #cvx-nav-left-main > a:not([href="index.html"]) { display: none !important; }
       }
     `;
     document.head.appendChild(s);
+  }
+
+  // Build mobile-only market section (Spot/Futures/TradFi tabs + coin rows from ticker)
+  function buildMobileMarket() {
+    if (document.getElementById('cvx-mobile-market')) return;
+    if (!tickerMap) return;
+
+    // Find insertion point: after the desktop pairs container or its parent
+    const desktopPairs = document.getElementById('cvx-desktop-pairs');
+    if (!desktopPairs) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'cvx-mobile-market';
+    wrapper.style.cssText = 'display:block;padding:0 0 8px;';
+
+    // CSS to hide this on desktop
+    const mobileOnlyStyle = document.createElement('style');
+    mobileOnlyStyle.textContent = '@media (min-width: 768px) { #cvx-mobile-market { display: none !important; } }';
+    document.head.appendChild(mobileOnlyStyle);
+
+    // Tab bar
+    const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking'];
+    const tabBar = document.createElement('div');
+    tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:4px;';
+
+    const rowsDiv = document.createElement('div');
+    rowsDiv.style.cssText = 'display:flex;flex-direction:column;';
+
+    let activeTab = 0;
+    function renderRows() {
+      rowsDiv.innerHTML = '';
+      const pairs = SPOT_PAIRS;
+      pairs.forEach(sym => {
+        const t = tickerMap ? tickerMap[sym + 'USDT'] : null;
+        const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : '—';
+        const chg = t ? Number(t.change24h) : 0;
+        const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : '—';
+        const imgSrc = COIN_IMG[sym] || '';
+
+        const row = document.createElement('a');
+        row.href = 'trade.html';
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;color:inherit;cursor:pointer;';
+        row.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+            <img src="${imgSrc}" alt="${sym}" style="width:32px;height:32px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'">
+            <div>
+              <div style="font-size:14px;font-weight:600;">${sym}<span style="color:rgba(255,255,255,0.4);font-weight:400;">/USDT</span></div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:14px;">$${price}</div>
+            <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};">${chgStr}</div>
+          </div>`;
+        rowsDiv.appendChild(row);
+      });
+      // More link
+      const more = document.createElement('a');
+      more.href = 'market.html';
+      more.textContent = 'More >';
+      more.style.cssText = 'display:block;text-align:center;padding:12px;color:rgba(255,255,255,0.5);font-size:14px;text-decoration:none;';
+      rowsDiv.appendChild(more);
+    }
+
+    TABS.forEach((label, i) => {
+      const tab = document.createElement('div');
+      tab.textContent = label;
+      const setActive = () => {
+        activeTab = i;
+        tabBar.querySelectorAll('[data-cvxtab]').forEach((t, j) => {
+          t.style.color = j === i ? '#fff' : 'rgba(255,255,255,0.4)';
+          t.style.fontWeight = j === i ? '700' : '400';
+          t.style.borderBottom = j === i ? '2px solid #F0B90B' : '2px solid transparent';
+        });
+        renderRows();
+      };
+      tab.setAttribute('data-cvxtab', i);
+      tab.style.cssText = 'padding:10px 10px;font-size:14px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;color:rgba(255,255,255,0.4);font-weight:400;';
+      tab.addEventListener('click', setActive);
+      tabBar.appendChild(tab);
+      if (i === 0) setTimeout(setActive, 0);
+    });
+
+    wrapper.appendChild(tabBar);
+    wrapper.appendChild(rowsDiv);
+    desktopPairs.parentElement.insertBefore(wrapper, desktopPairs);
   }
 
   // Create the gem SVG element (two paths only, no text bleed)
@@ -310,7 +423,8 @@
   function start() {
     injectMobileCSS();
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
-    wireTopNav(); wireWordmarks(); loadTicker().then(() => { applyPrices(); });
+    wireTopNav(); wireWordmarks();
+    loadTicker().then(() => { applyPrices(); buildMobileMarket(); });
     wireTrade(); revealImages();
     setInterval(() => { fixHeaderLogo(); addHamburger(); wireTopNav(); wireWordmarks(); wireTrade(); revealImages(); wirePairsTabs(); }, 3000);
     setInterval(async () => { await loadTicker(); applyPrices(); }, 5000);
