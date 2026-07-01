@@ -679,25 +679,23 @@
         shieldImg.style.cssText = 'display:block;width:240px;height:auto;border-radius:6px;';
         wrap.appendChild(shieldImg);
 
-        // Find subtitle p — insert shield RIGHT AFTER it (not before ul)
+        // Strategy: insert shield after subtitle p, then MOVE ul directly after shield
         const subtitleP = h2.parentElement ? h2.parentElement.querySelector('p') : sec.querySelector('p');
+        const ul = sec.querySelector('ul');
+
         if (subtitleP && subtitleP.parentNode) {
-          // Zero subtitle's own margin-bottom
           subtitleP.style.setProperty('margin-bottom','0','important');
-          // Insert shield right after subtitle
           subtitleP.parentNode.insertBefore(wrap, subtitleP.nextSibling);
-          // Hide any spacer divs between shield wrap and the ul
-          const ul = sec.querySelector('ul');
-          let node = wrap.nextSibling;
-          while (node && node !== ul) {
-            if (node.nodeType === 1 && node !== wrap)
-              node.style.setProperty('display','none','important');
-            node = node.nextSibling;
-          }
+        } else if (ul) {
+          ul.parentNode.insertBefore(wrap, ul);
         } else {
-          const ul = sec.querySelector('ul');
-          if (ul) ul.parentNode.insertBefore(wrap, ul);
-          else sec.appendChild(wrap);
+          sec.appendChild(wrap);
+        }
+
+        // Move ul to be DIRECTLY after wrap (close the gap below shield)
+        if (ul) {
+          ul.style.setProperty('margin-top','8px','important');
+          wrap.parentNode.insertBefore(ul, wrap.nextSibling);
         }
       }
     }
