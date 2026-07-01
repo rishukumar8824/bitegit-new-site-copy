@@ -134,10 +134,10 @@
       st.textContent = label;
       const active = 'padding:4px 14px;border-radius:20px;font-size:13px;cursor:pointer;background:rgba(0,0,0,0.45);color:#fff;font-weight:600;border:1px solid rgba(255,255,255,0.08);';
       const inactive = 'padding:4px 14px;border-radius:20px;font-size:13px;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);font-weight:400;border:1px solid transparent;';
-      st.style.cssText = i === 0 ? active : inactive;
+      st.style.cssText = i === 1 ? active : inactive;
       st.addEventListener('click', () => {
         subTabBar.querySelectorAll('div').forEach((el, j) => {
-          el.style.cssText = j === i ? active : inactive;
+          el.style.cssText = (j === i) ? active : inactive;
         });
       });
       subTabBar.appendChild(st);
@@ -186,7 +186,7 @@
         const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : '—';
         const chg = t ? Number(t.change24h) : 0;
         const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : '—';
-        const vol = fmtVol(t ? (t.quoteVolume || t.volume || 0) : 0);
+        const vol = fmtVol(t ? (t.quoteVolume || 0) : 0);
 
         const row = document.createElement('a');
         row.href = 'trade.html';

@@ -1005,6 +1005,11 @@ function createStableSymbolDrift(symbol, minuteBucket = Math.floor(Date.now() / 
   return wave * 0.9 + micro;
 }
 
+const FALLBACK_QUOTE_VOLUMES = {
+  BTCUSDT: 1_650_000_000, ETHUSDT: 980_000_000, BNBUSDT: 210_000_000,
+  SOLUSDT: 340_000_000,   XRPUSDT: 145_000_000, ADAUSDT: 72_000_000,
+};
+
 function createFallbackTickerSnapshot(symbols) {
   const safeSymbols = Array.isArray(symbols) && symbols.length ? symbols : DEFAULT_TICKER_SYMBOLS;
   const nowBucket = Math.floor(Date.now() / 60000);
@@ -1018,7 +1023,8 @@ function createFallbackTickerSnapshot(symbols) {
     return {
       symbol,
       lastPrice,
-      change24h: Number(driftPercent.toFixed(2))
+      change24h: Number(driftPercent.toFixed(2)),
+      quoteVolume: FALLBACK_QUOTE_VOLUMES[symbol] || 50_000_000
     };
   });
 }
@@ -2767,7 +2773,8 @@ app.get('/api/p2p/exchange-ticker', async (req, res) => {
     const ticker = data.map((item) => ({
       symbol: item.symbol,
       lastPrice: Number(item.lastPrice),
-      change24h: Number(item.priceChangePercent)
+      change24h: Number(item.priceChangePercent),
+      quoteVolume: Number(item.quoteVolume)
     }));
 
     return res.json({
@@ -2807,7 +2814,8 @@ app.get('/api/v1/market/tickers', async (req, res) => {
     const ticker = data.map((item) => ({
       symbol: item.symbol,
       lastPrice: Number(item.lastPrice),
-      change24h: Number(item.priceChangePercent)
+      change24h: Number(item.priceChangePercent),
+      quoteVolume: Number(item.quoteVolume)
     }));
 
     return res.json({
