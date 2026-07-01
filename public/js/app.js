@@ -8,17 +8,17 @@
 
   const NAV = [
     { label: 'Buy Crypto', href: 'market.html', arrow: true },
-    { label: 'Markets', href: 'market.html', arrow: false },
-    { label: 'Trade', href: 'trade.html', arrow: true },
-    { label: 'Futures', href: 'futures_overview.html', arrow: true },
-    { label: 'TradFi', href: 'tradfi.html', arrow: true },
-    { label: 'Finance', href: 'finance.html', arrow: true },
-    { label: 'Activity', href: '#', arrow: true },
-    { label: 'Glory of Legends', href: '#', arrow: false },
-    { label: 'English / USD', href: '#', arrow: false },
-    { label: 'APP Download', href: '#', arrow: false },
+    { label: 'Markets',    href: 'market.html', arrow: false },
+    { label: 'P2P',        href: 'p2p.html',    arrow: false },
+    { label: 'Trade',      href: 'trade.html',  arrow: true },
+    { label: 'Futures',    href: 'futures_overview.html', arrow: true },
+    { label: 'TradFi',     href: 'tradfi.html', arrow: true },
+    { label: 'Finance',    href: 'finance.html',arrow: true },
+    { label: 'Activity',   href: '#',           arrow: true },
+    { label: 'Glory of Legends', href: '#',     arrow: false },
+    { label: 'English / USD',    href: '#',     arrow: false },
   ];
-  const NAV_MAP = { 'Markets': 'market.html', 'Trade': 'trade.html', 'Futures': 'futures_overview.html', 'TradFi': 'tradfi.html', 'Finance': 'finance.html', 'Buy Crypto': 'market.html' };
+  const NAV_MAP = { 'Markets': 'market.html', 'Trade': 'trade.html', 'Futures': 'futures_overview.html', 'TradFi': 'tradfi.html', 'Finance': 'finance.html', 'Buy Crypto': 'market.html', 'P2P': 'p2p.html' };
 
   function wireTopNav() {
     document.querySelectorAll('header a, nav a').forEach((a) => {
@@ -459,8 +459,8 @@
 
     const btn = document.createElement('button');
     btn.setAttribute('aria-label', 'Menu');
-    btn.innerHTML = '<svg width="18" height="14" viewBox="0 0 18 14" fill="currentColor"><rect width="18" height="2" rx="1"/><rect y="6" width="18" height="2" rx="1"/><rect y="12" width="18" height="2" rx="1"/></svg>';
-    btn.style.cssText = 'background:none;border:none;color:currentColor;cursor:pointer;padding:4px 8px;display:flex;align-items:center;margin-left:4px;';
+    btn.innerHTML = '<svg width="20" height="16" viewBox="0 0 20 16" fill="currentColor"><rect width="20" height="2.5" rx="1.2"/><rect y="6.75" width="20" height="2.5" rx="1.2"/><rect y="13.5" width="20" height="2.5" rx="1.2"/></svg>';
+    btn.style.cssText = 'background:none;border:none;color:#fff;cursor:pointer;padding:6px 8px;display:flex;align-items:center;margin-left:4px;';
 
     btn.addEventListener('click', () => {
       const existing = document.getElementById('cvx-mobile-nav');
@@ -468,41 +468,61 @@
 
       const panel = document.createElement('div');
       panel.id = 'cvx-mobile-nav';
-      panel.style.cssText = 'position:fixed;inset:0;z-index:10000;background:#161A1E;display:flex;flex-direction:column;overflow-y:auto;font-family:inherit;';
+      panel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#161A1E;display:flex;flex-direction:column;font-family:-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;';
 
+      // ── Top bar: logo + X ──
       const topBar = document.createElement('div');
-      topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0;';
+      topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 16px;flex-shrink:0;';
       const logoEl = makeGemSVG('22', '26');
       logoEl.style.color = 'white';
       const closeBtn = document.createElement('button');
-      closeBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-      closeBtn.style.cssText = 'background:none;border:none;color:#fff;cursor:pointer;padding:4px;display:flex;align-items:center;';
+      closeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <line x1="5" y1="5" x2="17" y2="17"/><line x1="17" y1="5" x2="5" y2="17"/>
+      </svg>`;
+      closeBtn.style.cssText = 'background:none;border:none;color:rgba(255,255,255,0.7);cursor:pointer;padding:2px;display:flex;align-items:center;';
       closeBtn.addEventListener('click', () => panel.remove());
-      topBar.appendChild(logoEl); topBar.appendChild(closeBtn);
+      topBar.appendChild(logoEl);
+      topBar.appendChild(closeBtn);
       panel.appendChild(topBar);
 
+      // ── Auth buttons ──
       const authRow = document.createElement('div');
-      authRow.style.cssText = 'display:flex;gap:10px;padding:16px;flex-shrink:0;';
+      authRow.style.cssText = 'display:flex;gap:10px;padding:8px 16px 16px;flex-shrink:0;';
       const loginBtn = document.createElement('a');
       loginBtn.href = 'login.html'; loginBtn.textContent = 'Log in';
-      loginBtn.style.cssText = 'flex:1;text-align:center;padding:10px;border-radius:6px;background:#2b2f36;color:#fff;text-decoration:none;font-size:15px;font-weight:600;';
+      loginBtn.style.cssText = 'flex:1;text-align:center;padding:11px 0;border-radius:6px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;letter-spacing:0.01em;';
       const signupBtn = document.createElement('a');
       signupBtn.href = 'register.html'; signupBtn.textContent = 'Sign up';
-      signupBtn.style.cssText = 'flex:1;text-align:center;padding:10px;border-radius:6px;background:#F0B90B;color:#000;text-decoration:none;font-size:15px;font-weight:600;';
-      authRow.appendChild(loginBtn); authRow.appendChild(signupBtn);
+      signupBtn.style.cssText = 'flex:1;text-align:center;padding:11px 0;border-radius:6px;background:#F0B90B;color:#181a20;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:0.01em;';
+      authRow.appendChild(loginBtn);
+      authRow.appendChild(signupBtn);
       panel.appendChild(authRow);
 
-      const navList = document.createElement('div');
-      navList.style.cssText = 'flex:1;padding:0 0 24px;';
+      // ── Nav list (scrollable) ──
+      const navScroll = document.createElement('div');
+      navScroll.style.cssText = 'flex:1;overflow-y:auto;';
+      const CHEVRON = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35;flex-shrink:0;"><polyline points="6,4 10,8 6,12"/></svg>`;
       NAV.forEach(({ label, href, arrow }) => {
         const row = document.createElement('a');
         row.href = href;
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:16px 20px;color:#fff;text-decoration:none;font-size:16px;font-weight:500;border-bottom:1px solid rgba(255,255,255,0.07);';
-        row.innerHTML = label + (arrow ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.4"><path d="M6 12l4-4-4-4"/></svg>' : '');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:17px 20px;color:#eaecef;text-decoration:none;font-size:16px;font-weight:500;border-bottom:1px solid rgba(255,255,255,0.07);';
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = label;
+        row.appendChild(labelSpan);
+        if (arrow) row.insertAdjacentHTML('beforeend', CHEVRON);
         row.addEventListener('click', () => panel.remove());
-        navList.appendChild(row);
+        navScroll.appendChild(row);
       });
-      panel.appendChild(navList);
+      panel.appendChild(navScroll);
+
+      // ── APP Download bottom button ──
+      const appBtn = document.createElement('a');
+      appBtn.href = '#';
+      appBtn.textContent = 'APP Download';
+      appBtn.style.cssText = 'display:block;margin:16px;padding:14px 0;text-align:center;border-radius:8px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;flex-shrink:0;';
+      appBtn.addEventListener('click', () => panel.remove());
+      panel.appendChild(appBtn);
+
       document.body.appendChild(panel);
     });
 
