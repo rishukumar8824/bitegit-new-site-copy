@@ -636,21 +636,33 @@
       // Also hide any remaining img in section
       sec.querySelectorAll('img').forEach(img => { img.style.display = 'none'; });
 
-      // Step 2: make section + ancestors overflow:visible, remove extra padding
+      // Step 2: fix overflow + kill ALL extra padding/gap causing the huge empty space
       let sp = sec;
       for (let i = 0; i < 6; i++) {
         if (!sp || sp === document.body) break;
         sp.style.overflow = 'visible';
         sp = sp.parentElement;
       }
-      // Remove extra padding/margin from section children that cause the gap
-      [...sec.querySelectorAll('div')].forEach(d => {
-        const cs = getComputedStyle(d);
-        if (parseInt(cs.paddingTop) > 40 || parseInt(cs.marginTop) > 40) {
-          d.style.paddingTop = '0';
-          d.style.marginTop = '0';
-        }
+      // Kill section's own padding
+      sec.style.paddingTop = '32px';
+      sec.style.paddingBottom = '32px';
+      // Find the flex row wrapper (contains both columns) and zero its gap/minHeight
+      [...sec.children].forEach(child => {
+        child.style.minHeight = '0';
+        child.style.height = 'auto';
+        child.style.paddingTop = '0';
+        child.style.paddingBottom = '0';
+        child.style.gap = '0';
       });
+      // Zero out left column (h2's parent chain) padding too
+      let lp = h2.parentElement;
+      for (let i = 0; i < 4; i++) {
+        if (!lp || lp === sec) break;
+        lp.style.paddingTop = '0';
+        lp.style.marginTop = '0';
+        lp.style.gap = '0';
+        lp = lp.parentElement;
+      }
 
       // Step 3: find the <ul> that contains bullets
       const ul = sec.querySelector('ul');
