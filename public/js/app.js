@@ -617,14 +617,42 @@
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
 
+    // Desktop: replace right column (w-[320px] shrink-0)
     const rightCol = [...sec.querySelectorAll('div')].find(d => {
       const cls = d.className || '';
       return /shrink-0/.test(cls) && /w-\[320px\]/.test(cls);
     });
-
     if (rightCol) {
       rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_v2.webp" alt="Security Shield" style="width:100%;height:auto;object-fit:contain;display:block;">';
       rightCol.style.cssText = 'display:flex;flex-shrink:0;align-items:center;justify-content:center;width:420px;overflow:visible;transform:none;';
+    }
+
+    // Mobile: inject centered shield before first bullet item
+    if (window.innerWidth <= 767 && !document.getElementById('cvx-mobile-shield')) {
+      // Find any existing shield img and hide/remove clipped one
+      sec.querySelectorAll('img').forEach(img => {
+        const cs = getComputedStyle(img.parentElement || img);
+        if (cs.overflow === 'hidden') img.parentElement.style.overflow = 'visible';
+        img.style.cssText = 'display:none;';
+      });
+      // Find first bullet (Transaction Security li or div with bullet)
+      const firstBullet = [...sec.querySelectorAll('li, [class*="bullet"], [class*="dot"]')].find(el =>
+        el.textContent.includes('Transaction Security')
+      ) || sec.querySelector('ul') || null;
+
+      const shieldImg = document.createElement('img');
+      shieldImg.id = 'cvx-mobile-shield';
+      shieldImg.src = '/cdn/imgs/index-web/home/shield_v2.webp';
+      shieldImg.alt = 'Security Shield';
+      shieldImg.style.cssText = 'display:block;width:220px;height:auto;margin:24px auto 28px;object-fit:contain;';
+
+      if (firstBullet) {
+        const bulletParent = firstBullet.closest('ul') || firstBullet.parentElement;
+        bulletParent.parentElement.insertBefore(shieldImg, bulletParent);
+      } else {
+        // Fallback: insert after heading block
+        h2.parentElement.insertBefore(shieldImg, h2.nextSibling);
+      }
     }
 
     const marker = document.createElement('span');
