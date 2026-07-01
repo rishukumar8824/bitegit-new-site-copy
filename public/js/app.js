@@ -101,11 +101,24 @@
     });
   }
 
+  // Bitbase's React app transitions images from opacity-0 → opacity-100 on load.
+  // Static HTML has no React, so images stay invisible. Fix: reveal them ourselves.
+  function revealImages() {
+    document.querySelectorAll('img.opacity-0').forEach((img) => {
+      const show = () => {
+        img.classList.remove('opacity-0');
+        img.classList.add('opacity-100');
+      };
+      if (img.complete) { show(); }
+      else { img.addEventListener('load', show); img.addEventListener('error', show); }
+    });
+  }
+
   async function tick() { if (!tickerMap) await loadTicker(); applyPrices(); }
   function start() {
     wireTopNav(); wireWordmarks(); loadTicker().then(() => { applyPrices(); });
-    wireTrade();
-    setInterval(() => { wireTopNav(); wireWordmarks(); wireTrade(); }, 3000);
+    wireTrade(); revealImages();
+    setInterval(() => { wireTopNav(); wireWordmarks(); wireTrade(); revealImages(); }, 3000);
     setInterval(async () => { await loadTicker(); applyPrices(); }, 5000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
