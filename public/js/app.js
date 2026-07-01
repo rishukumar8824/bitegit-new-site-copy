@@ -591,7 +591,7 @@
 
     sections.slice(1).forEach(sec => {
       sec.setAttribute('data-cvx-footer-section', '1');
-      const titleEl = sec.querySelector('p, h3, h4, div.font-semibold, div.font-medium, div.text-sm, div:first-child');
+      const titleEl = sec.querySelector('h2, h3, h4, p, div.font-semibold, div.font-medium');
       if (!titleEl) return;
       titleEl.setAttribute('data-cvx-footer-title', '1');
       titleEl.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4"/></svg>');
@@ -637,42 +637,63 @@
     });
   }
 
-  // ── 15. SECURITY SECTION — simple static fix, no shield injection ────────
+  // ── 15. SECURITY SECTION ─────────────────────────────────────────────────
   function fixSecuritySection() {
     if (document.getElementById('cvx-security-done')) return;
+    if (window.innerWidth > 767) {
+      const marker = document.createElement('span');
+      marker.id = 'cvx-security-done';
+      marker.style.display = 'none';
+      document.body.appendChild(marker);
+      return; // desktop: leave as-is
+    }
     const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
     if (!h2) return;
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
 
-    // Hide ALL non-text elements: shrink-0 cols, md:hidden image containers, all imgs/spans with images
-    sec.querySelectorAll('div, span').forEach(el => {
-      const cls = el.className || '';
-      if (/shrink-0/.test(cls) || /md:hidden/.test(cls)) {
-        el.style.setProperty('display','none','important');
+    // 1) Hide shrink-0 col (desktop right col) + md:hidden image wrapper (has aspect-square child causing 200px gap)
+    [...sec.querySelectorAll('div')].forEach(d => {
+      const cls = d.className || '';
+      if (/\bshrink-0\b/.test(cls) || /\bmd:hidden\b/.test(cls)) {
+        d.style.setProperty('display','none','important');
       }
     });
-    sec.querySelectorAll('img, canvas, video').forEach(el => el.style.setProperty('display','none','important'));
-
-    // Kill aspect-ratio — this is the root cause of the gap (aspect-square div = 200×200px)
-    sec.querySelectorAll('*').forEach(el => {
-      el.style.setProperty('aspect-ratio','auto','important');
-      el.style.setProperty('height','auto','important');
-      el.style.setProperty('min-height','0','important');
+    sec.querySelectorAll('img').forEach(img => {
+      if (!img.id || img.id !== 'cvx-mobile-shield') img.style.setProperty('display','none','important');
     });
 
-    // Clean up section itself
-    sec.style.setProperty('height','auto','important');
+    // 2) Section itself — no fixed height
     sec.style.setProperty('min-height','0','important');
-    sec.style.setProperty('padding','32px 20px','important');
+    sec.style.setProperty('height','auto','important');
+    sec.style.setProperty('padding-top','28px','important');
+    sec.style.setProperty('padding-bottom','28px','important');
 
-    // Clean up left col (text container — the one with h2)
-    const leftCol = [...sec.querySelectorAll('div')].find(d => d.contains(h2) && !d.isSameNode(sec));
-    if (leftCol) {
-      leftCol.style.setProperty('width','100%','important');
-      leftCol.style.setProperty('max-width','100%','important');
-      leftCol.style.setProperty('flex','unset','important');
-      leftCol.style.setProperty('padding','0','important');
+    // 3) Inject shield between subtitle and bullet list
+    if (!document.getElementById('cvx-mobile-shield')) {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:12px 0 8px;';
+      const img = document.createElement('img');
+      img.id = 'cvx-mobile-shield';
+      img.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
+      img.alt = 'Security Shield';
+      img.style.cssText = 'display:block!important;width:220px;height:auto;border-radius:6px;';
+      wrap.appendChild(img);
+
+      const subtitleP = h2.parentElement ? h2.parentElement.querySelector('p') : sec.querySelector('p');
+      const ul = sec.querySelector('ul');
+      if (subtitleP && subtitleP.parentNode) {
+        subtitleP.style.setProperty('margin-bottom','0','important');
+        subtitleP.parentNode.insertBefore(wrap, subtitleP.nextSibling);
+      } else if (ul) {
+        ul.parentNode.insertBefore(wrap, ul);
+      } else {
+        sec.appendChild(wrap);
+      }
+      if (ul) {
+        ul.style.setProperty('margin-top','8px','important');
+        wrap.parentNode.insertBefore(ul, wrap.nextSibling);
+      }
     }
 
     const marker = document.createElement('span');
@@ -795,7 +816,7 @@
     injectMobileCSS();
     addMobileAppBanner();
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
-    fixFooter(); fixFooterAccordion(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
+    fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
     fixAppSection(); hideBrokenElements();
     wireTopNav(); wireWordmarks();
     loadTicker().then(() => { applyPrices(); buildMobileMarket(); fixDesktopPairs(); });
