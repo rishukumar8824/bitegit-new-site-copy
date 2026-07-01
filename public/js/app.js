@@ -126,19 +126,18 @@
     const tabBar = document.createElement('div');
     tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:0;';
 
-    // Spot / Futures pill sub-tabs (like Bitbase)
+    // Spot / Futures pill sub-tabs (like Bitbase — selected = dark pill)
     const subTabBar = document.createElement('div');
-    subTabBar.style.cssText = 'display:flex;gap:8px;padding:10px 16px 6px;';
+    subTabBar.style.cssText = 'display:flex;gap:6px;padding:8px 16px 6px;';
     ['Spot', 'Futures'].forEach((label, i) => {
       const st = document.createElement('div');
       st.textContent = label;
-      st.style.cssText = 'padding:4px 14px;border-radius:20px;font-size:13px;cursor:pointer;transition:all 0.2s;' +
-        (i === 0 ? 'background:rgba(255,255,255,0.12);color:#fff;font-weight:600;' : 'background:transparent;color:rgba(255,255,255,0.4);font-weight:400;');
+      const active = 'padding:4px 14px;border-radius:20px;font-size:13px;cursor:pointer;background:rgba(0,0,0,0.45);color:#fff;font-weight:600;border:1px solid rgba(255,255,255,0.08);';
+      const inactive = 'padding:4px 14px;border-radius:20px;font-size:13px;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);font-weight:400;border:1px solid transparent;';
+      st.style.cssText = i === 0 ? active : inactive;
       st.addEventListener('click', () => {
         subTabBar.querySelectorAll('div').forEach((el, j) => {
-          el.style.background = j === i ? 'rgba(255,255,255,0.12)' : 'transparent';
-          el.style.color = j === i ? '#fff' : 'rgba(255,255,255,0.4)';
-          el.style.fontWeight = j === i ? '600' : '400';
+          el.style.cssText = j === i ? active : inactive;
         });
       });
       subTabBar.appendChild(st);
@@ -191,22 +190,27 @@
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:52px;';
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:9px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:48px;';
 
         row.appendChild(makeIcon(sym));
 
-        // Name + volume (left column, flex:1)
+        // Col 1: pair name only (flex:1)
         const nameCol = document.createElement('div');
-        nameCol.style.cssText = 'flex:1;min-width:0;';
-        nameCol.innerHTML = `<div style="font-size:14px;font-weight:500;line-height:1.2;">${sym}USDT</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">${vol}</div>`;
+        nameCol.style.cssText = 'flex:1;min-width:0;padding-left:2px;';
+        nameCol.innerHTML = `<div style="font-size:13.5px;font-weight:500;line-height:1.2;letter-spacing:0.01em;">${sym}USDT</div>`;
         row.appendChild(nameCol);
 
-        // Price + change (right column)
+        // Col 2: volume (center, fixed width)
+        const volCol = document.createElement('div');
+        volCol.style.cssText = 'width:80px;text-align:left;flex-shrink:0;';
+        volCol.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.45);">${vol}</div>`;
+        row.appendChild(volCol);
+
+        // Col 3: price + change% (right)
         const priceCol = document.createElement('div');
-        priceCol.style.cssText = 'text-align:right;flex-shrink:0;';
-        priceCol.innerHTML = `<div style="font-size:14px;font-weight:500;">${price}</div>
-          <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};margin-top:2px;">${chgStr}</div>`;
+        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:70px;';
+        priceCol.innerHTML = `<div style="font-size:13.5px;font-weight:500;">${price}</div>
+          <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};margin-top:1px;">${chgStr}</div>`;
         row.appendChild(priceCol);
 
         rowsDiv.appendChild(row);
