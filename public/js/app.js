@@ -516,29 +516,36 @@
     }
   }
 
-  // Inject the security shield GIF into the security section empty div
+  // Fix security section — show security_v7.webp in the empty aspect-square div
   function fixSecuritySection() {
     if (document.getElementById('cvx-security-done')) return;
-    // Find security section by heading
     const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
     if (!h2) return;
-    const sec = h2.closest('section') || h2.closest('[class*="relative"]');
+    const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
-    // Find the empty aspect-square div (was 3D canvas in React)
+    // Fill the empty aspect-square div with the correct security webp
     const emptyDiv = [...sec.querySelectorAll('div')].find(d =>
-      !d.children.length && !d.textContent.trim() && /aspect-square/.test(d.className)
+      !d.children.length && !d.textContent.trim() && /aspect-square/.test(d.className || '')
     );
     if (emptyDiv) {
       const img = document.createElement('img');
-      img.src = '/cdn/imgs/index-web/home/security_shield.gif';
+      img.src = '/cdn/imgs/index-web/home/security_v7.webp';
       img.alt = 'Security Shield';
-      img.style.cssText = 'width:180px;height:180px;object-fit:contain;display:block;margin:0 auto;';
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;';
       emptyDiv.appendChild(img);
-      const marker = document.createElement('span');
-      marker.id = 'cvx-security-done';
-      marker.style.display = 'none';
-      document.body.appendChild(marker);
     }
+    // Also reveal the opacity-0 img if present
+    const secImg = sec.querySelector('img[src*="security_v7"]');
+    if (secImg) {
+      secImg.classList.remove('opacity-0');
+      secImg.classList.add('opacity-100');
+      const skeleton = secImg.closest('span')?.querySelector('.animate-pulse');
+      if (skeleton) skeleton.style.display = 'none';
+    }
+    const marker = document.createElement('span');
+    marker.id = 'cvx-security-done';
+    marker.style.display = 'none';
+    document.body.appendChild(marker);
   }
 
   function start() {
