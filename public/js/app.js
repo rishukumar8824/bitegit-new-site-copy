@@ -656,7 +656,7 @@
       sec.style.setProperty('padding-top','28px','important');
       sec.style.setProperty('padding-bottom','28px','important');
 
-      // Zero ALL padding/margin/gap inside section
+      // Zero ALL padding/margin/gap/height inside section
       sec.querySelectorAll('*').forEach(el => {
         const cs = window.getComputedStyle(el);
         if (parseFloat(cs.paddingTop) > 8)   el.style.setProperty('padding-top','0','important');
@@ -666,10 +666,9 @@
         const g = parseFloat(cs.rowGap || cs.gap || 0);
         if (g > 4) { el.style.setProperty('row-gap','0','important'); el.style.setProperty('gap','0','important'); }
         el.style.setProperty('min-height','0','important');
+        el.style.setProperty('height','auto','important');
       });
 
-      // Find ul and insert shield BEFORE it
-      const ul = sec.querySelector('ul');
       if (!document.getElementById('cvx-mobile-shield')) {
         const wrap = document.createElement('div');
         wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:12px 0 8px;';
@@ -677,10 +676,29 @@
         shieldImg.id = 'cvx-mobile-shield';
         shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
         shieldImg.alt = 'Security Shield';
-        shieldImg.style.cssText = 'display:block !important;width:240px;height:auto;border-radius:6px;';
+        shieldImg.style.cssText = 'display:block;width:240px;height:auto;border-radius:6px;';
         wrap.appendChild(shieldImg);
-        if (ul) ul.parentNode.insertBefore(wrap, ul);
-        else sec.appendChild(wrap);
+
+        // Find subtitle p — insert shield RIGHT AFTER it (not before ul)
+        const subtitleP = h2.parentElement ? h2.parentElement.querySelector('p') : sec.querySelector('p');
+        if (subtitleP && subtitleP.parentNode) {
+          // Zero subtitle's own margin-bottom
+          subtitleP.style.setProperty('margin-bottom','0','important');
+          // Insert shield right after subtitle
+          subtitleP.parentNode.insertBefore(wrap, subtitleP.nextSibling);
+          // Hide any spacer divs between shield wrap and the ul
+          const ul = sec.querySelector('ul');
+          let node = wrap.nextSibling;
+          while (node && node !== ul) {
+            if (node.nodeType === 1 && node !== wrap)
+              node.style.setProperty('display','none','important');
+            node = node.nextSibling;
+          }
+        } else {
+          const ul = sec.querySelector('ul');
+          if (ul) ul.parentNode.insertBefore(wrap, ul);
+          else sec.appendChild(wrap);
+        }
       }
     }
 
