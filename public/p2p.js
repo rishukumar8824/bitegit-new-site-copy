@@ -6154,31 +6154,42 @@ window.addEventListener('pagehide', () => {
   // For non-logged-in users, showLoginPrompt is shown when they open the orders screen.
 })();
 
-// ── Scroll-hide chrome on mobile (header + subnav up, bottom nav down) ──
+// ── Scroll-hide chrome on mobile ─────────────────────────────────────
+// On mobile, body is overflow:hidden — only #p2pCards scrolls, not window.
 (function setupScrollHide() {
+  var bodyEl = document.body;
   var lastY = 0;
   var ticking = false;
-  var bodyEl = document.body;
-  window.addEventListener('scroll', function() {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(function() {
-      var y = window.scrollY || window.pageYOffset || 0;
-      // Only hide when no overlay/modal is open
-      var modalOpen = bodyEl.classList.contains('mob-screen-open') ||
-                      bodyEl.classList.contains('deal-open') ||
-                      document.querySelector('.p2p-auth-overlay:not(.hidden)');
-      if (!modalOpen) {
-        if (y > lastY && y > 60) {
-          bodyEl.classList.add('p2p-chrome-hidden');
-        } else if (y < lastY) {
-          bodyEl.classList.remove('p2p-chrome-hidden');
+
+  function attachToCards() {
+    var cardsEl = document.getElementById('p2pCards');
+    if (!cardsEl) return;
+    cardsEl.addEventListener('scroll', function() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function() {
+        var y = cardsEl.scrollTop;
+        var modalOpen = bodyEl.classList.contains('mob-screen-open') ||
+                        bodyEl.classList.contains('deal-open');
+        if (!modalOpen) {
+          if (y > lastY && y > 40) {
+            bodyEl.classList.add('p2p-chrome-hidden');
+          } else if (y < lastY) {
+            bodyEl.classList.remove('p2p-chrome-hidden');
+          }
         }
-      }
-      lastY = y;
-      ticking = false;
-    });
-  }, { passive: true });
+        lastY = y;
+        ticking = false;
+      });
+    }, { passive: true });
+  }
+
+  // Cards may not exist until init renders them, so try after DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachToCards);
+  } else {
+    attachToCards();
+  }
 })();
 
 // ── Online presence ping — marks current user as online ──────────────
