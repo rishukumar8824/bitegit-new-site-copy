@@ -636,33 +636,29 @@
       // Also hide any remaining img in section
       sec.querySelectorAll('img').forEach(img => { img.style.display = 'none'; });
 
-      // Step 2: fix overflow + kill ALL extra padding/gap causing the huge empty space
+      // Step 2: NUCLEAR — kill every source of gap between text and shield
+      // Overflow fix
       let sp = sec;
       for (let i = 0; i < 6; i++) {
         if (!sp || sp === document.body) break;
         sp.style.overflow = 'visible';
         sp = sp.parentElement;
       }
-      // Kill section's own padding
-      sec.style.paddingTop = '32px';
-      sec.style.paddingBottom = '32px';
-      // Find the flex row wrapper (contains both columns) and zero its gap/minHeight
-      [...sec.children].forEach(child => {
-        child.style.minHeight = '0';
-        child.style.height = 'auto';
-        child.style.paddingTop = '0';
-        child.style.paddingBottom = '0';
-        child.style.gap = '0';
+      // Zero ALL padding/margin/gap on EVERY element inside section
+      sec.querySelectorAll('*').forEach(el => {
+        const cs = window.getComputedStyle(el);
+        if (parseFloat(cs.paddingTop) > 8)    el.style.setProperty('padding-top',    '0',    'important');
+        if (parseFloat(cs.paddingBottom) > 8)  el.style.setProperty('padding-bottom', '0',    'important');
+        if (parseFloat(cs.marginTop) > 4)      el.style.setProperty('margin-top',     '0',    'important');
+        if (parseFloat(cs.marginBottom) > 4)   el.style.setProperty('margin-bottom',  '4px',  'important');
+        const g = parseFloat(cs.gap || cs.rowGap || 0);
+        if (g > 4) { el.style.setProperty('gap', '0', 'important'); el.style.setProperty('row-gap', '0', 'important'); }
+        el.style.setProperty('min-height', '0', 'important');
+        el.style.setProperty('height', 'auto', 'important');
       });
-      // Zero out left column (h2's parent chain) padding too
-      let lp = h2.parentElement;
-      for (let i = 0; i < 4; i++) {
-        if (!lp || lp === sec) break;
-        lp.style.paddingTop = '0';
-        lp.style.marginTop = '0';
-        lp.style.gap = '0';
-        lp = lp.parentElement;
-      }
+      // Section itself
+      sec.style.setProperty('padding-top', '28px', 'important');
+      sec.style.setProperty('padding-bottom', '28px', 'important');
 
       // Step 3: find the <ul> that contains bullets
       const ul = sec.querySelector('ul');
