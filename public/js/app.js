@@ -1269,6 +1269,7 @@
               hide_top_toolbar:false, hide_side_toolbar:true,
               allow_symbol_change:false, enable_publishing:false,
               container_id:cid,
+              disabled_features:['create_volume_indicator_by_default','header_symbol_search','header_compare'],
               studies:[
                 { id:'MAExp@tv-basicstudies', inputs:{length:7},  overrides:{'Plot.color':'#f6a609','Plot.linewidth':1} },
                 { id:'MAExp@tv-basicstudies', inputs:{length:25}, overrides:{'Plot.color':'#9c27b0','Plot.linewidth':1} },
@@ -1280,7 +1281,8 @@
                 'mainSeriesProperties.candleStyle.borderUpColor':'#2ebd85',
                 'mainSeriesProperties.candleStyle.borderDownColor':'#f6465d',
                 'mainSeriesProperties.candleStyle.wickUpColor':'#2ebd85',
-                'mainSeriesProperties.candleStyle.wickDownColor':'#f6465d'
+                'mainSeriesProperties.candleStyle.wickDownColor':'#f6465d',
+                'volumePaneSize':'tiny'
               },
               loading_screen:{backgroundColor:'#0b0e11'}
             });
@@ -1358,16 +1360,70 @@
       updateDesktopPrices(isUp, color, priceStr);
     }
 
-    function updateDesktopPrices(isUp, color, priceStr) {
+    async function updateDesktopPrices(isUp, color, priceStr) {
+      // Update main price display
       const priceEl=document.querySelector('.ticker_price__pzh7e .up-color,.ticker_price__pzh7e .down-color');
       if(priceEl){
         priceEl.textContent=priceStr||livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-        priceEl.className=priceEl.className.replace(/up-color|down-color/,isUp!==false?(livePct>=0?'up-color':'down-color'):'down-color');
+        priceEl.className=priceEl.className.replace(/up-color|down-color/,livePct>=0?'up-color':'down-color');
       }
+      // Update 24H stats (the arrow_content divs)
+      const statDivs=[...document.querySelectorAll('.arrow_content__rBT_Q > div')];
+      if(statDivs.length>=4){
+        const vals=[
+          (livePct>=0?'+':'')+livePct.toFixed(2)+'%',
+          liveHigh.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),
+          liveLow.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),
+          fmtP(liveVol)
+        ];
+        statDivs.forEach((d,i)=>{ const v=d.querySelector('div'); if(v&&vals[i]) v.textContent=vals[i]; });
+      }
+      // USD sub-price
+      const usdEl=document.querySelector('.ticker_price__pzh7e div');
+      if(usdEl&&livePrice) usdEl.textContent=livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USD';
+      // Update mid price row
+      const midEl=document.getElementById('midPrice');
+      if(midEl&&livePrice) midEl.textContent=livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      // Fetch real order book from Binance
+      try {
+        const depth=await fetch(`https://api.binance.com/api/v3/depth?symbol=BTCUSDT&limit=15`).then(r=>r.json());
+        // Update ask rows (sell orders — red)
+        const askCols=document.querySelectorAll('.depthNormal_scrollWindowAsk__hke1X .list_main__zCJtr');
+        if(askCols.length&&depth.asks){
+          const asks=[...depth.asks].slice(0,askCols.length);
+          askCols.forEach((row,i)=>{
+            const cells=row.querySelectorAll('.fontScale_sub__PN1Es');
+            if(asks[i]&&cells.length>=2){
+              cells[0].textContent=Number(asks[i][0]).toFixed(2);
+              cells[0].style.color='#f6465d';
+              cells[1].textContent=Number(asks[i][1]).toFixed(6);
+              if(cells[2]) cells[2].textContent=(Number(asks[i][0])*Number(asks[i][1])).toFixed(6);
+            }
+          });
+        }
+        // Update bid rows (buy orders — green, below mid price)
+        const allRows=document.querySelectorAll('.list_main__zCJtr');
+        const bidRows=[...allRows].filter(r=>!r.closest('.depthNormal_scrollWindowAsk__hke1X'));
+        if(bidRows.length&&depth.bids){
+          const bids=depth.bids.slice(0,bidRows.length);
+          bidRows.forEach((row,i)=>{
+            const cells=row.querySelectorAll('.fontScale_sub__PN1Es');
+            if(bids[i]&&cells.length>=2){
+              cells[0].textContent=Number(bids[i][0]).toFixed(2);
+              cells[0].style.color='#2ebd85';
+              cells[1].textContent=Number(bids[i][1]).toFixed(6);
+              if(cells[2]) cells[2].textContent=(Number(bids[i][0])*Number(bids[i][1])).toFixed(6);
+            }
+          });
+        }
+        // Update mid price span in order book
+        const midPriceSpans=document.querySelectorAll('.ticker_mid__price, [class*="midPrice"]');
+        midPriceSpans.forEach(el=>{ el.textContent=livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); });
+      } catch(e) {}
     }
 
     fetchTradeTicker().then(updateMobilePrices);
-    setInterval(async()=>{ await fetchTradeTicker(); updateMobilePrices(); }, 3000);
+    setInterval(async()=>{ await fetchTradeTicker(); updateMobilePrices(); }, 2000);
   }
 
   // ── 17. HIDE BROKEN ELEMENTS ──────────────────────────────────────────────
