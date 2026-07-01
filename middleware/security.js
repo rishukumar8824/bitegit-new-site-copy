@@ -143,9 +143,14 @@ function applySecurityHeaders(app) {
               connectSrc: [
                 "'self'",
                 'https://api.binance.com',
+                'https://data-api.binance.vision',
+                'https://api.bybit.com',
+                'https://api.coingecko.com',
                 'https://api.resend.com',
                 'https://*.tradingview.com',
-                'wss://*.tradingview.com'
+                'wss://*.tradingview.com',
+                'https://bitcovex-backend.onrender.com',
+                'https://*.onrender.com'
               ],
               frameSrc: ["'self'", 'https://*.tradingview.com'],
               fontSrc: ["'self'", 'https:', 'data:'],

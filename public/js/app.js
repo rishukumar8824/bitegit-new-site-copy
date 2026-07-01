@@ -253,23 +253,158 @@
   }
 
   // ── 4. DESKTOP PAIRS — hide unsupported pairs (DOT/HBAR/LINK/XLM) ─────────
-  function fixDesktopPairs() {
+  async function fixDesktopPairs() {
     if (document.getElementById('cvx-dp-fixed')) return;
+    if (window.innerWidth <= 767) return;
     const dp = document.getElementById('cvx-desktop-pairs');
     if (!dp) return;
-    const UNSUPPORTED = ['DOT', 'HBAR', 'LINK', 'XLM'];
-    dp.querySelectorAll('div, a').forEach(el => {
-      const txt = el.textContent || '';
-      if (UNSUPPORTED.some(s => new RegExp('\\b' + s + '\\b').test(txt))) {
-        const parent = el.parentElement;
-        if (parent && parent !== dp) {
-          const isSelf = UNSUPPORTED.some(s => new RegExp('\\b' + s + '\\b').test(el.className || ''));
-          if (txt.length < 200 && txt.includes('USDT')) {
-            el.style.display = 'none';
-          }
-        }
-      }
+
+    // Fetch live data for all pairs from Binance
+    const SPOT_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOGEUSDT','XRPUSDT','ADAUSDT','AVAXUSDT'];
+    const VOL_SYMS  = ['BTCUSDT','ETHUSDT','SOLUSDT','HYPEUSDT','XAUUSDT','BNBUSDT','DOGEUSDT','XRPUSDT'];
+    const ALL_SYMS  = [...new Set([...SPOT_SYMS, ...VOL_SYMS])];
+
+    let tdata = {};
+    try {
+      const url = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(ALL_SYMS));
+      const res = await fetch(url).then(r => r.json());
+      res.forEach(t => { tdata[t.symbol] = t; });
+    } catch(e) {}
+
+    // Also fetch top gainers (all tickers, get top by %)
+    let gainers = [], newListings = [];
+    try {
+      const all = await fetch('https://api.binance.com/api/v3/ticker/24hr').then(r => r.json());
+      const usdt = all.filter(t => t.symbol.endsWith('USDT') && Number(t.lastPrice) > 0 && Number(t.quoteVolume) > 500000);
+      gainers = [...usdt].sort((a,b) => Number(b.priceChangePercent) - Number(a.priceChangePercent)).slice(0, 4);
+      newListings = ['BCHUSDT','CROUSDT','CCUSDT'].map(s => usdt.find(t => t.symbol === s)).filter(Boolean);
+      if (newListings.length < 3) newListings = usdt.filter(t => !SPOT_SYMS.includes(t.symbol)).slice(0, 3);
+    } catch(e) {}
+
+    const COIN_ICONS = {
+      BTC:'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png',
+      ETH:'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png',
+      BNB:'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
+      SOL:'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png',
+      DOGE:'https://s2.coinmarketcap.com/static/img/coins/64x64/74.png',
+      XRP:'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png',
+      ADA:'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
+      AVAX:'https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png',
+      HYPE:'https://s2.coinmarketcap.com/static/img/coins/64x64/32196.png',
+      XAU:'https://s2.coinmarketcap.com/static/img/coins/64x64/4705.png',
+    };
+    const coinIcon = (sym) => {
+      const base = sym.replace('USDT','');
+      return COIN_ICONS[base] || `https://s2.coinmarketcap.com/static/img/coins/64x64/1.png`;
+    };
+    const fmtP = (v) => {
+      const n = Number(v);
+      if (n >= 1e9) return (n/1e9).toFixed(2)+'B';
+      if (n >= 1e6) return (n/1e6).toFixed(2)+'M';
+      if (n >= 1e3) return (n/1e3).toFixed(2)+'K';
+      return n.toFixed(2);
+    };
+    const fmtPrice = (v) => {
+      const n = Number(v);
+      if (n >= 1000) return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      if (n >= 1) return '$'+n.toFixed(4);
+      return '$'+n.toFixed(6);
+    };
+    const sparkSVG = (up) => {
+      const color = up ? '#2ebd85' : '#f6465d';
+      const pts = Array.from({length:10},(_,i)=>i*8+4);
+      const ys = pts.map(()=> 8 + Math.random()*12);
+      const d = pts.map((x,i)=>`${i===0?'M':'L'}${x},${ys[i]}`).join(' ');
+      return `<svg width="80" height="28" viewBox="0 0 80 28"><path d="${d}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    };
+    const rowHTML = (sym, vol, showVol) => {
+      const t = tdata[sym] || {};
+      const price = fmtPrice(t.lastPrice || 0);
+      const chg = Number(t.priceChangePercent || 0);
+      const up = chg >= 0;
+      const base = sym.replace('USDT','');
+      const volStr = showVol ? fmtP(t.quoteVolume || 0) : '';
+      return `<a href="trade.html" style="display:flex;align-items:center;gap:0;padding:10px 20px 10px 24px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;color:inherit;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+          <img src="${coinIcon(sym)}" width="28" height="28" style="border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'"/>
+          <span style="font-size:14px;font-weight:600;">${base}<span style="color:rgba(255,255,255,0.4);font-weight:400;">/USDT</span></span>
+        </div>
+        ${showVol ? `<div style="width:90px;text-align:right;font-size:13px;color:rgba(255,255,255,0.4);">${volStr}</div>` : ''}
+        <div style="min-width:110px;text-align:right;">
+          <div style="font-size:14px;font-weight:600;">${price}</div>
+          <div style="font-size:12px;color:${up?'#2ebd85':'#f6465d'}">${up?'+':''}${chg.toFixed(2)}%</div>
+        </div>
+        <div style="width:88px;display:flex;justify-content:center;">${sparkSVG(up)}</div>
+        <div style="margin-left:8px;"><button onclick="location.href='trade.html'" style="background:#2b2f36;border:none;color:#fff;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">Trade</button></div>
+      </a>`;
+    };
+    const gainerRow = (t) => {
+      if (!t) return '';
+      const chg = Number(t.priceChangePercent||0);
+      const up = chg >= 0;
+      const base = t.symbol.replace('USDT','');
+      return `<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <img src="${coinIcon(t.symbol)}" width="24" height="24" style="border-radius:50%;flex-shrink:0;margin-right:10px;" onerror="this.style.display='none'"/>
+        <span style="flex:1;font-size:13px;font-weight:500;">${base}/USDT</span>
+        <div style="text-align:right;">
+          <div style="font-size:13px;font-weight:600;">${fmtPrice(t.lastPrice)}</div>
+          <div style="font-size:12px;color:${up?'#2ebd85':'#f6465d'}">${up?'+':''}${chg.toFixed(2)}%</div>
+        </div>
+      </div>`;
+    };
+
+    const TABS = ['Spot','Futures','TradFi','Volume Ranking'];
+    let activeTab = 'Spot';
+
+    const renderLeft = (tab) => {
+      const syms = (tab === 'Volume Ranking') ? VOL_SYMS : SPOT_SYMS;
+      const showVol = tab === 'Volume Ranking';
+      return syms.map(s => rowHTML(s, null, showVol)).join('');
+    };
+
+    dp.innerHTML = `
+      <div style="display:flex;justify-content:space-between;gap:20px;max-width:1200px;margin:0 auto;align-items:flex-start;">
+        <!-- LEFT: Popular Pairs -->
+        <div style="background:rgba(19,21,22,0.5);border-radius:20px;overflow:hidden;padding:16px 0 20px;width:798px;flex-shrink:0;">
+          <div id="cvx-market-tabs" style="display:flex;gap:4px;padding:0 24px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:0;">
+            ${TABS.map(t=>`<div data-tab="${t}" style="padding:10px 12px;cursor:pointer;font-size:14px;font-weight:${t===activeTab?'600':'400'};color:${t===activeTab?'#fff':'rgba(255,255,255,0.45)'};border-bottom:${t===activeTab?'2px solid #F0B90B':'2px solid transparent'};margin-bottom:-1px;white-space:nowrap;transition:color 0.15s;">${t}</div>`).join('')}
+          </div>
+          <div id="cvx-vol-subtabs" style="display:none;gap:6px;padding:8px 24px 4px;"></div>
+          <div id="cvx-pairs-body">${renderLeft('Spot')}</div>
+        </div>
+        <!-- RIGHT: Gainers + New Listings -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:0;">
+          <!-- Futures Gainers -->
+          <div style="background:rgba(19,21,22,0.5);border-radius:20px;padding:16px 20px;">
+            <div style="display:flex;gap:16px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px;">
+              <span style="font-size:14px;font-weight:600;color:#fff;">Futures Gainers</span>
+              <span style="font-size:14px;color:rgba(255,255,255,0.4);">Spot Gainers</span>
+            </div>
+            <div>${gainers.map(t=>gainerRow(t)).join('') || '<div style="padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">Loading...</div>'}</div>
+          </div>
+          <!-- New Listings -->
+          <div style="background:rgba(19,21,22,0.5);border-radius:20px;padding:16px 20px;">
+            <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px;">New Listings</div>
+            <div>${newListings.map(t=>gainerRow(t)).join('') || '<div style="padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">Loading...</div>'}</div>
+          </div>
+        </div>
+      </div>`;
+
+    // Tab click handlers
+    dp.querySelectorAll('[data-tab]').forEach(tab => {
+      tab.addEventListener('click', () => {
+        activeTab = tab.dataset.tab;
+        dp.querySelectorAll('[data-tab]').forEach(t => {
+          const active = t.dataset.tab === activeTab;
+          t.style.fontWeight = active ? '600' : '400';
+          t.style.color = active ? '#fff' : 'rgba(255,255,255,0.45)';
+          t.style.borderBottom = active ? '2px solid #F0B90B' : '2px solid transparent';
+        });
+        document.getElementById('cvx-pairs-body').innerHTML = renderLeft(activeTab);
+        document.getElementById('cvx-vol-subtabs').style.display = activeTab === 'Volume Ranking' ? 'flex' : 'none';
+      });
     });
+
     const marker = document.createElement('span');
     marker.id = 'cvx-dp-fixed';
     marker.style.display = 'none';
