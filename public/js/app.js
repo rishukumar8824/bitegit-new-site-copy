@@ -297,10 +297,21 @@
   // ── 6. HEADER LOGO ────────────────────────────────────────────────────────
   function fixHeaderLogo() {
     const logoLink = document.querySelector('header a[href="index.html"]');
-    if (!logoLink || logoLink.dataset.cvxLogo) return;
+    if (!logoLink) return;
+    // Always ensure only gem SVG shows — no text
+    const hasGem = logoLink.querySelector('svg[data-cvx-gem]');
+    if (!hasGem) {
+      logoLink.innerHTML = '';
+      const gem = makeGemSVG('26', '30');
+      gem.setAttribute('data-cvx-gem', '1');
+      logoLink.appendChild(gem);
+    }
+    // Hide any text nodes or spans that sneak back in
+    logoLink.querySelectorAll('span, svg:not([data-cvx-gem])').forEach(el => {
+      el.style.setProperty('display', 'none', 'important');
+    });
+    logoLink.style.cssText = 'display:inline-flex;align-items:center;padding:0 8px 0 12px;height:100%;';
     logoLink.dataset.cvxLogo = '1';
-    logoLink.innerHTML = '';
-    logoLink.appendChild(makeGemSVG('22', '26'));
   }
 
   // ── 7. HAMBURGER MENU ─────────────────────────────────────────────────────
@@ -896,7 +907,6 @@
   // ── START ─────────────────────────────────────────────────────────────────
   function start() {
     injectMobileCSS();
-    addMobileAppBanner();
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
     fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
     fixAppSection(); hideBrokenElements();
