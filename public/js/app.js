@@ -487,9 +487,10 @@
       titleEl.setAttribute('data-cvx-footer-title', '1');
       titleEl.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4"/></svg>');
 
-      // Wrap all links in a collapsible div
+      // Wrap all links in a collapsible div — collapsed by default
       const linksWrap = document.createElement('div');
       linksWrap.setAttribute('data-cvx-footer-links', '1');
+      linksWrap.style.display = 'none'; // explicitly collapsed on init
       const links = [...sec.children].slice(1);
       links.forEach(l => linksWrap.appendChild(l));
       sec.appendChild(linksWrap);
@@ -516,7 +517,7 @@
     }
   }
 
-  // Fix security section — make shield_v2.webp visible like Bitbase
+  // Fix security section — replace broken React shell with clean img tag
   function fixSecuritySection() {
     if (document.getElementById('cvx-security-done')) return;
     const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
@@ -524,58 +525,16 @@
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
 
-    // Fix the desktop shield: the img src=shield_v2.webp exists but its wrapping
-    // span.inline-block.overflow-hidden has no dimensions (React managed them).
-    // We fix every img in this section that points to shield_v2 or security_v7.
-    sec.querySelectorAll('img').forEach(img => {
-      const src = img.getAttribute('src') || '';
-      if (!src.includes('shield') && !src.includes('security')) return;
-
-      // Make img visible & properly sized
-      img.classList.remove('opacity-0');
-      img.classList.add('opacity-100');
-      img.style.cssText = 'width:100%;height:auto;object-fit:contain;display:block;opacity:1;';
-
-      // Fix every ancestor span/div with overflow:hidden up to the section
-      let el = img.parentElement;
-      while (el && el !== sec) {
-        const cs = getComputedStyle(el);
-        if (cs.overflow === 'hidden' || /overflow-hidden/.test(el.className || '')) {
-          el.style.overflow = 'visible';
-        }
-        if (el.tagName === 'SPAN' && cs.display === 'inline-block') {
-          el.style.cssText = (el.style.cssText || '') + ';display:block!important;width:100%;';
-        }
-        // Hide the loading skeleton inside this ancestor
-        const skeleton = el.querySelector('.animate-pulse');
-        if (skeleton) skeleton.style.display = 'none';
-        const absOverlay = el.querySelector('span.absolute');
-        if (absOverlay && absOverlay !== img.parentElement) absOverlay.style.display = 'none';
-        el = el.parentElement;
-      }
-
-      // The absolute wrapper div needs height too
-      const absDiv = img.closest('div[class*="absolute"]');
-      if (absDiv) absDiv.style.cssText = (absDiv.style.cssText || '') + ';height:100%;';
+    // Find right column (shrink-0 + w-[320px])
+    const rightCol = [...sec.querySelectorAll('div')].find(d => {
+      const cls = d.className || '';
+      return /shrink-0/.test(cls) && /w-\[320px\]/.test(cls);
     });
 
-    // Nuclear fallback: inject a fresh absolutely-positioned shield image directly in the section
-    // This shows regardless of broken span/div structure
-    if (!document.getElementById('cvx-shield-inject')) {
-      const rightCol = [...sec.querySelectorAll('div')].find(d =>
-        /shrink-0/.test(d.className || '') && /w-\[320px\]/.test(d.className || '')
-      );
-      const target = rightCol;
-      if (target) {
-        target.style.cssText = (target.style.cssText||'') + ';position:relative;overflow:visible;';
-        // Clear broken children and inject fresh img
-        const freshImg = document.createElement('img');
-        freshImg.id = 'cvx-shield-inject';
-        freshImg.src = '/cdn/imgs/index-web/home/shield_v2.webp';
-        freshImg.alt = 'Security Shield';
-        freshImg.style.cssText = 'width:100%;height:auto;object-fit:contain;display:block;position:relative;z-index:1;';
-        target.insertBefore(freshImg, target.firstChild);
-      }
+    if (rightCol) {
+      // Completely replace broken React structure with a clean img
+      rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_v2.webp" alt="Security Shield" style="width:100%;height:auto;object-fit:contain;display:block;">';
+      rightCol.style.cssText = 'display:flex;flex-shrink:0;align-items:center;justify-content:center;width:420px;overflow:visible;transform:none;';
     }
 
     const marker = document.createElement('span');
