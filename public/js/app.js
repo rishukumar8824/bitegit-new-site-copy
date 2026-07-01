@@ -686,11 +686,28 @@
   function fixSecuritySection() {
     if (document.getElementById('cvx-security-done')) return;
     if (window.innerWidth > 767) {
+      // Desktop: replace shield_v2.webp (dark/invisible) with shield_mobile.jpg (silver, visible)
+      const desktopShield = document.querySelector('img[src*="shield_v2"]');
+      if (desktopShield) {
+        desktopShield.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
+        desktopShield.style.cssText = 'opacity:1!important;width:100%;height:auto;border-radius:8px;';
+        // Also fix the aspect-square container that clips it
+        const container = desktopShield.closest('[class*="aspect-square"]');
+        if (container) {
+          container.style.setProperty('aspect-ratio', 'auto', 'important');
+          container.style.setProperty('height', 'auto', 'important');
+        }
+        // Make sure parent hidden md:flex div is visible
+        const wrapper = desktopShield.closest('[class*="hidden md:flex"]');
+        if (wrapper) {
+          wrapper.style.setProperty('display', 'flex', 'important');
+        }
+      }
       const marker = document.createElement('span');
       marker.id = 'cvx-security-done';
       marker.style.display = 'none';
       document.body.appendChild(marker);
-      return; // desktop: leave as-is
+      return;
     }
     const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
     if (!h2) return;
