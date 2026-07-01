@@ -620,29 +620,52 @@
     const isMobile = window.innerWidth <= 767;
 
     if (!isMobile) {
-      // ── DESKTOP: rebuild as flex-row — left col (text+bullets) | right col (big shield) ──
-      // Find the inner flex container (direct child of sec or grandchild)
+      // ── DESKTOP: text+bullets LEFT, big shield RIGHT (like Bitbase) ──
+      sec.style.setProperty('overflow','visible','important');
+
+      // Find flex row: the div that is direct/near parent of BOTH the h2 col and the shrink-0 col
       let flexRow = [...sec.querySelectorAll('div')].find(d => {
-        const cs = getComputedStyle(d);
-        return (cs.display === 'flex' || /\bflex\b/.test(d.className || '')) && d.children.length >= 2;
-      }) || sec;
+        const ch = [...d.children];
+        return ch.length >= 2 && ch.some(c => c.contains(h2)) && ch.some(c => /shrink-0/.test(c.className||''));
+      });
+      // Fallback: find any flex div with 2+ children that contains h2
+      if (!flexRow) flexRow = [...sec.querySelectorAll('div')].find(d =>
+        d.children.length >= 2 && d.contains(h2)
+      );
+      if (!flexRow) flexRow = sec;
 
-      // Make sure the flex row is proper row layout
-      flexRow.style.cssText = 'display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:40px;max-width:1200px;margin:0 auto;padding:60px 40px;';
+      flexRow.style.setProperty('display','flex','important');
+      flexRow.style.setProperty('flex-direction','row','important');
+      flexRow.style.setProperty('align-items','center','important');
+      flexRow.style.setProperty('justify-content','space-between','important');
+      flexRow.style.setProperty('gap','60px','important');
+      flexRow.style.setProperty('padding','60px 40px','important');
+      flexRow.style.setProperty('max-width','1200px','important');
+      flexRow.style.setProperty('margin','0 auto','important');
+      flexRow.style.setProperty('overflow','visible','important');
 
-      // Left col = the child that contains h2
+      // Left col = child containing h2
       const leftCol = [...flexRow.children].find(c => c.contains(h2));
-      if (leftCol) leftCol.style.cssText = 'flex:1;min-width:0;';
-
-      // Right col = other child (has the shield img or is shrink-0)
-      const rightCol = [...flexRow.children].find(c => !c.contains(h2));
-      if (rightCol) {
-        rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_mobile.jpg" alt="Security Shield" style="width:420px;height:auto;display:block;object-fit:contain;">';
-        rightCol.style.cssText = 'flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:visible;';
+      if (leftCol) {
+        leftCol.style.setProperty('flex','1','important');
+        leftCol.style.setProperty('min-width','0','important');
+        leftCol.style.setProperty('overflow','visible','important');
       }
 
-      // Make sec itself full-width
-      sec.style.cssText = 'background:inherit;overflow:visible;';
+      // Right col = shrink-0 div (priority) or last child not containing h2
+      let rightCol = [...flexRow.children].find(c => /shrink-0/.test(c.className||''));
+      if (!rightCol) rightCol = [...flexRow.children].reverse().find(c => !c.contains(h2));
+
+      if (rightCol) {
+        rightCol.style.setProperty('display','flex','important');
+        rightCol.style.setProperty('flex-shrink','0','important');
+        rightCol.style.setProperty('width','440px','important');
+        rightCol.style.setProperty('align-items','center','important');
+        rightCol.style.setProperty('justify-content','center','important');
+        rightCol.style.setProperty('overflow','visible','important');
+        rightCol.style.setProperty('transform','none','important');
+        rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_mobile.jpg" alt="Security Shield" style="width:440px;height:auto;display:block;object-fit:contain;">';
+      }
 
     } else {
       // ── MOBILE: hide right col, inject shield above bullets ──
