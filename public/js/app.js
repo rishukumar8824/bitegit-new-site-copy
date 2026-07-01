@@ -627,48 +627,43 @@
       rightCol.style.cssText = 'display:flex;flex-shrink:0;align-items:center;justify-content:center;width:420px;overflow:visible;transform:none;';
     }
 
-    // Mobile: inject centered shield before first bullet item
+    // Mobile: hide old shield, inject new one above bullets
     if (window.innerWidth <= 767 && !document.getElementById('cvx-mobile-shield')) {
-      // Hide ALL existing imgs in section + bust every overflow:hidden ancestor
-      sec.querySelectorAll('img').forEach(img => {
-        img.style.display = 'none';
-        let p = img.parentElement;
-        for (let i = 0; i < 8; i++) {
-          if (!p || p === document.body) break;
-          p.style.overflow = 'visible';
-          p.style.height = 'auto';
-          p.style.maxHeight = 'none';
-          p = p.parentElement;
-        }
+      // Step 1: find and HIDE the entire right column (shrink-0) container
+      [...sec.querySelectorAll('div')].forEach(d => {
+        if (/shrink-0/.test(d.className || '')) d.style.display = 'none';
       });
-      // Also hide any span/div wrapping that clips the old shield
-      sec.querySelectorAll('span[class*="relative"], span[class*="inline-block"], span[class*="overflow"]').forEach(sp => {
+      // Also hide any remaining img in section
+      sec.querySelectorAll('img').forEach(img => { img.style.display = 'none'; });
+
+      // Step 2: make section + ancestors overflow:visible so nothing clips
+      let sp = sec;
+      for (let i = 0; i < 6; i++) {
+        if (!sp || sp === document.body) break;
         sp.style.overflow = 'visible';
-        sp.style.display = 'block';
-        sp.style.height = 'auto';
-      });
+        sp = sp.parentElement;
+      }
 
-      // Find first bullet (Transaction Security)
-      const firstBullet = [...sec.querySelectorAll('li')].find(el =>
-        el.textContent.includes('Transaction Security')
-      ) || sec.querySelector('ul');
+      // Step 3: find the <ul> that contains bullets
+      const ul = sec.querySelector('ul');
 
-      // Wrapper div for centering with no clip
+      // Step 4: build centered shield wrapper
       const wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;justify-content:center;align-items:center;padding:20px 0 24px;overflow:visible;width:100%;';
-
+      wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:28px 0 24px;';
       const shieldImg = document.createElement('img');
       shieldImg.id = 'cvx-mobile-shield';
       shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
       shieldImg.alt = 'Security Shield';
-      shieldImg.style.cssText = 'display:block;width:240px;height:auto;object-fit:contain;border-radius:4px;';
+      shieldImg.style.cssText = 'display:block;width:240px;height:auto;border-radius:4px;';
       wrap.appendChild(shieldImg);
 
-      if (firstBullet) {
-        const bulletParent = firstBullet.closest('ul') || firstBullet.parentElement;
-        bulletParent.parentElement.insertBefore(wrap, bulletParent);
+      // Step 5: insert BEFORE the ul (above bullets)
+      if (ul) {
+        ul.parentNode.insertBefore(wrap, ul);
       } else {
-        sec.appendChild(wrap);
+        // fallback: insert after h2's parent div
+        const headDiv = h2.closest('div') || h2.parentElement;
+        headDiv.parentNode.insertBefore(wrap, headDiv.nextSibling);
       }
     }
 
