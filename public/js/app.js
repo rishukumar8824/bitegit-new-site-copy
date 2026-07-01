@@ -645,11 +645,16 @@
       });
     }
 
+    // Accordion only on mobile — desktop shows full expanded footer
+    const isMobile = window.innerWidth <= 767;
     sections.slice(1).forEach(sec => {
       sec.setAttribute('data-cvx-footer-section', '1');
       const titleEl = sec.querySelector('h2, h3, h4, p, div.font-semibold, div.font-medium');
       if (!titleEl) return;
       titleEl.setAttribute('data-cvx-footer-title', '1');
+
+      if (!isMobile) return; // Desktop: keep links visible, no accordion
+
       titleEl.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 6l4 4 4-4"/></svg>');
 
       const linksWrap = document.createElement('div');
