@@ -190,27 +190,27 @@
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:52px;';
+        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:60px;';
 
         row.appendChild(makeIcon(sym));
 
-        // Col 1: pair name (flex:1)
+        // Col 1: pair name (flex:1, truncate)
         const nameCol = document.createElement('div');
-        nameCol.style.cssText = 'flex:1;min-width:0;padding-left:4px;';
-        nameCol.innerHTML = `<div style="font-size:14px;font-weight:500;line-height:1.2;">${sym}USDT</div>`;
+        nameCol.style.cssText = 'flex:1;min-width:0;overflow:hidden;padding-left:8px;';
+        nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}USDT</div>`;
         row.appendChild(nameCol);
 
         // Col 2: volume
         const volCol = document.createElement('div');
-        volCol.style.cssText = 'width:88px;text-align:left;flex-shrink:0;';
-        volCol.innerHTML = `<div style="font-size:12.5px;color:rgba(255,255,255,0.45);">${vol}</div>`;
+        volCol.style.cssText = 'width:82px;text-align:left;flex-shrink:0;padding-left:4px;';
+        volCol.innerHTML = `<div style="font-size:11.5px;color:rgba(255,255,255,0.4);white-space:nowrap;">${vol}</div>`;
         row.appendChild(volCol);
 
         // Col 3: price + change%
         const priceCol = document.createElement('div');
-        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:82px;';
-        priceCol.innerHTML = `<div style="font-size:14px;font-weight:500;">${price}</div>
-          <div style="font-size:12px;color:${chgColor};margin-top:2px;">${chgStr}</div>`;
+        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:90px;';
+        priceCol.innerHTML = `<div style="font-size:15px;font-weight:600;">${price}</div>
+          <div style="font-size:12px;font-weight:500;color:${chgColor};margin-top:3px;">${chgStr}</div>`;
         row.appendChild(priceCol);
 
         rowsDiv.appendChild(row);
