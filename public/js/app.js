@@ -559,17 +559,23 @@
       if (absDiv) absDiv.style.cssText = (absDiv.style.cssText || '') + ';height:100%;';
     });
 
-    // If no shield img found at all, inject one into the desktop right column
-    if (!sec.querySelector('img[src*="shield"], img[src*="security"]')) {
-      const rightCol = [...sec.querySelectorAll('[class*="md:flex"]')].find(d =>
-        !d.querySelector('h2') && /shrink-0|w-\[320/.test(d.className || '')
+    // Nuclear fallback: inject a fresh absolutely-positioned shield image directly in the section
+    // This shows regardless of broken span/div structure
+    if (!document.getElementById('cvx-shield-inject')) {
+      const rightCol = [...sec.querySelectorAll('div')].find(d =>
+        /shrink-0/.test(d.className || '') && /w-\[320px\]/.test(d.className || '')
       );
-      const target = rightCol || sec;
-      const img = document.createElement('img');
-      img.src = '/cdn/imgs/index-web/home/shield_v2.webp';
-      img.alt = 'Security Shield';
-      img.style.cssText = 'width:100%;max-width:420px;height:auto;object-fit:contain;display:block;';
-      target.appendChild(img);
+      const target = rightCol;
+      if (target) {
+        target.style.cssText = (target.style.cssText||'') + ';position:relative;overflow:visible;';
+        // Clear broken children and inject fresh img
+        const freshImg = document.createElement('img');
+        freshImg.id = 'cvx-shield-inject';
+        freshImg.src = '/cdn/imgs/index-web/home/shield_v2.webp';
+        freshImg.alt = 'Security Shield';
+        freshImg.style.cssText = 'width:100%;height:auto;object-fit:contain;display:block;position:relative;z-index:1;';
+        target.insertBefore(freshImg, target.firstChild);
+      }
     }
 
     const marker = document.createElement('span');
