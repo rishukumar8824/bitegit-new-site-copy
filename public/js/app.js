@@ -637,7 +637,7 @@
     });
   }
 
-  // ── 15. SECURITY SHIELD ───────────────────────────────────────────────────
+  // ── 15. SECURITY SECTION — simple static fix, no shield injection ────────
   function fixSecuritySection() {
     if (document.getElementById('cvx-security-done')) return;
     const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
@@ -645,162 +645,85 @@
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
 
-    const isMobile = window.innerWidth <= 767;
-
-    if (!isMobile) {
-      // ── DESKTOP: text+bullets LEFT, big shield RIGHT (like Bitbase) ──
-      sec.style.setProperty('overflow','visible','important');
-
-      // Find flex row: the div that is direct/near parent of BOTH the h2 col and the shrink-0 col
-      let flexRow = [...sec.querySelectorAll('div')].find(d => {
-        const ch = [...d.children];
-        return ch.length >= 2 && ch.some(c => c.contains(h2)) && ch.some(c => /shrink-0/.test(c.className||''));
-      });
-      // Fallback: find any flex div with 2+ children that contains h2
-      if (!flexRow) flexRow = [...sec.querySelectorAll('div')].find(d =>
-        d.children.length >= 2 && d.contains(h2)
-      );
-      if (!flexRow) flexRow = sec;
-
-      flexRow.style.setProperty('display','flex','important');
-      flexRow.style.setProperty('flex-direction','row','important');
-      flexRow.style.setProperty('align-items','center','important');
-      flexRow.style.setProperty('justify-content','space-between','important');
-      flexRow.style.setProperty('gap','60px','important');
-      flexRow.style.setProperty('padding','60px 40px','important');
-      flexRow.style.setProperty('max-width','1200px','important');
-      flexRow.style.setProperty('margin','0 auto','important');
-      flexRow.style.setProperty('overflow','visible','important');
-
-      // Left col = child containing h2
-      const leftCol = [...flexRow.children].find(c => c.contains(h2));
-      if (leftCol) {
-        leftCol.style.setProperty('flex','1','important');
-        leftCol.style.setProperty('min-width','0','important');
-        leftCol.style.setProperty('overflow','visible','important');
+    // Hide ALL non-text elements: shrink-0 cols, md:hidden image containers, all imgs/spans with images
+    sec.querySelectorAll('div, span').forEach(el => {
+      const cls = el.className || '';
+      if (/shrink-0/.test(cls) || /md:hidden/.test(cls)) {
+        el.style.setProperty('display','none','important');
       }
+    });
+    sec.querySelectorAll('img, canvas, video').forEach(el => el.style.setProperty('display','none','important'));
 
-      // Right col = shrink-0 div (priority) or last child not containing h2
-      let rightCol = [...flexRow.children].find(c => /shrink-0/.test(c.className||''));
-      if (!rightCol) rightCol = [...flexRow.children].reverse().find(c => !c.contains(h2));
+    // Kill aspect-ratio — this is the root cause of the gap (aspect-square div = 200×200px)
+    sec.querySelectorAll('*').forEach(el => {
+      el.style.setProperty('aspect-ratio','auto','important');
+      el.style.setProperty('height','auto','important');
+      el.style.setProperty('min-height','0','important');
+    });
 
-      if (rightCol) {
-        rightCol.style.setProperty('display','flex','important');
-        rightCol.style.setProperty('flex-shrink','0','important');
-        rightCol.style.setProperty('width','440px','important');
-        rightCol.style.setProperty('align-items','center','important');
-        rightCol.style.setProperty('justify-content','center','important');
-        rightCol.style.setProperty('overflow','visible','important');
-        rightCol.style.setProperty('transform','none','important');
-        rightCol.innerHTML = '<img src="/cdn/imgs/index-web/home/shield_mobile.jpg" alt="Security Shield" style="width:440px;height:auto;display:block;object-fit:contain;">';
-      }
+    // Clean up section itself
+    sec.style.setProperty('height','auto','important');
+    sec.style.setProperty('min-height','0','important');
+    sec.style.setProperty('padding','32px 20px','important');
 
-    } else {
-      // ── MOBILE: hide right col, inject shield above bullets ──
-      // Hide every shrink-0 div (right col)
-      [...sec.querySelectorAll('div')].forEach(d => {
-        if (/shrink-0/.test(d.className || '')) d.setProperty ? d.style.setProperty('display','none','important') : (d.style.display = 'none');
-      });
-      sec.querySelectorAll('img').forEach(img => img.style.setProperty('display','none','important'));
-
-      // Fix section + ancestors
-      sec.style.setProperty('padding-top','28px','important');
-      sec.style.setProperty('padding-bottom','28px','important');
-      sec.style.setProperty('min-height','0','important');
-      sec.style.setProperty('height','auto','important');
-      // Zero height on parent chain too (up to 4 levels)
-      let _p = sec.parentElement;
-      for (let _i = 0; _i < 4 && _p && _p !== document.body; _i++, _p = _p.parentElement) {
-        _p.style.setProperty('height','auto','important');
-        _p.style.setProperty('min-height','0','important');
-        const _cs = window.getComputedStyle(_p);
-        if (parseFloat(_cs.paddingBottom) > 8) _p.style.setProperty('padding-bottom','0','important');
-        if (parseFloat(_cs.marginBottom) > 8)  _p.style.setProperty('margin-bottom','0','important');
-      }
-
-      // Find and fix the flex row container (parent of left+right cols)
-      const flexRow = [...sec.querySelectorAll('div')].find(d => {
-        const ch = [...d.children];
-        return ch.length >= 2 && ch.some(c => /shrink-0/.test(c.className||'')) && ch.some(c => c.contains(h2));
-      });
-      if (flexRow) {
-        flexRow.style.setProperty('display','flex','important');
-        flexRow.style.setProperty('flex-direction','column','important');
-        flexRow.style.setProperty('align-items','flex-start','important');
-        flexRow.style.setProperty('height','auto','important');
-        flexRow.style.setProperty('min-height','0','important');
-        flexRow.style.setProperty('gap','0','important');
-        flexRow.style.setProperty('padding','0','important');
-      }
-
-      // Zero ALL padding/margin/gap/height inside section
-      sec.querySelectorAll('*').forEach(el => {
-        const cs = window.getComputedStyle(el);
-        if (parseFloat(cs.paddingTop) > 8)   el.style.setProperty('padding-top','0','important');
-        if (parseFloat(cs.paddingBottom) > 8) el.style.setProperty('padding-bottom','0','important');
-        if (parseFloat(cs.marginTop) > 4)     el.style.setProperty('margin-top','0','important');
-        if (parseFloat(cs.marginBottom) > 8)  el.style.setProperty('margin-bottom','4px','important');
-        const g = parseFloat(cs.rowGap || cs.gap || 0);
-        if (g > 4) { el.style.setProperty('row-gap','0','important'); el.style.setProperty('gap','0','important'); }
-        el.style.setProperty('min-height','0','important');
-        el.style.setProperty('height','auto','important');
-      });
-
-      if (!document.getElementById('cvx-mobile-shield')) {
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:12px 0 8px;';
-        const shieldImg = document.createElement('img');
-        shieldImg.id = 'cvx-mobile-shield';
-        shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
-        shieldImg.alt = 'Security Shield';
-        shieldImg.style.cssText = 'display:block;width:240px;height:auto;border-radius:6px;';
-        wrap.appendChild(shieldImg);
-
-        // Strategy: insert shield after subtitle p, then MOVE ul directly after shield
-        const subtitleP = h2.parentElement ? h2.parentElement.querySelector('p') : sec.querySelector('p');
-        const ul = sec.querySelector('ul');
-
-        if (subtitleP && subtitleP.parentNode) {
-          subtitleP.style.setProperty('margin-bottom','0','important');
-          subtitleP.parentNode.insertBefore(wrap, subtitleP.nextSibling);
-        } else if (ul) {
-          ul.parentNode.insertBefore(wrap, ul);
-        } else {
-          sec.appendChild(wrap);
-        }
-
-        // Move ul to be DIRECTLY after wrap (close the gap below shield)
-        if (ul) {
-          ul.style.setProperty('margin-top','8px','important');
-          wrap.parentNode.insertBefore(ul, wrap.nextSibling);
-        }
-      }
+    // Clean up left col (text container — the one with h2)
+    const leftCol = [...sec.querySelectorAll('div')].find(d => d.contains(h2) && !d.isSameNode(sec));
+    if (leftCol) {
+      leftCol.style.setProperty('width','100%','important');
+      leftCol.style.setProperty('max-width','100%','important');
+      leftCol.style.setProperty('flex','unset','important');
+      leftCol.style.setProperty('padding','0','important');
     }
 
     const marker = document.createElement('span');
     marker.id = 'cvx-security-done';
-    marker.dataset.mode = isMobile ? 'mobile' : 'desktop';
     marker.style.display = 'none';
     document.body.appendChild(marker);
   }
 
-  // Re-run security fix on resize (desktop↔mobile switch)
-  let _secResizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(_secResizeTimer);
-    _secResizeTimer = setTimeout(() => {
-      const marker = document.getElementById('cvx-security-done');
-      const prevMode = marker ? marker.dataset.mode : null;
-      const curMode = window.innerWidth <= 767 ? 'mobile' : 'desktop';
-      if (prevMode !== curMode) {
-        // Mode changed — reset and re-run
-        if (marker) marker.remove();
-        const mobileShield = document.getElementById('cvx-mobile-shield');
-        if (mobileShield) mobileShield.parentElement.remove();
-        fixSecuritySection();
-      }
-    }, 200);
-  });
+  // ── 16a. FOOTER ACCORDION (mobile — like Bitbase) ────────────────────────
+  function fixFooterAccordion() {
+    if (document.getElementById('cvx-footer-accordion')) return;
+    if (window.innerWidth > 767) return;
+    const footer = document.querySelector('footer');
+    if (!footer) return;
+
+    // Find section headings (Company, Product, Support, Service)
+    footer.querySelectorAll('section, div').forEach(block => {
+      const heading = block.querySelector('h3, h4, p, div');
+      if (!heading) return;
+      const txt = (heading.textContent || '').trim();
+      if (!['Company','Product','Support','Service','Resources'].includes(txt)) return;
+      if (block.dataset.cvxAccordion) return;
+      block.dataset.cvxAccordion = '1';
+
+      // Get list of links
+      const linkList = block.querySelector('ul, ol, nav');
+      if (!linkList) return;
+
+      // Style heading as accordion trigger
+      heading.style.cssText += ';display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:14px 0;font-size:15px;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.08);';
+      const arrow = document.createElement('span');
+      arrow.textContent = '›';
+      arrow.style.cssText = 'font-size:18px;transform:rotate(90deg);transition:transform 0.2s;display:inline-block;color:rgba(255,255,255,0.5);';
+      heading.appendChild(arrow);
+
+      // Hide links by default
+      linkList.style.cssText = 'max-height:0;overflow:hidden;transition:max-height 0.3s ease;';
+
+      let open = false;
+      heading.addEventListener('click', () => {
+        open = !open;
+        linkList.style.maxHeight = open ? (linkList.scrollHeight + 'px') : '0';
+        arrow.style.transform = open ? 'rotate(-90deg)' : 'rotate(90deg)';
+      });
+    });
+
+    const marker = document.createElement('span');
+    marker.id = 'cvx-footer-accordion';
+    marker.style.display = 'none';
+    document.body.appendChild(marker);
+  }
 
   // ── 16. CAROUSEL AUTO-SLIDE ───────────────────────────────────────────────
   function autoSlideCarousel() {
@@ -872,7 +795,7 @@
     injectMobileCSS();
     addMobileAppBanner();
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
-    fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
+    fixFooter(); fixFooterAccordion(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
     fixAppSection(); hideBrokenElements();
     wireTopNav(); wireWordmarks();
     loadTicker().then(() => { applyPrices(); buildMobileMarket(); fixDesktopPairs(); });
