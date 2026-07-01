@@ -679,6 +679,7 @@
       sec.style.setProperty('padding-top','28px','important');
       sec.style.setProperty('padding-bottom','28px','important');
       sec.style.setProperty('min-height','0','important');
+      sec.style.setProperty('height','auto','important');
 
       // Find and fix the flex row container (parent of left+right cols)
       const flexRow = [...sec.querySelectorAll('div')].find(d => {
