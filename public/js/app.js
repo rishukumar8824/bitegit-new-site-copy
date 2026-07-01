@@ -129,16 +129,23 @@
         const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : '—';
         const imgSrc = COIN_IMG[sym] || '';
 
+        const COLORS = { BTC:'#F7931A',ETH:'#627EEA',BNB:'#F3BA2F',SOL:'#9945FF',XRP:'#346AA9',ADA:'#0033AD' };
+        const iconColor = COLORS[sym] || '#888';
+        const iconHtml = imgSrc
+          ? `<img src="${imgSrc}" alt="${sym}" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
+            + `<div style="display:none;width:36px;height:36px;border-radius:50%;background:${iconColor};flex-shrink:0;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${sym.slice(0,1)}</div>`
+          : `<div style="width:36px;height:36px;border-radius:50%;background:${iconColor};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${sym.slice(0,1)}</div>`;
+
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:64px;';
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:64px;';
         row.innerHTML = `
           <div style="display:flex;align-items:center;gap:12px;min-width:0;">
-            <img src="${imgSrc}" alt="${sym}" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'">
-            <div style="font-size:15px;font-weight:600;letter-spacing:0.1px;">${sym}USDT</div>
+            ${iconHtml}
+            <div style="font-size:15px;font-weight:500;">${sym}USDT</div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:15px;font-weight:500;">${price}</div>
+            <div style="font-size:16px;font-weight:500;">${price}</div>
             <div style="font-size:13px;color:${chg >= 0 ? UP : DOWN};margin-top:2px;">${chgStr}</div>
           </div>`;
         rowsDiv.appendChild(row);
