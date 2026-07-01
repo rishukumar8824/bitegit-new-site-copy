@@ -636,20 +636,28 @@
       // Also hide any remaining img in section
       sec.querySelectorAll('img').forEach(img => { img.style.display = 'none'; });
 
-      // Step 2: make section + ancestors overflow:visible so nothing clips
+      // Step 2: make section + ancestors overflow:visible, remove extra padding
       let sp = sec;
       for (let i = 0; i < 6; i++) {
         if (!sp || sp === document.body) break;
         sp.style.overflow = 'visible';
         sp = sp.parentElement;
       }
+      // Remove extra padding/margin from section children that cause the gap
+      [...sec.querySelectorAll('div')].forEach(d => {
+        const cs = getComputedStyle(d);
+        if (parseInt(cs.paddingTop) > 40 || parseInt(cs.marginTop) > 40) {
+          d.style.paddingTop = '0';
+          d.style.marginTop = '0';
+        }
+      });
 
       // Step 3: find the <ul> that contains bullets
       const ul = sec.querySelector('ul');
 
       // Step 4: build centered shield wrapper
       const wrap = document.createElement('div');
-      wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:8px 0 12px;';
+      wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:4px 0 0;';
       const shieldImg = document.createElement('img');
       shieldImg.id = 'cvx-mobile-shield';
       shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
