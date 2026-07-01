@@ -516,7 +516,7 @@
     }
   }
 
-  // Fix security section — show security_v7.webp in the empty aspect-square div
+  // Fix security section — show security_v7.webp same as Bitbase (large shield on right)
   function fixSecuritySection() {
     if (document.getElementById('cvx-security-done')) return;
     const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
@@ -524,28 +524,55 @@
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
 
-    // Ensure dark background on section
+    // Ensure dark background
     sec.style.backgroundColor = '#0b0e11';
 
-    // Fill the empty aspect-square div with the correct security webp
-    const emptyDiv = [...sec.querySelectorAll('div')].find(d =>
-      !d.children.length && !d.textContent.trim() && /aspect-square/.test(d.className || '')
-    );
-    if (emptyDiv) {
-      const img = document.createElement('img');
-      img.src = '/cdn/imgs/index-web/home/security_v7.webp';
-      img.alt = 'Security Shield';
-      img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;';
-      emptyDiv.appendChild(img);
-    }
-    // Also reveal the opacity-0 img if present
+    // Find the right-side image container — look for any flex child that contains the image placeholder
+    // It might be: div with aspect-square, or a flex-1/w-1/2 column on the right
+    let imgContainer = null;
+
+    // Try 1: find the opacity-0 img (React placeholder pattern) and get its wrapper
     const secImg = sec.querySelector('img[src*="security_v7"]');
     if (secImg) {
       secImg.classList.remove('opacity-0');
       secImg.classList.add('opacity-100');
       const skeleton = secImg.closest('span')?.querySelector('.animate-pulse');
       if (skeleton) skeleton.style.display = 'none';
+      imgContainer = secImg.closest('span') || secImg.parentElement;
     }
+
+    // Try 2: find empty aspect-square div
+    if (!imgContainer) {
+      imgContainer = [...sec.querySelectorAll('div')].find(d =>
+        !d.children.length && !d.textContent.trim() && /aspect-square/.test(d.className || '')
+      );
+    }
+
+    // Try 3: find any flex child of section that has no text — the right column
+    if (!imgContainer) {
+      const secFlex = sec.querySelector('.flex');
+      if (secFlex) {
+        const cols = [...secFlex.children];
+        // Right column = last child that has no h2/p/bullet text
+        imgContainer = cols.find(c => !c.querySelector('h2') && !c.querySelector('p'));
+      }
+    }
+
+    if (imgContainer) {
+      // Size the container properly so shield is large like Bitbase
+      imgContainer.style.cssText = (imgContainer.style.cssText || '') +
+        ';min-width:380px;min-height:420px;max-width:480px;width:100%;position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:visible;';
+
+      // Only inject img if not already there
+      if (!imgContainer.querySelector('img[src*="security_v7"]')) {
+        const img = document.createElement('img');
+        img.src = '/cdn/imgs/index-web/home/security_v7.webp';
+        img.alt = 'Security Shield';
+        img.style.cssText = 'width:100%;max-width:460px;height:auto;object-fit:contain;display:block;';
+        imgContainer.appendChild(img);
+      }
+    }
+
     const marker = document.createElement('span');
     marker.id = 'cvx-security-done';
     marker.style.display = 'none';
