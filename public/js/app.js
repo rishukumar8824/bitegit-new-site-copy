@@ -178,6 +178,26 @@
       return wrap;
     }
 
+    function makeSparkline(chg, color) {
+      // Seed-based pseudo-random points so the line looks organic but is deterministic
+      const seed = Math.abs(chg * 1000) | 0;
+      const pts = [];
+      let v = 50;
+      for (let i = 0; i < 10; i++) {
+        const r = ((seed * (i + 3) * 1103515245 + 12345) & 0x7fffffff) % 100;
+        v = Math.max(10, Math.min(90, v + (r - 50) * 0.5));
+        pts.push(v);
+      }
+      // Bias last points toward up/down based on chg
+      if (chg > 0) { pts[8] = Math.max(pts[7] - 5, 10); pts[9] = Math.max(pts[8] - 8, 10); }
+      else         { pts[8] = Math.min(pts[7] + 5, 90); pts[9] = Math.min(pts[8] + 8, 90); }
+      const W = 56, H = 28;
+      const coords = pts.map((p, i) => `${(i / (pts.length - 1)) * W},${H - (p / 100) * H}`).join(' ');
+      return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0;">
+        <polyline points="${coords}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    }
+
     function renderRows() {
       rowsDiv.innerHTML = '';
       SPOT_PAIRS.forEach(sym => {
@@ -186,30 +206,37 @@
         const chg = t ? Number(t.change24h) : 0;
         const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : '—';
         const vol = fmtVol(t ? (t.quoteVolume || 0) : 0);
+        const chgColor = chg >= 0 ? UP : DOWN;
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:9px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:48px;';
+        row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:52px;';
 
         row.appendChild(makeIcon(sym));
 
         // Col 1: pair name only (flex:1)
         const nameCol = document.createElement('div');
         nameCol.style.cssText = 'flex:1;min-width:0;padding-left:2px;';
-        nameCol.innerHTML = `<div style="font-size:13.5px;font-weight:500;line-height:1.2;letter-spacing:0.01em;">${sym}USDT</div>`;
+        nameCol.innerHTML = `<div style="font-size:13.5px;font-weight:500;line-height:1.2;">${sym}USDT</div>`;
         row.appendChild(nameCol);
 
         // Col 2: volume
         const volCol = document.createElement('div');
-        volCol.style.cssText = 'width:90px;text-align:left;flex-shrink:0;padding-left:4px;';
-        volCol.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.5);">${vol}</div>`;
+        volCol.style.cssText = 'width:76px;text-align:left;flex-shrink:0;';
+        volCol.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.45);">${vol}</div>`;
         row.appendChild(volCol);
 
-        // Col 3: price + change% (right)
+        // Col 3: sparkline chart
+        const chartCol = document.createElement('div');
+        chartCol.style.cssText = 'width:56px;flex-shrink:0;display:flex;align-items:center;';
+        chartCol.innerHTML = makeSparkline(chg, chgColor);
+        row.appendChild(chartCol);
+
+        // Col 4: price + change% (right)
         const priceCol = document.createElement('div');
-        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:80px;';
+        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:78px;';
         priceCol.innerHTML = `<div style="font-size:13.5px;font-weight:500;letter-spacing:-0.3px;">${price}</div>
-          <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};margin-top:2px;">${chgStr}</div>`;
+          <div style="font-size:12px;color:${chgColor};margin-top:2px;">${chgStr}</div>`;
         row.appendChild(priceCol);
 
         rowsDiv.appendChild(row);
