@@ -3177,19 +3177,25 @@ function renderOffers(data, append) {
           </div>
           <div class="bbt-card-time">&#8987; ${repTime}</div>
         </div>
-        <div class="bbt-card-price-wrap">
-          <span class="bbt-card-price-lbl">INR</span>
-          <span class="bbt-card-price-val">${Number(offer.price).toFixed(2)}</span>
+        <div class="bbt-card-body">
+          <div class="bbt-card-left">
+            <div class="bbt-card-price-wrap">
+              <span class="bbt-card-price-lbl">INR</span>
+              <span class="bbt-card-price-val">${Number(offer.price).toFixed(2)}</span>
+            </div>
+            <div class="bbt-card-row"><span class="bbt-card-lbl">Available</span><span class="bbt-card-val">${Number(offer.available).toFixed(4)} ${offer.asset}</span></div>
+            <div class="bbt-card-row"><span class="bbt-card-lbl">Limits</span><span class="bbt-card-val">${Number(offer.minLimit).toFixed(2)} - ${Number(offer.maxLimit).toFixed(2)} INR</span></div>
+            <div class="bbt-card-pays">${mobPayRows}</div>
+          </div>
+          <div class="bbt-card-right">
+            <button type="button"
+              class="bbt-card-btn offer-action-btn ${data.side==='sell'?'bbt-card-btn-sell':''}"
+              data-offer-id="${offer.id}"
+              ${isOwnAd ? 'disabled' : ''}>
+              ${data.side==='buy'?'Buy':'Sell'} ${offer.asset}
+            </button>
+          </div>
         </div>
-        <div class="bbt-card-row"><span class="bbt-card-lbl">Available</span><span class="bbt-card-val">${Number(offer.available).toFixed(4)} ${offer.asset}</span></div>
-        <div class="bbt-card-row"><span class="bbt-card-lbl">Limits</span><span class="bbt-card-val">${Number(offer.minLimit).toFixed(2)} - ${Number(offer.maxLimit).toFixed(2)} INR</span></div>
-        <div class="bbt-card-pays">${mobPayRows}</div>
-        <button type="button"
-          class="bbt-card-btn offer-action-btn ${data.side==='sell'?'bbt-card-btn-sell':''}"
-          data-offer-id="${offer.id}"
-          ${isOwnAd ? 'disabled' : ''}>
-          ${data.side==='buy'?'Buy':'Sell'} ${offer.asset}
-        </button>
       </article>
     `);
   });

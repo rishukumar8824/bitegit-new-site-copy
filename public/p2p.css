@@ -4437,10 +4437,20 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-card-stats { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px; }
 .bbt-card-time { font-size: 11px; color: rgba(255,255,255,0.35); white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
 
+/* Card body: left info + right button */
+.bbt-card-body {
+  display: flex; align-items: stretch; gap: 12px;
+}
+.bbt-card-left { flex: 1; min-width: 0; }
+.bbt-card-right {
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; width: 88px;
+}
+
 /* Price row */
-.bbt-card-price-wrap { display: flex; align-items: baseline; gap: 5px; margin: 10px 0 8px; }
+.bbt-card-price-wrap { display: flex; align-items: baseline; gap: 5px; margin: 0 0 8px; }
 .bbt-card-price-lbl { font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 400; }
-.bbt-card-price-val { font-size: 28px; font-weight: 700; color: #eaecef; letter-spacing: -0.5px; line-height: 1; }
+.bbt-card-price-val { font-size: 24px; font-weight: 700; color: #eaecef; letter-spacing: -0.5px; line-height: 1; }
 
 /* Info rows */
 .bbt-card-row {
@@ -4451,21 +4461,21 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-card-val { color: rgba(255,255,255,0.8); font-weight: 400; }
 
 /* Payment methods */
-.bbt-card-pays { margin: 8px 0 12px; display: flex; flex-direction: column; gap: 5px; }
-.bbt-mob-pay { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.75); }
+.bbt-card-pays { margin: 8px 0 0; display: flex; flex-direction: column; gap: 5px; }
+.bbt-mob-pay { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.75); }
 .bbt-pay-bar {
   width: 3px; height: 14px; border-radius: 2px;
   background: #F0B90B; flex-shrink: 0;
 }
 
-/* Action button */
+/* Action button — right side, not full-width */
 .bbt-card-btn {
-  display: block; width: 100%;
-  padding: 13px 0; margin-top: 4px;
+  display: block; width: 88px;
+  padding: 10px 0;
   border-radius: 6px; border: none; cursor: pointer;
-  font-size: 15px; font-weight: 700; letter-spacing: 0.01em;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.01em;
   background: #2ebd85; color: #fff;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s; white-space: nowrap;
 }
 .bbt-card-btn.bbt-card-btn-sell { background: #f6465d; }
 .bbt-card-btn:disabled { opacity: 0.45; cursor: not-allowed; }
