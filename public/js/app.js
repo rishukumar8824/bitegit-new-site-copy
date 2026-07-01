@@ -703,11 +703,20 @@
       });
       sec.querySelectorAll('img').forEach(img => img.style.setProperty('display','none','important'));
 
-      // Fix section padding
+      // Fix section + ancestors
       sec.style.setProperty('padding-top','28px','important');
       sec.style.setProperty('padding-bottom','28px','important');
       sec.style.setProperty('min-height','0','important');
       sec.style.setProperty('height','auto','important');
+      // Zero height on parent chain too (up to 4 levels)
+      let _p = sec.parentElement;
+      for (let _i = 0; _i < 4 && _p && _p !== document.body; _i++, _p = _p.parentElement) {
+        _p.style.setProperty('height','auto','important');
+        _p.style.setProperty('min-height','0','important');
+        const _cs = window.getComputedStyle(_p);
+        if (parseFloat(_cs.paddingBottom) > 8) _p.style.setProperty('padding-bottom','0','important');
+        if (parseFloat(_cs.marginBottom) > 8)  _p.style.setProperty('margin-bottom','0','important');
+      }
 
       // Find and fix the flex row container (parent of left+right cols)
       const flexRow = [...sec.querySelectorAll('div')].find(d => {
