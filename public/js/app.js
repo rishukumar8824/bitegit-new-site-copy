@@ -523,6 +523,10 @@
     if (!h2) return;
     const sec = h2.closest('section') || h2.parentElement;
     if (!sec) return;
+
+    // Ensure dark background on section
+    sec.style.backgroundColor = '#0b0e11';
+
     // Fill the empty aspect-square div with the correct security webp
     const emptyDiv = [...sec.querySelectorAll('div')].find(d =>
       !d.children.length && !d.textContent.trim() && /aspect-square/.test(d.className || '')
@@ -548,14 +552,74 @@
     document.body.appendChild(marker);
   }
 
+  // Auto-slide promo banner carousel right-to-left (like Bitbase)
+  function autoSlideCarousel() {
+    if (document.getElementById('cvx-carousel-done')) return;
+
+    // Find all overflow-hidden containers that wrap a horizontal flex of multiple children
+    const candidates = [...document.querySelectorAll('div')].filter(div => {
+      const cs = getComputedStyle(div);
+      if (cs.overflow !== 'hidden' && !/(overflow-hidden)/.test(div.className || '')) return false;
+      const inner = div.firstElementChild;
+      if (!inner) return false;
+      const ics = getComputedStyle(inner);
+      return (ics.display === 'flex' || /\bflex\b/.test(inner.className || '')) && inner.children.length >= 2;
+    });
+
+    candidates.forEach(container => {
+      const track = container.firstElementChild;
+      const slides = [...track.children];
+      if (slides.length < 2) return;
+
+      // Already wired?
+      if (container.dataset.cvxCarousel) return;
+      container.dataset.cvxCarousel = '1';
+
+      // Make sure track has transition
+      track.style.transition = 'transform 0.5s ease';
+      track.style.willChange = 'transform';
+
+      let current = 0;
+      const total = slides.length;
+
+      // Find dot indicators if any (siblings of container)
+      const parent = container.parentElement;
+      const dots = parent ? [...parent.querySelectorAll('[class*="rounded-full"], [class*="dot"]')].filter(d => {
+        const r = d.getBoundingClientRect();
+        return r.width <= 12 && r.height <= 12;
+      }) : [];
+
+      const goTo = (idx) => {
+        current = (idx + total) % total;
+        track.style.transform = `translateX(-${current * (100 / total)}%)`;
+        // Update dots if found
+        dots.forEach((dot, i) => {
+          dot.style.opacity = i === current ? '1' : '0.4';
+          dot.style.transform = i === current ? 'scaleX(2.5)' : 'scaleX(1)';
+        });
+      };
+
+      // Set initial dot state
+      goTo(0);
+
+      // Auto-advance every 3 seconds
+      setInterval(() => goTo(current + 1), 3000);
+    });
+
+    const marker = document.createElement('span');
+    marker.id = 'cvx-carousel-done';
+    marker.style.display = 'none';
+    document.body.appendChild(marker);
+  }
+
   function start() {
     injectMobileCSS();
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
-    fixFooter(); fixSecuritySection();
+    fixFooter(); fixSecuritySection(); autoSlideCarousel();
     wireTopNav(); wireWordmarks();
     loadTicker().then(() => { applyPrices(); buildMobileMarket(); });
     wireTrade(); revealImages();
-    setInterval(() => { fixHeaderLogo(); addHamburger(); wireTopNav(); wireWordmarks(); wireTrade(); revealImages(); wirePairsTabs(); }, 3000);
+    setInterval(() => { fixHeaderLogo(); addHamburger(); wireTopNav(); wireWordmarks(); wireTrade(); revealImages(); wirePairsTabs(); autoSlideCarousel(); }, 3000);
     setInterval(async () => { await loadTicker(); applyPrices(); }, 5000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
