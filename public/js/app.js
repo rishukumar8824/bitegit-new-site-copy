@@ -42,7 +42,7 @@
   function injectMobileCSS() {
     if (document.getElementById('cvx-mobile-css')) return;
 
-    // Mark the desktop Popular Pairs flex container so we can target it in CSS
+    // Mark the desktop Popular Pairs flex container
     document.querySelectorAll('div').forEach(div => {
       const cls = div.className || '';
       if (cls.includes('justify-between') && cls.includes('max-w-[1200px]') && cls.includes('mx-auto') && cls.includes('gap-5') && !div.id) {
@@ -50,19 +50,29 @@
       }
     });
 
-    // Mark desktop left nav links (shown on desktop, should be hidden on mobile)
+    // Mark desktop nav links container (first div inside left-main)
     const leftMain = document.querySelector('[data-nav-left-main="true"]');
-    if (leftMain) leftMain.id = 'cvx-nav-left-main';
+    if (leftMain) {
+      leftMain.id = 'cvx-nav-left-main';
+      const navLinksDiv = leftMain.querySelector('div');
+      if (navLinksDiv) navLinksDiv.setAttribute('data-cvx-nav-links', '1');
+    }
+
+    // Mark download + globe icon buttons in right box (they have .relative.group class)
+    const rightBox = document.querySelector('[data-nav-right-box]');
+    if (rightBox) {
+      rightBox.querySelectorAll('.relative.group').forEach(el => el.setAttribute('data-cvx-icon-btn', '1'));
+    }
 
     const s = document.createElement('style');
     s.id = 'cvx-mobile-css';
     s.textContent = `
       @media (max-width: 767px) {
-        [data-nav-right-box] [role="separator"] { display: none !important; }
+        [data-cvx-nav-links] { display: none !important; }
         header a[href="login.html"] { display: none !important; }
-        [data-nav-right-box] .relative.group { display: none !important; }
+        [data-nav-right-box] [role="separator"] { display: none !important; }
+        [data-cvx-icon-btn] { display: none !important; }
         #cvx-desktop-pairs { display: none !important; }
-        #cvx-nav-left-main > a:not([href="index.html"]) { display: none !important; }
       }
     `;
     document.head.appendChild(s);
