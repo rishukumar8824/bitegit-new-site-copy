@@ -4449,3 +4449,30 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* Cards container on mobile — no gap between cards */
 #p2pCards { background: #000; }
+
+/* ── Scroll-hide chrome on mobile ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .p2p-header {
+    transition: transform 0.25s ease;
+    will-change: transform;
+  }
+  .p2p-subnav {
+    transition: transform 0.25s ease;
+    will-change: transform;
+  }
+  .p2p-mobile-bottom-nav {
+    transition: transform 0.25s ease;
+    will-change: transform;
+  }
+
+  body.p2p-chrome-hidden .p2p-header {
+    transform: translateY(-100%);
+  }
+  /* Subnav is sticky at top:60px; push it fully off screen upward */
+  body.p2p-chrome-hidden .p2p-subnav {
+    transform: translateY(calc(-100% - 60px));
+  }
+  body.p2p-chrome-hidden .p2p-mobile-bottom-nav {
+    transform: translateY(100%);
+  }
+}

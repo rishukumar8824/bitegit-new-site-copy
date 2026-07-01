@@ -6154,6 +6154,33 @@ window.addEventListener('pagehide', () => {
   // For non-logged-in users, showLoginPrompt is shown when they open the orders screen.
 })();
 
+// ── Scroll-hide chrome on mobile (header + subnav up, bottom nav down) ──
+(function setupScrollHide() {
+  var lastY = 0;
+  var ticking = false;
+  var bodyEl = document.body;
+  window.addEventListener('scroll', function() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function() {
+      var y = window.scrollY || window.pageYOffset || 0;
+      // Only hide when no overlay/modal is open
+      var modalOpen = bodyEl.classList.contains('mob-screen-open') ||
+                      bodyEl.classList.contains('deal-open') ||
+                      document.querySelector('.p2p-auth-overlay:not(.hidden)');
+      if (!modalOpen) {
+        if (y > lastY && y > 60) {
+          bodyEl.classList.add('p2p-chrome-hidden');
+        } else if (y < lastY) {
+          bodyEl.classList.remove('p2p-chrome-hidden');
+        }
+      }
+      lastY = y;
+      ticking = false;
+    });
+  }, { passive: true });
+})();
+
 // ── Online presence ping — marks current user as online ──────────────
 function _p2pPing() {
   if (currentUser && document.visibilityState !== 'hidden') {
@@ -8279,7 +8306,7 @@ window.deleteMobAd = async function(offerId) {
           '</div>',
           '<div style="display:flex;flex-direction:column;gap:0.35rem;">',
             '<div style="font-size:0.76rem;color:rgba(255,255,255,0.45);line-height:1.5;">* The other party has passed our real-name and video identity verification.</div>',
-            '<div style="font-size:0.76rem;color:rgba(255,255,255,0.45);line-height:1.5;">* The cryptocurrency in this order is held in escrow by BITEGIT P2P and your payment is secure.</div>',
+            '<div style="font-size:0.76rem;color:rgba(255,255,255,0.45);line-height:1.5;">* The cryptocurrency in this order is held in escrow by BITCOVEX P2P and your payment is secure.</div>',
           '</div>',
         '</div>',
         // Order details card
@@ -8336,7 +8363,7 @@ window.deleteMobAd = async function(offerId) {
           '</div>',
           '<div style="flex:1;">',
             '<p style="margin:0 0 0.3rem;font-size:0.88rem;color:#fff;font-weight:700;line-height:1.45;">Exit the App and transfer funds to the following recipient\'s account.</p>',
-            '<p style="margin:0 0 0.7rem;font-size:0.75rem;color:rgba(255,255,255,0.38);line-height:1.55;">During the transfer, please avoid using terms like BTC, USDT, BITEGIT, or similar, in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>',
+            '<p style="margin:0 0 0.7rem;font-size:0.75rem;color:rgba(255,255,255,0.38);line-height:1.55;">During the transfer, please avoid using terms like BTC, USDT, BITCOVEX, or similar, in the remarks, to prevent issues like the payment being intercepted or the account being frozen.</p>',
             // Transfer detail card
             '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:0.1rem 0.9rem;margin-bottom:0.7rem;">',
               '<div id="bfPayDetails"></div>',
