@@ -35,6 +35,7 @@
   };
   const SPOT_PAIRS = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA'];
   const COIN_COLORS = { BTC:'#F7931A',ETH:'#627EEA',BNB:'#F3BA2F',SOL:'#9945FF',XRP:'#346AA9',ADA:'#0033AD' };
+  const COIN_NAME = { BTC:'Bitcoin',ETH:'Ethereum',BNB:'BNB',SOL:'Solana',XRP:'XRP',ADA:'Cardano' };
 
   // ── 1. MOBILE CSS — hide desktop elements on mobile ──────────────────────
   function injectMobileCSS() {
@@ -137,21 +138,24 @@
         const imgSrc = COIN_IMG[sym] || '';
         const iconColor = COIN_COLORS[sym] || '#888';
         const iconHtml = imgSrc
-          ? `<img src="${imgSrc}" alt="${sym}" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
-             <div style="display:none;width:36px;height:36px;border-radius:50%;background:${iconColor};flex-shrink:0;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${sym[0]}</div>`
-          : `<div style="width:36px;height:36px;border-radius:50%;background:${iconColor};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${sym[0]}</div>`;
+          ? `<img src="${imgSrc}" alt="${sym}" style="width:32px;height:32px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+             <div style="display:none;width:32px;height:32px;border-radius:50%;background:${iconColor};flex-shrink:0;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">${sym[0]}</div>`
+          : `<div style="width:32px;height:32px;border-radius:50%;background:${iconColor};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">${sym[0]}</div>`;
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:64px;';
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:52px;';
         row.innerHTML = `
-          <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
             ${iconHtml}
-            <div style="font-size:15px;font-weight:500;">${sym}USDT</div>
+            <div>
+              <div style="font-size:14px;font-weight:500;line-height:1.2;">${sym}USDT</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">${COIN_NAME[sym] || sym}</div>
+            </div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:16px;font-weight:500;">${price}</div>
-            <div style="font-size:13px;color:${chg >= 0 ? UP : DOWN};margin-top:2px;">${chgStr}</div>
+            <div style="font-size:14px;font-weight:500;">${price}</div>
+            <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};margin-top:2px;">${chgStr}</div>
           </div>`;
         rowsDiv.appendChild(row);
       });
@@ -176,7 +180,7 @@
         renderRows();
       };
       tab.setAttribute('data-cvxtab', i);
-      tab.style.cssText = 'padding:12px 10px;font-size:15px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;color:rgba(255,255,255,0.4);font-weight:500;';
+      tab.style.cssText = 'padding:10px 10px;font-size:14px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;color:rgba(255,255,255,0.4);font-weight:500;';
       tab.addEventListener('click', setActive);
       tabBar.appendChild(tab);
       if (i === 0) setTimeout(setActive, 0);
@@ -534,6 +538,19 @@
     }
   }
 
+  // ── 14b. FIX TRUNCATED TEXT IN SECURITY SECTION ──────────────────────────
+  function fixSecurityText() {
+    const h2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Your Assets'));
+    if (!h2) return;
+    const sec = h2.closest('section') || h2.parentElement;
+    if (!sec) return;
+    sec.querySelectorAll('p, span').forEach(el => {
+      el.style.webkitLineClamp = 'unset';
+      el.style.overflow = 'visible';
+      el.style.display = el.tagName === 'SPAN' ? 'inline' : 'block';
+    });
+  }
+
   // ── 15. SECURITY SHIELD ───────────────────────────────────────────────────
   function fixSecuritySection() {
     if (document.getElementById('cvx-security-done')) return;
@@ -628,7 +645,7 @@
     injectMobileCSS();
     addMobileAppBanner();
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
-    fixFooter(); fixSecuritySection(); autoSlideCarousel();
+    fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
     fixAppSection(); hideBrokenElements();
     wireTopNav(); wireWordmarks();
     loadTicker().then(() => { applyPrices(); buildMobileMarket(); fixDesktopPairs(); });
