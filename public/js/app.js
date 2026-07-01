@@ -31,12 +31,10 @@
     BNB: '/cdn/1/currency/11628b76-313d-44a6-a87c-f2cc9e6ac75b-1774002833218.png',
     SOL: '/cdn/1/currency/0f9dbb43-7c86-456a-bcaa-64d5bb61a01e-1774002879582.png',
     ETH: '/cdn/1/currency/65b8e63b-5356-4d33-9cb8-aa19585ffaf0-1774002774151.png',
-    DOT: '/cdn/1/currency/bb4a7896-ae19-4984-93a2-faa929232511-1774003142263.png',
-    HBAR: '/cdn/1/currency/3772da34-bdb1-4957-b64d-aa82d45986f4-1774003084075.png',
-    LINK: '/cdn/1/currency/4ce211ab-484f-4c97-94a8-6f06b276350f-1774003060941.png',
-    XLM: '/cdn/1/currency/711e7039-09f0-455a-bfb2-e77092318b05-1774003037416.png',
+    XRP: 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png',
+    ADA: 'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
   };
-  const SPOT_PAIRS = ['BTC', 'ETH', 'BNB', 'SOL', 'LINK', 'DOT', 'XLM', 'HBAR'];
+  const SPOT_PAIRS = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA'];
 
   // Inject one-time CSS for mobile header cleanup and desktop pairs section hide on mobile
   function injectMobileCSS() {
@@ -62,7 +60,22 @@
     const rightBox = document.querySelector('[data-nav-right-box]');
     if (rightBox) {
       rightBox.querySelectorAll('.relative.group').forEach(el => el.setAttribute('data-cvx-icon-btn', '1'));
+      // Also mark the lang-currency-picker (globe icon) which uses a different class
+      const langPicker = rightBox.querySelector('.lang-currency-picker');
+      if (langPicker) langPicker.setAttribute('data-cvx-icon-btn', '1');
     }
+
+    // Mark the mobile "More >" link that comes from existing HTML (below the desktop pairs / mobile coin rows area)
+    // It's a div.mt-4 with text-center containing an <a href="market.html"> with "More" text
+    document.querySelectorAll('div').forEach(div => {
+      const cls = div.className || '';
+      if ((cls.includes('mt-4') || cls.includes('mt-6')) && cls.includes('text-center')) {
+        const link = div.querySelector('a[href="market.html"]');
+        if (link && /More/.test(link.textContent)) {
+          div.setAttribute('data-cvx-html-more', '1');
+        }
+      }
+    });
 
     const s = document.createElement('style');
     s.id = 'cvx-mobile-css';
@@ -73,6 +86,7 @@
         [data-nav-right-box] [role="separator"] { display: none !important; }
         [data-cvx-icon-btn] { display: none !important; }
         #cvx-desktop-pairs { display: none !important; }
+        [data-cvx-html-more] { display: none !important; }
       }
     `;
     document.head.appendChild(s);
@@ -126,7 +140,7 @@
             </div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:14px;">$${price}</div>
+            <div style="font-size:14px;">${price}</div>
             <div style="font-size:12px;color:${chg >= 0 ? UP : DOWN};">${chgStr}</div>
           </div>`;
         rowsDiv.appendChild(row);
