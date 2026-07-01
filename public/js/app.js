@@ -629,29 +629,46 @@
 
     // Mobile: inject centered shield before first bullet item
     if (window.innerWidth <= 767 && !document.getElementById('cvx-mobile-shield')) {
-      // Find any existing shield img and hide/remove clipped one
+      // Hide ALL existing imgs in section + bust every overflow:hidden ancestor
       sec.querySelectorAll('img').forEach(img => {
-        const cs = getComputedStyle(img.parentElement || img);
-        if (cs.overflow === 'hidden') img.parentElement.style.overflow = 'visible';
-        img.style.cssText = 'display:none;';
+        img.style.display = 'none';
+        let p = img.parentElement;
+        for (let i = 0; i < 8; i++) {
+          if (!p || p === document.body) break;
+          p.style.overflow = 'visible';
+          p.style.height = 'auto';
+          p.style.maxHeight = 'none';
+          p = p.parentElement;
+        }
       });
-      // Find first bullet (Transaction Security li or div with bullet)
-      const firstBullet = [...sec.querySelectorAll('li, [class*="bullet"], [class*="dot"]')].find(el =>
+      // Also hide any span/div wrapping that clips the old shield
+      sec.querySelectorAll('span[class*="relative"], span[class*="inline-block"], span[class*="overflow"]').forEach(sp => {
+        sp.style.overflow = 'visible';
+        sp.style.display = 'block';
+        sp.style.height = 'auto';
+      });
+
+      // Find first bullet (Transaction Security)
+      const firstBullet = [...sec.querySelectorAll('li')].find(el =>
         el.textContent.includes('Transaction Security')
-      ) || sec.querySelector('ul') || null;
+      ) || sec.querySelector('ul');
+
+      // Wrapper div for centering with no clip
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;justify-content:center;align-items:center;padding:20px 0 24px;overflow:visible;width:100%;';
 
       const shieldImg = document.createElement('img');
       shieldImg.id = 'cvx-mobile-shield';
       shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
       shieldImg.alt = 'Security Shield';
-      shieldImg.style.cssText = 'display:block;width:220px;height:auto;margin:24px auto 28px;object-fit:contain;';
+      shieldImg.style.cssText = 'display:block;width:240px;height:auto;object-fit:contain;border-radius:4px;';
+      wrap.appendChild(shieldImg);
 
       if (firstBullet) {
         const bulletParent = firstBullet.closest('ul') || firstBullet.parentElement;
-        bulletParent.parentElement.insertBefore(shieldImg, bulletParent);
+        bulletParent.parentElement.insertBefore(wrap, bulletParent);
       } else {
-        // Fallback: insert after heading block
-        h2.parentElement.insertBefore(shieldImg, h2.nextSibling);
+        sec.appendChild(wrap);
       }
     }
 
