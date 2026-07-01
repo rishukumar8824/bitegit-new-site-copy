@@ -649,12 +649,12 @@
 
       // Step 4: build centered shield wrapper
       const wrap = document.createElement('div');
-      wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:28px 0 24px;';
+      wrap.style.cssText = 'width:100%;display:flex;justify-content:center;padding:8px 0 12px;';
       const shieldImg = document.createElement('img');
       shieldImg.id = 'cvx-mobile-shield';
-      shieldImg.src = '/cdn/imgs/index-web/home/shield_mobile.jpg';
+      shieldImg.src = '/cdn/imgs/index-web/home/shield_v2.webp';
       shieldImg.alt = 'Security Shield';
-      shieldImg.style.cssText = 'display:block;width:240px;height:auto;border-radius:4px;';
+      shieldImg.style.cssText = 'display:block;width:260px;height:auto;';
       wrap.appendChild(shieldImg);
 
       // Step 5: insert BEFORE the ul (above bullets)
