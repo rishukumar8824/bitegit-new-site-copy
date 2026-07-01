@@ -580,7 +580,7 @@
       @media (max-width: 767px) {
         footer .flex.w-full.justify-between { flex-direction: column !important; gap: 0 !important; padding: 0 !important; }
         footer .flex.w-full.justify-between > section:first-child { max-width: 100% !important; margin: 0 0 16px 0 !important; padding-bottom: 16px !important; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        [data-cvx-footer-section] { margin: 0 !important; padding: 0 !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; width: 100% !important; }
+        [data-cvx-footer-section] { margin: 0 !important; padding: 0 !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; width: 100% !important; max-width: 100% !important; }
         [data-cvx-footer-links] { display: none; padding: 0 0 4px !important; }
         [data-cvx-footer-links] a { padding: 10px 0 !important; display: block; font-size: 14px; color: rgba(255,255,255,0.6); }
         [data-cvx-footer-title] { display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; padding: 14px 0 !important; margin: 0 !important; cursor: pointer; font-size: 15px !important; font-weight: 600 !important; }
@@ -615,6 +615,13 @@
       logoSec.querySelectorAll('div').forEach(el => {
         const img = el.querySelector('img[src^="data:image"]');
         if (img) el.setAttribute('data-cvx-footer-qr', '1');
+      });
+      // Hide "Scan to Download the APP" text and any similar download text
+      logoSec.querySelectorAll('div, p, span').forEach(el => {
+        const txt = (el.textContent || '').trim().toLowerCase();
+        if (txt.includes('scan to download') || txt === 'scan to download the app') {
+          el.setAttribute('data-cvx-footer-qr', '1');
+        }
       });
       // Hide "Community" heading text
       logoSec.querySelectorAll('h1,h2,h3,h4,h5,p,span,div').forEach(el => {
