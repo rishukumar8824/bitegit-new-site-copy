@@ -42,7 +42,7 @@ const _P2P_BENEFITS_HTML = (function() {
     +       '<div class="p2p-why-item"><strong>Trade your way:</strong> Pick offers, payment methods, and prices that suit you — you\'re in control.</div>'
     +     '</div>'
     +   '</div>'
-    +   '<div class="p2p-benefit-img"><img src="/img/p2p-people.png" alt="BITCOVEX P2P" loading="lazy"/></div>'
+    +   '<div class="p2p-benefit-img"><div class="bft-img-wrap"><img src="/img/p2p-people.png" alt="BITCOVEX P2P" loading="lazy"/><span class="bft-badge">BITCOVEX P2P</span></div></div>'
     + '</div>'
 
     /* ── Section 4: Block Trading (text left + image right) ── */
@@ -56,7 +56,7 @@ const _P2P_BENEFITS_HTML = (function() {
     +       '<div class="p2p-why-item"><strong>Secure escrow:</strong> Funds are only released after confirmation, ensuring worry-free trades.</div>'
     +     '</div>'
     +   '</div>'
-    +   '<div class="p2p-benefit-img"><img src="/img/p2p-fees.png" alt="BITCOVEX P2P Block Trading" loading="lazy"/></div>'
+    +   '<div class="p2p-benefit-img"><div class="bft-img-wrap"><img src="/img/p2p-fees.png" alt="BITCOVEX P2P Block Trading" loading="lazy"/><span class="bft-badge">BITCOVEX 0% FEES</span></div></div>'
     + '</div>'
 
     + '</div>';
@@ -2284,7 +2284,7 @@ function setP2PNavOpen(open) {
   const shouldOpen = Boolean(open);
   document.body.classList.toggle('p2p-nav-open', shouldOpen);
   p2pNavDrawer.classList.toggle('is-open', shouldOpen);
-  p2pNavOverlay.classList.toggle('hidden', !shouldOpen);
+  p2pNavOverlay.classList.toggle('is-visible', shouldOpen);
   p2pNavDrawer.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
   p2pNavOverlay.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
   p2pMenuToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
