@@ -224,7 +224,7 @@
         <div class="panel-card">
           <div class="panel-card-header">
             <span class="panel-card-title">KYC Submissions</span>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow-x:auto;">
               <select id="kycStatusFilter" class="input-dark" style="width:160px;height:34px;padding:4px 10px;">
                 <option value="">All Statuses</option>
                 <option value="PENDING_REVIEW" selected>Pending Review</option>
@@ -313,11 +313,11 @@
       <!-- ── USER MANAGEMENT ── -->
       <section class="admin-panel hidden" data-panel="users">
         <div class="panel-card" style="margin-bottom:16px;">
-          <div class="panel-card-body" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <input id="userSearchInput" class="input-dark" style="flex:1;min-width:200px;max-width:340px;" type="text" placeholder="Search by email or user ID..." />
-            <button id="userSearchBtn" class="btn-secondary btn-sm">Search</button>
-            <button id="userSearchResetBtn" class="btn-ghost btn-sm">Reset</button>
-            <button id="usersReloadBtn" class="btn-primary btn-sm" style="margin-left:auto;">Reload</button>
+          <div class="panel-card-body" style="display:flex;gap:8px;flex-wrap:nowrap;align-items:center;overflow-x:auto;">
+            <input id="userSearchInput" class="input-dark" style="flex:1;min-width:180px;max-width:340px;" type="text" placeholder="Search by email or user ID..." />
+            <button id="userSearchBtn" class="btn-secondary btn-sm" style="white-space:nowrap;">Search</button>
+            <button id="userSearchResetBtn" class="btn-ghost btn-sm" style="white-space:nowrap;">Reset</button>
+            <button id="usersReloadBtn" class="btn-primary btn-sm" style="margin-left:auto;white-space:nowrap;">Reload</button>
           </div>
         </div>
         <div class="panel-card">
