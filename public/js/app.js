@@ -117,7 +117,7 @@
 
     const wrapper = document.createElement('div');
     wrapper.id = 'cvx-mobile-market';
-    wrapper.style.cssText = 'display:block;padding:0 0 8px;';
+    wrapper.style.cssText = 'display:block;padding:0 0 8px;width:100%;box-sizing:border-box;';
 
     const mobileOnlyStyle = document.createElement('style');
     mobileOnlyStyle.textContent = '@media (min-width: 768px) { #cvx-mobile-market { display: none !important; } }';
@@ -129,7 +129,7 @@
     tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:0;';
 
     const rowsDiv = document.createElement('div');
-    rowsDiv.style.cssText = 'display:flex;flex-direction:column;';
+    rowsDiv.style.cssText = 'display:flex;flex-direction:column;width:100%;';
 
     function fmtVol(v) {
       const n = Number(v);
@@ -176,7 +176,7 @@
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:64px;';
+        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:12px 8px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:64px;width:100%;box-sizing:border-box;';
 
         row.appendChild(makeIcon(sym));
 
