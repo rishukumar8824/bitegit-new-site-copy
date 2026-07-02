@@ -123,27 +123,10 @@
     mobileOnlyStyle.textContent = '@media (min-width: 768px) { #cvx-mobile-market { display: none !important; } }';
     document.head.appendChild(mobileOnlyStyle);
 
-    // Main tabs
+    // Main tabs — no sub-tabs (match bitbase)
     const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking >'];
     const tabBar = document.createElement('div');
     tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:0;';
-
-    // Spot / Futures pill sub-tabs (like Bitbase — selected = dark pill)
-    const subTabBar = document.createElement('div');
-    subTabBar.style.cssText = 'display:flex;gap:6px;padding:8px 16px 6px;';
-    ['Spot', 'Futures'].forEach((label, i) => {
-      const st = document.createElement('div');
-      st.textContent = label;
-      const active = 'padding:4px 14px;border-radius:20px;font-size:13px;cursor:pointer;background:rgba(0,0,0,0.45);color:#fff;font-weight:600;border:1px solid rgba(255,255,255,0.08);';
-      const inactive = 'padding:4px 14px;border-radius:20px;font-size:13px;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);font-weight:400;border:1px solid transparent;';
-      st.style.cssText = i === 1 ? active : inactive;
-      st.addEventListener('click', () => {
-        subTabBar.querySelectorAll('div').forEach((el, j) => {
-          el.style.cssText = (j === i) ? active : inactive;
-        });
-      });
-      subTabBar.appendChild(st);
-    });
 
     const rowsDiv = document.createElement('div');
     rowsDiv.style.cssText = 'display:flex;flex-direction:column;';
@@ -193,14 +176,14 @@
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:60px;';
+        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:64px;';
 
         row.appendChild(makeIcon(sym));
 
         // Col 1: pair name (flex:1, truncate)
         const nameCol = document.createElement('div');
         nameCol.style.cssText = 'flex:1;min-width:0;overflow:hidden;padding-left:8px;';
-        nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}USDT</div>`;
+        nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>`;
         row.appendChild(nameCol);
 
         // Col 2: price + change% (no volume column — match bitbase)
@@ -241,7 +224,6 @@
     });
 
     wrapper.appendChild(tabBar);
-    wrapper.appendChild(subTabBar);
     wrapper.appendChild(rowsDiv);
     desktopPairs.parentElement.insertBefore(wrapper, desktopPairs);
   }
