@@ -468,7 +468,7 @@
 
       const panel = document.createElement('div');
       panel.id = 'cvx-mobile-nav';
-      panel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#161A1E;display:flex;flex-direction:column;font-family:-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;';
+      panel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;font-family:-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;';
 
       // ── Top bar: logo + X ──
       const topBar = document.createElement('div');
