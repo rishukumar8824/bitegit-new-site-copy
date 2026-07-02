@@ -1193,22 +1193,43 @@ async function createSession() {
 }
 
 async function isSessionValid(token) {
-  if (!token) {
-    return false;
+  if (!token) return false;
+
+  // HMAC fallback token (used when repos/DB not ready at login time)
+  if (token.includes('.') && !repos) {
+    try {
+      const [b64, sig] = token.split('.');
+      const payload = Buffer.from(b64, 'base64url').toString();
+      const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET || ADMIN_PASSWORD;
+      const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+      if (sig !== expected) return false;
+      const expiresAt = parseInt(payload.split(':')[1], 10);
+      return Date.now() < expiresAt;
+    } catch (_) { return false; }
+  }
+  if (token.includes('.') && repos) {
+    try {
+      const [b64, sig] = token.split('.');
+      const payload = Buffer.from(b64, 'base64url').toString();
+      const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET || ADMIN_PASSWORD;
+      const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+      if (sig === expected) {
+        const expiresAt = parseInt(payload.split(':')[1], 10);
+        return Date.now() < expiresAt;
+      }
+    } catch (_) {}
   }
 
-  const session = await repos.getAdminSession(token);
-  if (!session || !session.expiresAt) {
-    return false;
-  }
-
-  if (new Date(session.expiresAt).getTime() < Date.now()) {
-    await repos.deleteAdminSession(token);
-    return false;
-  }
-
-  await repos.refreshAdminSession(token, Date.now() + SESSION_TTL_MS);
-  return true;
+  try {
+    const session = await repos.getAdminSession(token);
+    if (!session || !session.expiresAt) return false;
+    if (new Date(session.expiresAt).getTime() < Date.now()) {
+      await repos.deleteAdminSession(token);
+      return false;
+    }
+    await repos.refreshAdminSession(token, Date.now() + SESSION_TTL_MS);
+    return true;
+  } catch (_) { return false; }
 }
 
 async function requiresAdminSession(req, res, next) {
@@ -1263,15 +1284,20 @@ async function handleLegacyAdminLogin(req, res) {
     return res.status(400).json({ message: 'Admin email/username and password are required.' });
   }
 
-  if (!repos) {
-    return res.status(503).json({ message: 'Admin service is initializing. Please try again.' });
-  }
-
   if (!isLegacyAdminIdentifier(identifier) || password !== ADMIN_PASSWORD) {
     return res.status(401).json({ message: 'Invalid login credentials.' });
   }
 
-  const sessionToken = await createSession();
+  let sessionToken;
+  if (repos) {
+    sessionToken = await createSession();
+  } else {
+    // DB not ready — use a signed HMAC token so session works without MongoDB
+    const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET || ADMIN_PASSWORD;
+    const payload = `admin_legacy:${Date.now() + SESSION_TTL_MS}`;
+    const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    sessionToken = `${Buffer.from(payload).toString('base64url')}.${sig}`;
+  }
   setCookie(res, SESSION_COOKIE_NAME, sessionToken, Math.floor(SESSION_TTL_MS / 1000), {
     sameSite: 'Lax',
     secure: IS_PRODUCTION,
