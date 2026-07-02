@@ -86,7 +86,36 @@
 
 .rfm-child {
   transform: var(--transform);
-}</style><link rel="stylesheet" crossorigin="" href="/cdn/assets/index-web/assets/static/swiper-77ebcdb4.9HwNLU-R.css"><link rel="stylesheet" crossorigin="" href="/cdn/assets/index-web/assets/static/swiper-ddc97c76.tn0RQdqM.css"><link rel="stylesheet" crossorigin="" href="/cdn/assets/index-web/assets/static/swiper-01306625.DyHoXDPE.css"></head>
+}</style><link rel="stylesheet" crossorigin="" href="/cdn/assets/index-web/assets/static/swiper-77ebcdb4.9HwNLU-R.css"><link rel="stylesheet" crossorigin="" href="/cdn/assets/index-web/assets/static/swiper-ddc97c76.tn0RQdqM.css"><link rel="stylesheet" crossorigin="" href="/cdn/assets/index-web/assets/static/swiper-01306625.DyHoXDPE.css"><style>
+/* Fix nav items always visible - disable horizontal JS scroll clipping */
+.ss-header-nav-scrollbar-none {
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  transform: none !important;
+  transition: none !important;
+}
+.ss-header-nav-scrollbar-none > div {
+  transform: none !important;
+  transition: none !important;
+}
+/* Fix the overflow-hidden parent wrapper */
+.ss-header-nav-scrollbar-none {
+  flex-wrap: wrap;
+}
+/* Disable ALL translate animations on header elements */
+header * {
+  transition-property: color, background-color, border-color, opacity !important;
+}
+</style><style>
+/* Force the nav wrapper to not clip */
+div:has(> .ss-header-nav-scrollbar-none) {
+  overflow: visible !important;
+}
+div:has(> div > .ss-header-nav-scrollbar-none) {
+  overflow: visible !important;
+  min-width: 0;
+}
+</style></head>
       <body theme="dark" lang="en" dir="ltr">
         <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KGK7Q4MK"
@@ -175,4 +204,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             opacity: 1;
           }
         }
-      </style><iframe title="Button to launch messaging window" id="launcher" style="color-scheme: light; height: 64px; width: 64px; position: fixed; bottom: 16px; right: 16px; border: 0px; margin-top: 0px; opacity: 0; box-shadow: rgba(23, 73, 77, 0.15) 0px 20px 30px; animation: 0.2s ease-in 0.5s 1 normal forwards running ww-fbd52125-ee24-4504-9b9b-22fbf08d6563-widgetOnLoad; z-index: 999999; border-radius: 50%;"></iframe></div></div><script src="js/app.js"></script></body></html>
+      </style><iframe title="Button to launch messaging window" id="launcher" style="color-scheme: light; height: 64px; width: 64px; position: fixed; bottom: 16px; right: 16px; border: 0px; margin-top: 0px; opacity: 0; box-shadow: rgba(23, 73, 77, 0.15) 0px 20px 30px; animation: 0.2s ease-in 0.5s 1 normal forwards running ww-fbd52125-ee24-4504-9b9b-22fbf08d6563-widgetOnLoad; z-index: 999999; border-radius: 50%;"></iframe></div></div><script src="js/app.js"></script><script>
+(function(){
+  function fixNav(){
+    var nav = document.querySelector('.ss-header-nav-scrollbar-none');
+    if(!nav) return;
+    // Reset any JS-applied transform or scroll
+    nav.style.transform = 'none';
+    nav.style.transition = 'none';
+    nav.scrollLeft = 0;
+    // Fix the overflow-hidden parent
+    var parent = nav.parentElement;
+    if(parent){ parent.style.overflow = 'visible'; }
+    var grandparent = parent && parent.parentElement;
+    if(grandparent){ grandparent.style.overflow = 'visible'; grandparent.style.minWidth = '0'; }
+    // Remove any transform on child nav items set by JS
+    var items = nav.children;
+    for(var i=0;i<items.length;i++){ items[i].style.transform = 'none'; }
+  }
+  // Run immediately and after short delay to override any JS that runs after
+  fixNav();
+  setTimeout(fixNav, 100);
+  setTimeout(fixNav, 500);
+  setTimeout(fixNav, 1500);
+})();
+</script></body></html>
