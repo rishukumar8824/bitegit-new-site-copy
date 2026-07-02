@@ -6154,51 +6154,6 @@ window.addEventListener('pagehide', () => {
   // For non-logged-in users, showLoginPrompt is shown when they open the orders screen.
 })();
 
-// ── Scroll-hide chrome on mobile ─────────────────────────────────────
-(function setupScrollHide() {
-  var body = document.body;
-  var lastY = 0;
-  var ticking = false;
-  var tries = 0;
-
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(function() {
-      var el = document.getElementById('p2pCards');
-      if (!el) { ticking = false; return; }
-      var y = el.scrollTop;
-      var busy = body.classList.contains('mob-screen-open') || body.classList.contains('deal-open');
-      if (!busy) {
-        if (y <= 4) {
-          body.classList.remove('p2p-chrome-hidden');
-        } else if (y > lastY + 4) {
-          body.classList.add('p2p-chrome-hidden');
-        } else if (y < lastY - 4) {
-          body.classList.remove('p2p-chrome-hidden');
-        }
-      }
-      lastY = y;
-      ticking = false;
-    });
-  }
-
-  function attach() {
-    var el = document.getElementById('p2pCards');
-    if (el) {
-      el.addEventListener('scroll', onScroll, { passive: true });
-    } else if (tries++ < 20) {
-      setTimeout(attach, 250);
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', attach);
-  } else {
-    attach();
-  }
-})();
-
 // ── Online presence ping — marks current user as online ──────────────
 function _p2pPing() {
   if (currentUser && document.visibilityState !== 'hidden') {
