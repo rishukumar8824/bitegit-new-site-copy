@@ -4462,9 +4462,8 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-card { background:#111214; border-radius:0; padding:13px 14px 12px; border-bottom:1px solid rgba(255,255,255,0.06); position:relative; }
 
 /* Brand mark — top left of each card */
-.bbt-card-brand-mark { display:flex; align-items:center; gap:5px; margin-bottom:10px; }
-.bbt-card-brand-name { font-size:11px; font-weight:800; color:#fff; letter-spacing:0.5px; }
-.bbt-card-brand-p2p { font-size:9px; font-weight:700; color:#000; background:#F0B90B; border-radius:3px; padding:1px 5px; letter-spacing:0.4px; }
+.bbt-card-brand-mark { display:flex; align-items:center; gap:4px; margin-bottom:9px; }
+.bbt-card-brand-name { font-size:9.5px; font-weight:700; color:rgba(255,255,255,0.35); letter-spacing:0.6px; text-transform:uppercase; }
 
 /* Top row: avatar + meta + time on one line */
 .bbt-card-top { display:flex; align-items:center; gap:7px; margin-bottom:9px; }
