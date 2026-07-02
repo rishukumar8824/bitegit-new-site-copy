@@ -4921,6 +4921,7 @@ app.post('/api/admin/wallet/withdrawals/:requestId/review', requiresAdminSession
 
 // ── Admin: Review deposit request (approve / reject) ──────────────────────────
 app.post('/api/admin/wallet/deposits/:depositId/review', requiresAdminSession, async (req, res) => {
+  if (!adminStore) return res.status(503).json({ message: 'Store not ready' });
   const depositId = String(req.params.depositId || '').trim();
   if (!depositId) return res.status(400).json({ message: 'depositId is required.' });
   const { decision, reason } = req.body || {};
@@ -4978,6 +4979,7 @@ app.post('/api/admin/wallet/deposits/:depositId/review', requiresAdminSession, a
 // ── Admin: List deposit requests ──────────────────────────────────────────────
 app.get('/api/admin/wallet/deposits', requiresAdminSession, async (req, res) => {
   try {
+    if (!adminStore) return res.json({ deposits: [], total: 0 });
     const page = Math.max(1, Number(req.query.page || 1));
     const limit = Math.min(100, Math.max(1, Number(req.query.limit || 20)));
     const status = String(req.query.status || '').toUpperCase() || undefined;
@@ -5595,9 +5597,21 @@ app.get('/assets', (req, res) => {
 app.get('/chart', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chart.html'));
 });
-app.get('/chart.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'chart.html'));
-});
+// Redirect .html URLs to clean URLs
+app.get('/p2p.html', (req, res) => res.redirect(301, '/p2p'));
+app.get('/index.html', (req, res) => res.redirect(301, '/'));
+app.get('/market.html', (req, res) => res.redirect(301, '/markets'));
+app.get('/chart.html', (req, res) => res.redirect(301, '/chart'));
+app.get('/auth.html', (req, res) => res.redirect(301, '/auth'));
+app.get('/wallet.html', (req, res) => res.redirect(301, '/wallet'));
+app.get('/p2p-order-flow.html', (req, res) => res.redirect(301, '/p2p-order-flow'));
+app.get('/p2p-buy.html', (req, res) => res.redirect(301, '/p2p-buy'));
+app.get('/p2p-chat.html', (req, res) => res.redirect(301, '/p2p-chat'));
+app.get('/p2p-order-history.html', (req, res) => res.redirect(301, '/p2p-order-history'));
+app.get('/p2p-sell-flow.html', (req, res) => res.redirect(301, '/p2p-sell-flow'));
+app.get('/p2p-user-center.html', (req, res) => res.redirect(301, '/p2p-user-center'));
+app.get('/trade.html', (req, res) => res.redirect(301, '/trade'));
+
 app.get('/auth', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'auth.html'));
 });

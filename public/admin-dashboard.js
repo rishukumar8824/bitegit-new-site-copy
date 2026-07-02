@@ -2352,16 +2352,20 @@ function openUserProfile(userId) {
       <div class="spin" style="margin:auto;"></div></div>`;
   });
 
-  // Show overlay (only left of drawer) and slide drawer in
+  // Show overlay and fade drawer in (no slide)
   const overlay = document.getElementById('userProfileOverlay');
   const drawer  = document.getElementById('userProfileDrawer');
   if (overlay) {
     const drawerW = Math.min(560, window.innerWidth);
-    overlay.style.right = drawerW + 'px'; // don't cover the drawer
+    overlay.style.right = drawerW + 'px';
     overlay.style.display = 'block';
     overlay.classList.remove('hidden');
   }
-  if (drawer)  { drawer.style.right = '0'; }
+  if (drawer) {
+    drawer.style.opacity = '1';
+    drawer.style.visibility = 'visible';
+    drawer.style.pointerEvents = 'auto';
+  }
 
   // Show overview tab by default
   document.querySelectorAll('.up-tab').forEach(b =>
@@ -2375,7 +2379,11 @@ function closeUserProfile() {
   const overlay = document.getElementById('userProfileOverlay');
   const drawer  = document.getElementById('userProfileDrawer');
   if (overlay) { overlay.style.display = 'none'; overlay.classList.add('hidden'); }
-  if (drawer)  { drawer.style.right = '-580px'; }
+  if (drawer) {
+    drawer.style.opacity = '0';
+    drawer.style.visibility = 'hidden';
+    drawer.style.pointerEvents = 'none';
+  }
   _upUserId = null;
 }
 
