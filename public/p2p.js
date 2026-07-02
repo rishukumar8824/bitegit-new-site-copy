@@ -3,100 +3,15 @@ const cardsEl = document.getElementById('p2pCards');
 
 /* ── Benefits banner (injected below mobile cards) ───────────────────── */
 const _P2P_BENEFITS_HTML = (function() {
-  /* SVG 1: P2P trading concept */
-  var svg1 = '<svg class="p2p-info-svg" viewBox="0 0 375 230" fill="none" xmlns="http://www.w3.org/2000/svg">'
-    + '<path d="M30 42 l3.5 9 l9 3.5 l-9 3.5 l-3.5 9 l-3.5-9-9-3.5 9-3.5z" fill="#F0B90B"/>'
-    + '<path d="M347 30 l2.5 6.5 l6.5 2.5 l-6.5 2.5 l-2.5 6.5 l-2.5-6.5-6.5-2.5 6.5-2.5z" fill="#2ebd85"/>'
-    + '<path d="M355 135 l2 5 l5 2 l-5 2 l-2 5 l-2-5-5-2 5-2z" fill="#F0B90B" opacity="0.7"/>'
-    + '<circle cx="18" cy="148" r="4" fill="#2ebd85" opacity="0.45"/>'
-    + '<circle cx="358" cy="190" r="3.5" fill="#F0B90B" opacity="0.45"/>'
-    /* BITCOVEX P2P badge */
-    + '<rect x="105" y="15" width="165" height="38" rx="19" fill="#F0B90B"/>'
-    + '<text x="187" y="39" text-anchor="middle" font-size="14" font-weight="900" fill="#000" font-family="Arial,Helvetica,sans-serif">BITCOVEX P2P</text>'
-    /* Left circle: Seller (teal) */
-    + '<circle cx="82" cy="134" r="66" fill="#091a0f"/>'
-    + '<circle cx="82" cy="128" r="52" fill="#2ebd85"/>'
-    + '<circle cx="82" cy="110" r="16" fill="#fff" opacity="0.88"/>'
-    + '<path d="M57 148 Q82 134 107 148" fill="#fff" opacity="0.82"/>'
-    + '<polygon points="82,128 89,142 82,155 75,142" fill="#F0B90B"/>'
-    + '<text x="82" y="214" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.4)" font-family="Arial,sans-serif">Seller</text>'
-    /* Right circle: Buyer (yellow) */
-    + '<circle cx="293" cy="134" r="66" fill="#1a1000"/>'
-    + '<circle cx="293" cy="128" r="52" fill="#F0B90B"/>'
-    + '<circle cx="293" cy="110" r="16" fill="#fff" opacity="0.88"/>'
-    + '<path d="M268 148 Q293 134 318 148" fill="#fff" opacity="0.82"/>'
-    + '<polygon points="293,128 300,142 293,155 286,142" fill="#2ebd85"/>'
-    + '<text x="293" y="214" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.4)" font-family="Arial,sans-serif">Buyer</text>'
-    /* Fist bump center */
-    + '<circle cx="187" cy="160" r="28" fill="rgba(46,189,133,0.05)" stroke="#2ebd85" stroke-width="1" stroke-dasharray="4 3"/>'
-    + '<rect x="153" y="157" width="32" height="22" rx="7" fill="#2ebd85"/>'
-    + '<rect x="190" y="157" width="32" height="22" rx="7" fill="#F0B90B"/>'
-    + '<line x1="186" y1="148" x2="186" y2="138" stroke="#fff" stroke-width="2" opacity="0.6"/>'
-    + '<line x1="194" y1="151" x2="198" y2="141" stroke="#fff" stroke-width="2" opacity="0.6"/>'
-    + '<line x1="178" y1="151" x2="174" y2="141" stroke="#fff" stroke-width="2" opacity="0.6"/>'
-    /* Globe icon */
-    + '<circle cx="55" cy="206" r="13" fill="none" stroke="#F0B90B" stroke-width="1.8"/>'
-    + '<ellipse cx="55" cy="206" rx="6" ry="13" fill="none" stroke="#F0B90B" stroke-width="1.4"/>'
-    + '<line x1="42" y1="206" x2="68" y2="206" stroke="#F0B90B" stroke-width="1.4"/>'
-    /* % circle */
-    + '<circle cx="320" cy="206" r="13" fill="none" stroke="#2ebd85" stroke-width="1.8"/>'
-    + '<text x="320" y="211" text-anchor="middle" font-size="13" font-weight="700" fill="#2ebd85" font-family="Arial,sans-serif">%</text>'
-    + '</svg>';
-
-  /* SVG 2: Blockchain / benefits concept */
-  var svg2 = '<svg class="p2p-info-svg" viewBox="0 0 375 230" fill="none" xmlns="http://www.w3.org/2000/svg">'
-    /* Hexagonal wireframe */
-    + '<polygon points="187,14 299,76 299,154 187,216 75,154 75,76" fill="none" stroke="rgba(46,189,133,0.25)" stroke-width="1.5" stroke-dasharray="6 4"/>'
-    /* Corner cubes */
-    + '<rect x="178" y="5" width="18" height="18" rx="3" fill="#111" stroke="#2ebd85" stroke-width="1.5"/>'
-    + '<line x1="178" y1="5" x2="172" y2="0" stroke="#2ebd85" stroke-width="1" opacity="0.5"/>'
-    + '<line x1="196" y1="5" x2="202" y2="0" stroke="#2ebd85" stroke-width="1" opacity="0.5"/>'
-    + '<line x1="172" y1="0" x2="202" y2="0" stroke="#2ebd85" stroke-width="1" opacity="0.5"/>'
-    + '<rect x="290" y="67" width="18" height="18" rx="3" fill="#111" stroke="#F0B90B" stroke-width="1.5"/>'
-    + '<rect x="290" y="145" width="18" height="18" rx="3" fill="#111" stroke="#2ebd85" stroke-width="1.5"/>'
-    + '<rect x="178" y="207" width="18" height="18" rx="3" fill="#111" stroke="#F0B90B" stroke-width="1.5"/>'
-    + '<rect x="67" y="145" width="18" height="18" rx="3" fill="#111" stroke="#2ebd85" stroke-width="1.5"/>'
-    + '<rect x="67" y="67" width="18" height="18" rx="3" fill="#111" stroke="#F0B90B" stroke-width="1.5"/>'
-    /* Plus signs */
-    + '<line x1="38" y1="46" x2="38" y2="66" stroke="#F0B90B" stroke-width="2" stroke-linecap="round" opacity="0.6"/>'
-    + '<line x1="28" y1="56" x2="48" y2="56" stroke="#F0B90B" stroke-width="2" stroke-linecap="round" opacity="0.6"/>'
-    + '<line x1="337" y1="43" x2="337" y2="63" stroke="#2ebd85" stroke-width="2" stroke-linecap="round" opacity="0.6"/>'
-    + '<line x1="327" y1="53" x2="347" y2="53" stroke="#2ebd85" stroke-width="2" stroke-linecap="round" opacity="0.6"/>'
-    + '<line x1="348" y1="163" x2="348" y2="178" stroke="#F0B90B" stroke-width="1.8" stroke-linecap="round" opacity="0.5"/>'
-    + '<line x1="340.5" y1="170.5" x2="355.5" y2="170.5" stroke="#F0B90B" stroke-width="1.8" stroke-linecap="round" opacity="0.5"/>'
-    + '<line x1="27" y1="163" x2="27" y2="178" stroke="#2ebd85" stroke-width="1.8" stroke-linecap="round" opacity="0.5"/>'
-    + '<line x1="19.5" y1="170.5" x2="34.5" y2="170.5" stroke="#2ebd85" stroke-width="1.8" stroke-linecap="round" opacity="0.5"/>'
-    /* Left circle: Person (yellow) */
-    + '<circle cx="138" cy="115" r="36" fill="#1a1000" stroke="#F0B90B" stroke-width="2"/>'
-    + '<circle cx="138" cy="106" r="12" fill="#F0B90B"/>'
-    + '<path d="M116 134 Q138 120 160 134" fill="#F0B90B"/>'
-    /* Right circle: Shield/$ (teal) */
-    + '<circle cx="237" cy="115" r="36" fill="#091a0f" stroke="#2ebd85" stroke-width="2"/>'
-    + '<path d="M237 94 L253 101 L253 118 C253 128 237 134 237 134 C237 134 221 128 221 118 L221 101 Z" fill="#2ebd85"/>'
-    + '<text x="237" y="120" text-anchor="middle" font-size="15" font-weight="800" fill="#fff" font-family="Arial,sans-serif">$</text>'
-    /* Lightning bolt (stroke-based, glow + fill) */
-    + '<path d="M192 92 L179 118 L191 118 L179 144" stroke="#F0B90B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.25"/>'
-    + '<path d="M192 92 L179 118 L191 118 L179 144" stroke="#F0B90B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
-    /* 0% FEES badge */
-    + '<rect x="252" y="171" width="96" height="54" rx="8" fill="#111" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>'
-    + '<circle cx="274" cy="188" r="12" fill="#F0B90B"/>'
-    + '<text x="274" y="192" text-anchor="middle" font-size="10" font-weight="800" fill="#000" font-family="Arial,sans-serif">0%</text>'
-    + '<text x="296" y="186" font-size="10" font-weight="700" fill="#fff" font-family="Arial,sans-serif">FEES</text>'
-    + '<line x1="259" y1="198" x2="340" y2="198" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>'
-    + '<text x="299" y="214" text-anchor="middle" font-size="8.5" fill="rgba(255,255,255,0.35)" font-family="Arial,sans-serif">All P2P trades</text>'
-    + '</svg>';
-
-  /* Step icon SVGs */
-  var iconDoc = '<svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="18" fill="rgba(46,189,133,0.12)"/><rect x="11" y="9" width="14" height="18" rx="2" stroke="#2ebd85" stroke-width="1.8"/><rect x="13" y="13" width="9" height="1.5" rx="0.75" fill="#2ebd85"/><rect x="13" y="16.5" width="6" height="1.5" rx="0.75" fill="#2ebd85"/><rect x="13" y="20" width="7.5" height="1.5" rx="0.75" fill="#2ebd85"/></svg>';
-  var iconCard = '<svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="18" fill="rgba(46,189,133,0.12)"/><rect x="8" y="13" width="20" height="13" rx="2" stroke="#2ebd85" stroke-width="1.8"/><line x1="8" y1="17.5" x2="28" y2="17.5" stroke="#2ebd85" stroke-width="1.5"/><rect x="11" y="20.5" width="6" height="3" rx="1" fill="#2ebd85"/></svg>';
-  var iconCheck = '<svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="18" fill="rgba(46,189,133,0.12)"/><circle cx="18" cy="19" r="9" stroke="#2ebd85" stroke-width="1.8"/><path d="M14 19.5 l3 3 l5-6" stroke="#2ebd85" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
+  var iconDoc = '<svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="22" fill="rgba(46,189,133,0.13)"/><rect x="13" y="10" width="18" height="24" rx="2.5" stroke="#2ebd85" stroke-width="2"/><rect x="16" y="15" width="11" height="2" rx="1" fill="#2ebd85"/><rect x="16" y="19.5" width="7.5" height="2" rx="1" fill="#2ebd85"/><rect x="16" y="24" width="9" height="2" rx="1" fill="#2ebd85"/></svg>';
+  var iconCard = '<svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="22" fill="rgba(46,189,133,0.13)"/><rect x="9" y="15" width="26" height="17" rx="2.5" stroke="#2ebd85" stroke-width="2"/><line x1="9" y1="20.5" x2="35" y2="20.5" stroke="#2ebd85" stroke-width="2"/><rect x="13" y="24.5" width="8" height="3.5" rx="1.2" fill="#2ebd85"/></svg>';
+  var iconCheck = '<svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="22" fill="rgba(46,189,133,0.13)"/><circle cx="22" cy="23" r="11" stroke="#2ebd85" stroke-width="2"/><path d="M17 23.5 l3.5 3.5 l6.5-7.5" stroke="#2ebd85" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
 
   return '<div class="p2p-benefit-banner">'
 
-    /* ── How it works ── */
+    /* ── Section 1: How it works ── */
     + '<div class="p2p-how-block">'
-    +   svg1
-    +   '<h2 class="p2p-sec-title">Buy USDT with INR in 3 Easy Steps</h2>'
+    +   '<h2 class="p2p-how-title">Buy USDT with INR in 3 easy steps</h2>'
     +   '<p class="p2p-sec-sub">Start your P2P journey with INR. Follow these simple steps to buy your first USDT securely.</p>'
     +   '<div class="p2p-buy-tabs">'
     +     '<button class="p2p-buy-tab p2p-buy-tab-active" type="button">Buy Coins</button>'
@@ -109,22 +24,34 @@ const _P2P_BENEFITS_HTML = (function() {
     +   '</div>'
     + '</div>'
 
-    /* ── Why BITCOVEX P2P ── */
-    + '<div class="p2p-why-block">'
-    +   svg2
-    +   '<h2 class="p2p-sec-title">Why Choose BITCOVEX P2P for USDT/INR?</h2>'
-    +   '<div class="p2p-why-list">'
-    +     '<div class="p2p-why-item"><strong>Lower fees: </strong>Trading USDT/INR costs less than on traditional exchanges.</div>'
-    +     '<div class="p2p-why-item"><strong>Global accessibility: </strong>Trade anytime, anywhere, 24/7.</div>'
-    +     '<div class="p2p-why-item"><strong>Trade your way: </strong>Pick offers, payment methods, and prices that suit you — you\'re in control.</div>'
+    /* ── Section 2: Benefits of P2P header ── */
+    + '<div class="p2p-benefits-head"><h2>Benefits of P2P</h2></div>'
+
+    /* ── Section 3: Why BITCOVEX P2P (text left + image right) ── */
+    + '<div class="p2p-benefit-row">'
+    +   '<div class="p2p-benefit-text">'
+    +     '<h2 class="p2p-benefit-row-title">Why choose BITCOVEX P2P for USDT/INR?</h2>'
+    +     '<div class="p2p-why-list">'
+    +       '<div class="p2p-why-item"><strong>Lower fees:</strong> Trading USDT/INR costs less than on traditional exchanges.</div>'
+    +       '<div class="p2p-why-item"><strong>Global accessibility:</strong> Trade anytime, anywhere, 24/7.</div>'
+    +       '<div class="p2p-why-item"><strong>Trade your way:</strong> Pick offers, payment methods, and prices that suit you — you\'re in control.</div>'
+    +     '</div>'
     +   '</div>'
-    +   '<h2 class="p2p-sec-title" style="margin-top:28px;">Why Choose BITCOVEX P2P for USDT/INR Block Trading?</h2>'
-    +   '<div class="p2p-why-list">'
-    +     '<div class="p2p-why-item"><strong>Zero fees: </strong>No fees throughout the USDT trading process.</div>'
-    +     '<div class="p2p-why-item"><strong>Flexible payment methods: </strong>Choose from 600+ options.</div>'
-    +     '<div class="p2p-why-item"><strong>24/7 support: </strong>Multilingual help anytime via Help Center.</div>'
-    +     '<div class="p2p-why-item"><strong>Secure escrow: </strong>Funds are only released after confirmation, ensuring worry-free trades.</div>'
+    +   '<div class="p2p-benefit-img"><img src="/img/p2p-people.png" alt="BITCOVEX P2P" loading="lazy"/></div>'
+    + '</div>'
+
+    /* ── Section 4: Block Trading (text left + image right) ── */
+    + '<div class="p2p-benefit-row">'
+    +   '<div class="p2p-benefit-text">'
+    +     '<h2 class="p2p-benefit-row-title">Why choose BITCOVEX P2P for USDT/INR Block Trading?</h2>'
+    +     '<div class="p2p-why-list">'
+    +       '<div class="p2p-why-item"><strong>Zero fees:</strong> No fees throughout the USDT trading process.</div>'
+    +       '<div class="p2p-why-item"><strong>Flexible payment methods:</strong> Choose from 600+ options.</div>'
+    +       '<div class="p2p-why-item"><strong>24/7 support:</strong> Multilingual help anytime via Help Center.</div>'
+    +       '<div class="p2p-why-item"><strong>Secure escrow:</strong> Funds are only released after confirmation, ensuring worry-free trades.</div>'
+    +     '</div>'
     +   '</div>'
+    +   '<div class="p2p-benefit-img"><img src="/img/p2p-fees.png" alt="BITCOVEX P2P Block Trading" loading="lazy"/></div>'
     + '</div>'
 
     + '</div>';
