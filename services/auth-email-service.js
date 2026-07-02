@@ -1,9 +1,7 @@
 const nodemailer = require('nodemailer');
 
-const BRAND_NAME = String(process.env.APP_NAME || 'BITEGIT')
-  .trim()
-  .toUpperCase();
-const BRAND_ACCENT = '#f0b90b';
+const BRAND_NAME = String(process.env.APP_NAME || 'Bitcovex').trim();
+const BRAND_ACCENT = '#F68F15';
 const BRAND_DARK = '#181a20';
 let providerConfigLogged = false;
 
@@ -210,18 +208,18 @@ async function sendViaProvider({ to, subject, text, html }) {
 }
 
 function buildBitegitHeader() {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 12px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:4px;overflow:hidden;"><tr><td style="padding:24px 28px 0;text-align:center;"><table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr><td style="padding-right:6px;vertical-align:middle;"><table cellpadding="0" cellspacing="0" style="border-collapse:collapse;"><tr><td style="width:10px;height:10px;background:#00b8d4;border-radius:50%;"></td><td style="width:5px;"></td><td style="width:10px;height:10px;background:#00b8d4;border-radius:2px;"></td></tr></table></td><td style="font-size:22px;font-weight:800;color:#00b8d4;letter-spacing:1px;vertical-align:middle;">${BRAND_NAME}</td></tr></table><div style="width:100%;height:3px;background:linear-gradient(90deg,transparent 0%,#00b8d4 30%,#00b8d4 70%,transparent 100%);margin-top:16px;"></div></td></tr>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head><body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 12px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#181a20;border-radius:4px;overflow:hidden;"><tr><td style="padding:24px 28px 20px;text-align:center;background:#000;"><table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr><td style="padding-right:8px;vertical-align:middle;"><svg viewBox="0 0 22 26" width="32" height="38" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.40038 0H0.73112L0 4.09705H4.66926L5.40038 0Z" fill="${BRAND_ACCENT}"/><path d="M6.13151 7.64698H1.46225L0.73112 11.744H5.40038L6.13151 7.64698Z" fill="${BRAND_ACCENT}"/><path d="M4.66926 15.294H0L0 19.391H4.66926V15.294Z" fill="${BRAND_ACCENT}"/><path d="M5.40038 0H10.0696L10.8008 4.09705H6.13151L5.40038 0Z" fill="#ffffff"/><path d="M10.8008 4.09705H15.47L16.2011 0H11.532L10.8008 4.09705Z" fill="#ffffff"/><path d="M6.13151 7.64698H10.8008L11.532 11.744H6.86269L6.13151 7.64698Z" fill="#ffffff"/><path d="M11.532 11.744H16.2011L16.9323 7.64698H12.263L11.532 11.744Z" fill="#ffffff"/><path d="M4.66926 15.294H9.33852L10.0696 19.391H5.40038L4.66926 15.294Z" fill="#ffffff"/><path d="M10.0696 19.391H14.7389L15.47 15.294H10.8008L10.0696 19.391Z" fill="#ffffff"/><path d="M5.40038 22.941H0.73112L0 26H4.66926L5.40038 22.941Z" fill="#ffffff"/></svg></td><td style="font-size:24px;font-weight:800;color:#ffffff;letter-spacing:1px;vertical-align:middle;">${BRAND_NAME}</td></tr></table></td></tr>`;
 }
 
 function buildBitegitFooter() {
   const year = new Date().getFullYear();
-  return `<tr><td style="padding:24px 28px 28px;border-top:1px solid #f0f0f0;background:#fafafa;">
-<p style="margin:0 0 4px;font-size:13px;color:#444;">Any question or in need of help?</p>
-<p style="margin:0 0 4px;font-size:13px;color:#444;">You can refer to <a href="https://bitegit.com/support" style="color:#00b8d4;text-decoration:none;">Help center</a> or send email <a href="mailto:support@bitegit.com" style="color:#00b8d4;text-decoration:none;">support@bitegit.com</a> to contact us</p>
-<p style="margin:0 0 14px;font-size:13px;color:#444;">Follow our <a href="https://twitter.com/bitegit" style="color:#00b8d4;text-decoration:none;">X(Twitter)</a> for more ${BRAND_NAME} updates.</p>
-<p style="margin:0 0 18px;font-size:12px;color:#888;">* This email is sent automatically and you do not need to reply.</p>
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;"><tr><td style="border-left:3px solid #00b8d4;padding-left:12px;"><span style="font-size:13px;color:#444;font-weight:600;">Anti-Phishing Code :</span></td></tr></table>
-<p style="margin:0 0 14px;font-size:15px;color:#111;font-weight:700;text-align:center;">Download the <strong>${BRAND_NAME}</strong> App now<br/><span style="font-weight:400;font-size:14px;color:#555;">Stay updated on the go!</span></p>
+  return `<tr><td style="padding:24px 28px 28px;border-top:1px solid #2a2d35;background:#181a20;">
+<p style="margin:0 0 4px;font-size:13px;color:#aaa;">Any question or in need of help?</p>
+<p style="margin:0 0 4px;font-size:13px;color:#aaa;">You can refer to <a href="https://bitcovex.com/support" style="color:${BRAND_ACCENT};text-decoration:none;">Help center</a> or send email <a href="mailto:support@bitcovex.com" style="color:${BRAND_ACCENT};text-decoration:none;">support@bitcovex.com</a> to contact us</p>
+<p style="margin:0 0 14px;font-size:13px;color:#aaa;">Follow our <a href="https://twitter.com/bitcovex" style="color:${BRAND_ACCENT};text-decoration:none;">X(Twitter)</a> for more ${BRAND_NAME} updates.</p>
+<p style="margin:0 0 18px;font-size:12px;color:#666;">* This email is sent automatically and you do not need to reply.</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;"><tr><td style="border-left:3px solid ${BRAND_ACCENT};padding-left:12px;"><span style="font-size:13px;color:#aaa;font-weight:600;">Security Reminder: ${BRAND_NAME} official staff will never ask for your verification code.</span></td></tr></table>
+<p style="margin:0 0 14px;font-size:15px;color:#fff;font-weight:700;text-align:center;">Download the <strong>${BRAND_NAME}</strong> App now<br/><span style="font-weight:400;font-size:14px;color:#aaa;">Stay updated on the go!</span></p>
 <table cellpadding="0" cellspacing="0" style="margin:0 auto 22px auto;"><tr>
   <td style="padding-right:10px;">
     <a href="#" style="display:inline-block;background:#000;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
@@ -262,19 +260,19 @@ function buildBitegitFooter() {
 
 function createOtpTemplate({ title, code, expiresInMinutes, note, maskedEmail = '' }) {
   return buildBitegitHeader() + `
-<tr><td style="padding:28px 28px 0;">
-  <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#111;">${escapeHtml(title)}</h1>
-  ${maskedEmail ? `<p style="margin:0 0 18px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>` : ''}
-  <p style="margin:0 0 16px;font-size:14px;color:#333;">Your verification code is:</p>
+<tr><td style="padding:28px 28px 0;background:#181a20;">
+  <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#fff;">${escapeHtml(title)}</h1>
+  ${maskedEmail ? `<p style="margin:0 0 18px;font-size:14px;color:#aaa;">Hi ${escapeHtml(maskedEmail)},</p>` : ''}
+  <p style="margin:0 0 16px;font-size:14px;color:#ccc;">Your verification code is:</p>
   <div style="text-align:center;margin-bottom:20px;">
-    <div style="display:inline-block;background:#f0fffe;border:2px solid #00b8d4;border-radius:10px;padding:14px 32px;font-size:36px;font-weight:800;letter-spacing:8px;color:#00b8d4;">
+    <div style="display:inline-block;background:#2a2000;border:2px solid ${BRAND_ACCENT};border-radius:10px;padding:14px 32px;font-size:36px;font-weight:800;letter-spacing:8px;color:${BRAND_ACCENT};">
       ${escapeHtml(String(code))}
     </div>
   </div>
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
-    <tr><td style="background:#f8f8f8;border-radius:6px;padding:14px 18px;">
-      <p style="margin:0 0 6px;font-size:13px;color:#333;">⏱ Valid for: <strong style="color:#00b8d4;">${Number(expiresInMinutes)} minutes</strong></p>
-      <p style="margin:0;font-size:13px;color:#888;">🔒 ${escapeHtml(note)}</p>
+    <tr><td style="background:#22252e;border-radius:6px;padding:14px 18px;">
+      <p style="margin:0 0 6px;font-size:13px;color:#ccc;">⏱ Valid for: <strong style="color:${BRAND_ACCENT};">${Number(expiresInMinutes)} minutes</strong></p>
+      <p style="margin:0;font-size:13px;color:#aaa;">🔒 ${escapeHtml(note)}</p>
     </td></tr>
   </table>
   <p style="margin:0 0 28px;font-size:13px;color:#888;">* This email is sent automatically and you do not need to reply.</p>
@@ -285,21 +283,21 @@ function createOtpTemplate({ title, code, expiresInMinutes, note, maskedEmail = 
 function createNewDeviceTemplate({ email, loginTimeUtc, ipAddress, userAgent, location }) {
   const maskedEmail = String(email).replace(/^(.{4}).*(@.*)$/, '$1****$2');
   return buildBitegitHeader() + `
-<tr><td style="padding:28px 28px 0;">
+<tr><td style="padding:28px 28px 0;background:#181a20;">
   <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px 18px;margin-bottom:20px;">
     <span style="font-size:20px;margin-right:8px;">⚠️</span>
     <span style="font-size:14px;font-weight:700;color:#856404;">New Device or Location Login Detected</span>
   </div>
-  <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#111;">New Device Login Alert</h1>
-  <p style="margin:0 0 18px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
-  <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">We detected a login to your account from a new device or IP address. If this was you, no action is needed. If not, <strong style="color:#e53935;">reset your password immediately.</strong></p>
+  <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#fff;">New Device Login Alert</h1>
+  <p style="margin:0 0 18px;font-size:14px;color:#aaa;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 16px;font-size:14px;color:#ccc;line-height:1.7;">We detected a login to your account from a new device or IP address. If this was you, no action is needed. If not, <strong style="color:#e53935;">reset your password immediately.</strong></p>
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
     <tr><td style="background:#f8f8f8;border-radius:6px;padding:18px 20px;">
       <table width="100%" cellpadding="0" cellspacing="0">
-        <tr><td style="padding:6px 0;font-size:14px;color:#333;width:130px;vertical-align:top;">Login time:</td><td style="padding:6px 0;font-size:14px;color:#00b8d4;font-weight:500;">${escapeHtml(loginTimeUtc)}</td></tr>
-        <tr><td style="padding:6px 0;font-size:14px;color:#333;vertical-align:top;">IP Address:</td><td style="padding:6px 0;font-size:14px;color:#00b8d4;font-weight:500;">${escapeHtml(ipAddress)}</td></tr>
-        <tr><td style="padding:6px 0;font-size:14px;color:#333;vertical-align:top;">Device:</td><td style="padding:6px 0;font-size:14px;color:#00b8d4;font-weight:500;word-break:break-all;">${escapeHtml(userAgent)}</td></tr>
-        <tr><td style="padding:6px 0;font-size:14px;color:#333;vertical-align:top;">Location:</td><td style="padding:6px 0;font-size:14px;color:#00b8d4;font-weight:500;">${escapeHtml(location)}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#333;width:130px;vertical-align:top;">Login time:</td><td style="padding:6px 0;font-size:14px;color:'#F68F15';font-weight:500;">${escapeHtml(loginTimeUtc)}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#333;vertical-align:top;">IP Address:</td><td style="padding:6px 0;font-size:14px;color:'#F68F15';font-weight:500;">${escapeHtml(ipAddress)}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#333;vertical-align:top;">Device:</td><td style="padding:6px 0;font-size:14px;color:'#F68F15';font-weight:500;word-break:break-all;">${escapeHtml(userAgent)}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:#333;vertical-align:top;">Location:</td><td style="padding:6px 0;font-size:14px;color:'#F68F15';font-weight:500;">${escapeHtml(location)}</td></tr>
       </table>
     </td></tr>
   </table>
@@ -371,14 +369,14 @@ function createAuthEmailService() {
     const subject = `[${BRAND_NAME}] ${asset} Deposit Successful`;
     const text = `${asset} Deposit Successful. Amount: ${amount} ${asset}.`;
     const html = buildBitegitHeader() + `
-<tr><td style="padding:28px 28px 0;">
-  <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#111;">Deposit successful</h1>
-  <p style="margin:0 0 18px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
+<tr><td style="padding:28px 28px 0;background:#181a20;">
+  <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#fff;">Deposit successful</h1>
+  <p style="margin:0 0 18px;font-size:14px;color:#aaa;">Hi ${escapeHtml(maskedEmail)},</p>
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
     <tr><td style="background:#f8f8f8;border-radius:6px;padding:18px 20px;">
       <table width="100%" cellpadding="0" cellspacing="0">
-        <tr><td style="padding:7px 0;font-size:14px;color:#333;white-space:nowrap;width:155px;vertical-align:top;">Transaction time:</td><td style="padding:7px 0;font-size:14px;color:#00b8d4;font-weight:500;">${escapeHtml(depositTime)}</td></tr>
-        <tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">Crypto received:</td><td style="padding:7px 0;font-size:14px;color:#00b8d4;font-weight:500;">${amount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:#333;white-space:nowrap;width:155px;vertical-align:top;">Transaction time:</td><td style="padding:7px 0;font-size:14px;color:'#F68F15';font-weight:500;">${escapeHtml(depositTime)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">Crypto received:</td><td style="padding:7px 0;font-size:14px;color:'#F68F15';font-weight:500;">${amount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</td></tr>
       </table>
     </td></tr>
   </table>
@@ -399,18 +397,18 @@ function createAuthEmailService() {
     const subject = `[${BRAND_NAME}] ${asset} Withdrawal Successful`;
     const text = `${asset} Withdrawal Successful. Amount: ${amount} ${asset}. Address: ${address}. TxId: ${txId}`;
     const html = buildBitegitHeader() + `
-<tr><td style="padding:28px 28px 0;">
-  <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#111;">Withdrawal successful</h1>
-  <p style="margin:0 0 18px;font-size:14px;color:#555;">Hi ${escapeHtml(maskedEmail)},</p>
+<tr><td style="padding:28px 28px 0;background:#181a20;">
+  <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#fff;">Withdrawal successful</h1>
+  <p style="margin:0 0 18px;font-size:14px;color:#aaa;">Hi ${escapeHtml(maskedEmail)},</p>
   <p style="margin:0 0 18px;font-size:15px;color:#333;line-height:1.6;">Withdrawal has been successful. Check the details below:</p>
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
     <tr><td style="background:#f8f8f8;border-radius:6px;padding:18px 20px;">
       <table width="100%" cellpadding="0" cellspacing="0">
-        <tr><td style="padding:7px 0;font-size:14px;color:#333;white-space:nowrap;width:155px;vertical-align:top;">Withdrawal time:</td><td style="padding:7px 0;font-size:14px;color:#00b8d4;font-weight:500;">${escapeHtml(withdrawalTime)}</td></tr>
-        <tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">Amount:</td><td style="padding:7px 0;font-size:14px;color:#00b8d4;font-weight:500;">${amount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</td></tr>
-        <tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">Withdrawal address:</td><td style="padding:7px 0;font-size:14px;color:#00b8d4;font-weight:500;word-break:break-all;">${escapeHtml(address)}</td></tr>
-        <tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">TxID:</td><td style="padding:7px 0;font-size:14px;color:#00b8d4;font-weight:500;word-break:break-all;">${escapeHtml(txId)}</td></tr>
-        ${fee > 0 ? `<tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">Transaction fees:</td><td style="padding:7px 0;font-size:14px;color:#00b8d4;font-weight:500;">${fee} ${escapeHtml(asset)}</td></tr>` : ''}
+        <tr><td style="padding:7px 0;font-size:14px;color:#333;white-space:nowrap;width:155px;vertical-align:top;">Withdrawal time:</td><td style="padding:7px 0;font-size:14px;color:'#F68F15';font-weight:500;">${escapeHtml(withdrawalTime)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">Amount:</td><td style="padding:7px 0;font-size:14px;color:'#F68F15';font-weight:500;">${amount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">Withdrawal address:</td><td style="padding:7px 0;font-size:14px;color:'#F68F15';font-weight:500;word-break:break-all;">${escapeHtml(address)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">TxID:</td><td style="padding:7px 0;font-size:14px;color:'#F68F15';font-weight:500;word-break:break-all;">${escapeHtml(txId)}</td></tr>
+        ${fee > 0 ? `<tr><td style="padding:7px 0;font-size:14px;color:#333;vertical-align:top;">Transaction fees:</td><td style="padding:7px 0;font-size:14px;color:'#F68F15';font-weight:500;">${fee} ${escapeHtml(asset)}</td></tr>` : ''}
       </table>
     </td></tr>
   </table>
