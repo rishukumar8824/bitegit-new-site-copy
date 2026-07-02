@@ -4807,6 +4807,7 @@ app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
 // ── Admin: List all withdrawal requests ───────────────────────────────────────
 app.get('/api/admin/wallet/withdrawals', requiresAdminSession, async (req, res) => {
   try {
+    if (!isDbConnected()) return res.json({ total: 0, withdrawals: [] });
     const statusFilter = String(req.query.status || '').toLowerCase();
     const limit = Math.min(Math.max(Number(req.query.limit || 50), 1), 200);
     const { withdrawalRequests, p2pCredentials } = getCollections();
@@ -5121,7 +5122,14 @@ app.post('/api/support/ticket/:ticketId/user-reply', async (req, res) => {
 app.get('/api/admin/auth/me', requiresAdminSession, async (req, res) => {
   try {
     const admin = req.adminUser || {};
-    return res.json({ admin: { id: admin.id, username: admin.username, email: admin.email, role: admin.role || 'admin' } });
+    return res.json({
+      admin: {
+        id: admin.id || 'admin_legacy',
+        username: admin.username || ADMIN_SEED_USERNAME,
+        email: admin.email || ADMIN_SEED_EMAIL,
+        role: admin.role || ADMIN_SEED_ROLE || 'SUPER_ADMIN'
+      }
+    });
   } catch (e) { return res.status(500).json({ message: 'Failed to get admin info' }); }
 });
 

@@ -3349,7 +3349,7 @@ function showSupportNotification(info) {
   n.style.cssText = `position:fixed;top:18px;right:18px;z-index:9999;
     background:var(--bg-card);border:1px solid var(--accent);border-radius:14px;
     padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
-    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:320px;`;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:fadeIn 0.22s ease;max-width:320px;`;
 
   const avatarColor = '#00b8d4';
   n.innerHTML = `
@@ -3390,7 +3390,7 @@ function showDisputeNotification(info) {
   n.style.cssText = `position:fixed;top:18px;right:18px;z-index:9999;
     background:var(--bg-card);border:1px solid #f97316;border-radius:14px;
     padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
-    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:340px;`;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:fadeIn 0.22s ease;max-width:340px;`;
   n.innerHTML = `
     <div style="width:38px;height:38px;border-radius:50%;background:#f9731620;border:2px solid #f9731640;
                 display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⚠️</div>
@@ -3599,7 +3599,7 @@ function showWithdrawalNotification(info) {
   n.style.cssText = `position:fixed;top:18px;right:18px;z-index:10000;
     background:#141821;border:1px solid rgba(0,229,255,0.3);border-radius:14px;
     padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;
-    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:slideInDown 0.3s cubic-bezier(.22,1,.36,1);max-width:340px;`;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7);animation:fadeIn 0.22s ease;max-width:340px;`;
   n.innerHTML = `
     <div style="width:38px;height:38px;border-radius:50%;background:rgba(0,229,255,0.1);border:2px solid rgba(0,229,255,0.3);
                 display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💸</div>
