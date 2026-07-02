@@ -3231,9 +3231,6 @@ function renderOffers(data, append) {
     ).join('');
     cardsHtml.push(`
       <article class="bbt-card">
-        <div class="bbt-card-brand-mark">
-          <img src="/cdn/brand/logo.png" alt="Bitcovex" class="bbt-card-brand-img" />
-        </div>
         <div class="bbt-card-top">
           <div class="bbt-card-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
           <div class="bbt-card-meta">
