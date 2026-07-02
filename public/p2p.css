@@ -4452,14 +4452,50 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* ── Scroll-hide chrome (mobile only) ───────────────────────────────── */
 @media (max-width: 768px) {
-  .p2p-header { transition: transform 0.25s ease; will-change: transform; }
-  .p2p-subnav { transition: transform 0.25s ease; will-change: transform; }
-  .p2p-mobile-bottom-nav { transition: transform 0.25s ease; will-change: transform; }
-  .gt-controls { transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.25s ease; overflow: hidden; max-height: 200px; opacity: 1; }
+  /* max-height collapse removes elements from flow — no black gap */
+  .p2p-header {
+    max-height: 60px;
+    overflow: hidden;
+    transition: max-height 0.28s ease;
+  }
+  .p2p-subnav {
+    max-height: 50px;
+    overflow: hidden;
+    transition: max-height 0.28s ease;
+  }
+  .gt-controls {
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height 0.28s ease, opacity 0.2s ease;
+    opacity: 1;
+  }
+  /* Bottom nav: compact (stays visible, just shorter + icons only) */
+  .p2p-mobile-bottom-nav {
+    transition: min-height 0.28s ease, padding-bottom 0.28s ease;
+  }
+  .p2p-mobile-bottom-nav .nav-label {
+    transition: max-height 0.2s ease, opacity 0.2s ease;
+    max-height: 20px;
+    overflow: hidden;
+    opacity: 1;
+  }
 
-  body.p2p-chrome-hidden .p2p-header { transform: translateY(-100%); }
-  body.p2p-chrome-hidden .p2p-subnav { transform: translateY(calc(-100% - 52px)); }
-  body.p2p-chrome-hidden .p2p-mobile-bottom-nav { transform: translateY(100%); }
-  body.p2p-chrome-hidden .gt-controls { max-height: 0; opacity: 0; pointer-events: none; margin-bottom: 0; }
+  body.p2p-chrome-hidden .p2p-header { max-height: 0; }
+  body.p2p-chrome-hidden .p2p-subnav { max-height: 0; }
+  body.p2p-chrome-hidden .gt-controls { max-height: 0; opacity: 0; pointer-events: none; }
+
+  /* Compact bottom nav — shrink to 36px, hide text labels */
+  body.p2p-chrome-hidden .p2p-mobile-bottom-nav {
+    min-height: 36px !important;
+    padding-bottom: 0 !important;
+  }
+  body.p2p-chrome-hidden .p2p-mobile-bottom-nav a {
+    padding: 4px 0 !important;
+    gap: 0 !important;
+  }
+  body.p2p-chrome-hidden .p2p-mobile-bottom-nav .nav-label {
+    max-height: 0;
+    opacity: 0;
+  }
 }
 

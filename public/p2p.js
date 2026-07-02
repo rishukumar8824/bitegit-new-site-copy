@@ -6155,27 +6155,28 @@ window.addEventListener('pagehide', () => {
 })();
 
 // ── Scroll-hide chrome on mobile ─────────────────────────────────────
-// body is overflow:hidden on mobile — #p2pCards is the real scroll container.
 (function setupScrollHide() {
   var body = document.body;
   var lastY = 0;
   var ticking = false;
+  var tries = 0;
 
-  function onCardsScroll() {
+  function onScroll() {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(function() {
       var el = document.getElementById('p2pCards');
       if (!el) { ticking = false; return; }
       var y = el.scrollTop;
-      var modalOpen = body.classList.contains('mob-screen-open') || body.classList.contains('deal-open');
-      if (!modalOpen) {
-        if (y > lastY && y > 50) {
+      var busy = body.classList.contains('mob-screen-open') || body.classList.contains('deal-open');
+      if (!busy) {
+        if (y <= 4) {
+          body.classList.remove('p2p-chrome-hidden');
+        } else if (y > lastY + 4) {
           body.classList.add('p2p-chrome-hidden');
-        } else if (y < lastY) {
+        } else if (y < lastY - 4) {
           body.classList.remove('p2p-chrome-hidden');
         }
-        if (y <= 0) body.classList.remove('p2p-chrome-hidden');
       }
       lastY = y;
       ticking = false;
@@ -6185,9 +6186,9 @@ window.addEventListener('pagehide', () => {
   function attach() {
     var el = document.getElementById('p2pCards');
     if (el) {
-      el.addEventListener('scroll', onCardsScroll, { passive: true });
-    } else {
-      setTimeout(attach, 300);
+      el.addEventListener('scroll', onScroll, { passive: true });
+    } else if (tries++ < 20) {
+      setTimeout(attach, 250);
     }
   }
 
