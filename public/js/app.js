@@ -262,37 +262,14 @@
     // Same pairs as Bitbase Popular Pairs
     const SPOT_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOTUSDT','HBARUSDT','LINKUSDT','XLMUSDT'];
     const VOL_SYMS  = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT'];
-    const ALL_SYMS  = [...new Set([...SPOT_SYMS, ...VOL_SYMS])];
 
-    // Fetch via server proxy (avoids CORS issues with Binance)
-    const fetchTicker = async (symbols) => {
-      const qs = symbols ? '?symbols=' + encodeURIComponent(JSON.stringify(symbols)) : '';
-      try {
-        const r = await fetch('/api/v3/ticker/24hr' + qs);
-        if (!r.ok) throw new Error('proxy fail');
-        return await r.json();
-      } catch(e) {
-        // fallback to direct Binance
-        const r2 = await fetch('https://api.binance.com/api/v3/ticker/24hr' + qs);
-        return await r2.json();
-      }
-    };
+    // Use tickerMap already populated by loadTicker() — no extra fetch needed
+    const tdata = tickerMap || {};
 
-    let tdata = {};
-    try {
-      const res = await fetchTicker(ALL_SYMS);
-      if (Array.isArray(res)) res.forEach(t => { tdata[t.symbol] = t; });
-    } catch(e) {}
-
-    let gainers = [], newListings = [];
-    try {
-      const all = await fetchTicker(null);
-      if (Array.isArray(all)) {
-        const usdt = all.filter(t => t.symbol.endsWith('USDT') && Number(t.lastPrice) > 0 && Number(t.quoteVolume) > 500000);
-        gainers = [...usdt].sort((a,b) => Number(b.priceChangePercent) - Number(a.priceChangePercent)).slice(0, 4);
-        newListings = usdt.filter(t => !SPOT_SYMS.includes(t.symbol)).slice(0, 3);
-      }
-    } catch(e) {}
+    // Build gainers from tickerMap (sort by % change)
+    const usdt = Object.values(tdata).filter(t => t.symbol.endsWith('USDT') && Number(t.lastPrice) > 0);
+    const gainers = [...usdt].sort((a,b) => Number(b.change24h||b.priceChangePercent||0) - Number(a.change24h||a.priceChangePercent||0)).slice(0, 4);
+    const newListings = usdt.filter(t => !SPOT_SYMS.includes(t.symbol)).slice(0, 3);
 
     const COIN_ICONS = {
       BTC:'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png',
@@ -616,19 +593,11 @@
   // ── 11. TICKER / PRICES ───────────────────────────────────────────────────
   let tickerMap = null;
   async function loadTicker() {
-    // Try backend first
+    // All pairs needed (home page Popular Pairs + mini ticker)
+    const ALL_LOAD_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOTUSDT','HBARUSDT','LINKUSDT','XLMUSDT',
+                           'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','HYPEUSDT','XAUUSDT'];
     try {
-      const r = await fetch(API_BASE + '/api/p2p/exchange-ticker').then((x) => x.json());
-      if (r && r.ticker && r.source !== 'fallback') {
-        tickerMap = {};
-        r.ticker.forEach((t) => { tickerMap[t.symbol] = t; });
-        return;
-      }
-    } catch (e) {}
-    // Backend fallback or error → fetch directly from Binance for live prices
-    try {
-      const syms = SPOT_PAIRS.map(s => s + 'USDT');
-      const url = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(syms));
+      const url = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(ALL_LOAD_SYMS));
       const data = await fetch(url).then(x => x.json());
       if (Array.isArray(data) && data.length) {
         tickerMap = {};
@@ -636,6 +605,7 @@
           tickerMap[item.symbol] = {
             symbol: item.symbol,
             lastPrice: Number(item.lastPrice),
+            priceChangePercent: item.priceChangePercent,
             change24h: Number(item.priceChangePercent),
             quoteVolume: Number(item.quoteVolume)
           };
@@ -643,10 +613,13 @@
         return;
       }
     } catch (e) {}
-    // Last resort: use backend fallback data
+    // Fallback: try backend exchange-ticker
     try {
       const r = await fetch(API_BASE + '/api/p2p/exchange-ticker').then((x) => x.json());
-      if (r && r.ticker) { tickerMap = {}; r.ticker.forEach((t) => { tickerMap[t.symbol] = t; }); }
+      if (r && r.ticker) {
+        tickerMap = {};
+        r.ticker.forEach((t) => { tickerMap[t.symbol] = t; });
+      }
     } catch (e) {}
   }
 
