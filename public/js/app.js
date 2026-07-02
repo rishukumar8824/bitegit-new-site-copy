@@ -39,14 +39,14 @@
     DOGE: 'https://s2.coinmarketcap.com/static/img/coins/64x64/74.png',
     ADA:  'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
     AVAX: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png',
-    PAXG: 'https://s2.coinmarketcap.com/static/img/coins/64x64/4705.png',
+    XLM:  'https://s2.coinmarketcap.com/static/img/coins/64x64/512.png',
     LINK: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png',
     DOT:  'https://s2.coinmarketcap.com/static/img/coins/64x64/6636.png',
     HBAR: 'https://s2.coinmarketcap.com/static/img/coins/64x64/4642.png',
   };
   const SPOT_PAIRS    = ['BTC', 'ETH', 'SOL', 'HYPE', 'XAU'];
   const FUTURES_PAIRS = ['BTC', 'ETH', 'SOL', 'XRP', 'BNB', 'DOGE', 'ADA', 'AVAX'];
-  const TRADFI_PAIRS  = ['PAXG', 'XAU', 'LINK', 'DOT', 'HBAR'];
+  const TRADFI_PAIRS  = ['XAU', 'LINK', 'DOT', 'HBAR', 'XLM'];
   const COIN_COLORS = { BTC:'#F7931A', ETH:'#627EEA', SOL:'#9945FF', HYPE:'#4FAAFF', XAU:'#E5C55A',
     XRP:'#00AAE4', BNB:'#F3BA2F', DOGE:'#C3A634', ADA:'#0D1E2D', AVAX:'#E84142',
     PAXG:'#D4AF37', LINK:'#2A5ADA', DOT:'#E6007A', HBAR:'#222' };
@@ -512,7 +512,7 @@
   async function loadTicker() {
     // All pairs needed (home page Popular Pairs + mini ticker)
     const ALL_LOAD_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOTUSDT','HBARUSDT','LINKUSDT','XLMUSDT',
-                           'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','HYPEUSDT','XAUUSDT','PAXGUSDT'];
+                           'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','HYPEUSDT','XAUUSDT'];
     try {
       const url = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(ALL_LOAD_SYMS));
       const data = await fetch(url).then(x => x.json());
