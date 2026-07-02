@@ -126,7 +126,7 @@
     // Main tabs — no sub-tabs (match bitbase)
     const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking >'];
     const tabBar = document.createElement('div');
-    tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;scrollbar-width:none;margin-bottom:0;';
+    tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow:hidden;margin-bottom:0;border:none;outline:none;';
 
     const rowsDiv = document.createElement('div');
     rowsDiv.style.cssText = 'display:flex;flex-direction:column;width:100%;';
