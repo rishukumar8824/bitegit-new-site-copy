@@ -190,10 +190,10 @@ function setSidebarOpen(open) {
   }
   if (open) {
     dom.sidebar.classList.add('open');
-    if (dom.sidebarOverlay) dom.sidebarOverlay.classList.add('active');
+    if (dom.sidebarOverlay) dom.sidebarOverlay.classList.add('show');
   } else {
     dom.sidebar.classList.remove('open');
-    if (dom.sidebarOverlay) dom.sidebarOverlay.classList.remove('active');
+    if (dom.sidebarOverlay) dom.sidebarOverlay.classList.remove('show');
   }
 }
 
