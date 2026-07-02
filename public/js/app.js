@@ -252,140 +252,45 @@
     desktopPairs.parentElement.insertBefore(wrapper, desktopPairs);
   }
 
-  // ── 4. DESKTOP PAIRS — live prices matching Bitbase layout ──────────────────
+  // ── 4. DESKTOP PAIRS — update prices in-place (keep Bitbase HTML/size) ───────
   async function fixDesktopPairs() {
     if (document.getElementById('cvx-dp-fixed')) return;
     if (window.innerWidth <= 767) return;
     const dp = document.getElementById('cvx-desktop-pairs');
     if (!dp) return;
 
-    // Same pairs as Bitbase Popular Pairs
-    const SPOT_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOTUSDT','HBARUSDT','LINKUSDT','XLMUSDT'];
-    const VOL_SYMS  = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT'];
-
-    // Use tickerMap already populated by loadTicker() — no extra fetch needed
     const tdata = tickerMap || {};
 
-    // Build gainers from tickerMap (sort by % change)
-    const usdt = Object.values(tdata).filter(t => t.symbol.endsWith('USDT') && Number(t.lastPrice) > 0);
-    const gainers = [...usdt].sort((a,b) => Number(b.change24h||b.priceChangePercent||0) - Number(a.change24h||a.priceChangePercent||0)).slice(0, 4);
-    const newListings = usdt.filter(t => !SPOT_SYMS.includes(t.symbol)).slice(0, 3);
-
-    const COIN_ICONS = {
-      BTC:'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png',
-      ETH:'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png',
-      BNB:'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
-      SOL:'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png',
-      DOT:'https://s2.coinmarketcap.com/static/img/coins/64x64/6636.png',
-      HBAR:'https://s2.coinmarketcap.com/static/img/coins/64x64/4642.png',
-      LINK:'https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png',
-      XLM:'https://s2.coinmarketcap.com/static/img/coins/64x64/512.png',
-      XRP:'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png',
-      DOGE:'https://s2.coinmarketcap.com/static/img/coins/64x64/74.png',
-      ADA:'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
-      AVAX:'https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png',
-    };
-    const coinIcon = (sym) => {
-      const base = sym.replace('USDT','');
-      return COIN_ICONS[base] || `https://s2.coinmarketcap.com/static/img/coins/64x64/1.png`;
-    };
-    const fmtP = (v) => {
-      const n = Number(v);
-      if (n >= 1e9) return (n/1e9).toFixed(2)+'B';
-      if (n >= 1e6) return (n/1e6).toFixed(2)+'M';
-      if (n >= 1e3) return (n/1e3).toFixed(2)+'K';
-      return n.toFixed(2);
-    };
     const fmtPrice = (v) => {
       const n = Number(v);
       if (n >= 1000) return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
       if (n >= 1) return '$'+n.toFixed(4);
       return '$'+n.toFixed(6);
     };
-    const sparkSVG = (up) => {
-      const color = up ? '#2ebd85' : '#f6465d';
-      const pts = Array.from({length:10},(_,i)=>i*8+4);
-      const ys = pts.map(()=> 8 + Math.random()*12);
-      const d = pts.map((x,i)=>`${i===0?'M':'L'}${x},${ys[i]}`).join(' ');
-      return `<svg width="80" height="28" viewBox="0 0 80 28"><path d="${d}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    };
-    // Bitbase-matching row: [icon] [name flex:1] [price 130px] [% 70px] [spark 88px] [Trade]
-    const rowHTML = (sym, showVol) => {
-      const t = tdata[sym] || {};
-      const price = fmtPrice(t.lastPrice || 0);
-      const chg = Number(t.priceChangePercent || 0);
-      const up = chg >= 0;
-      const base = sym.replace('USDT','');
-      const volStr = showVol ? fmtP(t.quoteVolume || 0) : '';
-      return `<a href="trade.html" style="display:flex;align-items:center;padding:12px 20px 12px 24px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;color:inherit;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background=''">
-        <img src="${coinIcon(sym)}" width="32" height="32" style="border-radius:50%;flex-shrink:0;margin-right:12px;" onerror="this.src='https://s2.coinmarketcap.com/static/img/coins/64x64/1.png'"/>
-        <span style="font-size:14px;font-weight:600;flex:1;min-width:0;">${base}<span style="color:rgba(255,255,255,0.4);font-weight:400;">/USDT</span></span>
-        ${showVol ? `<div style="width:90px;text-align:right;font-size:13px;color:rgba(255,255,255,0.4);">${volStr}</div>` : ''}
-        <div style="width:130px;text-align:right;font-size:14px;font-weight:600;">${price}</div>
-        <div style="width:70px;text-align:right;font-size:13px;font-weight:500;color:${up?'#2ebd85':'#f6465d'}">${up?'+':''}${chg.toFixed(2)}%</div>
-        <div style="width:88px;display:flex;justify-content:center;">${sparkSVG(up)}</div>
-        <div style="margin-left:12px;"><button onclick="event.preventDefault();location.href='trade.html'" style="background:#2b2f36;border:none;color:#fff;padding:6px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">Trade</button></div>
-      </a>`;
-    };
-    const gainerRow = (t) => {
-      if (!t) return '';
-      const chg = Number(t.priceChangePercent||0);
-      const up = chg >= 0;
-      const base = t.symbol.replace('USDT','');
-      return `<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-        <img src="${coinIcon(t.symbol)}" width="28" height="28" style="border-radius:50%;flex-shrink:0;margin-right:10px;" onerror="this.src='https://s2.coinmarketcap.com/static/img/coins/64x64/1.png'"/>
-        <span style="flex:1;font-size:13px;font-weight:500;">${base}/USDT</span>
-        <div style="text-align:right;">
-          <div style="font-size:13px;font-weight:600;">${fmtPrice(t.lastPrice)}</div>
-          <div style="font-size:12px;color:${up?'#2ebd85':'#f6465d'}">${up?'+':''}${chg.toFixed(2)}%</div>
-        </div>
-      </div>`;
-    };
 
-    const TABS = ['Spot','Futures','TradFi','Volume Ranking'];
-    let activeTab = 'Spot';
+    // Update each row in-place — keep Bitbase HTML layout exactly as-is
+    dp.querySelectorAll('[style*="height: 64px"]').forEach(row => {
+      // Identify coin by the /USDT quote slot
+      const quoteEl = row.querySelector('[data-slot="quote"]');
+      if (!quoteEl) return;
+      const base = (quoteEl.previousElementSibling || {}).textContent?.trim();
+      if (!base) return;
+      const t = tdata[base + 'USDT'];
+      if (!t || !Number(t.lastPrice)) return;
 
-    const renderLeft = (tab) => {
-      const syms = (tab === 'Volume Ranking') ? VOL_SYMS : SPOT_SYMS;
-      return syms.map(s => rowHTML(s, tab === 'Volume Ranking')).join('');
-    };
+      // Price column (2nd child, contains a <div> with text)
+      const priceDiv = row.children[1]?.querySelector('div');
+      if (priceDiv) priceDiv.textContent = fmtPrice(t.lastPrice);
 
-    dp.innerHTML = `
-      <div style="display:flex;justify-content:space-between;gap:20px;max-width:1200px;margin:0 auto;align-items:flex-start;">
-        <!-- LEFT: Popular Pairs -->
-        <div style="background:rgba(19,21,22,0.5);border-radius:20px;overflow:hidden;padding:16px 0 20px;width:798px;flex-shrink:0;">
-          <div id="cvx-market-tabs" style="display:flex;gap:4px;padding:0 24px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:0;">
-            ${TABS.map(t=>`<div data-tab="${t}" style="padding:10px 12px;cursor:pointer;font-size:14px;font-weight:${t===activeTab?'600':'400'};color:${t===activeTab?'#fff':'rgba(255,255,255,0.45)'};border-bottom:${t===activeTab?'2px solid #F0B90B':'2px solid transparent'};margin-bottom:-1px;white-space:nowrap;transition:color 0.15s;">${t}</div>`).join('')}
-          </div>
-          <div id="cvx-pairs-body">${renderLeft('Spot')}</div>
-        </div>
-        <!-- RIGHT: Gainers + New Listings -->
-        <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:0;">
-          <div style="background:rgba(19,21,22,0.5);border-radius:20px;padding:16px 20px;">
-            <div style="display:flex;gap:16px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px;">
-              <span style="font-size:14px;color:rgba(255,255,255,0.4);cursor:pointer;">Futures Gainers</span>
-              <span style="font-size:14px;font-weight:600;color:#fff;cursor:pointer;">Spot Gainers</span>
-            </div>
-            <div>${gainers.map(t=>gainerRow(t)).join('') || '<div style="padding:20px;color:rgba(255,255,255,0.3);font-size:13px;text-align:center;">Loading...</div>'}</div>
-          </div>
-          <div style="background:rgba(19,21,22,0.5);border-radius:20px;padding:16px 20px;">
-            <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px;">New Listings</div>
-            <div>${newListings.map(t=>gainerRow(t)).join('') || '<div style="padding:20px;color:rgba(255,255,255,0.3);font-size:13px;text-align:center;">Loading...</div>'}</div>
-          </div>
-        </div>
-      </div>`;
-
-    dp.querySelectorAll('[data-tab]').forEach(tab => {
-      tab.addEventListener('click', () => {
-        activeTab = tab.dataset.tab;
-        dp.querySelectorAll('[data-tab]').forEach(t => {
-          const active = t.dataset.tab === activeTab;
-          t.style.fontWeight = active ? '600' : '400';
-          t.style.color = active ? '#fff' : 'rgba(255,255,255,0.45)';
-          t.style.borderBottom = active ? '2px solid #F0B90B' : '2px solid transparent';
-        });
-        document.getElementById('cvx-pairs-body').innerHTML = renderLeft(activeTab);
-      });
+      // % change column (3rd child, contains a <span> with class)
+      const pctSpan = row.children[2]?.querySelector('span');
+      if (pctSpan) {
+        const chg = Number(t.change24h || t.priceChangePercent || 0);
+        const up = chg >= 0;
+        pctSpan.textContent = (up ? '+' : '') + chg.toFixed(2) + '%';
+        pctSpan.className = up ? 'text-fn_green_default' : 'text-fn_red_default';
+        pctSpan.style.color = up ? '#2ebd85' : '#f6465d';
+      }
     });
 
     const marker = document.createElement('span');
