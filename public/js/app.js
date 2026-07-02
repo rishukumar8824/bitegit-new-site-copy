@@ -124,8 +124,12 @@
   }
 
   // ── 3. MOBILE MARKET (Spot/Futures/TradFi tabs + live prices) ─────────────
+  let _mobileRenderRows = null;
   function buildMobileMarket() {
-    if (document.getElementById('cvx-mobile-market')) return;
+    if (document.getElementById('cvx-mobile-market')) {
+      if (_mobileRenderRows) _mobileRenderRows();
+      return;
+    }
     if (!tickerMap) return;
     const desktopPairs = document.getElementById('cvx-desktop-pairs');
     if (!desktopPairs) return;
@@ -238,6 +242,7 @@
       if (i === 0) setTimeout(setActive, 0);
     });
 
+    _mobileRenderRows = renderRows;
     wrapper.appendChild(tabBar);
     wrapper.appendChild(rowsDiv);
     desktopPairs.parentElement.insertBefore(wrapper, desktopPairs);
