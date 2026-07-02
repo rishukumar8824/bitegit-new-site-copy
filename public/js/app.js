@@ -212,12 +212,11 @@
         tabBar.querySelectorAll('[data-cvxtab]').forEach((t, j) => {
           t.style.color = j === i ? '#fff' : 'rgba(255,255,255,0.4)';
           t.style.fontWeight = j === i ? '700' : '400';
-          t.style.borderBottom = j === i ? '2px solid #F0B90B' : '2px solid transparent';
         });
         renderRows();
       };
       tab.setAttribute('data-cvxtab', i);
-      tab.style.cssText = 'padding:10px 10px;font-size:14px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;color:rgba(255,255,255,0.4);font-weight:500;';
+      tab.style.cssText = 'padding:10px 10px;font-size:14px;cursor:pointer;white-space:nowrap;transition:all 0.2s;color:rgba(255,255,255,0.4);font-weight:500;';
       tab.addEventListener('click', setActive);
       tabBar.appendChild(tab);
       if (i === 0) setTimeout(setActive, 0);
