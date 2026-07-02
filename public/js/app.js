@@ -510,35 +510,38 @@
   })();
 
   async function loadTicker() {
-    // All pairs needed (home page Popular Pairs + mini ticker)
     const ALL_LOAD_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOTUSDT','HBARUSDT','LINKUSDT','XLMUSDT',
                            'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','HYPEUSDT','XAUUSDT'];
+    const parseTicker = (data) => {
+      if (!Array.isArray(data) || !data.length) return false;
+      tickerMap = {};
+      data.forEach(item => {
+        tickerMap[item.symbol] = {
+          symbol: item.symbol,
+          lastPrice: Number(item.lastPrice),
+          priceChangePercent: item.priceChangePercent,
+          change24h: Number(item.priceChangePercent),
+          quoteVolume: Number(item.quoteVolume)
+        };
+      });
+      try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: tickerMap })); } catch (e) {}
+      return true;
+    };
+    const qs = '?symbols=' + encodeURIComponent(JSON.stringify(ALL_LOAD_SYMS));
+    // 1. Try server proxy (avoids CORS/IP blocks)
     try {
-      const url = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(ALL_LOAD_SYMS));
-      const data = await fetch(url).then(x => x.json());
-      if (Array.isArray(data) && data.length) {
-        tickerMap = {};
-        data.forEach(item => {
-          tickerMap[item.symbol] = {
-            symbol: item.symbol,
-            lastPrice: Number(item.lastPrice),
-            priceChangePercent: item.priceChangePercent,
-            change24h: Number(item.priceChangePercent),
-            quoteVolume: Number(item.quoteVolume)
-          };
-        });
-        // Cache to localStorage for instant next load
-        try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: tickerMap })); } catch (e) {}
-        return;
-      }
+      const data = await fetch(API_BASE + '/api/v3/ticker/24hr' + qs).then(x => x.json());
+      if (parseTicker(data)) return;
     } catch (e) {}
-    // Fallback: try backend exchange-ticker
+    // 2. Try direct Binance
+    try {
+      const data = await fetch('https://api.binance.com/api/v3/ticker/24hr' + qs).then(x => x.json());
+      if (parseTicker(data)) return;
+    } catch (e) {}
+    // 3. Fallback: backend exchange-ticker
     try {
       const r = await fetch(API_BASE + '/api/p2p/exchange-ticker').then((x) => x.json());
-      if (r && r.ticker) {
-        tickerMap = {};
-        r.ticker.forEach((t) => { tickerMap[t.symbol] = t; });
-      }
+      if (r && r.ticker) { tickerMap = {}; r.ticker.forEach((t) => { tickerMap[t.symbol] = t; }); }
     } catch (e) {}
   }
 
