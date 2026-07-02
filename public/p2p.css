@@ -4493,8 +4493,8 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-mob-pay { display:flex; align-items:center; gap:7px; font-size:11px; color:rgba(255,255,255,0.65); }
 .bbt-pay-bar { width:3px; height:12px; border-radius:2px; background:#F68F15; flex-shrink:0; }
 
-/* Action button — Bybit yellow style */
-.bbt-card-btn { display:block; width:82px; padding:10px 0; border-radius:6px; border:none; cursor:pointer; font-size:11px; font-weight:800; background:#F68F15; color:#000; transition:opacity 0.15s, transform 0.1s; white-space:nowrap; }
+/* Action button */
+.bbt-card-btn { display:block; width:82px; padding:10px 0; border-radius:6px; border:none; cursor:pointer; font-size:11px; font-weight:800; background:#2ebd85; color:#fff; transition:opacity 0.15s, transform 0.1s; white-space:nowrap; }
 .bbt-card-btn.bbt-card-btn-sell { background:#f6465d; color:#fff; }
 .bbt-card-btn:disabled { opacity:0.4; cursor:not-allowed; }
 .bbt-card-btn:not(:disabled):active { opacity:0.85; transform:scale(0.97); }

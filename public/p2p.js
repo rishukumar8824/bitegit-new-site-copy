@@ -3233,7 +3233,6 @@ function renderOffers(data, append) {
       <article class="bbt-card">
         <div class="bbt-card-brand-mark">
           <img src="/cdn/brand/logo.png" alt="Bitcovex" class="bbt-card-brand-img" />
-          <span class="bbt-card-brand-name">Bitcovex</span>
         </div>
         <div class="bbt-card-top">
           <div class="bbt-card-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
