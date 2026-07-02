@@ -496,7 +496,23 @@
   }
 
   // ── 11. TICKER / PRICES ───────────────────────────────────────────────────
+  const TICKER_CACHE_KEY = 'cvx_ticker_v1';
+  const TICKER_CACHE_TTL = 30000; // 30s
+
   let tickerMap = null;
+
+  // Load cached prices instantly from localStorage
+  (function loadCachedTicker() {
+    try {
+      const raw = localStorage.getItem(TICKER_CACHE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Date.now() - parsed.ts < TICKER_CACHE_TTL && parsed.data) {
+        tickerMap = parsed.data;
+      }
+    } catch (e) {}
+  })();
+
   async function loadTicker() {
     // All pairs needed (home page Popular Pairs + mini ticker)
     const ALL_LOAD_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOTUSDT','HBARUSDT','LINKUSDT','XLMUSDT',
@@ -515,6 +531,8 @@
             quoteVolume: Number(item.quoteVolume)
           };
         });
+        // Cache to localStorage for instant next load
+        try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: tickerMap })); } catch (e) {}
         return;
       }
     } catch (e) {}
@@ -1400,6 +1418,9 @@
     fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
     fixAppSection(); hideBrokenElements();
     wireTopNav(); wireWordmarks();
+    // If we have cached prices, render instantly — no wait
+    if (tickerMap) { applyPrices(); buildMobileMarket(); fixDesktopPairs(); }
+    // Always fetch fresh in background and re-render
     loadTicker().then(() => { applyPrices(); buildMobileMarket(); fixDesktopPairs(); });
     wireTrade(); revealImages(); fixTradePage();
     setInterval(() => {
@@ -1407,7 +1428,7 @@
       wireTrade(); revealImages(); wirePairsTabs(); autoSlideCarousel();
       hideBrokenElements(); fixAppSection();
     }, 3000);
-    setInterval(async () => { await loadTicker(); applyPrices(); }, 5000);
+    setInterval(async () => { await loadTicker(); applyPrices(); fixDesktopPairs(); }, 5000);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
