@@ -203,13 +203,7 @@
         nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}USDT</div>`;
         row.appendChild(nameCol);
 
-        // Col 2: volume
-        const volCol = document.createElement('div');
-        volCol.style.cssText = 'width:82px;text-align:left;flex-shrink:0;padding-left:4px;';
-        volCol.innerHTML = `<div style="font-size:11.5px;color:rgba(255,255,255,0.4);white-space:nowrap;">${vol}</div>`;
-        row.appendChild(volCol);
-
-        // Col 3: price + change%
+        // Col 2: price + change% (no volume column — match bitbase)
         const priceCol = document.createElement('div');
         priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:90px;';
         priceCol.innerHTML = `<div style="font-size:15px;font-weight:600;">${price}</div>
