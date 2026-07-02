@@ -1194,11 +1194,16 @@
   var _bootFailSafeTimer = null;
   var _paidRetryInFlight = {};
   var PREVIEW_MODE = new URLSearchParams(window.location.search).get('preview') === '1';
+  // Load demo offer from localStorage if navigated from demo flow
+  var _demoOffer = null;
+  if (PREVIEW_MODE) {
+    try { _demoOffer = JSON.parse(localStorage.getItem('cvx_demo_offer') || 'null'); } catch(_) {}
+  }
   var PREVIEW_USER = {
     id: 'preview_buyer',
     userId: 'preview_buyer',
-    username: 'Preview Buyer',
-    email: 'preview@bitegit.local',
+    username: 'Demo User',
+    email: 'demo@bitcovex.com',
     role: 'user',
     createdAt: new Date().toISOString()
   };
@@ -1623,6 +1628,30 @@
   }
 
   function buildPreviewAd() {
+    // Use real demo offer data if navigated from demo flow
+    if (_demoOffer) {
+      var pm = Array.isArray(_demoOffer.paymentMethods) ? _demoOffer.paymentMethods : ['UPI'];
+      return {
+        id: _demoOffer.id || 'preview_usdt_sell_ad',
+        type: 'SELL',
+        asset: _demoOffer.asset || 'USDT',
+        price: Number(_demoOffer.price || 101.3),
+        minLimit: Number(_demoOffer.minLimit || 1000),
+        maxLimit: Number(_demoOffer.maxLimit || 6000),
+        availableAmount: Number(_demoOffer.available || 5000),
+        payWindow: 15,
+        payments: pm,
+        createdByUserId: 'demo_seller',
+        createdByUsername: _demoOffer.advertiser || 'SELLER',
+        advertiser: _demoOffer.advertiser || 'SELLER',
+        completedBuyOrders: _demoOffer.baseOrders || 10,
+        completedSellOrders: _demoOffer.baseOrders || 10,
+        completedOrdersBothParties: (_demoOffer.baseOrders || 10) * 2,
+        avgReleaseTime: _demoOffer.releaseTime || '15',
+        terms: 'Use your own bank account only. Do not mention crypto or USDT in payment remarks.',
+        createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+      };
+    }
     return {
       id: 'preview_usdt_sell_ad',
       type: 'SELL',

@@ -3160,7 +3160,8 @@ function renderOffers(data, append) {
     const limits = `₹${formatNumber(offer.minLimit)} - ₹${formatNumber(offer.maxLimit)}`;
     const rowClass = index === 0 ? 'top-pick-row offer-highlight' : '';
     const topPickTag = index === 0 ? '<p class="top-pick-label">Top Picks for New Users</p>' : '';
-    const actionText = isOwnAd ? 'Your Ad' : currentUser ? actionLabel : 'Login';
+    const isDemo = String(offer.id || '').startsWith('demo');
+    const actionText = isOwnAd ? 'Your Ad' : currentUser ? actionLabel : isDemo ? 'Try Demo' : 'Login';
     // Admin-assigned merchant badge — use server value OR fall back to current user's own badge
     const _BADGE_SVG = {
       1: `<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;vertical-align:middle;margin-left:3px;cursor:pointer;" onclick="event.stopPropagation();openMerchantBadgeSheet&&openMerchantBadgeSheet(1)"><path d="M22 4 L36 10 L36 22 C36 30 29 37 22 40 C15 37 8 30 8 22 L8 10 Z" fill="#cd7f32"/><path d="M22 8 L33 13 L33 22 C33 28.5 27.5 34 22 37 C16.5 34 11 28.5 11 22 L11 13 Z" fill="#e8a060" opacity="0.5"/><text x="22" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">B</text></svg>`,
@@ -3707,15 +3708,20 @@ async function createOrder(offerId, options = {}) {
 }
 
 function openDealForOffer(offerId) {
-  if (!currentUser) {
-    requireLoginNotice();
-    return;
-  }
   const offer = offersMap.get(String(offerId || '').trim());
-  if (!offer) {
-    alert('Ad not found. Please refresh and try again.');
+  if (!offer) { alert('Ad not found. Please refresh and try again.'); return; }
+
+  // Demo offers — allow without login, use preview mode for full flow simulation
+  const isDemo = String(offerId || '').startsWith('demo');
+  if (!currentUser && isDemo) {
+    cacheSelectedOffer(offer);
+    // Store demo offer details for preview ad override
+    try { localStorage.setItem('cvx_demo_offer', JSON.stringify(offer)); } catch (_) {}
+    window.location.href = '/p2p-order-flow?preview=1&demo_offer=' + encodeURIComponent(String(offerId));
     return;
   }
+
+  if (!currentUser) { requireLoginNotice(); return; }
   fillDealModal(offer);
 }
 
