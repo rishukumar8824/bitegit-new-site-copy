@@ -260,22 +260,23 @@ function buildBitegitFooter() {
 
 function createOtpTemplate({ title, code, expiresInMinutes, note, maskedEmail = '' }) {
   return buildBitegitHeader() + `
-<tr><td style="padding:28px 28px 0;background:#181a20;">
-  <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#fff;">${escapeHtml(title)}</h1>
-  ${maskedEmail ? `<p style="margin:0 0 18px;font-size:14px;color:#aaa;">Hi ${escapeHtml(maskedEmail)},</p>` : ''}
-  <p style="margin:0 0 16px;font-size:14px;color:#ccc;">Your verification code is:</p>
-  <div style="text-align:center;margin-bottom:20px;">
-    <div style="display:inline-block;background:#2a2000;border:2px solid ${BRAND_ACCENT};border-radius:10px;padding:14px 32px;font-size:36px;font-weight:800;letter-spacing:8px;color:${BRAND_ACCENT};">
-      ${escapeHtml(String(code))}
-    </div>
+<tr><td style="padding:28px 28px 20px;background:#1a1a1a;">
+  <p style="margin:0 0 16px;font-size:14px;color:#ccc;">Dear ${BRAND_NAME} user:</p>
+  <p style="margin:0 0 16px;font-size:14px;color:#ccc;line-height:1.7;">You are performing an account verification. Please use the following verification code to complete the process: ${escapeHtml(String(code))}</p>
+  <p style="margin:0 0 20px;font-size:14px;color:#ccc;line-height:1.7;">This code is valid for ${Number(expiresInMinutes)} minutes. Please complete the verification as soon as possible.</p>
+  <div style="display:inline-block;background:${BRAND_ACCENT};border-radius:4px;padding:6px 16px;margin-bottom:20px;">
+    <span style="font-size:20px;font-weight:800;color:#000;letter-spacing:3px;">${escapeHtml(String(code))}</span>
   </div>
-  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
-    <tr><td style="background:#22252e;border-radius:6px;padding:14px 18px;">
-      <p style="margin:0 0 6px;font-size:13px;color:#ccc;">⏱ Valid for: <strong style="color:${BRAND_ACCENT};">${Number(expiresInMinutes)} minutes</strong></p>
-      <p style="margin:0;font-size:13px;color:#aaa;">🔒 ${escapeHtml(note)}</p>
-    </td></tr>
-  </table>
-  <p style="margin:0 0 28px;font-size:13px;color:#888;">* This email is sent automatically and you do not need to reply.</p>
+  <p style="margin:0 0 12px;font-size:13px;color:#aaa;line-height:1.7;">Security Reminder: Do not disclose your verification code to anyone. ${BRAND_NAME} official staff will never ask for your verification code. Please ensure you are visiting the official ${BRAND_NAME} website.</p>
+  <p style="margin:0 0 20px;font-size:13px;color:#aaa;">Please add this email to your contacts to ensure delivery.</p>
+  <p style="margin:0 0 8px;font-size:13px;color:#aaa;font-weight:600;">Security Reminder:</p>
+  <p style="margin:0 0 6px;font-size:13px;color:#aaa;">Do not disclose your verification code to anyone.</p>
+  <p style="margin:0 0 6px;font-size:13px;color:#aaa;">${BRAND_NAME} official staff will never ask for your verification code.</p>
+  <p style="margin:0 0 6px;font-size:13px;color:#aaa;">Please ensure you are visiting the official ${BRAND_NAME} website.</p>
+  <p style="margin:0 0 20px;font-size:13px;font-weight:700;color:#ccc;">Please add this email to your contacts to ensure delivery.</p>
+  <p style="margin:0 0 6px;font-size:13px;color:#aaa;">Thank you for your support and trust in ${BRAND_NAME}.</p>
+  <p style="margin:0 0 16px;font-size:13px;color:#aaa;">${BRAND_NAME} TEAM</p>
+  <p style="margin:0 0 0;font-size:12px;color:#666;">The message was sent automatically by the system. Please do not reply to this message.</p>
 </td></tr>
 ` + buildBitegitFooter();
 }
