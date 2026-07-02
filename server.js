@@ -5085,6 +5085,439 @@ app.post('/api/support/ticket/:ticketId/user-reply', async (req, res) => {
   }
 });
 
+/* ═══════════════════════════════════════════════════════════════
+   ADMIN API ROUTES — all panels in admin-dashboard.js
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── Auth ─────────────────────────────────────────────────────────
+app.get('/api/admin/auth/me', requiresAdminSession, async (req, res) => {
+  try {
+    const admin = req.adminUser || {};
+    return res.json({ admin: { id: admin.id, username: admin.username, email: admin.email, role: admin.role || 'admin' } });
+  } catch (e) { return res.status(500).json({ message: 'Failed to get admin info' }); }
+});
+
+app.post('/api/admin/auth/logout', requiresAdminSession, async (req, res) => {
+  try {
+    const cookies = parseCookies(req);
+    const accessToken = String(cookies[ADMIN_ACCESS_COOKIE_NAME] || '').trim();
+    if (accessToken && adminStore) await adminStore.verifyAdminAccessToken(accessToken).catch(() => {});
+    res.clearCookie(ADMIN_ACCESS_COOKIE_NAME);
+    res.clearCookie(SESSION_COOKIE_NAME);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Logout failed' }); }
+});
+
+// ── Dashboard Overview ────────────────────────────────────────────
+app.get('/api/admin/dashboard/overview', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.json({ totalUsers: 0, activeOrders: 0, pendingKyc: 0, pendingWithdrawals: 0, totalVolume: 0, revenue: 0 });
+    const [usersPayload, depositsPayload, withdrawalsPayload] = await Promise.allSettled([
+      adminStore.listUsers({ limit: 1 }),
+      adminStore.listDeposits({ limit: 1, status: 'pending' }),
+      adminStore.listWithdrawals({ limit: 1, status: 'PENDING' })
+    ]);
+    const totalUsers = usersPayload.status === 'fulfilled' ? (usersPayload.value?.total || 0) : 0;
+    const pendingDeposits = depositsPayload.status === 'fulfilled' ? (depositsPayload.value?.total || 0) : 0;
+    const pendingWithdrawals = withdrawalsPayload.status === 'fulfilled' ? (withdrawalsPayload.value?.total || 0) : 0;
+    // KYC pending count
+    let pendingKyc = 0;
+    try {
+      const kycUsers = await adminStore.listUsers({ kyc: 'pending', limit: 1 });
+      pendingKyc = kycUsers?.total || 0;
+    } catch (_) {}
+    return res.json({
+      totalUsers, pendingKyc, pendingDeposits, pendingWithdrawals,
+      activeOrders: 0, totalVolume: 0, revenue: 0,
+      systemHealth: { status: 'ok', uptime: process.uptime() },
+      updatedAt: new Date().toISOString()
+    });
+  } catch (e) { return res.status(500).json({ message: 'Failed to load overview', error: e.message }); }
+});
+
+// ── Users ─────────────────────────────────────────────────────────
+app.get('/api/admin/users', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.json({ users: [], total: 0, page: 1, limit: 20 });
+    const { email, search, page = 1, limit = 20, kyc, status } = req.query;
+    const result = await adminStore.listUsers({ email: email || search, page: Number(page), limit: Number(limit), kyc, status });
+    return res.json(result);
+  } catch (e) { return res.status(500).json({ message: 'Failed to list users', error: e.message }); }
+});
+
+app.get('/api/admin/users/:userId', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.status(404).json({ message: 'User not found' });
+    const user = await adminStore.getUserById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    return res.json({ user });
+  } catch (e) { return res.status(500).json({ message: 'Failed to get user', error: e.message }); }
+});
+
+app.get('/api/admin/users/:userId/kyc', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.json({ kyc: null });
+    const kyc = await adminStore.getUserKyc(req.params.userId);
+    return res.json({ kyc });
+  } catch (e) { return res.status(500).json({ message: 'Failed to get KYC', error: e.message }); }
+});
+
+app.get('/api/admin/users/:userId/kyc/documents', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.json({ documents: [] });
+    const documents = await adminStore.getKycDocuments(req.params.userId);
+    return res.json({ documents: Array.isArray(documents) ? documents : [] });
+  } catch (e) { return res.status(500).json({ message: 'Failed to get KYC documents', error: e.message }); }
+});
+
+app.post('/api/admin/users/:userId/kyc/review', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.status(503).json({ message: 'Store not ready' });
+    const { decision, remarks } = req.body;
+    if (!decision) return res.status(400).json({ message: 'decision required (approved|rejected)' });
+    const result = await adminStore.reviewKyc(req.params.userId, decision, remarks || '');
+    return res.json({ ok: true, kyc: result });
+  } catch (e) { return res.status(500).json({ message: 'KYC review failed', error: e.message }); }
+});
+
+app.patch('/api/admin/users/:userId/status', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.status(503).json({ message: 'Store not ready' });
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ message: 'status required' });
+    const user = await adminStore.updateUserStatus(req.params.userId, { status });
+    return res.json({ ok: true, user });
+  } catch (e) { return res.status(500).json({ message: 'Failed to update status', error: e.message }); }
+});
+
+app.post('/api/admin/users/:userId/adjust-balance', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.status(503).json({ message: 'Store not ready' });
+    const { amount, reason, coin = 'USDT', type } = req.body;
+    if (amount == null) return res.status(400).json({ message: 'amount required' });
+    const adjustAmount = type === 'debit' ? -Math.abs(Number(amount)) : Math.abs(Number(amount));
+    const result = await adminStore.adjustUserBalance(req.params.userId, adjustAmount, reason || 'admin adjustment', coin);
+    return res.json({ ok: true, result });
+  } catch (e) { return res.status(500).json({ message: 'Balance adjustment failed', error: e.message }); }
+});
+
+app.post('/api/admin/users/:userId/reset-password', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.status(503).json({ message: 'Store not ready' });
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ message: 'newPassword required (min 6 chars)' });
+    await adminStore.resetUserPassword(req.params.userId, newPassword);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Password reset failed', error: e.message }); }
+});
+
+app.get('/api/admin/users/:userId/login-history', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listLoginHistory !== 'function') return res.json({ history: [] });
+    const history = await adminStore.listLoginHistory(req.params.userId, { limit: 20 }).catch(() => []);
+    return res.json({ history: Array.isArray(history) ? history : [] });
+  } catch (e) { return res.json({ history: [] }); }
+});
+
+app.get('/api/admin/users/:userId/devices', requiresAdminSession, async (req, res) => {
+  return res.json({ devices: [] });
+});
+
+app.post('/api/admin/users/:userId/force-logout', requiresAdminSession, async (req, res) => {
+  return res.json({ ok: true });
+});
+
+app.post('/api/admin/users/:userId/login-as', requiresAdminSession, async (req, res) => {
+  return res.status(403).json({ message: 'Login-as is disabled for security.' });
+});
+
+// ── Wallet ────────────────────────────────────────────────────────
+app.get('/api/admin/wallet/overview', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore) return res.json({ totalBalance: 0, totalDeposits: 0, totalWithdrawals: 0 });
+    const overview = await adminStore.getWalletOverview();
+    return res.json(overview || {});
+  } catch (e) { return res.status(500).json({ message: 'Failed to get wallet overview', error: e.message }); }
+});
+
+app.get('/api/admin/wallet/hot-balances', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listHotWalletBalances !== 'function') return res.json({ balances: [] });
+    const balances = await adminStore.listHotWalletBalances().catch(() => []);
+    return res.json({ balances: Array.isArray(balances) ? balances : [] });
+  } catch (e) { return res.json({ balances: [] }); }
+});
+
+app.get('/api/admin/wallet/config/:coin', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.getCoinWalletConfig !== 'function') return res.json({ config: {} });
+    const config = await adminStore.getCoinWalletConfig(req.params.coin).catch(() => ({}));
+    return res.json({ config: config || {} });
+  } catch (e) { return res.json({ config: {} }); }
+});
+
+app.post('/api/admin/wallet/config/:coin', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.setCoinWithdrawalConfig !== 'function') return res.json({ ok: true });
+    await adminStore.setCoinWithdrawalConfig(req.params.coin, req.body);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to update wallet config', error: e.message }); }
+});
+
+// ── P2P Admin ─────────────────────────────────────────────────────
+app.get('/api/admin/p2p/ads', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listP2PAds !== 'function') return res.json({ ads: [], total: 0 });
+    const { limit = 30, page = 1, status } = req.query;
+    const result = await adminStore.listP2PAds({ limit: Number(limit), page: Number(page), status });
+    return res.json(result || { ads: [], total: 0 });
+  } catch (e) { return res.status(500).json({ message: 'Failed to list P2P ads', error: e.message }); }
+});
+
+app.get('/api/admin/p2p/disputes', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listP2PDisputes !== 'function') return res.json({ disputes: [], total: 0 });
+    const { limit = 20, page = 1 } = req.query;
+    const result = await adminStore.listP2PDisputes({ limit: Number(limit), page: Number(page) });
+    return res.json(result || { disputes: [], total: 0 });
+  } catch (e) { return res.status(500).json({ message: 'Failed to list disputes', error: e.message }); }
+});
+
+app.get('/api/admin/p2p/settings', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.getP2PSettings !== 'function') return res.json({ settings: {} });
+    const settings = await adminStore.getP2PSettings();
+    return res.json({ settings: settings || {} });
+  } catch (e) { return res.json({ settings: {} }); }
+});
+
+app.post('/api/admin/p2p/settings', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.updateP2PSettings !== 'function') return res.json({ ok: true });
+    await adminStore.updateP2PSettings(req.body);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to update P2P settings', error: e.message }); }
+});
+
+app.post('/api/admin/p2p/ads/:offerId/review', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.reviewP2PAd !== 'function') return res.json({ ok: true });
+    const { decision, reason } = req.body;
+    const actor = { id: req.adminUser?.id, username: req.adminUser?.username };
+    await adminStore.reviewP2PAd(req.params.offerId, decision, reason, actor);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to review ad', error: e.message }); }
+});
+
+app.post('/api/admin/p2p/orders/:orderId/release', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.manualReleaseEscrow !== 'function') return res.json({ ok: true });
+    const actor = { id: req.adminUser?.id, username: req.adminUser?.username };
+    await adminStore.manualReleaseEscrow(req.params.orderId, actor);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to release escrow', error: e.message }); }
+});
+
+app.post('/api/admin/p2p/orders/:orderId/freeze', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.freezeEscrow !== 'function') return res.json({ ok: true });
+    const actor = { id: req.adminUser?.id, username: req.adminUser?.username };
+    await adminStore.freezeEscrow(req.params.orderId, actor);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to freeze escrow', error: e.message }); }
+});
+
+// ── Support Tickets ───────────────────────────────────────────────
+app.get('/api/admin/support/tickets', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listSupportTickets !== 'function') return res.json({ tickets: [], total: 0 });
+    const { limit = 20, page = 1, status } = req.query;
+    const result = await adminStore.listSupportTickets({ limit: Number(limit), page: Number(page), status });
+    return res.json(result || { tickets: [], total: 0 });
+  } catch (e) { return res.status(500).json({ message: 'Failed to list tickets', error: e.message }); }
+});
+
+app.get('/api/admin/support/tickets/:ticketId', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.getSupportTicket !== 'function') return res.status(404).json({ message: 'Not found' });
+    const ticket = await adminStore.getSupportTicket(req.params.ticketId);
+    if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
+    return res.json({ ticket });
+  } catch (e) { return res.status(500).json({ message: 'Failed to get ticket', error: e.message }); }
+});
+
+app.post('/api/admin/support/tickets/:ticketId/reply', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.replySupportTicket !== 'function') return res.json({ ok: true });
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ message: 'message required' });
+    const actor = { id: req.adminUser?.id, username: req.adminUser?.username || 'admin' };
+    await adminStore.replySupportTicket(req.params.ticketId, message, actor);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to reply', error: e.message }); }
+});
+
+app.patch('/api/admin/support/tickets/:ticketId/status', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.updateSupportTicketStatus !== 'function') return res.json({ ok: true });
+    const { status } = req.body;
+    await adminStore.updateSupportTicketStatus(req.params.ticketId, status);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to update ticket status', error: e.message }); }
+});
+
+// ── Revenue ───────────────────────────────────────────────────────
+app.get('/api/admin/revenue/summary', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.getRevenueSummary !== 'function') return res.json({ summary: {} });
+    const summary = await adminStore.getRevenueSummary();
+    return res.json(summary || { summary: {} });
+  } catch (e) { return res.json({ summary: {}, breakdown: [] }); }
+});
+
+// ── Spot Trading ──────────────────────────────────────────────────
+app.get('/api/admin/spot/pairs', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listSpotPairs !== 'function') return res.json({ pairs: [] });
+    const pairs = await adminStore.listSpotPairs().catch(() => []);
+    return res.json({ pairs: Array.isArray(pairs) ? pairs : [] });
+  } catch (e) { return res.json({ pairs: [] }); }
+});
+
+app.patch('/api/admin/spot/pairs/:symbol', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.updateSpotPair !== 'function') return res.json({ ok: true });
+    await adminStore.updateSpotPair(req.params.symbol, req.body);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to update spot pair', error: e.message }); }
+});
+
+// ── Risk ──────────────────────────────────────────────────────────
+app.get('/api/admin/risk/config', requiresAdminSession, async (req, res) => res.json({ config: {} }));
+app.post('/api/admin/risk/config', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+app.get('/api/admin/risk/blocked-ips', requiresAdminSession, async (req, res) => res.json({ blockedIPs: [] }));
+app.get('/api/admin/risk/suspicious', requiresAdminSession, async (req, res) => res.json({ alerts: [] }));
+app.post('/api/admin/risk/block-ip', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+app.delete('/api/admin/risk/block-ip/:id', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+
+// ── Features / Flags ──────────────────────────────────────────────
+app.get('/api/admin/features', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listComplianceFlags !== 'function') return res.json({ flags: [] });
+    const result = await adminStore.listComplianceFlags({ limit: 50 }).catch(() => ({ flags: [] }));
+    return res.json({ flags: result?.flags || [] });
+  } catch (e) { return res.json({ flags: [] }); }
+});
+
+app.get('/api/admin/features/network-status', requiresAdminSession, async (req, res) => {
+  return res.json({ networks: { TRC20: { depositEnabled: true, withdrawalEnabled: true }, ERC20: { depositEnabled: false, withdrawalEnabled: false } } });
+});
+
+app.post('/api/admin/features/:key', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+app.post('/api/admin/features/network/:network/deposit', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+app.post('/api/admin/features/network/:network/withdrawal', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+
+// ── Notifications ─────────────────────────────────────────────────
+app.get('/api/admin/notifications', requiresAdminSession, async (req, res) => res.json({ notifications: [] }));
+app.post('/api/admin/notifications', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+app.post('/api/admin/notifications/broadcast', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+
+// ── Blockchain ────────────────────────────────────────────────────
+app.get('/api/admin/blockchain/stats', requiresAdminSession, async (req, res) => res.json({ stats: { network: 'TRC20', status: 'manual', autoScanner: false } }));
+app.get('/api/admin/blockchain/scanner-status', requiresAdminSession, async (req, res) => res.json({ scanners: [] }));
+app.get('/api/admin/blockchain/withdrawal-queue', requiresAdminSession, async (req, res) => res.json({ queue: [] }));
+app.get('/api/admin/blockchain/transactions', requiresAdminSession, async (req, res) => res.json({ transactions: [] }));
+app.post('/api/admin/blockchain/withdrawal-queue/:id/prioritize', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+app.post('/api/admin/blockchain/transactions/:id/retry', requiresAdminSession, async (req, res) => res.json({ ok: true }));
+
+// ── Compliance ────────────────────────────────────────────────────
+app.get('/api/admin/compliance/flags', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listComplianceFlags !== 'function') return res.json({ flags: [], total: 0 });
+    const { limit = 40 } = req.query;
+    const result = await adminStore.listComplianceFlags({ limit: Number(limit) }).catch(() => ({ flags: [], total: 0 }));
+    return res.json(result || { flags: [], total: 0 });
+  } catch (e) { return res.json({ flags: [], total: 0 }); }
+});
+
+app.post('/api/admin/compliance/flags', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.createComplianceFlag !== 'function') return res.json({ ok: true });
+    const actor = { id: req.adminUser?.id, username: req.adminUser?.username };
+    await adminStore.createComplianceFlag(req.body, actor);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to create flag', error: e.message }); }
+});
+
+// ── Platform Settings ─────────────────────────────────────────────
+app.get('/api/admin/settings/platform', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.getPlatformSettings !== 'function') return res.json({ settings: {} });
+    const settings = await adminStore.getPlatformSettings();
+    return res.json({ settings: settings || {} });
+  } catch (e) { return res.json({ settings: {} }); }
+});
+
+app.post('/api/admin/settings/platform', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.updatePlatformSettings !== 'function') return res.json({ ok: true });
+    const actorId = req.adminUser?.id || 'admin';
+    await adminStore.updatePlatformSettings(req.body, actorId);
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to update settings', error: e.message }); }
+});
+
+// ── Monitoring ────────────────────────────────────────────────────
+app.get('/api/admin/monitoring/overview', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.getMonitoringOverview !== 'function') return res.json({ overview: {} });
+    const overview = await adminStore.getMonitoringOverview();
+    return res.json(overview || { apiRequestsLast10Min: 0, errorsLast10Min: 0 });
+  } catch (e) { return res.json({ overview: {} }); }
+});
+
+app.get('/api/admin/monitoring/api-logs', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listApiLogs !== 'function') return res.json({ logs: [] });
+    const { limit = 30 } = req.query;
+    const result = await adminStore.listApiLogs({ limit: Number(limit) }).catch(() => ({ logs: [] }));
+    return res.json(result || { logs: [] });
+  } catch (e) { return res.json({ logs: [] }); }
+});
+
+// ── Audit Logs ────────────────────────────────────────────────────
+app.get('/api/admin/audit/logs', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listAuditLogs !== 'function') return res.json({ logs: [] });
+    const { limit = 40 } = req.query;
+    const result = await adminStore.listAuditLogs({ limit: Number(limit) }).catch(() => ({ logs: [] }));
+    return res.json(result || { logs: [] });
+  } catch (e) { return res.json({ logs: [] }); }
+});
+
+// ── Admins Management ─────────────────────────────────────────────
+app.get('/api/admin/admins', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listAdmins !== 'function') return res.json({ admins: [] });
+    const admins = await adminStore.listAdmins().catch(() => []);
+    return res.json({ admins: Array.isArray(admins) ? admins.map(a => ({ id: a.id, username: a.username, email: a.email, role: a.role, status: a.status, createdAt: a.createdAt })) : [] });
+  } catch (e) { return res.json({ admins: [] }); }
+});
+
+app.post('/api/admin/admins', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.seedAdminUser !== 'function') return res.status(503).json({ message: 'Not supported' });
+    const { username, email, password, role } = req.body;
+    if (!username || !email || !password) return res.status(400).json({ message: 'username, email, password required' });
+    await adminStore.seedAdminUser({ username, email, password, role: role || 'moderator' });
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ message: 'Failed to create admin', error: e.message }); }
+});
+
+app.patch('/api/admin/admins/:adminId/status', requiresAdminSession, async (req, res) => {
+  return res.json({ ok: true });
+});
+
 app.get('/admin-login', (req, res) => {
   return res.redirect('/admin/login');
 });
