@@ -376,7 +376,7 @@
             <span id="profileIdentityTag" class="p2p-identity-tag">Identity Not Submitted</span>
           </div>
           <button id="profileDepositBtn" type="button" class="p2p-deposit-btn">Deposit</button>
-          <button type="button" class="p2p-deposit-btn" onclick="openWithdrawModal()" style="background:#1a1a2e;border:1px solid rgba(0,212,212,0.3);color:#00d4d4;margin-left:8px;">Withdraw</button>
+          <button type="button" class="p2p-deposit-btn" onclick="openWithdrawModal()" style="background:#1a1a2e;border:1px solid rgba(0,212,212,0.3);color:#F0B90B;margin-left:8px;">Withdraw</button>
         </article>
         <div class="p2p-metrics-grid">
           <article><span>Completed Orders (30D)</span><strong id="profileCompletedOrders30d">0</strong></article>
@@ -1139,8 +1139,8 @@
             style="width:100%;background:#111;border:1px solid #2a2a2a;color:#fff;border-radius:10px;padding:14px 16px;font-size:18px;letter-spacing:6px;text-align:center;box-sizing:border-box;outline:none;" />
           <p id="emailOtpError" style="font-size:12px;color:#ef4444;margin-top:6px;display:none;"></p>
         </div>
-        <button id="emailVerifySendBtn" onclick="sendEmailOtp()" style="width:100%;padding:14px;background:#00d4d4;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Send Code</button>
-        <button id="emailVerifyConfirmBtn" onclick="confirmEmailOtp()" style="display:none;width:100%;padding:14px;background:#00d4d4;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Verify</button>
+        <button id="emailVerifySendBtn" onclick="sendEmailOtp()" style="width:100%;padding:14px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Send Code</button>
+        <button id="emailVerifyConfirmBtn" onclick="confirmEmailOtp()" style="display:none;width:100%;padding:14px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Verify</button>
         <button onclick="closeEmailVerifyModal()" style="width:100%;padding:12px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:14px;cursor:pointer;">Cancel</button>
       </div>
     </div>
@@ -1158,7 +1158,7 @@
           <!-- Balance display -->
           <div style="background:#111;border-radius:12px;padding:14px 16px;margin-bottom:18px;border:1px solid #1a1a1a;">
             <span style="font-size:12px;color:rgba(255,255,255,0.4);">Available Balance</span>
-            <div style="font-size:20px;font-weight:700;color:#00d4d4;margin-top:4px;"><span id="withdrawAvailBal">0</span> USDT</div>
+            <div style="font-size:20px;font-weight:700;color:#F0B90B;margin-top:4px;"><span id="withdrawAvailBal">0</span> USDT</div>
           </div>
           <label style="display:block;margin-bottom:14px;">
             <span style="font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px;">Asset</span>
@@ -1186,11 +1186,11 @@
             <div style="position:relative;">
               <input id="withdrawAmount" type="number" inputmode="decimal" placeholder="0.00" min="0"
                 style="width:100%;background:#111;border:1px solid #2a2a2a;color:#fff;border-radius:10px;padding:12px 60px 12px 14px;font-size:16px;font-weight:600;outline:none;box-sizing:border-box;" />
-              <button onclick="withdrawSetMax()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#00d4d4;font-size:12px;font-weight:700;cursor:pointer;">MAX</button>
+              <button onclick="withdrawSetMax()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#F0B90B;font-size:12px;font-weight:700;cursor:pointer;">MAX</button>
             </div>
           </label>
           <p id="withdrawFormErr" style="font-size:12px;color:#ef4444;margin:6px 0 12px;display:none;"></p>
-          <button onclick="withdrawSendOtp()" style="width:100%;padding:14px;background:#00d4d4;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;">Send OTP &amp; Confirm</button>
+          <button onclick="withdrawSendOtp()" style="width:100%;padding:14px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;">Send OTP &amp; Confirm</button>
         </div>
         <!-- Step 2: OTP -->
         <div id="withdrawOtpStep" style="display:none;">
@@ -1202,15 +1202,15 @@
           <input id="withdrawOtpInput" type="number" inputmode="numeric" placeholder="000000" maxlength="6"
             style="width:100%;background:#111;border:1px solid #2a2a2a;color:#fff;border-radius:10px;padding:14px 16px;font-size:24px;letter-spacing:8px;text-align:center;box-sizing:border-box;outline:none;margin-bottom:6px;" />
           <p id="withdrawOtpErr" style="font-size:12px;color:#ef4444;margin:0 0 14px;display:none;"></p>
-          <button onclick="withdrawConfirmOtp()" style="width:100%;padding:14px;background:#00d4d4;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Confirm Withdrawal</button>
+          <button onclick="withdrawConfirmOtp()" style="width:100%;padding:14px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Confirm Withdrawal</button>
           <button onclick="withdrawSendOtp(true)" style="width:100%;padding:12px;background:transparent;border:1px solid #2a2a2a;color:rgba(255,255,255,0.5);border-radius:10px;font-size:13px;cursor:pointer;">Resend OTP</button>
         </div>
         <!-- Step 3: Success -->
         <div id="withdrawSuccessStep" style="display:none;text-align:center;padding:24px 0;">
           <div style="font-size:52px;margin-bottom:16px;">&#10003;</div>
-          <h3 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#00d4d4;">Withdrawal Submitted</h3>
+          <h3 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#F0B90B;">Withdrawal Submitted</h3>
           <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 24px;">Your withdrawal request is pending admin approval. You'll receive an email once processed.</p>
-          <button onclick="closeWithdrawModal()" style="padding:13px 40px;background:#00d4d4;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Done</button>
+          <button onclick="closeWithdrawModal()" style="padding:13px 40px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Done</button>
         </div>
         <!-- Withdrawal History -->
         <div id="withdrawHistoryWrap" style="margin-top:24px;border-top:1px solid #1a1a1a;padding-top:18px;">

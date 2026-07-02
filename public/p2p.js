@@ -357,7 +357,7 @@ var PM_ICONS = {
 
 const PAYMENT_METHOD_OPTIONS = [
   { key: 'UPI', label: 'UPI', category: 'UPI', chip: 'UP', color: '#ff9900' },
-  { key: 'Bank Transfer(India)', label: 'Bank Transfer(India)', category: 'BANK', chip: 'BK', color: '#00b4d8' },
+  { key: 'Bank Transfer(India)', label: 'Bank Transfer(India)', category: 'BANK', chip: 'BK', color: '#F0B90B' },
   { key: 'Paytm', label: 'Paytm', category: 'UPI', chip: 'PT', color: '#00baf2' },
   { key: 'PhonePe', label: 'PhonePe', category: 'UPI', chip: 'PP', color: '#5f259f' },
   { key: 'Google Pay', label: 'Google Pay', category: 'UPI', chip: 'GP', color: '#4285f4' },
@@ -4056,7 +4056,7 @@ function updateOrderUi(order) {
       markPaidBtn.style.background = '#fff'; markPaidBtn.style.color = '#000';
     } else if (isPaid) {
       markPaidBtn.textContent = 'Payment Sent'; markPaidBtn.disabled = true;
-      markPaidBtn.style.background = 'rgba(0,180,216,0.15)'; markPaidBtn.style.color = '#00b4d8';
+      markPaidBtn.style.background = 'rgba(0,180,216,0.15)'; markPaidBtn.style.color = '#F0B90B';
     } else if (isDisputed) {
       markPaidBtn.textContent = 'Appeal Active'; markPaidBtn.disabled = true;
       markPaidBtn.style.background = 'rgba(246,70,93,0.12)'; markPaidBtn.style.color = '#f6465d';
@@ -4866,7 +4866,7 @@ function _ordCard(order) {
   var status = String(order.status || '').toUpperCase();
   var isEnded = ['RELEASED','COMPLETED','CANCELLED','CANCELED','EXPIRED'].indexOf(status) !== -1;
   var _statusLabel = { CREATED:'In Progress', PAYMENT_SENT:'Payment Sent', PAID:'Payment Sent', RELEASED:'Completed', COMPLETED:'Completed', CANCELLED:'Cancelled', CANCELED:'Cancelled', EXPIRED:'Expired', DISPUTED:'Disputed' }[status] || status;
-  var _statusColor = { CREATED:'#a8ff3e', PAYMENT_SENT:'#00b4d8', PAID:'#00b4d8', RELEASED:'#2ebd85', COMPLETED:'#2ebd85', CANCELLED:'rgba(255,255,255,0.35)', CANCELED:'rgba(255,255,255,0.35)', EXPIRED:'rgba(255,255,255,0.35)', DISPUTED:'#f6465d' }[status] || '#fff';
+  var _statusColor = { CREATED:'#a8ff3e', PAYMENT_SENT:'#F0B90B', PAID:'#F0B90B', RELEASED:'#2ebd85', COMPLETED:'#2ebd85', CANCELLED:'rgba(255,255,255,0.35)', CANCELED:'rgba(255,255,255,0.35)', EXPIRED:'rgba(255,255,255,0.35)', DISPUTED:'#f6465d' }[status] || '#fff';
   var statusBadge = '<span style="font-size:11px;font-weight:600;color:'+_statusColor+';">'+_statusLabel+'</span>';
   var chatBtn = '<a href="'+chatUrl+'" class="ord-open-link" data-order-id="'+rawIdAttr+'" data-open-chat="1" data-url="'+chatUrl+'" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;-webkit-tap-highlight-color:rgba(240,185,11,0.15);">'+
     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</a>';
@@ -8273,7 +8273,7 @@ window.deleteMobAd = async function(offerId) {
     return '<div style="display:inline-flex;align-items:center;gap:7px;">'
       + '<div style="width:32px;height:32px;border-radius:6px;background:#2c2c2c;color:#fff;font-size:0.85rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">'
       + init
-      + '<span style="position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:#00c896;border:1.5px solid #000;"></span>'
+      + '<span style="position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:#F0B90B;border:1.5px solid #000;"></span>'
       + '</div>'
       + '<span style="font-weight:700;font-size:0.92rem;">' + esc(name || '--') + '</span>'
       + '<span style="color:#F0B90B;font-size:0.9rem;margin-left:1px;">✦</span>'
