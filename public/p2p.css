@@ -4459,40 +4459,44 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-buy-btn:not(:disabled):hover { opacity: 0.88; }
 
 /* ── Mobile cards — Bybit-exact ── */
-.bbt-card { background:#000; border-radius:0; padding:11px 14px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.bbt-card { background:#111214; border-radius:0; padding:13px 14px 12px; border-bottom:1px solid rgba(255,255,255,0.06); position:relative; }
+
+/* Brand mark — top left of each card */
+.bbt-card-brand-mark { display:flex; align-items:center; gap:4px; margin-bottom:9px; }
+.bbt-card-brand-name { font-size:9.5px; font-weight:700; color:rgba(255,255,255,0.35); letter-spacing:0.6px; text-transform:uppercase; }
 
 /* Top row: avatar + meta + time on one line */
-.bbt-card-top { display:flex; align-items:center; gap:7px; margin-bottom:8px; }
-.bbt-card-avatar { width:28px; height:28px; border-radius:50%; font-size:11px; font-weight:700; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.bbt-card-top { display:flex; align-items:center; gap:7px; margin-bottom:9px; }
+.bbt-card-avatar { width:30px; height:30px; border-radius:50%; font-size:12px; font-weight:700; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .bbt-card-meta { flex:1; min-width:0; display:flex; align-items:center; gap:6px; overflow:hidden; }
-.bbt-card-name { font-size:12px; font-weight:600; color:#eaecef; white-space:nowrap; }
-.bbt-card-stats { font-size:11px; color:rgba(255,255,255,0.4); white-space:nowrap; }
-.bbt-card-time { font-size:10px; color:rgba(255,255,255,0.35); white-space:nowrap; flex-shrink:0; }
+.bbt-card-name { font-size:12.5px; font-weight:700; color:#eaecef; white-space:nowrap; }
+.bbt-card-stats { font-size:11px; color:rgba(255,255,255,0.38); white-space:nowrap; }
+.bbt-card-time { font-size:10px; color:rgba(255,255,255,0.3); white-space:nowrap; flex-shrink:0; }
 
 /* Body: left info + right button */
 .bbt-card-body { display:flex; align-items:stretch; gap:10px; }
 .bbt-card-left { flex:1; min-width:0; }
-.bbt-card-right { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:80px; }
+.bbt-card-right { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:82px; }
 
 /* Price */
-.bbt-card-price { font-size:11px; color:rgba(255,255,255,0.45); margin-bottom:5px; }
-.bbt-card-price-num { font-size:19px; font-weight:700; color:#eaecef; letter-spacing:-0.3px; }
+.bbt-card-price { font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:4px; }
+.bbt-card-price-num { font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
 
 /* Info rows: label+value left-aligned together */
 .bbt-card-info-row { display:flex; align-items:center; gap:6px; font-size:11px; margin-bottom:3px; }
-.bbt-info-lbl { color:rgba(255,255,255,0.38); }
-.bbt-info-val { color:rgba(255,255,255,0.8); }
+.bbt-info-lbl { color:rgba(255,255,255,0.35); }
+.bbt-info-val { color:rgba(255,255,255,0.75); }
 
 /* Payment methods */
-.bbt-card-pays { margin-top:5px; display:flex; flex-direction:column; gap:3px; }
-.bbt-mob-pay { display:flex; align-items:center; gap:7px; font-size:11px; color:rgba(255,255,255,0.7); }
+.bbt-card-pays { margin-top:6px; display:flex; flex-direction:column; gap:3px; }
+.bbt-mob-pay { display:flex; align-items:center; gap:7px; font-size:11px; color:rgba(255,255,255,0.65); }
 .bbt-pay-bar { width:3px; height:12px; border-radius:2px; background:#F0B90B; flex-shrink:0; }
 
-/* Action button — right side, not full-width */
-.bbt-card-btn { display:block; width:80px; padding:9px 0; border-radius:6px; border:none; cursor:pointer; font-size:10.5px; font-weight:700; background:#2ebd85; color:#fff; transition:opacity 0.15s; white-space:nowrap; }
-.bbt-card-btn.bbt-card-btn-sell { background:#f6465d; }
-.bbt-card-btn:disabled { opacity:0.45; cursor:not-allowed; }
-.bbt-card-btn:not(:disabled):active { opacity:0.82; }
+/* Action button — Bybit yellow style */
+.bbt-card-btn { display:block; width:82px; padding:10px 0; border-radius:6px; border:none; cursor:pointer; font-size:11px; font-weight:800; background:#F0B90B; color:#000; transition:opacity 0.15s, transform 0.1s; white-space:nowrap; }
+.bbt-card-btn.bbt-card-btn-sell { background:#f6465d; color:#fff; }
+.bbt-card-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.bbt-card-btn:not(:disabled):active { opacity:0.85; transform:scale(0.97); }
 
 /* ── Pagination ── */
 .p2p-pagination { padding: 0 16px; }
