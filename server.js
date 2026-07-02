@@ -2776,6 +2776,19 @@ app.post('/api/withdrawals/:requestId/cancel', requiresP2PUser, async (req, res)
   }
 });
 
+// Binance ticker proxy — used by app.js to avoid CORS issues
+app.get('/api/v3/ticker/24hr', async (req, res) => {
+  try {
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    const upstream = await fetch(`https://api.binance.com/api/v3/ticker/24hr${qs}`);
+    const data = await upstream.json();
+    res.set('Cache-Control', 'public, max-age=10');
+    res.json(data);
+  } catch (e) {
+    res.status(502).json({ code: -1, msg: 'upstream error' });
+  }
+});
+
 app.get('/api/p2p/exchange-ticker', async (req, res) => {
   const requestedSymbols = String(req.query.symbols || '')
     .split(',')
