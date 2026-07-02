@@ -219,9 +219,7 @@
 
         <!-- Mobile cards -->
         <div id="p2pCards" class="p2p-cards mobile-only"></div>
-        <div style="text-align:center;padding:0.8rem 0;">
-          <button id="loadMoreOffersBtn" class="load-more-btn" style="display:none;">Load More Ads</button>
-        </div>
+        <div id="p2pPagination" class="p2p-pagination"></div>
 
       </section>
 
@@ -231,10 +229,10 @@
           <h2 class="p2p-how-title">Buy USDT with INR in 3 easy steps</h2>
           <p class="p2p-sec-sub">Start your P2P journey with INR. Follow these simple steps to buy your first USDT securely.</p>
           <div class="p2p-buy-tabs">
-            <button class="p2p-buy-tab p2p-buy-tab-active" type="button">Buy Coins</button>
-            <button class="p2p-buy-tab" type="button">Sell Coins</button>
+            <button class="p2p-buy-tab p2p-buy-tab-active" type="button" data-mode="buy">Buy Coins</button>
+            <button class="p2p-buy-tab" type="button" data-mode="sell">Sell Coins</button>
           </div>
-          <div class="p2p-steps-list">
+          <div class="p2p-steps-list p2b-buy-steps">
             <div class="p2p-step-row">
               <div class="p2p-step-icon"><svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="22" fill="rgba(46,189,133,0.13)"/><rect x="13" y="10" width="18" height="24" rx="2.5" stroke="#2ebd85" stroke-width="2"/><rect x="16" y="15" width="11" height="2" rx="1" fill="#2ebd85"/><rect x="16" y="19.5" width="7.5" height="2" rx="1" fill="#2ebd85"/><rect x="16" y="24" width="9" height="2" rx="1" fill="#2ebd85"/></svg></div>
               <div class="p2p-step-text"><strong>Step 1: Select an Ad</strong><span>Browse INR ads and pick an offer. Click <b>Buy USDT</b>.</span></div>
@@ -246,6 +244,20 @@
             <div class="p2p-step-row">
               <div class="p2p-step-icon"><svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="22" fill="rgba(46,189,133,0.13)"/><circle cx="22" cy="23" r="11" stroke="#2ebd85" stroke-width="2"/><path d="M17 23.5 l3.5 3.5 l6.5-7.5" stroke="#2ebd85" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
               <div class="p2p-step-text"><strong>Step 3: Receive USDT</strong><span>The seller will release USDT after confirming your payment.</span></div>
+            </div>
+          </div>
+          <div class="p2p-steps-list p2b-sell-steps" style="display:none">
+            <div class="p2p-step-row">
+              <div class="p2p-step-icon"><svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="22" fill="rgba(46,189,133,0.13)"/><rect x="13" y="10" width="18" height="24" rx="2.5" stroke="#2ebd85" stroke-width="2"/><rect x="16" y="15" width="11" height="2" rx="1" fill="#2ebd85"/><rect x="16" y="19.5" width="7.5" height="2" rx="1" fill="#2ebd85"/><rect x="16" y="24" width="9" height="2" rx="1" fill="#2ebd85"/></svg></div>
+              <div class="p2p-step-text"><strong>Step 1: Post or Select an Ad</strong><span>Browse buy requests or post your own sell ad with your price and limits.</span></div>
+            </div>
+            <div class="p2p-step-row">
+              <div class="p2p-step-icon"><svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="22" fill="rgba(46,189,133,0.13)"/><rect x="9" y="15" width="26" height="17" rx="2.5" stroke="#2ebd85" stroke-width="2"/><line x1="9" y1="20.5" x2="35" y2="20.5" stroke="#2ebd85" stroke-width="2"/><rect x="13" y="24.5" width="8" height="3.5" rx="1.2" fill="#2ebd85"/></svg></div>
+              <div class="p2p-step-text"><strong>Step 2: Receive INR Payment</strong><span>Buyer transfers INR to your payment method. Verify it in your account.</span></div>
+            </div>
+            <div class="p2p-step-row">
+              <div class="p2p-step-icon"><svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="22" fill="rgba(46,189,133,0.13)"/><circle cx="22" cy="23" r="11" stroke="#2ebd85" stroke-width="2"/><path d="M17 23.5 l3.5 3.5 l6.5-7.5" stroke="#2ebd85" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+              <div class="p2p-step-text"><strong>Step 3: Release USDT</strong><span>Confirm receipt and release USDT to the buyer securely via escrow.</span></div>
             </div>
           </div>
         </div>

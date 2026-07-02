@@ -4412,40 +4412,50 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-buy-btn:not(:disabled):hover { opacity: 0.88; }
 
 /* ── Mobile cards — Bybit-exact ── */
-.bbt-card { background:#000; border-radius:0; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.bbt-card { background:#000; border-radius:0; padding:11px 14px; border-bottom:1px solid rgba(255,255,255,0.07); }
 
 /* Top row: avatar + meta + time on one line */
-.bbt-card-top { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-.bbt-card-avatar { width:32px; height:32px; border-radius:50%; font-size:13px; font-weight:700; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.bbt-card-top { display:flex; align-items:center; gap:7px; margin-bottom:8px; }
+.bbt-card-avatar { width:28px; height:28px; border-radius:50%; font-size:11px; font-weight:700; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .bbt-card-meta { flex:1; min-width:0; display:flex; align-items:center; gap:6px; overflow:hidden; }
-.bbt-card-name { font-size:13px; font-weight:600; color:#eaecef; white-space:nowrap; }
-.bbt-card-stats { font-size:12px; color:rgba(255,255,255,0.4); white-space:nowrap; }
-.bbt-card-time { font-size:11px; color:rgba(255,255,255,0.35); white-space:nowrap; flex-shrink:0; }
+.bbt-card-name { font-size:12px; font-weight:600; color:#eaecef; white-space:nowrap; }
+.bbt-card-stats { font-size:11px; color:rgba(255,255,255,0.4); white-space:nowrap; }
+.bbt-card-time { font-size:10px; color:rgba(255,255,255,0.35); white-space:nowrap; flex-shrink:0; }
 
 /* Body: left info + right button */
 .bbt-card-body { display:flex; align-items:stretch; gap:10px; }
 .bbt-card-left { flex:1; min-width:0; }
-.bbt-card-right { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:88px; }
+.bbt-card-right { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:80px; }
 
 /* Price */
-.bbt-card-price { font-size:13px; color:rgba(255,255,255,0.45); margin-bottom:6px; }
-.bbt-card-price-num { font-size:22px; font-weight:700; color:#eaecef; letter-spacing:-0.3px; }
+.bbt-card-price { font-size:11px; color:rgba(255,255,255,0.45); margin-bottom:5px; }
+.bbt-card-price-num { font-size:19px; font-weight:700; color:#eaecef; letter-spacing:-0.3px; }
 
 /* Info rows: label+value left-aligned together */
-.bbt-card-info-row { display:flex; align-items:center; gap:6px; font-size:12px; margin-bottom:4px; }
+.bbt-card-info-row { display:flex; align-items:center; gap:6px; font-size:11px; margin-bottom:3px; }
 .bbt-info-lbl { color:rgba(255,255,255,0.38); }
 .bbt-info-val { color:rgba(255,255,255,0.8); }
 
 /* Payment methods */
-.bbt-card-pays { margin-top:6px; display:flex; flex-direction:column; gap:4px; }
-.bbt-mob-pay { display:flex; align-items:center; gap:7px; font-size:12px; color:rgba(255,255,255,0.7); }
-.bbt-pay-bar { width:3px; height:13px; border-radius:2px; background:#F0B90B; flex-shrink:0; }
+.bbt-card-pays { margin-top:5px; display:flex; flex-direction:column; gap:3px; }
+.bbt-mob-pay { display:flex; align-items:center; gap:7px; font-size:11px; color:rgba(255,255,255,0.7); }
+.bbt-pay-bar { width:3px; height:12px; border-radius:2px; background:#F0B90B; flex-shrink:0; }
 
 /* Action button — right side, not full-width */
-.bbt-card-btn { display:block; width:88px; padding:10px 0; border-radius:6px; border:none; cursor:pointer; font-size:11px; font-weight:700; background:#2ebd85; color:#fff; transition:opacity 0.15s; white-space:nowrap; }
+.bbt-card-btn { display:block; width:80px; padding:9px 0; border-radius:6px; border:none; cursor:pointer; font-size:10.5px; font-weight:700; background:#2ebd85; color:#fff; transition:opacity 0.15s; white-space:nowrap; }
 .bbt-card-btn.bbt-card-btn-sell { background:#f6465d; }
 .bbt-card-btn:disabled { opacity:0.45; cursor:not-allowed; }
 .bbt-card-btn:not(:disabled):active { opacity:0.82; }
+
+/* ── Pagination ── */
+.p2p-pagination { padding: 0 16px; }
+.p2p-pg-inner { display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; padding: 14px 0 16px; border-top: 1px solid rgba(255,255,255,0.07); }
+.p2p-pg-btn { min-width:32px; height:32px; padding:0 6px; border-radius:6px; border:1px solid rgba(255,255,255,0.12); background:transparent; color:rgba(255,255,255,0.55); font-size:13px; font-weight:600; cursor:pointer; font-family:'Manrope',sans-serif; transition:background 0.12s, color 0.12s, border-color 0.12s; }
+.p2p-pg-btn:hover:not(:disabled):not(.p2p-pg-active) { background:rgba(255,255,255,0.06); color:#eaecef; }
+.p2p-pg-btn.p2p-pg-active { background:#2ebd85; color:#fff; border-color:#2ebd85; }
+.p2p-pg-btn:disabled { opacity:0.28; cursor:not-allowed; }
+.p2p-pg-arrow { font-size:18px; font-weight:400; }
+.p2p-pg-dots { color:rgba(255,255,255,0.3); font-size:13px; padding:0 2px; line-height:32px; }
 
 /* Cards container on mobile — no gap between cards */
 #p2pCards { background: #000; }

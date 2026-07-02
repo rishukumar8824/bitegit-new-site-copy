@@ -14,13 +14,18 @@ const _P2P_BENEFITS_HTML = (function() {
     +   '<h2 class="p2p-how-title">Buy USDT with INR in 3 easy steps</h2>'
     +   '<p class="p2p-sec-sub">Start your P2P journey with INR. Follow these simple steps to buy your first USDT securely.</p>'
     +   '<div class="p2p-buy-tabs">'
-    +     '<button class="p2p-buy-tab p2p-buy-tab-active" type="button">Buy Coins</button>'
-    +     '<button class="p2p-buy-tab" type="button">Sell Coins</button>'
+    +     '<button class="p2p-buy-tab p2p-buy-tab-active" type="button" data-mode="buy">Buy Coins</button>'
+    +     '<button class="p2p-buy-tab" type="button" data-mode="sell">Sell Coins</button>'
     +   '</div>'
-    +   '<div class="p2p-steps-list">'
+    +   '<div class="p2p-steps-list p2b-buy-steps">'
     +     '<div class="p2p-step-row"><div class="p2p-step-icon">' + iconDoc + '</div><div class="p2p-step-text"><strong>Step 1: Select an Ad</strong><span>Browse INR ads and pick an offer. Click <b>Buy USDT</b>.</span></div></div>'
     +     '<div class="p2p-step-row"><div class="p2p-step-icon">' + iconCard + '</div><div class="p2p-step-text"><strong>Step 2: Confirm Payment</strong><span>Transfer INR to the seller and click <b>Payment Completed</b>.</span></div></div>'
     +     '<div class="p2p-step-row"><div class="p2p-step-icon">' + iconCheck + '</div><div class="p2p-step-text"><strong>Step 3: Receive USDT</strong><span>The seller will release USDT after confirming your payment.</span></div></div>'
+    +   '</div>'
+    +   '<div class="p2p-steps-list p2b-sell-steps" style="display:none">'
+    +     '<div class="p2p-step-row"><div class="p2p-step-icon">' + iconDoc + '</div><div class="p2p-step-text"><strong>Step 1: Post or Select an Ad</strong><span>Browse buy requests or post your own sell ad with your price and limits.</span></div></div>'
+    +     '<div class="p2p-step-row"><div class="p2p-step-icon">' + iconCard + '</div><div class="p2p-step-text"><strong>Step 2: Receive INR Payment</strong><span>Buyer transfers INR to your payment method. Verify it in your account.</span></div></div>'
+    +     '<div class="p2p-step-row"><div class="p2p-step-icon">' + iconCheck + '</div><div class="p2p-step-text"><strong>Step 3: Release USDT</strong><span>Confirm receipt and release USDT to the buyer securely via escrow.</span></div></div>'
     +   '</div>'
     + '</div>'
 
@@ -3300,6 +3305,8 @@ function getDummyOffers(side) {
 
 var _offersOffset = 0;
 var _offersHasMore = false;
+var _p2pPage = 1;
+var _totalOffers = 0;
 var _offersFetching = false; // in-flight lock — prevents stacked parallel calls
 var _lastOffersData = null; // last successful offers response for badge re-renders
 var _offersResponseCache = new Map();
@@ -3462,13 +3469,12 @@ function prefetchOrderFlowAssets() {
 }
 
 async function loadOffers(append) {
-  // Prevent parallel non-append calls (append = "load more" button, always allow)
+  // Prevent parallel non-append calls
   if (!append && _offersFetching) {
     console.log('[loadOffers] skipped — already in flight');
     return;
   }
-  if (!append) _offersOffset = 0;
-  var loadMoreBtn = document.getElementById('loadMoreOffersBtn');
+  if (!append) _offersOffset = (_p2pPage - 1) * 10;
 
   const params = new URLSearchParams({
     side: currentSide,
@@ -3487,17 +3493,14 @@ async function loadOffers(append) {
     renderOffers(cachedResponse, false);
     _offersOffset = Array.isArray(cachedResponse.offers) ? cachedResponse.offers.length : 0;
     _offersHasMore = Boolean(cachedResponse.hasMore);
-    if (loadMoreBtn) {
-      loadMoreBtn.style.display = _offersHasMore ? 'inline-block' : 'none';
-      loadMoreBtn.textContent = 'Load More Ads';
-    }
+    _totalOffers = cachedResponse.total || 0;
+    _renderPagination();
     if (metaEl) {
       metaEl.textContent = `${cachedResponse.side.toUpperCase()} ${cachedResponse.asset} offers: ${cachedResponse.total} | Updated ${new Date(cachedResponse.updatedAt).toLocaleTimeString()}`;
     }
   }
 
   if (!append && metaEl && !cachedResponse) metaEl.textContent = '';
-  if (loadMoreBtn) loadMoreBtn.textContent = 'Loading...';
   if (!append) _offersFetching = true;
 
   // Show demo ads immediately so page never looks empty
@@ -3522,12 +3525,11 @@ async function loadOffers(append) {
     if (!Array.isArray(data.offers) || data.offers.length === 0) {
       if (!append) {
         _offersFetching = false;
-        // Show demo ads instead of empty state
         const demoEmpty = Object.assign({}, _DEMO_OFFERS, { side: currentSide, asset: currentAsset });
         renderOffers(demoEmpty, false);
         if (metaEl) metaEl.textContent = '';
       }
-      if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+      _renderPagination();
       return;
     }
 
@@ -3538,31 +3540,74 @@ async function loadOffers(append) {
     renderOffers(data, append);
     _offersOffset += data.offers.length;
     _offersHasMore = Boolean(data.hasMore);
-    if (loadMoreBtn) {
-      loadMoreBtn.style.display = _offersHasMore ? 'inline-block' : 'none';
-      loadMoreBtn.textContent = 'Load More Ads';
-    }
+    _totalOffers = data.total || 0;
+    _renderPagination();
     if (metaEl) {
       metaEl.textContent = `${data.side.toUpperCase()} ${data.asset} offers: ${data.total} | Updated ${new Date(data.updatedAt).toLocaleTimeString()}`;
     }
   } catch (error) {
     clearTimeout(_offerTimer);
-    if (!append) _offersFetching = false; // always reset lock on error
+    if (!append) _offersFetching = false;
     console.warn('[loadOffers] error:', error && error.message);
     if (!append) {
-      // Keep demo ads visible on error — don't replace with error screen
       const demoFallback = Object.assign({}, _DEMO_OFFERS, { side: currentSide, asset: currentAsset });
       renderOffers(demoFallback, false);
       if (metaEl) metaEl.textContent = '';
     }
-    if (loadMoreBtn) { loadMoreBtn.style.display = 'none'; loadMoreBtn.textContent = 'Load More Ads'; }
+    _renderPagination();
   }
 }
 
-var _loadMoreOffersBtn = document.getElementById('loadMoreOffersBtn');
-if (_loadMoreOffersBtn) {
-  _loadMoreOffersBtn.addEventListener('click', function() { loadOffers(true); });
+function _renderPagination() {
+  var el = document.getElementById('p2pPagination');
+  if (!el) return;
+  var totalPages = Math.max(1, Math.ceil(_totalOffers / 10));
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  var cur = _p2pPage;
+  var pages = [1];
+  if (cur > 3) pages.push('…');
+  for (var i = Math.max(2, cur - 1); i <= Math.min(totalPages - 1, cur + 1); i++) pages.push(i);
+  if (cur < totalPages - 2) pages.push('…');
+  if (totalPages > 1) pages.push(totalPages);
+  var html = '<div class="p2p-pg-inner">';
+  html += '<button class="p2p-pg-btn p2p-pg-arrow" data-page="' + (cur - 1) + '"' + (cur <= 1 ? ' disabled' : '') + '>&#8249;</button>';
+  pages.forEach(function(p) {
+    if (p === '…') { html += '<span class="p2p-pg-dots">…</span>'; }
+    else { html += '<button class="p2p-pg-btn' + (p === cur ? ' p2p-pg-active' : '') + '" data-page="' + p + '">' + p + '</button>'; }
+  });
+  html += '<button class="p2p-pg-btn p2p-pg-arrow" data-page="' + (cur + 1) + '"' + (cur >= totalPages ? ' disabled' : '') + '>&#8250;</button>';
+  html += '</div>';
+  el.innerHTML = html;
 }
+
+var _pgEl = document.getElementById('p2pPagination');
+if (_pgEl) {
+  _pgEl.addEventListener('click', function(e) {
+    var btn = e.target.closest('.p2p-pg-btn');
+    if (!btn || btn.disabled) return;
+    var page = parseInt(btn.dataset.page, 10);
+    if (!page || page === _p2pPage) return;
+    _p2pPage = page;
+    _offersOffset = (_p2pPage - 1) * 10;
+    loadOffers(false);
+    if (cardsEl) cardsEl.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+/* ── Benefits tabs: Buy Coins / Sell Coins toggle ── */
+document.addEventListener('click', function(e) {
+  var tab = e.target.closest('.p2p-buy-tab');
+  if (!tab) return;
+  var block = tab.closest('.p2p-how-block');
+  if (!block) return;
+  block.querySelectorAll('.p2p-buy-tab').forEach(function(t) { t.classList.remove('p2p-buy-tab-active'); });
+  tab.classList.add('p2p-buy-tab-active');
+  var isBuy = tab.dataset.mode === 'buy';
+  var buySteps = block.querySelector('.p2b-buy-steps');
+  var sellSteps = block.querySelector('.p2b-sell-steps');
+  if (buySteps) buySteps.style.display = isBuy ? '' : 'none';
+  if (sellSteps) sellSteps.style.display = isBuy ? 'none' : '';
+});
 
 async function createOrder(offerId, options = {}) {
   if (!currentUser) {
