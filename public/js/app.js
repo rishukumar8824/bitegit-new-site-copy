@@ -34,10 +34,25 @@
     SOL:  '/cdn/1/currency/0f9dbb43-7c86-456a-bcaa-64d5bb61a01e-1774002879582.png',
     HYPE: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32196.png',
     XAU:  'https://s2.coinmarketcap.com/static/img/coins/64x64/4705.png',
+    XRP:  'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png',
+    BNB:  'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
+    DOGE: 'https://s2.coinmarketcap.com/static/img/coins/64x64/74.png',
+    ADA:  'https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png',
+    AVAX: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png',
+    PAXG: 'https://s2.coinmarketcap.com/static/img/coins/64x64/4705.png',
+    LINK: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png',
+    DOT:  'https://s2.coinmarketcap.com/static/img/coins/64x64/6636.png',
+    HBAR: 'https://s2.coinmarketcap.com/static/img/coins/64x64/4642.png',
   };
-  const SPOT_PAIRS = ['BTC', 'ETH', 'SOL', 'HYPE', 'XAU'];
-  const COIN_COLORS = { BTC:'#F7931A', ETH:'#627EEA', SOL:'#9945FF', HYPE:'#4FAAFF', XAU:'#E5C55A' };
-  const COIN_NAME = { BTC:'Bitcoin', ETH:'Ethereum', SOL:'Solana', HYPE:'Hyperliquid', XAU:'Gold' };
+  const SPOT_PAIRS    = ['BTC', 'ETH', 'SOL', 'HYPE', 'XAU'];
+  const FUTURES_PAIRS = ['BTC', 'ETH', 'SOL', 'XRP', 'BNB', 'DOGE', 'ADA', 'AVAX'];
+  const TRADFI_PAIRS  = ['PAXG', 'XAU', 'LINK', 'DOT', 'HBAR'];
+  const COIN_COLORS = { BTC:'#F7931A', ETH:'#627EEA', SOL:'#9945FF', HYPE:'#4FAAFF', XAU:'#E5C55A',
+    XRP:'#00AAE4', BNB:'#F3BA2F', DOGE:'#C3A634', ADA:'#0D1E2D', AVAX:'#E84142',
+    PAXG:'#D4AF37', LINK:'#2A5ADA', DOT:'#E6007A', HBAR:'#222' };
+  const COIN_NAME = { BTC:'Bitcoin', ETH:'Ethereum', SOL:'Solana', HYPE:'Hyperliquid', XAU:'Gold',
+    XRP:'Ripple', BNB:'BNB', DOGE:'Dogecoin', ADA:'Cardano', AVAX:'Avalanche',
+    PAXG:'PAX Gold', LINK:'Chainlink', DOT:'Polkadot', HBAR:'Hedera' };
 
   // ── 1. MOBILE CSS — hide desktop elements on mobile ──────────────────────
   function injectMobileCSS() {
@@ -166,7 +181,8 @@
 
     function renderRows() {
       rowsDiv.innerHTML = '';
-      SPOT_PAIRS.forEach(sym => {
+      const pairsList = activeTab === 1 ? FUTURES_PAIRS : activeTab === 2 ? TRADFI_PAIRS : SPOT_PAIRS;
+      pairsList.forEach(sym => {
         const t = tickerMap ? tickerMap[sym + 'USDT'] : null;
         const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : '—';
         const chg = t ? Number(t.change24h) : 0;
@@ -491,7 +507,7 @@
   async function loadTicker() {
     // All pairs needed (home page Popular Pairs + mini ticker)
     const ALL_LOAD_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOTUSDT','HBARUSDT','LINKUSDT','XLMUSDT',
-                           'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','HYPEUSDT','XAUUSDT'];
+                           'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','HYPEUSDT','XAUUSDT','PAXGUSDT'];
     try {
       const url = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(ALL_LOAD_SYMS));
       const data = await fetch(url).then(x => x.json());
