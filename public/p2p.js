@@ -357,7 +357,7 @@ var PM_ICONS = {
 
 const PAYMENT_METHOD_OPTIONS = [
   { key: 'UPI', label: 'UPI', category: 'UPI', chip: 'UP', color: '#ff9900' },
-  { key: 'Bank Transfer(India)', label: 'Bank Transfer(India)', category: 'BANK', chip: 'BK', color: '#F0B90B' },
+  { key: 'Bank Transfer(India)', label: 'Bank Transfer(India)', category: 'BANK', chip: 'BK', color: '#F68F15' },
   { key: 'Paytm', label: 'Paytm', category: 'UPI', chip: 'PT', color: '#00baf2' },
   { key: 'PhonePe', label: 'PhonePe', category: 'UPI', chip: 'PP', color: '#5f259f' },
   { key: 'Google Pay', label: 'Google Pay', category: 'UPI', chip: 'GP', color: '#4285f4' },
@@ -1403,14 +1403,14 @@ async function openEditAdModal(offerId) {
   if (!savedMethods.length) {
     paymentsHtml = `<div style="background:#111;border-radius:10px;padding:12px 14px;text-align:center;">
       <p style="color:#f6a623;font-size:13px;margin:0 0 10px;">No payment methods saved yet.</p>
-      <button onclick="openPaymentMethodsScreen();closeEditAdModal();" style="background:#F0B90B;color:#000;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:13px;touch-action:manipulation;">Add Payment Method</button>
+      <button onclick="openPaymentMethodsScreen();closeEditAdModal();" style="background:#F68F15;color:#000;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:13px;touch-action:manipulation;">Add Payment Method</button>
     </div>`;
   } else {
     paymentsHtml = savedMethods.map(function(pm) {
       var label = pm.nickname || pm.type || 'Unknown';
       var checked = selectedPayments.includes(label.toLowerCase()) ? 'checked' : '';
       return `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#111;border-radius:10px;cursor:pointer;user-select:none;-webkit-user-select:none;">
-        <input type="checkbox" name="eadPayment" value="${escapeHtml(label)}" ${checked} style="width:18px;height:18px;accent-color:#F0B90B;flex-shrink:0;">
+        <input type="checkbox" name="eadPayment" value="${escapeHtml(label)}" ${checked} style="width:18px;height:18px;accent-color:#F68F15;flex-shrink:0;">
         <span style="font-size:14px;color:#fff;font-weight:600;">${escapeHtml(label)}</span>
       </label>`;
     }).join('');
@@ -1445,7 +1445,7 @@ async function openEditAdModal(offerId) {
         <input id="eadRemark" type="text" inputmode="text" class="edit-ad-input" value="${o.remark || ''}" placeholder="e.g. Only IMPS transfer accepted"/>
         <p id="eadMsg" style="font-size:12px;min-height:16px;margin:4px 0 0;color:#f6465d;"></p>
       </div>
-      <button class="mob-kyc-fp-btn" style="background:#F0B90B;margin:0 1rem 1rem;touch-action:manipulation;" onclick="submitEditAd('${offerId}')">Save Changes</button>
+      <button class="mob-kyc-fp-btn" style="background:#F68F15;margin:0 1rem 1rem;touch-action:manipulation;" onclick="submitEditAd('${offerId}')">Save Changes</button>
     </div>
   `;
   modal.addEventListener('click', function(e) {
@@ -1523,7 +1523,7 @@ async function loadMyAds() {
   } catch (error) {
     clearTimeout(_adsTimer);
     console.warn('[loadMyAds] error:', error && error.message);
-    myAdsList.innerHTML = '<p class="empty-row">Unable to load your ads. <a href="#" onclick="loadMyAds();return false;" style="color:#F0B90B;">Retry</a></p>';
+    myAdsList.innerHTML = '<p class="empty-row">Unable to load your ads. <a href="#" onclick="loadMyAds();return false;" style="color:#F68F15;">Retry</a></p>';
   }
 }
 
@@ -4060,7 +4060,7 @@ function updateOrderUi(order) {
       markPaidBtn.style.background = '#fff'; markPaidBtn.style.color = '#000';
     } else if (isPaid) {
       markPaidBtn.textContent = 'Payment Sent'; markPaidBtn.disabled = true;
-      markPaidBtn.style.background = 'rgba(0,180,216,0.15)'; markPaidBtn.style.color = '#F0B90B';
+      markPaidBtn.style.background = 'rgba(0,180,216,0.15)'; markPaidBtn.style.color = '#F68F15';
     } else if (isDisputed) {
       markPaidBtn.textContent = 'Appeal Active'; markPaidBtn.disabled = true;
       markPaidBtn.style.background = 'rgba(246,70,93,0.12)'; markPaidBtn.style.color = '#f6465d';
@@ -4747,7 +4747,7 @@ async function loadMobileOrderHistory() {
       console.warn('ORDERS API RESPONSE (history):', resp.status, errData.code || errData.message);
       list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.4);">' +
         (resp.status === 404 ? 'API route missing' : 'Could not load history') +
-        ' <button onclick="loadMobileOrderHistory()" style="background:#F0B90B;color:#000;border:none;border-radius:6px;padding:6px 16px;font-size:13px;cursor:pointer;margin-left:8px;">Retry</button></div>';
+        ' <button onclick="loadMobileOrderHistory()" style="background:#F68F15;color:#000;border:none;border-radius:6px;padding:6px 16px;font-size:13px;cursor:pointer;margin-left:8px;">Retry</button></div>';
       return;
     }
     var data = await resp.json();
@@ -4870,9 +4870,9 @@ function _ordCard(order) {
   var status = String(order.status || '').toUpperCase();
   var isEnded = ['RELEASED','COMPLETED','CANCELLED','CANCELED','EXPIRED'].indexOf(status) !== -1;
   var _statusLabel = { CREATED:'In Progress', PAYMENT_SENT:'Payment Sent', PAID:'Payment Sent', RELEASED:'Completed', COMPLETED:'Completed', CANCELLED:'Cancelled', CANCELED:'Cancelled', EXPIRED:'Expired', DISPUTED:'Disputed' }[status] || status;
-  var _statusColor = { CREATED:'#a8ff3e', PAYMENT_SENT:'#F0B90B', PAID:'#F0B90B', RELEASED:'#2ebd85', COMPLETED:'#2ebd85', CANCELLED:'rgba(255,255,255,0.35)', CANCELED:'rgba(255,255,255,0.35)', EXPIRED:'rgba(255,255,255,0.35)', DISPUTED:'#f6465d' }[status] || '#fff';
+  var _statusColor = { CREATED:'#a8ff3e', PAYMENT_SENT:'#F68F15', PAID:'#F68F15', RELEASED:'#2ebd85', COMPLETED:'#2ebd85', CANCELLED:'rgba(255,255,255,0.35)', CANCELED:'rgba(255,255,255,0.35)', EXPIRED:'rgba(255,255,255,0.35)', DISPUTED:'#f6465d' }[status] || '#fff';
   var statusBadge = '<span style="font-size:11px;font-weight:600;color:'+_statusColor+';">'+_statusLabel+'</span>';
-  var chatBtn = '<a href="'+chatUrl+'" class="ord-open-link" data-order-id="'+rawIdAttr+'" data-open-chat="1" data-url="'+chatUrl+'" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;-webkit-tap-highlight-color:rgba(240,185,11,0.15);">'+
+  var chatBtn = '<a href="'+chatUrl+'" class="ord-open-link" data-order-id="'+rawIdAttr+'" data-open-chat="1" data-url="'+chatUrl+'" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,0.8);font-size:12px;text-decoration:none;-webkit-tap-highlight-color:rgba(246,143,21,0.15);">'+
     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</a>';
   // Amount + chat row:
   // Active: left=info cols, right=amount. Below: left=counterparty, right=Chat
@@ -5446,7 +5446,7 @@ function _ordShowRetry(msg) {
     '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:14px;">' +
     '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
     '<p style="color:rgba(255,255,255,0.45);font-size:14px;margin:0;text-align:center;">' + (msg || 'Could not load orders') + '</p>' +
-    '<button onclick="fetchOrdersSafe()" style="background:#F0B90B;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Retry</button>' +
+    '<button onclick="fetchOrdersSafe()" style="background:#F68F15;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Retry</button>' +
     '</div>';
 }
 function _ordShowLogin() {
@@ -5463,7 +5463,7 @@ function _ordShowLogin() {
     '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">' +
     '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>' +
     '<p style="color:rgba(255,255,255,0.45);font-size:14px;margin:0;text-align:center;">Login to view your orders</p>' +
-    '<button onclick="window.location.href=\'/auth?redirect=/p2p\'" style="background:#F0B90B;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
+    '<button onclick="window.location.href=\'/auth?redirect=/p2p\'" style="background:#F68F15;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
     '</div>';
 }
 
@@ -6911,7 +6911,7 @@ async function refreshMerchantStatus() {
         '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (canPost ? '0' : '.8rem') + ';">Lock 200 USDT security deposit to start posting ads on P2P marketplace.</div>' +
         (!canPost ? '<div style="display:flex;gap:.5rem;align-items:center;">' +
           '<input id="secDepInput" type="number" min="200" value="200" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;">' +
-          '<button onclick="lockSecurityDeposit()" style="background:#F0B90B;color:#000;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;">Lock USDT</button>' +
+          '<button onclick="lockSecurityDeposit()" style="background:#F68F15;color:#000;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;">Lock USDT</button>' +
         '</div>' : '') +
       '</div>';
 
@@ -6923,7 +6923,7 @@ async function refreshMerchantStatus() {
         '</div>' +
         '<div style="font-size:.78rem;color:#848e9c;margin-bottom:' + (badgeEligible ? '.8rem' : '0') + ';">Lock 500 USDT total to apply for verified merchant badge — priority listing, zero fees.</div>' +
         (badgeEligible ? '<button onclick="openP2PScreen(\'merchantApplyScreen\')" style="width:100%;background:linear-gradient(135deg,#f7931a,#e67e00);color:#fff;border:none;border-radius:10px;padding:.75rem;font-size:.9rem;font-weight:700;cursor:pointer;">Apply for Merchant Badge →</button>' :
-          (canPost ? '<div style="font-size:.75rem;color:#f7931a;font-weight:600;">Need ' + (500 - dep) + ' USDT more — <button onclick="document.getElementById(\'secDepInput2\').style.display=\'block\'" style="background:none;border:none;color:#F0B90B;cursor:pointer;font-size:.75rem;font-weight:700;padding:0;text-decoration:underline;">Upgrade now</button></div>' +
+          (canPost ? '<div style="font-size:.75rem;color:#f7931a;font-weight:600;">Need ' + (500 - dep) + ' USDT more — <button onclick="document.getElementById(\'secDepInput2\').style.display=\'block\'" style="background:none;border:none;color:#F68F15;cursor:pointer;font-size:.75rem;font-weight:700;padding:0;text-decoration:underline;">Upgrade now</button></div>' +
             '<div id="secDepInput2" style="display:none;display:flex;gap:.5rem;margin-top:.5rem;"><input type="number" min="' + (500-dep) + '" value="' + (500-dep) + '" id="secDepInput" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.5rem .7rem;color:#fff;font-size:.9rem;outline:none;"><button onclick="lockSecurityDeposit()" style="background:#f7931a;color:#fff;border:none;border-radius:8px;padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;">Add</button></div>'
           : '') +
         '') +
@@ -7881,7 +7881,7 @@ function initMobPostAdScreen() {
             if (adLimitMsg) {
               adLimitMsg.style.display = 'block';
               adLimitMsg.style.color = '#f6a623';
-              adLimitMsg.innerHTML = 'Add a payment method first before posting an ad. <button onclick="openPaymentMethodsScreen()" style="background:#F0B90B;color:#000;border:none;border-radius:8px;padding:6px 14px;font-weight:700;cursor:pointer;margin-top:8px;display:block;width:100%;">Add Payment Method</button>';
+              adLimitMsg.innerHTML = 'Add a payment method first before posting an ad. <button onclick="openPaymentMethodsScreen()" style="background:#F68F15;color:#000;border:none;border-radius:8px;padding:6px 14px;font-weight:700;cursor:pointer;margin-top:8px;display:block;width:100%;">Add Payment Method</button>';
             }
           } else {
             if (createSection) createSection.style.display = 'block';
@@ -8267,7 +8267,7 @@ window.deleteMobAd = async function(offerId) {
   // ── Payment method pill ───────────────────────────────────────────
   function pmPill(method) {
     return '<span style="display:inline-flex;align-items:center;gap:5px;">'
-      + '<span style="width:8px;height:8px;border-radius:2px;background:#F0B90B;display:inline-block;flex-shrink:0;"></span>'
+      + '<span style="width:8px;height:8px;border-radius:2px;background:#F68F15;display:inline-block;flex-shrink:0;"></span>'
       + esc(method || 'UPI') + '</span>';
   }
 
@@ -8277,10 +8277,10 @@ window.deleteMobAd = async function(offerId) {
     return '<div style="display:inline-flex;align-items:center;gap:7px;">'
       + '<div style="width:32px;height:32px;border-radius:6px;background:#2c2c2c;color:#fff;font-size:0.85rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">'
       + init
-      + '<span style="position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:#F0B90B;border:1.5px solid #000;"></span>'
+      + '<span style="position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:#F68F15;border:1.5px solid #000;"></span>'
       + '</div>'
       + '<span style="font-weight:700;font-size:0.92rem;">' + esc(name || '--') + '</span>'
-      + '<span style="color:#F0B90B;font-size:0.9rem;margin-left:1px;">✦</span>'
+      + '<span style="color:#F68F15;font-size:0.9rem;margin-left:1px;">✦</span>'
       + '</div>';
   }
 
@@ -8288,7 +8288,7 @@ window.deleteMobAd = async function(offerId) {
   function chatBtnHtml(btnId, prevScreen) {
     return '<button id="' + btnId + '" data-chat-prev="' + prevScreen + '" onclick="if(window.bfOpenChat)window.bfOpenChat(\'' + prevScreen + '\')" style="position:relative;width:38px;height:38px;border-radius:9px;background:#1e1e1e;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
       + '<svg width="18" height="17" viewBox="0 0 24 23" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'
-      + '<span style="position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#F0B90B;border:1.5px solid #0d0d0d;"></span>'
+      + '<span style="position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#F68F15;border:1.5px solid #0d0d0d;"></span>'
       + '</button>';
   }
 
@@ -8325,13 +8325,13 @@ window.deleteMobAd = async function(offerId) {
         '<div style="background:#1a1a1a;border-radius:10px;padding:0.85rem 1rem;display:flex;align-items:center;gap:0.7rem;margin-bottom:0.35rem;">',
           '<input id="bfPayInput" type="number" inputmode="decimal" placeholder="Enter amount" style="flex:1;background:none;border:none;color:#fff;font-size:1.2rem;font-weight:600;outline:none;font-family:Manrope,sans-serif;min-width:0;"/>',
           '<span id="bfInputUnit" style="color:rgba(255,255,255,0.55);font-size:0.9rem;font-weight:700;flex-shrink:0;">INR</span>',
-          '<button id="bfMaxBtn" style="background:transparent;border:none;color:#F0B90B;font-size:0.88rem;font-weight:700;padding:0;cursor:pointer;flex-shrink:0;font-family:Manrope,sans-serif;">Max</button>',
+          '<button id="bfMaxBtn" style="background:transparent;border:none;color:#F68F15;font-size:0.88rem;font-weight:700;padding:0;cursor:pointer;flex-shrink:0;font-family:Manrope,sans-serif;">Max</button>',
         '</div>',
         '<div id="bfLimitInfo" style="font-size:0.78rem;color:rgba(255,255,255,0.38);margin-bottom:0.15rem;padding-left:2px;">Limit ₹-- - ₹--</div>',
         '<div id="bfUsdtCalc" style="font-size:0.78rem;color:rgba(255,255,255,0.38);margin-bottom:1.1rem;padding-left:2px;">≈ -- USDT</div>',
         // Payment method
         '<div style="background:#1a1a1a;border-radius:10px;padding:0.82rem 1rem;display:flex;align-items:center;gap:0.65rem;margin-bottom:1.2rem;">',
-          '<span id="bfPayMethodDot" style="width:10px;height:10px;border-radius:2px;background:#F0B90B;flex-shrink:0;"></span>',
+          '<span id="bfPayMethodDot" style="width:10px;height:10px;border-radius:2px;background:#F68F15;flex-shrink:0;"></span>',
           '<select id="bfPayMethod" style="flex:1;background:none;border:none;color:#fff;font-size:0.9rem;font-family:Manrope,sans-serif;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;font-weight:500;"></select>',
           '<svg width="11" height="7" viewBox="0 0 11 7" fill="none"><path d="M1 1l4.5 4.5L10 1" stroke="rgba(255,255,255,0.4)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         '</div>',
@@ -8373,7 +8373,7 @@ window.deleteMobAd = async function(offerId) {
       '</div>',
       '<div style="' + FOOT + '">',
         '<div id="bfBuyHint" style="font-size:0.78rem;color:#f6465d;min-height:1em;text-align:center;"></div>',
-        '<button id="bfBuyBtn" style="' + PBTN + 'background:#F0B90B;color:#000;">Buy USDT with 0 fees</button>',
+        '<button id="bfBuyBtn" style="' + PBTN + 'background:#F68F15;color:#000;">Buy USDT with 0 fees</button>',
       '</div>',
     '</div>',
 
@@ -8386,7 +8386,7 @@ window.deleteMobAd = async function(offerId) {
       '</div>',
       '<div style="' + BODY + 'padding-top:0.1rem;">',
         '<h2 id="bfOrdTitle" style="margin:0 0 0.4rem;font-size:1.25rem;font-weight:800;line-height:1.35;color:#fff;">The order has been generated.<br>Proceed to payment.</h2>',
-        '<p id="bfOrdTimerLine" style="margin:0 0 1.25rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfOrderTimer" style="color:#F0B90B;font-weight:700;">15:00s</span></p>',
+        '<p id="bfOrdTimerLine" style="margin:0 0 1.25rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfOrderTimer" style="color:#F68F15;font-weight:700;">15:00s</span></p>',
         // Seller card + trust bullets (combined, matching Bitget)
         '<div style="' + CARD + 'padding:0.9rem 1rem;margin-bottom:0.7rem;">',
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;">',
@@ -8418,7 +8418,7 @@ window.deleteMobAd = async function(offerId) {
       // Waiting-for-release bar (shown only when PAID)
       '<div id="bfOrdWaitBar" style="display:none;flex-shrink:0;padding:0.55rem 1.1rem;background:rgba(0,184,212,0.07);border-top:1px solid rgba(0,184,212,0.18);">',
         '<div style="display:flex;align-items:center;gap:0.5rem;">',
-          '<span style="font-size:0.8rem;color:#F0B90B;">●</span>',
+          '<span style="font-size:0.8rem;color:#F68F15;">●</span>',
           '<span style="font-size:0.8rem;color:rgba(255,255,255,0.75);font-weight:600;">Payment confirmed — waiting for seller to release crypto</span>',
         '</div>',
       '</div>',
@@ -8438,7 +8438,7 @@ window.deleteMobAd = async function(offerId) {
       '</div>',
       '<div style="' + BODY + 'padding-top:0.1rem;">',
         '<h2 id="bfPayTitle" style="margin:0 0 0.3rem;font-size:1.15rem;font-weight:800;line-height:1.35;color:#fff;">Please use UPI to transfer funds</h2>',
-        '<p style="margin:0 0 1rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfPayTimer" style="color:#F0B90B;font-weight:700;">15:00s</span></p>',
+        '<p style="margin:0 0 1rem;font-size:0.82rem;color:rgba(255,255,255,0.42);">Please pay within <span id="bfPayTimer" style="color:#F68F15;font-weight:700;">15:00s</span></p>',
         // Seller row + chat
         '<div style="' + CARD + 'display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.8rem 1rem;margin-bottom:1.1rem;">',
           '<div id="bfPaySellerRow"></div>',
@@ -8517,7 +8517,7 @@ window.deleteMobAd = async function(offerId) {
         '<button id="bfChatBack" style="' + BACK + '">←</button>',
         '<div style="flex:1;text-align:center;">',
           '<div id="bfChatSellerName" style="font-size:0.95rem;font-weight:700;color:#fff;line-height:1.2;"></div>',
-          '<div style="font-size:0.74rem;color:rgba(255,255,255,0.45);margin-top:1px;"><span style="color:#F0B90B;font-size:0.68rem;">●</span> Online</div>',
+          '<div style="font-size:0.74rem;color:rgba(255,255,255,0.45);margin-top:1px;"><span style="color:#F68F15;font-size:0.68rem;">●</span> Online</div>',
         '</div>',
         '<button id="bfChatMenuBtn" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:1.15rem;cursor:pointer;padding:0.25rem 0.35rem;letter-spacing:1px;">···</button>',
       '</div>',
@@ -8534,7 +8534,7 @@ window.deleteMobAd = async function(offerId) {
       // Waiting-for-release bar (shown when PAID)
       '<div id="bfChatWaitBar" style="display:none;padding:0.55rem 1rem;border-bottom:1px solid rgba(0,184,212,0.18);background:rgba(0,184,212,0.07);flex-shrink:0;">',
         '<div style="display:flex;align-items:center;gap:0.5rem;">',
-          '<span style="font-size:0.78rem;color:#F0B90B;">●</span>',
+          '<span style="font-size:0.78rem;color:#F68F15;">●</span>',
           '<span style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.8);">Payment confirmed — waiting for seller to release crypto</span>',
         '</div>',
       '</div>',
@@ -8547,7 +8547,7 @@ window.deleteMobAd = async function(offerId) {
           '</div>',
           '<button id="bfChatPayBtn" style="background:#fff;color:#000;border:none;border-radius:10px;padding:0.62rem 1.4rem;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:Manrope,sans-serif;">Pay</button>',
         '</div>',
-        '<div style="font-size:0.76rem;color:rgba(255,255,255,0.4);margin-top:4px;">Please pay within <span id="bfChatTimer" style="color:#F0B90B;font-weight:700;">15:00s</span></div>',
+        '<div style="font-size:0.76rem;color:rgba(255,255,255,0.4);margin-top:4px;">Please pay within <span id="bfChatTimer" style="color:#F68F15;font-weight:700;">15:00s</span></div>',
       '</div>',
       // Messages area
       '<div id="bfChatMessages" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.9rem 1rem;display:flex;flex-direction:column;gap:0.55rem;background:#000;"></div>',
@@ -8557,7 +8557,7 @@ window.deleteMobAd = async function(offerId) {
         '<button id="bfChatImgBtn" style="background:none;border:none;cursor:pointer;padding:4px;flex-shrink:0;">',
           '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
         '</button>',
-        '<button id="bfChatSendBtn" style="background:#F0B90B;border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">',
+        '<button id="bfChatSendBtn" style="background:#F68F15;border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">',
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
         '</button>',
       '</div>',
@@ -8583,7 +8583,7 @@ window.deleteMobAd = async function(offerId) {
         '<h3 style="margin:0 0 0.75rem;font-size:1rem;font-weight:800;color:#fff;line-height:1.4;">Other issue?<br>Please review the following before canceling your order.</h3>',
         '<div style="font-size:0.82rem;color:rgba(255,255,255,0.5);line-height:1.9;">',
           '<div>1. If you\'ve already paid, don\'t cancel your order. You may lose your funds.</div>',
-          '<div>2. Over <span style="color:#F0B90B;font-weight:700;">3</span> cancellations in a day will block P2P buying for 24 hours.</div>',
+          '<div>2. Over <span style="color:#F68F15;font-weight:700;">3</span> cancellations in a day will block P2P buying for 24 hours.</div>',
           '<div>3. If canceled due to the seller\'s issue, you won\'t be affected.</div>',
         '</div>',
       '</div>',
@@ -8601,11 +8601,11 @@ window.deleteMobAd = async function(offerId) {
       '</div>',
       '<div style="' + BODY + 'padding-top:0.3rem;">',
         '<h2 style="margin:0 0 0.25rem;font-size:1.15rem;font-weight:800;color:#fff;">Please select a reason for cancellation</h2>',
-        '<div style="color:#F0B90B;font-size:0.82rem;font-weight:600;margin-bottom:1.4rem;cursor:pointer;">Order cancellation tips</div>',
+        '<div style="color:#F68F15;font-size:0.82rem;font-weight:600;margin-bottom:1.4rem;cursor:pointer;">Order cancellation tips</div>',
         '<div id="bfReasonList" style="display:flex;flex-direction:column;gap:0.1rem;"></div>',
         '<div style="height:1rem;"></div>',
         '<label style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem 0;border-top:1px solid #1e1e1e;cursor:pointer;">',
-          '<input type="checkbox" id="bfNotPaidCheck" style="width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:#F0B90B;">',
+          '<input type="checkbox" id="bfNotPaidCheck" style="width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:#F68F15;">',
           '<span style="font-size:0.82rem;color:rgba(255,255,255,0.65);line-height:1.5;">I have not paid the seller / I have received the seller\'s refund</span>',
         '</label>',
       '</div>',
@@ -8824,7 +8824,7 @@ window.deleteMobAd = async function(offerId) {
   window.bfSelectPaidOpt = function(opt) {
     _bfPaidSel = opt;
     var o1 = document.getElementById('bfPaidOpt1'), o2 = document.getElementById('bfPaidOpt2'), btn = document.getElementById('bfPaidConfirmBtn');
-    if (o1) { o1.style.borderColor = opt === 1 ? '#F0B90B' : '#2a2a2a'; o1.style.background = opt === 1 ? 'rgba(240,185,11,0.07)' : '#1c1c1c'; }
+    if (o1) { o1.style.borderColor = opt === 1 ? '#F68F15' : '#2a2a2a'; o1.style.background = opt === 1 ? 'rgba(246,143,21,0.07)' : '#1c1c1c'; }
     if (o2) { o2.style.borderColor = opt === 2 ? 'rgba(255,255,255,0.2)' : '#2a2a2a'; o2.style.background = opt === 2 ? 'rgba(255,255,255,0.04)' : '#1c1c1c'; }
     if (btn) { var ok = opt === 1; btn.disabled = !ok; btn.style.background = ok ? '#fff' : '#222'; btn.style.color = ok ? '#0d0d0d' : 'rgba(255,255,255,0.22)'; btn.style.cursor = ok ? 'pointer' : 'not-allowed'; }
   };
@@ -8859,7 +8859,7 @@ window.deleteMobAd = async function(offerId) {
       btn._creating = true; btn.disabled = true;
       btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:ord-spin 0.7s linear infinite;display:inline-block;"></span>Placing order...</span>';
       var toast = document.createElement('div');
-      toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#F0B90B;color:#000;padding:10px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,184,212,0.4);';
+      toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#F68F15;color:#000;padding:10px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,184,212,0.4);';
       toast.textContent = '⏳ Placing your order...';
       document.body.appendChild(toast);
       try {
@@ -8930,7 +8930,7 @@ window.deleteMobAd = async function(offerId) {
       if (!list) return;
       list.innerHTML = CANCEL_REASONS.map(function(r, i) {
         return '<label style="display:flex;align-items:center;gap:0.75rem;padding:0.72rem 0;border-bottom:1px solid #1a1a1a;cursor:pointer;">'
-          + '<input type="radio" name="bfCancelReason" value="' + i + '" style="width:18px;height:18px;accent-color:#F0B90B;flex-shrink:0;">'
+          + '<input type="radio" name="bfCancelReason" value="' + i + '" style="width:18px;height:18px;accent-color:#F68F15;flex-shrink:0;">'
           + '<span style="font-size:0.87rem;color:rgba(255,255,255,0.85);">' + r + '</span>'
           + '</label>';
       }).join('');
@@ -9654,7 +9654,7 @@ window.deleteMobAd = async function(offerId) {
         if (!items.length) { listEl.innerHTML = '<span style="color:rgba(255,255,255,0.3);font-size:12px;">No withdrawals yet.</span>'; return; }
         var html = '';
         items.forEach(function(w) {
-          var statusColor = w.status === 'approved' ? '#F0B90B' : w.status === 'rejected' ? '#ef4444' : '#f59e0b';
+          var statusColor = w.status === 'approved' ? '#F68F15' : w.status === 'rejected' ? '#ef4444' : '#f59e0b';
           var dt = w.createdAt ? new Date(w.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
           html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1a1a1a;">'
             + '<div><div style="font-size:13px;font-weight:600;">' + (w.amount || 0) + ' ' + (w.currency || 'USDT') + '</div>'

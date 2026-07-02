@@ -11,7 +11,7 @@
 
     <!-- App mount guard: hide raw HTML until JS initializes -->
     <div id="appInitLoader" style="position:fixed;inset:0;background:#0b0e11;z-index:99999;display:flex;align-items:center;justify-content:center;">
-      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#F0B90B;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
+      <div style="width:28px;height:28px;border:2px solid #222;border-top-color:#F68F15;border-radius:50%;animation:_apl_spin 0.7s linear infinite;"></div>
     </div>
     <style>@keyframes _apl_spin{to{transform:rotate(360deg)}} body{visibility:hidden!important;} body.app-ready{visibility:visible!important;}</style>
     <script>
@@ -206,7 +206,7 @@
 
         <!-- Alert -->
         <div class="p2p-alert-bar" id="p2pAlertBar" style="position:relative;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0B90B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F68F15" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span>Do not share personal contact details. Always verify payment information independently.</span>
           <button onclick="document.getElementById('p2pAlertBar').style.display='none'" type="button" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.5);font-size:14px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;">✕</button>
         </div>
@@ -376,7 +376,7 @@
             <span id="profileIdentityTag" class="p2p-identity-tag">Identity Not Submitted</span>
           </div>
           <button id="profileDepositBtn" type="button" class="p2p-deposit-btn">Deposit</button>
-          <button type="button" class="p2p-deposit-btn" onclick="openWithdrawModal()" style="background:#1a1a2e;border:1px solid rgba(0,212,212,0.3);color:#F0B90B;margin-left:8px;">Withdraw</button>
+          <button type="button" class="p2p-deposit-btn" onclick="openWithdrawModal()" style="background:#1a1a2e;border:1px solid rgba(0,212,212,0.3);color:#F68F15;margin-left:8px;">Withdraw</button>
         </article>
         <div class="p2p-metrics-grid">
           <article><span>Completed Orders (30D)</span><strong id="profileCompletedOrders30d">0</strong></article>
@@ -424,7 +424,7 @@
 
       <!-- Main tabs: Pending | Ended -->
       <div id="ordMainTabs" style="display:flex;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;">
-        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #F0B90B;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
+        <button id="ordTabPending" data-ord-main="pending" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid #F68F15;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;">Pending</button>
         <button id="ordTabEnded" data-ord-main="ended" style="flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.4);font-size:14px;font-weight:500;cursor:pointer;touch-action:manipulation;">Ended</button>
       </div>
 
@@ -603,7 +603,7 @@
         <p id="editNicknameChangesLeft" style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 4px;"></p>
         <p id="editNicknameMsg" style="font-size:13px;min-height:18px;margin:0 0 28px;"></p>
 
-        <button id="editNicknameSaveBtn" onclick="saveProfileNickname()" style="width:100%;padding:15px;border-radius:14px;background:#F0B90B;border:none;color:#000;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.02em;">
+        <button id="editNicknameSaveBtn" onclick="saveProfileNickname()" style="width:100%;padding:15px;border-radius:14px;background:#F68F15;border:none;color:#000;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.02em;">
           Save Username
         </button>
       </div>
@@ -1139,8 +1139,8 @@
             style="width:100%;background:#111;border:1px solid #2a2a2a;color:#fff;border-radius:10px;padding:14px 16px;font-size:18px;letter-spacing:6px;text-align:center;box-sizing:border-box;outline:none;" />
           <p id="emailOtpError" style="font-size:12px;color:#ef4444;margin-top:6px;display:none;"></p>
         </div>
-        <button id="emailVerifySendBtn" onclick="sendEmailOtp()" style="width:100%;padding:14px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Send Code</button>
-        <button id="emailVerifyConfirmBtn" onclick="confirmEmailOtp()" style="display:none;width:100%;padding:14px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Verify</button>
+        <button id="emailVerifySendBtn" onclick="sendEmailOtp()" style="width:100%;padding:14px;background:#F68F15;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Send Code</button>
+        <button id="emailVerifyConfirmBtn" onclick="confirmEmailOtp()" style="display:none;width:100%;padding:14px;background:#F68F15;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Verify</button>
         <button onclick="closeEmailVerifyModal()" style="width:100%;padding:12px;background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:14px;cursor:pointer;">Cancel</button>
       </div>
     </div>
@@ -1158,7 +1158,7 @@
           <!-- Balance display -->
           <div style="background:#111;border-radius:12px;padding:14px 16px;margin-bottom:18px;border:1px solid #1a1a1a;">
             <span style="font-size:12px;color:rgba(255,255,255,0.4);">Available Balance</span>
-            <div style="font-size:20px;font-weight:700;color:#F0B90B;margin-top:4px;"><span id="withdrawAvailBal">0</span> USDT</div>
+            <div style="font-size:20px;font-weight:700;color:#F68F15;margin-top:4px;"><span id="withdrawAvailBal">0</span> USDT</div>
           </div>
           <label style="display:block;margin-bottom:14px;">
             <span style="font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px;">Asset</span>
@@ -1186,11 +1186,11 @@
             <div style="position:relative;">
               <input id="withdrawAmount" type="number" inputmode="decimal" placeholder="0.00" min="0"
                 style="width:100%;background:#111;border:1px solid #2a2a2a;color:#fff;border-radius:10px;padding:12px 60px 12px 14px;font-size:16px;font-weight:600;outline:none;box-sizing:border-box;" />
-              <button onclick="withdrawSetMax()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#F0B90B;font-size:12px;font-weight:700;cursor:pointer;">MAX</button>
+              <button onclick="withdrawSetMax()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#F68F15;font-size:12px;font-weight:700;cursor:pointer;">MAX</button>
             </div>
           </label>
           <p id="withdrawFormErr" style="font-size:12px;color:#ef4444;margin:6px 0 12px;display:none;"></p>
-          <button onclick="withdrawSendOtp()" style="width:100%;padding:14px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;">Send OTP &amp; Confirm</button>
+          <button onclick="withdrawSendOtp()" style="width:100%;padding:14px;background:#F68F15;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;">Send OTP &amp; Confirm</button>
         </div>
         <!-- Step 2: OTP -->
         <div id="withdrawOtpStep" style="display:none;">
@@ -1202,15 +1202,15 @@
           <input id="withdrawOtpInput" type="number" inputmode="numeric" placeholder="000000" maxlength="6"
             style="width:100%;background:#111;border:1px solid #2a2a2a;color:#fff;border-radius:10px;padding:14px 16px;font-size:24px;letter-spacing:8px;text-align:center;box-sizing:border-box;outline:none;margin-bottom:6px;" />
           <p id="withdrawOtpErr" style="font-size:12px;color:#ef4444;margin:0 0 14px;display:none;"></p>
-          <button onclick="withdrawConfirmOtp()" style="width:100%;padding:14px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Confirm Withdrawal</button>
+          <button onclick="withdrawConfirmOtp()" style="width:100%;padding:14px;background:#F68F15;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">Confirm Withdrawal</button>
           <button onclick="withdrawSendOtp(true)" style="width:100%;padding:12px;background:transparent;border:1px solid #2a2a2a;color:rgba(255,255,255,0.5);border-radius:10px;font-size:13px;cursor:pointer;">Resend OTP</button>
         </div>
         <!-- Step 3: Success -->
         <div id="withdrawSuccessStep" style="display:none;text-align:center;padding:24px 0;">
           <div style="font-size:52px;margin-bottom:16px;">&#10003;</div>
-          <h3 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#F0B90B;">Withdrawal Submitted</h3>
+          <h3 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#F68F15;">Withdrawal Submitted</h3>
           <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 24px;">Your withdrawal request is pending admin approval. You'll receive an email once processed.</p>
-          <button onclick="closeWithdrawModal()" style="padding:13px 40px;background:#F0B90B;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Done</button>
+          <button onclick="closeWithdrawModal()" style="padding:13px 40px;background:#F68F15;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Done</button>
         </div>
         <!-- Withdrawal History -->
         <div id="withdrawHistoryWrap" style="margin-top:24px;border-top:1px solid #1a1a1a;padding-top:18px;">
@@ -1321,7 +1321,7 @@
           <h2 id="orderTitle" style="margin:0 0 0.3rem;font-size:1.05rem;font-weight:700;line-height:1.4;color:#fff;">Waiting for seller to release crypto</h2>
           <p style="margin:0;font-size:0.81rem;color:rgba(255,255,255,0.45);">
             <span id="orderTimerLabel" style="margin-right:4px;">Pay before timer expires</span>
-            <strong id="orderTimer" style="color:#F0B90B;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
+            <strong id="orderTimer" style="color:#F68F15;font-size:1rem;letter-spacing:0.04em;">15:00</strong>
           </p>
         </div>
 
@@ -1329,11 +1329,11 @@
         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;margin-bottom:0.85rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
-              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#F0B90B;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
+              <div id="orderMerchantAvatar" style="width:32px;height:32px;border-radius:50%;background:#F68F15;color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">S</div>
               <div>
                 <div style="display:flex;align-items:center;gap:0.35rem;">
                   <h3 id="orderMerchant" style="margin:0;font-size:0.88rem;font-weight:700;color:#fff;"></h3>
-                  <span style="color:#F0B90B;font-size:0.75rem;">⚡</span>
+                  <span style="color:#F68F15;font-size:0.75rem;">⚡</span>
                 </div>
                 <p id="orderCounterpartyMeta" style="margin:0;font-size:0.72rem;color:rgba(255,255,255,0.4);"></p>
               </div>
@@ -1374,7 +1374,7 @@
             <button id="chatImageBtn" type="button" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:1rem;padding:0;flex-shrink:0;">📎</button>
             <input id="chatImageInput" class="hidden-control" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" />
           </div>
-          <button id="chatSendBtn" type="button" style="background:#F0B90B;border:none;color:#000;width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
+          <button id="chatSendBtn" type="button" style="background:#F68F15;border:none;color:#000;width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
         </div>
         <form id="chatForm" style="display:none;"></form>
         <p id="chatUploadState" class="hidden"></p>
@@ -1511,7 +1511,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:50%;height:100%;background:linear-gradient(90deg,#F0B90B,#F0B90B);border-radius:99px;"></div>
+          <div style="width:50%;height:100%;background:linear-gradient(90deg,#F68F15,#F68F15);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1559,7 +1559,7 @@
 
         <p class="mob-kyc-fp-note">🔒 Your data is encrypted and used only for verification</p>
         <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
-          Powered by <span style="color:#F0B90B;font-weight:700;">Sumsub</span>
+          Powered by <span style="color:#F68F15;font-weight:700;">Sumsub</span>
         </p>
       </div>
     </div>
@@ -1577,7 +1577,7 @@
       <!-- Progress -->
       <div style="padding:0 1rem 0.5rem;">
         <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;">
-          <div style="width:100%;height:100%;background:linear-gradient(90deg,#F0B90B,#F0B90B);border-radius:99px;"></div>
+          <div style="width:100%;height:100%;background:linear-gradient(90deg,#F68F15,#F68F15);border-radius:99px;"></div>
         </div>
       </div>
 
@@ -1660,7 +1660,7 @@
 
         <p class="mob-kyc-fp-note">🔒 Review takes 24–48 hours. You'll be notified on approval.</p>
         <p style="text-align:center;font-size:0.7rem;color:#4a5568;margin-top:0.5rem;letter-spacing:0.02em;">
-          Powered by <span style="color:#F0B90B;font-weight:700;">Sumsub</span>
+          Powered by <span style="color:#F68F15;font-weight:700;">Sumsub</span>
         </p>
       </div>
     </div>
@@ -1677,18 +1677,18 @@
       <div class="mob-kyc-fp-body" style="justify-content:center;align-items:center;text-align:center;gap:1.5rem;">
         <div style="font-size:4rem;">⏳</div>
         <div>
-          <p style="font-size:1.1rem;font-weight:800;color:#F0B90B;margin:0 0 0.5rem;">Documents Under Review</p>
+          <p style="font-size:1.1rem;font-weight:800;color:#F68F15;margin:0 0 0.5rem;">Documents Under Review</p>
           <p style="font-size:0.82rem;color:#8a97ae;line-height:1.6;margin:0;">Your KYC documents have been submitted successfully.<br/>Our team will verify them within <strong style="color:#fff;">24–48 hours</strong>.<br/>You'll be notified once verified.</p>
         </div>
-        <div style="background:rgba(240,185,11,0.08);border:1.5px solid rgba(240,185,11,0.25);border-radius:14px;padding:1rem 1.2rem;width:100%;box-sizing:border-box;">
-          <p style="font-size:0.78rem;color:#F0B90B;margin:0;font-weight:600;">What happens next?</p>
+        <div style="background:rgba(246,143,21,0.08);border:1.5px solid rgba(246,143,21,0.25);border-radius:14px;padding:1rem 1.2rem;width:100%;box-sizing:border-box;">
+          <p style="font-size:0.78rem;color:#F68F15;margin:0;font-weight:600;">What happens next?</p>
           <ul style="font-size:0.75rem;color:#8a97ae;margin:0.5rem 0 0;padding-left:1.2rem;line-height:1.8;text-align:left;">
             <li>Admin reviews your Aadhaar &amp; selfie</li>
             <li>Verification takes 24–48 hours</li>
             <li>You can trade once approved</li>
           </ul>
         </div>
-        <button onclick="document.getElementById('kycUnderReviewScreen').style.display='none'; window.showMobScreen && window.showMobScreen('mobProfileScreen'); window.loadProfilePanel && window.loadProfilePanel();" class="mob-kyc-fp-btn" style="margin-top:0.5rem;background:linear-gradient(135deg,#F0B90B,#d4a00b);box-shadow:0 2px 14px rgba(240,185,11,0.3);">Got it</button>
+        <button onclick="document.getElementById('kycUnderReviewScreen').style.display='none'; window.showMobScreen && window.showMobScreen('mobProfileScreen'); window.loadProfilePanel && window.loadProfilePanel();" class="mob-kyc-fp-btn" style="margin-top:0.5rem;background:linear-gradient(135deg,#F68F15,#d4a00b);box-shadow:0 2px 14px rgba(246,143,21,0.3);">Got it</button>
       </div>
     </div>
 
@@ -1718,7 +1718,7 @@
               <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="4">0</text>
               <text x="82" y="118" font-family="Inter,system-ui,sans-serif" font-size="90" font-weight="900" fill="rgba(255,255,255,0.08)">0</text>
               <!-- % teal -->
-              <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#F0B90B">%</text>
+              <text x="148" y="132" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="900" fill="#F68F15">%</text>
             </svg>
           </div>
           <h1 style="font-size:1.6rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;line-height:1.25;">Become a Merchant</h1>
@@ -1879,7 +1879,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;">
               <div style="display:flex;align-items:center;gap:12px;">
                 <span id="merchantCurrencyCheck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/><polyline points="8 12 11 15 16 9" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Select a currency <span id="merchantCurrencyLabel" style="color:#F0B90B;font-weight:700;"></span> <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
+                <span style="font-size:0.88rem;color:#fff;font-weight:500;">Select a currency <span id="merchantCurrencyLabel" style="color:#F68F15;font-weight:700;"></span> <span style="color:#f6465d;font-size:0.72rem;">*</span></span>
               </div>
               <button id="merchantCurrencyAddBtn" onclick="merchantToggleCurrency()" style="padding:6px 16px;border-radius:8px;background:#fff;color:#000;font-size:0.8rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0;">Add</button>
             </div>
@@ -1935,7 +1935,7 @@
                   <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:0.75rem;color:rgba(255,255,255,0.35);pointer-events:none;">Instagram</span>
                   <input id="merchantInstagram" type="text" placeholder="@username" style="width:100%;padding:12px 12px 12px 82px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.88rem;box-sizing:border-box;outline:none;">
                 </div>
-                <button onclick="merchantSaveSocial()" style="width:100%;padding:12px;border-radius:10px;background:#F0B90B;color:#000;font-size:0.9rem;font-weight:700;border:none;cursor:pointer;margin-top:2px;">Save</button>
+                <button onclick="merchantSaveSocial()" style="width:100%;padding:12px;border-radius:10px;background:#F68F15;color:#000;font-size:0.9rem;font-weight:700;border:none;cursor:pointer;margin-top:2px;">Save</button>
               </div>
             </div>
           </div>
@@ -1945,8 +1945,8 @@
         <!-- Agreement + Submit -->
         <div style="margin-top:1.8rem;">
           <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:1.5rem;">
-            <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#F0B90B;flex-shrink:0;" />
-            <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#F0B90B;cursor:pointer;">Merchant Service Agreement</span></span>
+            <input type="checkbox" id="merchantAgree" style="width:18px;height:18px;margin-top:1px;accent-color:#F68F15;flex-shrink:0;" />
+            <span style="font-size:0.84rem;color:rgba(255,255,255,0.75);line-height:1.5;">I have read and agree to the <span style="color:#F68F15;cursor:pointer;">Merchant Service Agreement</span></span>
           </label>
           <button onclick="submitMerchantApp()" style="width:100%;padding:16px;border-radius:14px;background:#fff;color:#000;font-size:1rem;font-weight:700;border:none;cursor:pointer;">Submit Application</button>
         </div>
@@ -1966,7 +1966,7 @@
         <!-- Icon -->
         <div style="display:flex;justify-content:center;margin-bottom:1.5rem;">
           <div style="width:72px;height:72px;border-radius:50%;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.25);display:flex;align-items:center;justify-content:center;">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#F0B90B" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#F0B90B"/></svg>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#F68F15" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#F68F15"/></svg>
           </div>
         </div>
         <h2 style="font-size:1.3rem;font-weight:800;color:#fff;text-align:center;margin:0 0 0.5rem;">Two-Factor Authentication</h2>
@@ -1976,7 +1976,7 @@
         <div style="border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:1rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:.8rem;">
             <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,229,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0B90B" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F68F15" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </div>
             <div>
               <div style="font-weight:700;color:#fff;font-size:.9rem;">Email OTP</div>
@@ -1997,7 +1997,7 @@
               <div style="font-size:.75rem;color:#848e9c;margin-top:2px;">TOTP-based 2FA</div>
             </div>
           </div>
-          <button onclick="(function(b){var t=document.createElement('div');t.textContent='Google Authenticator coming soon';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap;';document.body.appendChild(t);setTimeout(function(){t.remove();},2000);})(this)" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#F0B90B;font-weight:600;cursor:pointer;">Enable</button>
+          <button onclick="(function(b){var t=document.createElement('div');t.textContent='Google Authenticator coming soon';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap;';document.body.appendChild(t);setTimeout(function(){t.remove();},2000);})(this)" style="font-size:.75rem;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:999px;color:#F68F15;font-weight:600;cursor:pointer;">Enable</button>
         </div>
 
         <!-- Security tips -->
@@ -2518,7 +2518,7 @@
       if (!msgs) return;
       var ub = document.createElement('div');
       ub.style.cssText = 'display:flex;justify-content:flex-end;margin:0.35rem 1rem;';
-      ub.innerHTML = '<span style="background:#F0B90B;color:#fff;border-radius:14px 14px 2px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;font-weight:600;max-width:78%;display:inline-block;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</span>';
+      ub.innerHTML = '<span style="background:#F68F15;color:#fff;border-radius:14px 14px 2px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;font-weight:600;max-width:78%;display:inline-block;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</span>';
       msgs.appendChild(ub);
       spScroll();
     }
@@ -2539,8 +2539,8 @@
       var name = senderName || _spAgentName || 'Support Agent';
       var wrap = document.createElement('div');
       wrap.style.cssText = 'margin:0.35rem 1rem;';
-      wrap.innerHTML = '<div style="font-size:0.68rem;color:#F0B90B;font-weight:700;margin-bottom:3px;">🎧 ' + name + '</div>'
-        + '<div style="background:rgba(240,185,11,0.1);border:1px solid rgba(240,185,11,0.25);border-radius:2px 14px 14px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;color:#fff;max-width:78%;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</div>';
+      wrap.innerHTML = '<div style="font-size:0.68rem;color:#F68F15;font-weight:700;margin-bottom:3px;">🎧 ' + name + '</div>'
+        + '<div style="background:rgba(246,143,21,0.1);border:1px solid rgba(246,143,21,0.25);border-radius:2px 14px 14px 14px;padding:0.45rem 0.85rem;font-size:0.85rem;color:#fff;max-width:78%;word-break:break-word;">' + text.replace(/</g,'&lt;') + '</div>';
       msgs.appendChild(wrap);
       spScroll();
     }
@@ -2617,7 +2617,7 @@
       // Show queue position immediately
       var queuePos = Math.floor(Math.random()*8)+2;
       var waitMin = Math.ceil(queuePos * 1.5);
-      spAddBotBubble('<p>🎧 <strong>Connecting you to a live agent…</strong></p><p style="font-size:0.82rem;opacity:0.8;">📋 Your position in queue: <strong style="color:#F0B90B;">#' + queuePos + '</strong><br>⏱️ Estimated wait: ~' + waitMin + ' min<br><span style="font-size:0.75rem;opacity:0.55;">Please describe your issue while you wait.</span></p>');
+      spAddBotBubble('<p>🎧 <strong>Connecting you to a live agent…</strong></p><p style="font-size:0.82rem;opacity:0.8;">📋 Your position in queue: <strong style="color:#F68F15;">#' + queuePos + '</strong><br>⏱️ Estimated wait: ~' + waitMin + ' min<br><span style="font-size:0.75rem;opacity:0.55;">Please describe your issue while you wait.</span></p>');
       spSetStatus('🟡 Queue #' + queuePos + ' — Waiting…', 'waiting');
 
       try {
