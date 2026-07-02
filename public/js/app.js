@@ -126,7 +126,7 @@
     // Main tabs — no sub-tabs (match bitbase)
     const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking >'];
     const tabBar = document.createElement('div');
-    tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow:hidden;margin-bottom:0;border:none;outline:none;';
+    tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;overflow-y:hidden;margin-bottom:0;border:none;outline:none;-webkit-overflow-scrolling:touch;';
 
     const rowsDiv = document.createElement('div');
     rowsDiv.style.cssText = 'display:flex;flex-direction:column;width:100%;';
@@ -210,13 +210,13 @@
       const setActive = () => {
         activeTab = i;
         tabBar.querySelectorAll('[data-cvxtab]').forEach((t, j) => {
-          t.style.color = j === i ? '#fff' : 'rgba(255,255,255,0.4)';
-          t.style.fontWeight = j === i ? '700' : '400';
+          t.style.color = j === i ? '#fff' : 'rgba(255,255,255,0.45)';
+          t.style.fontWeight = j === i ? '700' : '600';
         });
         renderRows();
       };
       tab.setAttribute('data-cvxtab', i);
-      tab.style.cssText = 'padding:10px 10px;font-size:14px;cursor:pointer;white-space:nowrap;transition:all 0.2s;color:rgba(255,255,255,0.4);font-weight:500;';
+      tab.style.cssText = 'padding:10px 12px;font-size:15px;cursor:pointer;white-space:nowrap;transition:color 0.2s;color:rgba(255,255,255,0.45);font-weight:600;';
       tab.addEventListener('click', setActive);
       tabBar.appendChild(tab);
       if (i === 0) setTimeout(setActive, 0);
