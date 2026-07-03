@@ -1413,6 +1413,37 @@
     });
   }
 
+  // ── FAQ ACCORDION ─────────────────────────────────────────────────────────
+  function wireFAQ() {
+    document.querySelectorAll('.faq-item-title').forEach(function(title) {
+      if (title.dataset.cvxFaq) return;
+      title.dataset.cvxFaq = '1';
+      title.style.cursor = 'pointer';
+      title.addEventListener('click', function() {
+        var item = title.closest('.faq-item');
+        var content = item ? item.querySelector('.faq-item-content') : null;
+        if (!content) return;
+        var isOpen = content.classList.contains('faq-open');
+        // Close all open items in this list first
+        var list = title.closest('.faq-list');
+        if (list) {
+          list.querySelectorAll('.faq-item-content.faq-open').forEach(function(c) {
+            c.classList.remove('faq-open');
+            c.style.gridTemplateRows = '0fr';
+            var svg = c.closest('.faq-item').querySelector('.faq-item-title svg');
+            if (svg) svg.style.transform = '';
+          });
+        }
+        if (!isOpen) {
+          content.classList.add('faq-open');
+          content.style.gridTemplateRows = '1fr';
+          var svg = title.querySelector('svg');
+          if (svg) svg.style.transform = 'rotate(180deg)';
+        }
+      });
+    });
+  }
+
   // ── START ─────────────────────────────────────────────────────────────────
   function start() {
     injectMobileCSS();
@@ -1420,6 +1451,7 @@
     fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
     fixAppSection(); hideBrokenElements();
     wireTopNav(); wireWordmarks();
+    wireFAQ();
     // Build pairs section immediately (shows skeleton rows if no cache)
     buildMobileMarket();
     // If cached prices exist, fill in instantly
