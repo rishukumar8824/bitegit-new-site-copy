@@ -62,19 +62,7 @@ const _P2P_BENEFITS_HTML = (function() {
     + '</div>';
 })();
 
-// ── Demo ads (shown immediately; replaced by real backend data) ──────────
-const _DEMO_OFFERS = {
-  side: 'buy', asset: 'USDT', total: 7, hasMore: false, updatedAt: Date.now(),
-  offers: [
-    { id:'demo1', advertiser:'DELHI',        price:98.00,  available:7.9682,   asset:'USDT', minLimit:170,     maxLimit:170,     paymentMethods:['Cash Deposit to Bank'], baseOrders:9,  completionRate:90,  releaseTime:'15', onlineStatus:'online', merchantBadge:null },
-    { id:'demo2', advertiser:'@GlobeVend',   price:100.00, available:50.1119,  asset:'USDT', minLimit:100,     maxLimit:100,     paymentMethods:['UPI'],                  baseOrders:10, completionRate:90,  releaseTime:'15', onlineStatus:'online', merchantBadge:null },
-    { id:'demo3', advertiser:'BABLU',        price:100.00, available:2.8437,   asset:'USDT', minLimit:100,     maxLimit:284.37,  paymentMethods:['UPI','Union bank of India'], baseOrders:5,  completionRate:83,  releaseTime:'15', onlineStatus:'online', merchantBadge:null },
-    { id:'demo4', advertiser:'thrdprtysecure',price:101.00,available:2.5482,   asset:'USDT', minLimit:101,     maxLimit:257.36,  paymentMethods:['UPI'],                  baseOrders:5,  completionRate:83,  releaseTime:'15', onlineStatus:'online', merchantBadge:null },
-    { id:'demo5', advertiser:'MR. JINU',     price:103.00, available:400.0000, asset:'USDT', minLimit:20000,   maxLimit:41200,   paymentMethods:['Cash Deposit to Bank'], baseOrders:7,  completionRate:100, releaseTime:'15', onlineStatus:'online', merchantBadge:1 },
-    { id:'demo6', advertiser:'vendorsas',    price:104.00, available:200.0000, asset:'USDT', minLimit:6000,    maxLimit:20800,   paymentMethods:['UPI'],                  baseOrders:7,  completionRate:100, releaseTime:'15', onlineStatus:'online', merchantBadge:1 },
-    { id:'demo7', advertiser:'AZImpex',      price:104.59, available:173.1260, asset:'USDT', minLimit:10000,   maxLimit:18107.24,paymentMethods:['Cash Deposit to Bank'], baseOrders:12, completionRate:100, releaseTime:'15', onlineStatus:'online', merchantBadge:1 },
-  ]
-};
+const _DEMO_OFFERS = { side: 'buy', asset: 'USDT', total: 0, hasMore: false, updatedAt: Date.now(), offers: [] };
 const metaEl = document.getElementById('p2pMeta');
 const sideTabs = document.getElementById('sideTabs');
 const assetChipRow = document.getElementById('assetChipRow');
@@ -3504,10 +3492,8 @@ async function loadOffers(append) {
   if (!append && metaEl && !cachedResponse) metaEl.textContent = '';
   if (!append) _offersFetching = true;
 
-  // Show demo ads immediately so page never looks empty
   if (!append && !cachedResponse) {
-    const demoData = Object.assign({}, _DEMO_OFFERS, { side: currentSide, asset: currentAsset });
-    renderOffers(demoData, false);
+    renderOffers({ side: currentSide, asset: currentAsset, total: 0, hasMore: false, offers: [] }, false);
   }
 
   console.log('[loadOffers] fetching /api/p2p/offers side=' + currentSide + ' asset=' + currentAsset);
@@ -3526,8 +3512,7 @@ async function loadOffers(append) {
     if (!Array.isArray(data.offers) || data.offers.length === 0) {
       if (!append) {
         _offersFetching = false;
-        const demoEmpty = Object.assign({}, _DEMO_OFFERS, { side: currentSide, asset: currentAsset });
-        renderOffers(demoEmpty, false);
+        renderOffers({ side: currentSide, asset: currentAsset, total: 0, hasMore: false, offers: [] }, false);
         if (metaEl) metaEl.textContent = '';
       }
       _renderPagination();
@@ -3551,8 +3536,7 @@ async function loadOffers(append) {
     if (!append) _offersFetching = false;
     console.warn('[loadOffers] error:', error && error.message);
     if (!append) {
-      const demoFallback = Object.assign({}, _DEMO_OFFERS, { side: currentSide, asset: currentAsset });
-      renderOffers(demoFallback, false);
+      renderOffers({ side: currentSide, asset: currentAsset, total: 0, hasMore: false, offers: [] }, false);
       if (metaEl) metaEl.textContent = '';
     }
     _renderPagination();
@@ -6239,9 +6223,8 @@ window.addEventListener('pagehide', () => {
 });
 
 (async function init() {
-  // Render demo ads instantly — before any network calls — so page never looks blank
   try {
-    renderOffers(Object.assign({}, _DEMO_OFFERS, { side: currentSide, asset: currentAsset }), false);
+    renderOffers({ side: currentSide, asset: currentAsset, total: 0, hasMore: false, offers: [] }, false);
     if (metaEl) metaEl.textContent = '';
   } catch(e) { console.warn('[init] demo render failed', e); }
 
