@@ -2162,8 +2162,8 @@ body.p2p-kyc-open { overflow: hidden; }
   transition: color 0.15s;
 }
 
-.p2p-mobile-bottom-nav a.active { color: var(--p2p-brand); }
-.p2p-mobile-bottom-nav a:hover { color: var(--p2p-text); }
+.p2p-mobile-bottom-nav a.active { color: #fff; }
+.p2p-mobile-bottom-nav a:hover { color: rgba(255,255,255,0.8); }
 
 .p2p-mobile-bottom-nav .nav-icon {
   font-size: 1.2rem;
@@ -4727,3 +4727,291 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 
 
+
+/* ══════════════════════════════════════════════
+   BITGET-STYLE P2P CARDS  (mobile)
+   ══════════════════════════════════════════════ */
+
+/* Card shell */
+.bbt-card {
+  background: #000;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 14px 16px 13px;
+  position: relative;
+}
+.bbt-top-pick {
+  background: #111;
+}
+.bbt-top-pick-badge {
+  position: absolute;
+  top: 13px;
+  right: 14px;
+  font-size: 10px;
+  color: #F68F15;
+  border: 1px solid rgba(246,143,21,0.45);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Header row: avatar + name + chips | orders right */
+.bbt-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 6px;
+}
+.bbt-hd-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.bbt-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.bbt-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #eaecef;
+  white-space: nowrap;
+}
+.bbt-time-chip {
+  font-size: 11px;
+  color: rgba(255,255,255,0.42);
+  white-space: nowrap;
+}
+.bbt-fast-chip {
+  font-size: 10.5px;
+  color: #2ebd85;
+  background: rgba(46,189,133,0.13);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.bbt-orders {
+  font-size: 11px;
+  color: rgba(255,255,255,0.38);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Price */
+.bbt-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-bottom: 6px;
+}
+.bbt-psign {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1;
+}
+.bbt-pnum {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+/* Info lines */
+.bbt-info-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 3px;
+}
+.bbt-lbl { color: rgba(255,255,255,0.38); flex-shrink: 0; }
+.bbt-val { color: rgba(255,255,255,0.78); }
+
+/* Footer: payments + Buy button on same row */
+.bbt-ft {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 9px;
+  gap: 8px;
+}
+.bbt-pays {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.bbt-pay-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.62);
+  white-space: nowrap;
+}
+.bbt-pay-bar {
+  width: 3px;
+  height: 13px;
+  border-radius: 2px;
+  background: #F68F15;
+  flex-shrink: 0;
+}
+.bbt-pay-name { }
+
+/* Buy / Sell button — green rounded pill */
+.bbt-action-btn {
+  min-width: 68px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 20px;
+  background: #2ebd85;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.bbt-action-btn.bbt-sell-btn { background: #f6465d; }
+.bbt-action-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.bbt-action-btn:not(:disabled):active { opacity: 0.82; transform: scale(0.95); }
+
+/* ── Buy/Sell bar injected inside #p2pCards (scrolls away) ── */
+.bbt-bs-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 16px;
+  background: #000;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.bbt-bs-tab {
+  padding: 12px 18px;
+  background: none;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  color: rgba(255,255,255,0.38);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  transition: color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.bbt-bs-tab.bbt-bs-active {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+/* ── Payment filter in gt-controls-row2 ── */
+.gt-pay-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 0 10px;
+  height: 46px;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.gt-pay-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gt-pay-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 120;
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.gt-pay-dropdown.open { display: block; }
+.gt-pay-opt {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  font-weight: 500;
+}
+.gt-pay-opt:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.gt-pay-opt:first-child { font-weight: 700; color: #fff; }
+
+/* Filter icon button in row2 */
+.gt-filter-icon-btn {
+  width: 42px;
+  height: 46px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Mobile overrides ── */
+@media (max-width: 767px) {
+  /* Hide original Buy/Sell row — it lives inside #p2pCards now */
+  .gt-controls-row1 { display: none !important; }
+
+  /* Row2 = sticky filter bar */
+  .gt-controls-row2 {
+    background: #000;
+    padding: 8px 14px;
+    margin: 0;
+    gap: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  /* Make asset wrap more compact */
+  .gt-asset-wrap { height: 38px; padding: 0 10px; }
+  .gt-amount-wrap { height: 38px; flex: 1; }
+  .gt-amount-input { font-size: 13px; }
+  .gt-pay-wrap { height: 38px; padding: 0 8px; }
+  .gt-pay-label { font-size: 11px; max-width: 90px; }
+  .gt-filter-icon-btn { height: 38px; width: 36px; }
+
+  /* Remove extra gap in gt-controls */
+  .gt-controls { gap: 0; margin-bottom: 0; }
+
+  /* Alert bar sits right under filter row */
+  .p2p-alert-bar { margin-top: 0; }
+}

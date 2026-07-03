@@ -192,12 +192,28 @@
               </div>
             </div>
             <div class="gt-amount-wrap">
-              <input id="amountFilter" type="number" min="0" placeholder="0.000" class="gt-amount-input"/>
+              <input id="amountFilter" type="number" min="0" placeholder="Amount" class="gt-amount-input"/>
               <div class="gt-amount-right">
                 <span class="gt-amount-cur">INR</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
               </div>
             </div>
+            <div class="gt-pay-wrap" id="gtPayWrap">
+              <span id="gtPayLabel" class="gt-pay-label">All Payment Methods</span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              <div class="gt-pay-dropdown" id="gtPayDropdown">
+                <div class="gt-pay-opt" data-pay="">All Payment Methods</div>
+                <div class="gt-pay-opt" data-pay="UPI">UPI</div>
+                <div class="gt-pay-opt" data-pay="Paytm">Paytm</div>
+                <div class="gt-pay-opt" data-pay="PhonePe">PhonePe</div>
+                <div class="gt-pay-opt" data-pay="Google Pay">Google Pay</div>
+                <div class="gt-pay-opt" data-pay="IMPS">IMPS</div>
+                <div class="gt-pay-opt" data-pay="Bank Transfer">Bank Transfer</div>
+                <div class="gt-pay-opt" data-pay="NEFT">NEFT</div>
+              </div>
+            </div>
+            <button id="applyFilters2" type="button" class="gt-filter-icon-btn" aria-label="Filter">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            </button>
           </div>
         </div>
 
@@ -2788,5 +2804,38 @@ function closeMerchantBadgeSheet() {
   document.body.style.overflow = '';
 }
 </script>
-<script src="js/app.js"></script></body>
+<script src="js/app.js"></script>
+<script>
+(function(){
+  // Payment filter dropdown
+  var wrap = document.getElementById('gtPayWrap');
+  var drop = document.getElementById('gtPayDropdown');
+  var label = document.getElementById('gtPayLabel');
+  var payInput = document.getElementById('paymentFilter');
+  if (wrap && drop) {
+    wrap.addEventListener('click', function(e) {
+      var opt = e.target.closest('.gt-pay-opt');
+      if (opt) {
+        var val = opt.dataset.pay || '';
+        label.textContent = val || 'All Payment Methods';
+        if (payInput) { payInput.value = val; payInput.dispatchEvent(new Event('change')); }
+        drop.classList.remove('open');
+        // trigger refresh
+        var applyBtn = document.getElementById('applyFilters');
+        if (applyBtn) applyBtn.click();
+        return;
+      }
+      drop.classList.toggle('open');
+    });
+    document.addEventListener('click', function(e) {
+      if (!wrap.contains(e.target)) drop.classList.remove('open');
+    });
+  }
+  // Filter icon button
+  var fi2 = document.getElementById('applyFilters2');
+  var fi1 = document.getElementById('applyFilters');
+  if (fi2 && fi1) fi2.addEventListener('click', function(){ fi1.click(); });
+})();
+</script>
+</body>
 </html>

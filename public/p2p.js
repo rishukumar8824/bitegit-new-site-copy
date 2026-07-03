@@ -3223,33 +3223,35 @@ function renderOffers(data, append) {
     const paymentGate = offerPayments.map(m => `<span class="gt-pay">${escapeHtml(m)}</span>`).join('');
 
     const mobPayRows = offerPayments.map(m =>
-      `<div class="bbt-mob-pay"><span class="bbt-pay-bar"></span><span>${escapeHtml(m)}</span></div>`
+      `<span class="bbt-pay-item"><span class="bbt-pay-bar"></span><span class="bbt-pay-name">${escapeHtml(m)}</span></span>`
     ).join('');
+    const _isTopPick = index === 0;
+    const _topPickBadge = _isTopPick ? '<span class="bbt-top-pick-badge">Top Picks for New Users ⓘ</span>' : '';
     cardsHtml.push(`
-      <article class="bbt-card">
-        <div class="bbt-card-top">
-          <div class="bbt-card-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
-          <div class="bbt-card-meta">
-            <span class="bbt-card-name">${escapeHtml(offer.advertiser)}${verificationBadge}</span>
-            <span class="bbt-card-stats">${repOrders} Order(s) | ${repRate}%</span>
+      <article class="bbt-card${_isTopPick ? ' bbt-top-pick' : ''}">
+        ${_topPickBadge}
+        <div class="bbt-hd">
+          <div class="bbt-hd-left">
+            <div class="bbt-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
+            <span class="bbt-name">${escapeHtml(offer.advertiser)}${verificationBadge}</span>
+            <span class="bbt-time-chip">⊙ ${repTime}</span>
+            <span class="bbt-fast-chip">⚡ Fast release</span>
           </div>
-          <div class="bbt-card-time">&#8857; ${offer.releaseTime || (rep.avgReleaseMinutes != null ? rep.avgReleaseMinutes : 15)}m</div>
+          <span class="bbt-orders">${repOrders} Orders (${repRate}%)</span>
         </div>
-        <div class="bbt-card-body">
-          <div class="bbt-card-left">
-            <div class="bbt-card-price">INR <span class="bbt-card-price-num">${Number(offer.price).toFixed(2)}</span></div>
-            <div class="bbt-card-info-row"><span class="bbt-info-lbl">Available</span> <span class="bbt-info-val">${Number(offer.available).toFixed(4)} ${offer.asset}</span></div>
-            <div class="bbt-card-info-row"><span class="bbt-info-lbl">Limits</span> <span class="bbt-info-val">${Number(offer.minLimit).toFixed(2)} - ${Number(offer.maxLimit).toFixed(2)} INR</span></div>
-            <div class="bbt-card-pays">${mobPayRows}</div>
-          </div>
-          <div class="bbt-card-right">
-            <button type="button"
-              class="bbt-card-btn offer-action-btn ${data.side==='sell'?'bbt-card-btn-sell':''}"
-              data-offer-id="${offer.id}"
-              ${isOwnAd ? 'disabled' : ''}>
-              ${data.side==='buy'?'Buy':'Sell'} ${offer.asset}
-            </button>
-          </div>
+        <div class="bbt-price-row">
+          <span class="bbt-psign">₹</span><span class="bbt-pnum">${Number(offer.price).toFixed(2)}</span>
+        </div>
+        <div class="bbt-info-line"><span class="bbt-lbl">Limits</span> <span class="bbt-val">${formatNumber(offer.minLimit)} - ${formatNumber(offer.maxLimit)} INR</span></div>
+        <div class="bbt-info-line"><span class="bbt-lbl">Quantity</span> <span class="bbt-val">${formatNumber(offer.available)} ${offer.asset}</span></div>
+        <div class="bbt-ft">
+          <div class="bbt-pays">${mobPayRows}</div>
+          <button type="button"
+            class="bbt-action-btn offer-action-btn${data.side==='sell'?' bbt-sell-btn':''}"
+            data-offer-id="${offer.id}"
+            ${isOwnAd ? 'disabled' : ''}>
+            ${isOwnAd ? 'Your Ad' : (data.side==='buy' ? 'Buy' : 'Sell')}
+          </button>
         </div>
       </article>
     `);
@@ -3260,12 +3262,27 @@ function renderOffers(data, append) {
     else rowsEl.innerHTML = rowsHtml.join('');
   }
   if (cardsEl) {
+    const _bsBar = `<div class="bbt-bs-bar" id="bbtBuySellBar">
+      <button class="bbt-bs-tab${data.side==='buy'?' bbt-bs-active':''}" data-bbt-side="buy">Buy</button>
+      <button class="bbt-bs-tab${data.side==='sell'?' bbt-bs-active':''}" data-bbt-side="sell">Sell</button>
+    </div>`;
     if (append) {
       var _exB = cardsEl.querySelector('.p2p-benefit-banner');
       if (_exB) _exB.remove();
       cardsEl.insertAdjacentHTML('beforeend', cardsHtml.join('') + _P2P_BENEFITS_HTML);
     } else {
-      cardsEl.innerHTML = cardsHtml.join('') + _P2P_BENEFITS_HTML;
+      cardsEl.innerHTML = _bsBar + cardsHtml.join('') + _P2P_BENEFITS_HTML;
+      // wire injected Buy/Sell bar to real sideTabs
+      var _bsEl = document.getElementById('bbtBuySellBar');
+      if (_bsEl && !_bsEl._wired) {
+        _bsEl._wired = true;
+        _bsEl.addEventListener('click', function(e) {
+          var btn = e.target.closest('[data-bbt-side]');
+          if (!btn) return;
+          var realTab = document.querySelector('.gt-side-tab[data-side="' + btn.dataset.bbtSide + '"]');
+          if (realTab) realTab.click();
+        });
+      }
     }
   }
 }
