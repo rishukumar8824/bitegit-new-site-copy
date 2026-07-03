@@ -1122,29 +1122,21 @@
 <div class="modal-overlay hidden" id="modalNetwork" onclick="closeNetworkModal(event)">
   <div class="modal-sheet">
     <div class="modal-drag"></div>
-    <div class="modal-title-row">Choose network</div>
-    <div class="net-warn">
-      <span class="net-warn-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#333"/><path d="M12 8v4M12 16h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
-      </span>
-      Ensure the network you select matches the withdrawal platform, or your assets may be lost
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem 1rem 1rem">
+      <span style="font-size:1.05rem;font-weight:700;color:#fff">Choose Network</span>
+      <button onclick="closeNetworkModal({target:document.getElementById('modalNetwork')})" style="background:none;border:none;color:#8a9bb5;font-size:1.3rem;cursor:pointer;line-height:1">✕</button>
     </div>
-    <div class="network-card" id="netMorph" onclick="selectNetwork('MORPH')">
-      <div class="net-name">Morph (Morph)</div>
-      <div class="net-details">1 block confirmation(s)<br>Min deposit: 0.01 USDT<br>Crediting time ≈ 10 min</div>
+    <div style="display:flex;align-items:flex-start;gap:.5rem;background:#1e1e1e;border-radius:10px;padding:.7rem .85rem;margin:0 1rem .9rem;font-size:.8rem;color:#ccc;line-height:1.5">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:.1rem"><circle cx="12" cy="12" r="10" fill="#333"/><path d="M12 8v4M12 16h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      Please make sure that the deposit network you choose matches your withdraw network, otherwise it may cause asset loss.
     </div>
-    <div class="network-card" id="netTRC20" onclick="selectNetwork('TRC20')">
-      <div class="net-name">TRC20 (Tron)</div>
-      <div class="net-details">1 block confirmation(s)<br>Min deposit: 0.01 USDT<br>Crediting time ≈ 1 min</div>
-    </div>
-    <div class="network-card" id="netBEP20" onclick="selectNetwork('BEP20')">
-      <div class="net-name">BEP20 (Binance Smart Chain)</div>
-      <div class="net-details">15 block confirmation(s)<br>Min deposit: 0.01 USDT<br>Crediting time ≈ 1 min</div>
-    </div>
-    <div class="network-card selected" id="netERC20" onclick="selectNetwork('ERC20')">
-      <div class="net-name">ERC20 (Ethereum)</div>
-      <div class="net-details">12 block confirmation(s)<br>Min deposit: 0.01 USDT<br>Crediting time ≈ 1 min</div>
-    </div>
+    <div id="netMorph" onclick="selectNetwork('MORPH')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">Morph (Morph)</div>
+    <div id="netTRC20" onclick="selectNetwork('TRC20')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">TRC20 (TRON)</div>
+    <div id="netBEP20" onclick="selectNetwork('BEP20')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">BEP20 (BNB Smart Chain)</div>
+    <div id="netERC20" onclick="selectNetwork('ERC20')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">ERC20 (Ethereum)</div>
+    <div onclick="selectNetwork('SOL')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">SOL (Solana)</div>
+    <div onclick="selectNetwork('OPT')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">Opt (Optimism)</div>
+    <div onclick="selectNetwork('POL')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">POL (Polygon POS)</div>
   </div>
 </div>
 
@@ -1154,29 +1146,21 @@
 <div class="modal-overlay hidden" id="modalWdNetwork" onclick="closeWdNetworkModal(event)">
   <div class="modal-sheet">
     <div class="modal-drag"></div>
-    <div class="modal-title-row">Choose network</div>
-    <div class="net-warn">
-      <span class="net-warn-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#333"/><path d="M12 8v4M12 16h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
-      </span>
-      Ensure the network you select matches the deposit platform, or your assets may be lost
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem 1rem 1rem">
+      <span style="font-size:1.05rem;font-weight:700;color:#fff">Choose Network</span>
+      <button onclick="closeWdNetworkModal({target:document.getElementById('modalWdNetwork')})" style="background:none;border:none;color:#8a9bb5;font-size:1.3rem;cursor:pointer;line-height:1">✕</button>
     </div>
-    <div class="network-card selected" id="wdNetMorph" onclick="selectWdNetwork('MORPH')">
-      <div class="net-name">Morph (Morph)</div>
-      <div class="net-details">Fee: 1 USDT · Min withdrawal: 2 USDT<br>Crediting time ≈ 10 min</div>
+    <div style="display:flex;align-items:flex-start;gap:.5rem;background:#1e1e1e;border-radius:10px;padding:.7rem .85rem;margin:0 1rem .9rem;font-size:.8rem;color:#ccc;line-height:1.5">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:.1rem"><circle cx="12" cy="12" r="10" fill="#333"/><path d="M12 8v4M12 16h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      Please make sure that the deposit network you choose matches your withdraw network, otherwise it may cause asset loss.
     </div>
-    <div class="network-card" id="wdNetTRC20" onclick="selectWdNetwork('TRC20')">
-      <div class="net-name">TRC20 (Tron)</div>
-      <div class="net-details">Fee: 1 USDT · Min withdrawal: 2 USDT<br>Crediting time ≈ 1 min</div>
-    </div>
-    <div class="network-card" id="wdNetBEP20" onclick="selectWdNetwork('BEP20')">
-      <div class="net-name">BEP20 (Binance Smart Chain)</div>
-      <div class="net-details">Fee: 1 USDT · Min withdrawal: 2 USDT<br>Crediting time ≈ 1 min</div>
-    </div>
-    <div class="network-card" id="wdNetERC20" onclick="selectWdNetwork('ERC20')">
-      <div class="net-name">ERC20 (Ethereum)</div>
-      <div class="net-details">Fee: 5 USDT · Min withdrawal: 10 USDT<br>Crediting time ≈ 5 min</div>
-    </div>
+    <div id="wdNetMorph" onclick="selectWdNetwork('MORPH')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">Morph (Morph)</div>
+    <div id="wdNetTRC20" onclick="selectWdNetwork('TRC20')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">TRC20 (TRON)</div>
+    <div id="wdNetBEP20" onclick="selectWdNetwork('BEP20')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">BEP20 (BNB Smart Chain)</div>
+    <div id="wdNetERC20" onclick="selectWdNetwork('ERC20')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">ERC20 (Ethereum)</div>
+    <div onclick="selectWdNetwork('SOL')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">SOL (Solana)</div>
+    <div onclick="selectWdNetwork('OPT')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">Opt (Optimism)</div>
+    <div onclick="selectWdNetwork('POL')" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin:0 1rem .55rem;cursor:pointer;font-size:.95rem;font-weight:600;color:#fff">POL (Polygon POS)</div>
   </div>
 </div>
 
