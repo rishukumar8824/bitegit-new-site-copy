@@ -1182,8 +1182,8 @@ function getGeoInfo(ip) {
 }
 
 const loginAttemptLimiter = createIpAttemptLimiter({
-  maxAttempts: 100,
-  windowMs: 1 * 60 * 1000
+  maxAttempts: 5,
+  windowMs: 15 * 60 * 1000  // 15-minute lockout after 5 failed attempts
 });
 
 async function createSession() {
@@ -1200,7 +1200,8 @@ async function isSessionValid(token) {
     try {
       const [b64, sig] = token.split('.');
       const payload = Buffer.from(b64, 'base64url').toString();
-      const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET || ADMIN_PASSWORD;
+      const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+      if (!secret) return false;
       const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
       if (sig !== expected) return false;
       const expiresAt = parseInt(payload.split(':')[1], 10);
@@ -1211,7 +1212,8 @@ async function isSessionValid(token) {
     try {
       const [b64, sig] = token.split('.');
       const payload = Buffer.from(b64, 'base64url').toString();
-      const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET || ADMIN_PASSWORD;
+      const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+      if (!secret) return false;
       const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
       if (sig === expected) {
         const expiresAt = parseInt(payload.split(':')[1], 10);
@@ -1293,7 +1295,8 @@ async function handleLegacyAdminLogin(req, res) {
     sessionToken = await createSession();
   } else {
     // DB not ready — use a signed HMAC token so session works without MongoDB
-    const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET || ADMIN_PASSWORD;
+    const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+    if (!secret) throw new Error('JWT_SECRET env var is required for admin sessions.');
     const payload = `admin_legacy:${Date.now() + SESSION_TTL_MS}`;
     const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex');
     sessionToken = `${Buffer.from(payload).toString('base64url')}.${sig}`;

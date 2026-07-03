@@ -1,5 +1,16 @@
 const MONGO_OBJECT_ID_REGEX = /^[a-f\d]{24}$/i;
 
+function stripHtml(str) {
+  return str
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/\bon\w+\s*=\s*(['"]?)[^'">\s]*/gi, '')
+    .replace(/(?:javascript|vbscript)\s*:/gi, '')
+    .replace(/data\s*:(?!image\/[a-zA-Z])/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+}
+
 function sanitizeValue(input) {
   if (Array.isArray(input)) {
     return input.map((item) => sanitizeValue(item));
@@ -14,6 +25,10 @@ function sanitizeValue(input) {
       cleaned[key] = sanitizeValue(value);
     }
     return cleaned;
+  }
+
+  if (typeof input === 'string') {
+    return stripHtml(input);
   }
 
   return input;
