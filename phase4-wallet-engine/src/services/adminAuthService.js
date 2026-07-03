@@ -60,26 +60,24 @@ const ensureBootstrapAdmin = async (transaction = null) => {
     where: { email: adminEmail },
     ...(transaction ? { transaction } : {})
   });
-  if (existing) {
-    return existing;
-  }
-
   const role = await AdminRole.findOne({
     where: { role_name: 'super_admin' },
     ...(transaction ? { transaction } : {})
   });
-  if (!role) {
-    return null;
-  }
+  if (!role) return null;
 
   const hash = await bcrypt.hash(adminPassword, 10);
+
+  if (existing) {
+    await existing.update(
+      { password_hash: hash, is_active: true, role_id: role.id },
+      transaction ? { transaction } : undefined
+    );
+    return existing;
+  }
+
   return Admin.create(
-    {
-      email: adminEmail,
-      password_hash: hash,
-      role_id: role.id,
-      is_active: true
-    },
+    { email: adminEmail, password_hash: hash, role_id: role.id, is_active: true },
     transaction ? { transaction } : undefined
   );
 };
