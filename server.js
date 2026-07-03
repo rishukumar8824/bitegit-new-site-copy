@@ -5723,7 +5723,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 app.get('/markets', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'markets.html'));
+  res.sendFile(path.join(__dirname, 'public', 'market.html'));
 });
 app.get('/assets', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'assets', 'index.html'));
