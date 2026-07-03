@@ -2565,19 +2565,43 @@ async function loadUpBalance() {
       <div class="stat-card"><div class="stat-icon">💎</div><div class="stat-info"><div class="stat-label">Available</div><div class="stat-value" style="color:var(--green);font-size:17px;">${formatNumber(bal,4)}</div><div class="stat-meta">USDT</div></div></div>
       <div class="stat-card"><div class="stat-icon">🔒</div><div class="stat-info"><div class="stat-label">Locked</div><div class="stat-value" style="color:var(--red);font-size:17px;">${formatNumber(locked,4)}</div><div class="stat-meta">USDT</div></div></div>
     </div>
-    <div style="background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:14px 16px;">
+    <div style="background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:14px 16px;margin-bottom:12px;">
       <div class="up-info-row"><span class="up-info-label">Available Balance</span><span class="up-info-value" style="color:var(--green);font-weight:700;">${formatNumber(bal,6)} USDT</span></div>
       <div class="up-info-row"><span class="up-info-label">Locked Balance</span><span class="up-info-value" style="color:var(--red);">${formatNumber(locked,6)} USDT</span></div>
       <div class="up-info-row"><span class="up-info-label">Total Balance</span><span class="up-info-value" style="font-weight:700;">${formatNumber(bal+locked,6)} USDT</span></div>
     </div>
-    <div style="margin-top:12px;padding:10px 14px;background:var(--bg-card2);border-radius:8px;border:1px solid var(--border);">
-      <div style="font-size:11px;color:var(--text-2);margin-bottom:6px;">Quick Adjust Balance</div>
-      <div style="display:flex;gap:8px;">
-        <select id="upAdjustType2" class="input-dark" style="width:120px;height:34px;padding:4px 8px;font-size:12px;"><option value="ADD">➕ Add</option><option value="SUBTRACT">➖ Subtract</option></select>
-        <input id="upAdjustAmount2" class="input-dark" type="number" min="0" step="0.01" placeholder="Amount" style="flex:1;height:34px;" />
-        <button class="btn-primary" onclick="(function(){document.getElementById('upAdjustType').value=document.getElementById('upAdjustType2').value;document.getElementById('upAdjustAmount').value=document.getElementById('upAdjustAmount2').value;switchUpTab('actions');})()">Go →</button>
+    <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:14px 16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px;">⬇ Deposit to Wallet</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:8px;">
+          <input id="upDepositAmt" class="input-dark" type="number" min="0.01" step="0.01" placeholder="Amount (USDT)" style="flex:1;height:36px;" />
+        </div>
+        <input id="upDepositNote" class="input-dark" placeholder="Note (e.g. Manual top-up)" style="height:36px;" value="Admin manual deposit" />
+        <button class="btn-primary" style="background:var(--green);border-color:var(--green);padding:10px;" onclick="upDirectDeposit()">✅ Deposit to User Wallet</button>
       </div>
     </div>`;
+}
+
+async function upDirectDeposit() {
+  if (!_upUserId) return;
+  const amt = parseFloat(document.getElementById('upDepositAmt')?.value || '0');
+  const note = document.getElementById('upDepositNote')?.value?.trim() || 'Admin manual deposit';
+  if (!amt || amt <= 0) return showMessage('Enter a valid amount', 'error');
+  try {
+    const res = await fetch(`/api/admin/users/${encodeURIComponent(_upUserId)}/deposit`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: amt, coin: 'USDT', note })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Deposit failed');
+    showMessage(`✅ ${amt} USDT deposited. New balance: ${data.balance} USDT`, 'success');
+    document.getElementById('upDepositAmt').value = '';
+    await loadUpBalance();
+  } catch (e) {
+    showMessage(e.message || 'Deposit failed', 'error');
+  }
 }
 
 // Helper: ensure image src is a proper data URL

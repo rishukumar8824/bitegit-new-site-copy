@@ -4953,14 +4953,12 @@ app.post('/api/admin/wallet/deposits/:depositId/review', requiresAdminSession, a
 
     // Credit wallet if approved
     if (normalizedDecision === 'APPROVED' && walletService) {
-      try {
-        await walletService.creditAvailable(deposit.userId, Number(deposit.amount || 0), {
-          type: 'deposit',
-          currency: String(deposit.coin || 'USDT').toUpperCase(),
-          referenceId: deposit.id,
-          metadata: { source: 'admin_deposit_approval' }
-        });
-      } catch (_) {}
+      await walletService.creditAvailable(deposit.userId, Number(deposit.amount || 0), {
+        type: 'deposit',
+        currency: String(deposit.coin || 'USDT').toUpperCase(),
+        referenceId: deposit.id,
+        metadata: { source: 'admin_deposit_approval' }
+      });
     }
 
     // Send deposit success email
@@ -5239,12 +5237,34 @@ app.patch('/api/admin/users/:userId/status', requiresAdminSession, async (req, r
   } catch (e) { return res.status(500).json({ message: 'Failed to update status', error: e.message }); }
 });
 
+// ── Admin: Manual deposit to user wallet ────────────────────────────────────
+app.post('/api/admin/users/:userId/deposit', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || !walletService) return res.status(503).json({ message: 'Store not ready' });
+    const { amount, coin = 'USDT', note = 'Admin manual deposit' } = req.body;
+    const depositAmount = Math.abs(Number(amount));
+    if (!depositAmount || !Number.isFinite(depositAmount)) {
+      return res.status(400).json({ message: 'Valid amount required' });
+    }
+    const userId = String(req.params.userId || '').trim();
+    await walletService.ensureWallet(userId, { username: userId });
+    const wallet = await walletService.adminAdjustBalance(userId, depositAmount, note, {
+      type: 'admin_deposit',
+      currency: String(coin).toUpperCase(),
+      referenceId: `adep_${Date.now()}`,
+      metadata: { source: 'admin_manual_deposit', adminNote: note }
+    });
+    return res.json({ ok: true, balance: wallet.availableBalance, message: `Deposited ${depositAmount} ${coin} to user wallet.` });
+  } catch (e) { return res.status(500).json({ message: 'Deposit failed', error: e.message }); }
+});
+
 app.post('/api/admin/users/:userId/adjust-balance', requiresAdminSession, async (req, res) => {
   try {
     if (!adminStore) return res.status(503).json({ message: 'Store not ready' });
     const { amount, reason, coin = 'USDT', type } = req.body;
     if (amount == null) return res.status(400).json({ message: 'amount required' });
-    const adjustAmount = type === 'debit' ? -Math.abs(Number(amount)) : Math.abs(Number(amount));
+    const isDebit = type === 'debit' || type === 'SUBTRACT' || type === 'subtract' || Number(amount) < 0;
+    const adjustAmount = isDebit ? -Math.abs(Number(amount)) : Math.abs(Number(amount));
     const result = await adminStore.adjustUserBalance(req.params.userId, adjustAmount, reason || 'admin adjustment', coin);
     return res.json({ ok: true, result });
   } catch (e) { return res.status(500).json({ message: 'Balance adjustment failed', error: e.message }); }
