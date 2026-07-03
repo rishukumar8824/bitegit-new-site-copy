@@ -2673,6 +2673,11 @@ function updateUserUi() {
     logoutBtn.style.display = currentUser ? 'inline-flex' : 'none';
   }
 
+  // Hide Login / Sign Up buttons when user is logged in
+  document.querySelectorAll('[data-auth-guest-only]').forEach(function(el) {
+    el.style.display = currentUser ? 'none' : '';
+  });
+
   if (!currentUser) {
     if (myAdsList) {
       myAdsList.innerHTML = '<p class="empty-row">Login required to view your ads.</p>';

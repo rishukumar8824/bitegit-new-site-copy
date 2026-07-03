@@ -288,6 +288,8 @@ async function loadCurrentUser() {
     if (loggedIn) {
       if (marketsLoginBtn)  marketsLoginBtn.style.display  = 'none';
       if (marketsSignupBtn) marketsSignupBtn.style.display = 'none';
+      const drawerAuth = document.getElementById('marketsDrawerAuthBtns');
+      if (drawerAuth) drawerAuth.style.display = 'none';
     }
   } catch (_) {}
 }
