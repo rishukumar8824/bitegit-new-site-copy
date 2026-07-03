@@ -7,8 +7,8 @@
   const UP = '#2ebd85', DOWN = '#f6465d';
 
   const NAV = [
-    { label: 'Buy Crypto', href: 'market.html', arrow: true },
-    { label: 'Markets',    href: 'market.html', arrow: false },
+    { label: 'Buy Crypto', href: '/markets', arrow: true },
+    { label: 'Markets',    href: '/markets', arrow: false },
     { label: 'P2P',        href: 'p2p.html',    arrow: false },
     { label: 'Trade',      href: 'trade.html',  arrow: true },
     { label: 'Futures',    href: 'futures_overview.html', arrow: true },
@@ -18,7 +18,7 @@
     { label: 'Glory of Legends', href: '#',     arrow: false },
     { label: 'English / USD',    href: '#',     arrow: false },
   ];
-  const NAV_MAP = { 'Markets': 'market.html', 'Trade': 'trade.html', 'Futures': 'futures_overview.html', 'TradFi': 'tradfi.html', 'Finance': 'finance.html', 'Buy Crypto': 'market.html', 'P2P': 'p2p.html' };
+  const NAV_MAP = { 'Markets': '/markets', 'Trade': 'trade.html', 'Futures': 'futures_overview.html', 'TradFi': 'tradfi.html', 'Finance': 'finance.html', 'Buy Crypto': '/markets', 'P2P': 'p2p.html' };
 
   function wireTopNav() {
     document.querySelectorAll('header a, nav a').forEach((a) => {
@@ -82,7 +82,7 @@
     document.querySelectorAll('div').forEach(div => {
       const cls = div.className || '';
       if ((cls.includes('mt-4') || cls.includes('mt-6')) && cls.includes('text-center')) {
-        const link = div.querySelector('a[href="market.html"]');
+        const link = div.querySelector('a[href="/markets"]');
         if (link && /More/.test(link.textContent)) div.setAttribute('data-cvx-html-more', '1');
       }
     });
@@ -223,7 +223,7 @@
       });
 
       const more = document.createElement('a');
-      more.href = 'market.html';
+      more.href = '/markets';
       more.textContent = 'More >';
       more.style.cssText = 'display:block;text-align:center;padding:12px;color:rgba(255,255,255,0.5);font-size:14px;text-decoration:none;';
       rowsDiv.appendChild(more);
