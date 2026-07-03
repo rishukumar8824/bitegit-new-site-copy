@@ -5610,7 +5610,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 app.get('/markets', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'market.html'));
+  res.sendFile(path.join(__dirname, 'public', 'markets.html'));
 });
 app.get('/assets', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'assets', 'index.html'));
@@ -5632,6 +5632,10 @@ app.get('/p2p-order-history.html', (req, res) => res.redirect(301, '/p2p-order-h
 app.get('/p2p-sell-flow.html', (req, res) => res.redirect(301, '/p2p-sell-flow'));
 app.get('/p2p-user-center.html', (req, res) => res.redirect(301, '/p2p-user-center'));
 app.get('/trade.html', (req, res) => res.redirect(301, '/trade'));
+app.get('/tradfi.html', (req, res) => res.redirect(301, '/futures'));
+app.get('/futures.html', (req, res) => res.redirect(301, '/futures'));
+app.get('/markets.html', (req, res) => res.redirect(301, '/markets'));
+app.get('/market.html', (req, res) => res.redirect(301, '/markets'));
 
 app.get('/auth', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'auth.html'));
@@ -5672,6 +5676,10 @@ app.get('/earn', (req, res) => {
 
 app.get('/rewards', (req, res) => {
   res.redirect('/p2p#rewards');
+});
+
+app.get('/futures', (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'tradfi.html'));
 });
 
 app.get('/trade', (req, res) => {
