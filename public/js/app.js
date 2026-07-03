@@ -91,7 +91,7 @@
     s.textContent = `
       @media (max-width: 767px) {
         [data-cvx-nav-links] { display: none !important; }
-        header a[href="login.html"] { display: none !important; }
+        #indexAuthBtns { display: none !important; }
         [data-nav-right-box] [role="separator"] { display: none !important; }
         [data-cvx-icon-btn] { display: none !important; }
         #cvx-desktop-pairs { display: none !important; }
@@ -373,14 +373,16 @@
       const authRow = document.createElement('div');
       authRow.style.cssText = 'display:flex;gap:10px;padding:8px 16px 16px;flex-shrink:0;';
       const loginBtn = document.createElement('a');
-      loginBtn.href = 'login.html'; loginBtn.textContent = 'Log in';
+      loginBtn.href = '/auth'; loginBtn.textContent = 'Log in';
       loginBtn.style.cssText = 'flex:1;text-align:center;padding:11px 0;border-radius:6px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;letter-spacing:0.01em;';
       const signupBtn = document.createElement('a');
-      signupBtn.href = 'register.html'; signupBtn.textContent = 'Sign up';
+      signupBtn.href = '/auth?mode=signup'; signupBtn.textContent = 'Sign up';
       signupBtn.style.cssText = 'flex:1;text-align:center;padding:11px 0;border-radius:6px;background:#F0B90B;color:#181a20;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:0.01em;';
-      authRow.appendChild(loginBtn);
-      authRow.appendChild(signupBtn);
-      panel.appendChild(authRow);
+      if (!window._cvxLoggedIn) {
+        authRow.appendChild(loginBtn);
+        authRow.appendChild(signupBtn);
+        panel.appendChild(authRow);
+      }
 
       // ── Nav list (scrollable) ──
       const navScroll = document.createElement('div');
