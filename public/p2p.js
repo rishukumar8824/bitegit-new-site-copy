@@ -3544,7 +3544,8 @@ async function loadOffers(append) {
     if (!Array.isArray(data.offers) || data.offers.length === 0) {
       if (!append) {
         _offersFetching = false;
-        renderOffers({ side: currentSide, asset: currentAsset, total: 0, hasMore: false, offers: [] }, false);
+        const _fallback = getDummyOffers(currentSide);
+        renderOffers(_fallback, false);
         if (metaEl) metaEl.textContent = '';
       }
       _renderPagination();
@@ -3568,7 +3569,7 @@ async function loadOffers(append) {
     if (!append) _offersFetching = false;
     console.warn('[loadOffers] error:', error && error.message);
     if (!append) {
-      renderOffers({ side: currentSide, asset: currentAsset, total: 0, hasMore: false, offers: [] }, false);
+      renderOffers(getDummyOffers(currentSide), false);
       if (metaEl) metaEl.textContent = '';
     }
     _renderPagination();
