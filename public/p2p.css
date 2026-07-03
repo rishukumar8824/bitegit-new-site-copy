@@ -4458,7 +4458,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-buy-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .bbt-buy-btn:not(:disabled):hover { opacity: 0.88; }
 
-/* ── Mobile cards — Bybit-exact ── */
+/* ── Mobile cards — legacy (overridden by Bitget-style block at end of file) ── */
 .bbt-card { background:#000; border-radius:0; padding:13px 14px 12px; border-bottom:1px solid rgba(255,255,255,0.06); position:relative; }
 
 /* Brand mark — top left of each card */
@@ -4733,24 +4733,31 @@ body.mob-screen-open .p2p-secondary-nav {
    ══════════════════════════════════════════════ */
 
 /* Card shell */
+/* Regular flat card */
 .bbt-card {
   background: #000;
   border-bottom: 1px solid rgba(255,255,255,0.07);
-  padding: 14px 16px 13px;
+  padding: 14px 16px 14px;
   position: relative;
 }
+/* First card — rounded box, inset from edges */
 .bbt-top-pick {
-  background: #111;
+  background: #1a1c22;
+  border-bottom: none;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.09);
+  margin: 10px 12px 4px;
+  padding: 14px 14px 14px;
 }
 .bbt-top-pick-badge {
   position: absolute;
   top: 13px;
   right: 14px;
-  font-size: 10px;
+  font-size: 10.5px;
   color: #F68F15;
-  border: 1px solid rgba(246,143,21,0.45);
+  border: 1px solid rgba(246,143,21,0.5);
   border-radius: 20px;
-  padding: 2px 8px;
+  padding: 2px 9px;
   white-space: nowrap;
   pointer-events: none;
 }

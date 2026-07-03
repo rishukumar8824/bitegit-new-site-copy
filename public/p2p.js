@@ -3222,10 +3222,14 @@ function renderOffers(data, append) {
     const onlineLabel = onlineStatus === 'online' ? 'Online' : onlineStatus === 'away' ? 'Away' : 'Offline';
     const paymentGate = offerPayments.map(m => `<span class="gt-pay">${escapeHtml(m)}</span>`).join('');
 
-    const mobPayRows = offerPayments.map(m =>
-      `<span class="bbt-pay-item"><span class="bbt-pay-bar"></span><span class="bbt-pay-name">${escapeHtml(m)}</span></span>`
-    ).join('');
+    const _PAY_COLORS = { 'UPI':'#4CAF50','Paytm':'#00B9F1','PhonePe':'#5f259f','Google Pay':'#34a853','IMPS':'#FF9800','NEFT':'#2196F3','Bank Transfer':'#607D8B','Cash Deposit to Bank':'#F68F15','Digital eRupee':'#6C3483','Cash Deposit to Ba...':'#F68F15' };
+    const mobPayRows = offerPayments.map(m => {
+      const color = _PAY_COLORS[m] || '#F68F15';
+      const shortName = m.length > 14 ? m.slice(0,14)+'…' : m;
+      return `<span class="bbt-pay-item"><span class="bbt-pay-bar" style="background:${color}"></span><span class="bbt-pay-name">${escapeHtml(shortName)}</span></span>`;
+    }).join('');
     const _isTopPick = index === 0;
+    const _topPickChips = _isTopPick ? `<span class="bbt-time-chip">⊙ ${repTime}</span><span class="bbt-fast-chip">⚡ Fast release</span>` : '';
     const _topPickBadge = _isTopPick ? '<span class="bbt-top-pick-badge">Top Picks for New Users ⓘ</span>' : '';
     cardsHtml.push(`
       <article class="bbt-card${_isTopPick ? ' bbt-top-pick' : ''}">
@@ -3234,8 +3238,7 @@ function renderOffers(data, append) {
           <div class="bbt-hd-left">
             <div class="bbt-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
             <span class="bbt-name">${escapeHtml(offer.advertiser)}${verificationBadge}</span>
-            <span class="bbt-time-chip">⊙ ${repTime}</span>
-            <span class="bbt-fast-chip">⚡ Fast release</span>
+            ${_topPickChips}
           </div>
           <span class="bbt-orders">${repOrders} Orders (${repRate}%)</span>
         </div>
@@ -3289,29 +3292,33 @@ function renderOffers(data, append) {
 
 function getDummyOffers(side) {
   const buyOffers = [
-    { id: 'd1', advertiser: 'RajeshTrader', orders: 1240, completionRate: 99, price: 96.40, available: 8500, asset: 'USDT', minLimit: 1000, maxLimit: 500000, payments: ['UPI', 'IMPS', 'Bank Transfer'] },
-    { id: 'd2', advertiser: 'CryptoKing_IN', orders: 873, completionRate: 98, price: 96.55, available: 3200, asset: 'USDT', minLimit: 500, maxLimit: 200000, payments: ['UPI', 'Paytm'] },
-    { id: 'd3', advertiser: 'SunilP2P', orders: 456, completionRate: 97, price: 96.70, available: 1500, asset: 'USDT', minLimit: 2000, maxLimit: 100000, payments: ['NEFT', 'IMPS', 'Bank Transfer'] },
-    { id: 'd4', advertiser: 'MumbaiExchange', orders: 2341, completionRate: 99, price: 96.80, available: 12000, asset: 'USDT', minLimit: 5000, maxLimit: 1000000, payments: ['UPI', 'IMPS'] },
-    { id: 'd5', advertiser: 'AyushCrypto', orders: 312, completionRate: 96, price: 96.95, available: 950, asset: 'USDT', minLimit: 1000, maxLimit: 50000, payments: ['Paytm', 'UPI'] },
-    { id: 'd6', advertiser: 'DelhiP2P', orders: 689, completionRate: 98, price: 97.10, available: 4000, asset: 'USDT', minLimit: 500, maxLimit: 300000, payments: ['Bank Transfer', 'NEFT'] },
-    { id: 'd7', advertiser: 'PriyaFinance', orders: 145, completionRate: 95, price: 97.25, available: 600, asset: 'USDT', minLimit: 2000, maxLimit: 80000, payments: ['UPI', 'IMPS'] },
-    { id: 'd8', advertiser: 'BinanceIndia', orders: 3102, completionRate: 99, price: 97.40, available: 25000, asset: 'USDT', minLimit: 1000, maxLimit: 2000000, payments: ['UPI', 'IMPS', 'NEFT', 'Bank Transfer'] },
+    { id: 'demo_1', advertiser: 'Psarkar', orders: 1237, completionRate: 97, price: 109.39, available: 7.49, asset: 'USDT', minLimit: 109.39, maxLimit: 819.33, payments: ['UPI', 'Paytm', 'PhonePe', 'Google Pay'], releaseTime: 1, baseOrders: 0 },
+    { id: 'demo_2', advertiser: 'MR. JINU', orders: 3, completionRate: 100, price: 103.00, available: 400, asset: 'USDT', minLimit: 20000, maxLimit: 41200, payments: ['Cash Deposit to Bank'] },
+    { id: 'demo_3', advertiser: 'Yoge_n', orders: 76, completionRate: 86, price: 103.80, available: 988.9029, asset: 'USDT', minLimit: 49000, maxLimit: 102650, payments: ['Cash Deposit to Bank'] },
+    { id: 'demo_4', advertiser: 'QICKSELLER', orders: 55, completionRate: 100, price: 103.82, available: 53.7258, asset: 'USDT', minLimit: 103.82, maxLimit: 310, payments: ['Digital eRupee'] },
+    { id: 'demo_5', advertiser: 'AMI', orders: 29, completionRate: 96, price: 103.84, available: 962.3481, asset: 'USDT', minLimit: 10000, maxLimit: 99930.22, payments: ['Cash Deposit to Bank'] },
+    { id: 'demo_6', advertiser: 'Shan23023', orders: 240, completionRate: 96, price: 103.85, available: 300, asset: 'USDT', minLimit: 9000, maxLimit: 30000, payments: ['Cash Deposit to Bank'] },
+    { id: 'demo_7', advertiser: 'RajeshP2P', orders: 874, completionRate: 99, price: 104.10, available: 5200, asset: 'USDT', minLimit: 1000, maxLimit: 500000, payments: ['UPI', 'IMPS', 'Bank Transfer'] },
+    { id: 'demo_8', advertiser: 'CryptoRavi_IN', orders: 412, completionRate: 98, price: 104.35, available: 1180, asset: 'USDT', minLimit: 5000, maxLimit: 200000, payments: ['UPI', 'Paytm'] },
+    { id: 'demo_9', advertiser: 'IndiaExchange', orders: 1560, completionRate: 99, price: 104.55, available: 8300, asset: 'USDT', minLimit: 2000, maxLimit: 1000000, payments: ['UPI', 'NEFT', 'Bank Transfer'] },
+    { id: 'demo_10', advertiser: 'SafeTrade_IN', orders: 189, completionRate: 95, price: 104.80, available: 750, asset: 'USDT', minLimit: 500, maxLimit: 75000, payments: ['PhonePe', 'Google Pay'] },
   ];
   const sellOffers = [
-    { id: 's1', advertiser: 'SwapMaster_IN', orders: 980, completionRate: 99, price: 95.80, available: 6000, asset: 'USDT', minLimit: 1000, maxLimit: 400000, payments: ['UPI', 'Bank Transfer'] },
-    { id: 's2', advertiser: 'VikramTrades', orders: 554, completionRate: 97, price: 95.60, available: 2100, asset: 'USDT', minLimit: 500, maxLimit: 150000, payments: ['UPI', 'Paytm'] },
-    { id: 's3', advertiser: 'KolkataP2P', orders: 234, completionRate: 96, price: 95.45, available: 800, asset: 'USDT', minLimit: 2000, maxLimit: 90000, payments: ['IMPS', 'NEFT'] },
-    { id: 's4', advertiser: 'FastSeller99', orders: 1670, completionRate: 99, price: 95.30, available: 9000, asset: 'USDT', minLimit: 5000, maxLimit: 800000, payments: ['UPI', 'IMPS'] },
-    { id: 's5', advertiser: 'NitinExchange', orders: 421, completionRate: 97, price: 95.20, available: 1300, asset: 'USDT', minLimit: 1000, maxLimit: 75000, payments: ['Bank Transfer', 'UPI'] },
-    { id: 's6', advertiser: 'ChennaiCrypto', orders: 789, completionRate: 98, price: 95.10, available: 3500, asset: 'USDT', minLimit: 500, maxLimit: 250000, payments: ['Paytm', 'IMPS', 'UPI'] },
-    { id: 's7', advertiser: 'TrustTrader_IN', orders: 163, completionRate: 95, price: 94.95, available: 500, asset: 'USDT', minLimit: 2000, maxLimit: 60000, payments: ['UPI'] },
-    { id: 's8', advertiser: 'GlobalSwapIN', orders: 2210, completionRate: 99, price: 94.80, available: 18000, asset: 'USDT', minLimit: 1000, maxLimit: 1500000, payments: ['UPI', 'NEFT', 'Bank Transfer'] },
+    { id: 'demo_s1', advertiser: 'Psarkar', orders: 1237, completionRate: 97, price: 101.50, available: 7.49, asset: 'USDT', minLimit: 109, maxLimit: 819, payments: ['UPI', 'Paytm', 'PhonePe', 'Google Pay'], releaseTime: 1, baseOrders: 0 },
+    { id: 'demo_s2', advertiser: 'SwapMaster_IN', orders: 980, completionRate: 99, price: 101.20, available: 6000, asset: 'USDT', minLimit: 1000, maxLimit: 400000, payments: ['UPI', 'Bank Transfer'] },
+    { id: 'demo_s3', advertiser: 'VikramTrades', orders: 554, completionRate: 97, price: 100.90, available: 2100, asset: 'USDT', minLimit: 500, maxLimit: 150000, payments: ['UPI', 'Paytm'] },
+    { id: 'demo_s4', advertiser: 'KolkataP2P', orders: 234, completionRate: 96, price: 100.70, available: 800, asset: 'USDT', minLimit: 2000, maxLimit: 90000, payments: ['IMPS', 'NEFT'] },
+    { id: 'demo_s5', advertiser: 'FastSeller99', orders: 1670, completionRate: 99, price: 100.50, available: 9000, asset: 'USDT', minLimit: 5000, maxLimit: 800000, payments: ['UPI', 'IMPS'] },
+    { id: 'demo_s6', advertiser: 'NitinExchange', orders: 421, completionRate: 97, price: 100.30, available: 1300, asset: 'USDT', minLimit: 1000, maxLimit: 75000, payments: ['Bank Transfer', 'UPI'] },
+    { id: 'demo_s7', advertiser: 'ChennaiCrypto', orders: 789, completionRate: 98, price: 100.10, available: 3500, asset: 'USDT', minLimit: 500, maxLimit: 250000, payments: ['Paytm', 'IMPS', 'UPI'] },
+    { id: 'demo_s8', advertiser: 'TrustTrader_IN', orders: 163, completionRate: 95, price: 99.90, available: 500, asset: 'USDT', minLimit: 2000, maxLimit: 60000, payments: ['UPI'] },
+    { id: 'demo_s9', advertiser: 'GlobalSwapIN', orders: 2210, completionRate: 99, price: 99.70, available: 18000, asset: 'USDT', minLimit: 1000, maxLimit: 1500000, payments: ['UPI', 'NEFT', 'Bank Transfer'] },
+    { id: 'demo_s10', advertiser: 'SafeTrade_IN', orders: 189, completionRate: 95, price: 99.50, available: 750, asset: 'USDT', minLimit: 500, maxLimit: 75000, payments: ['PhonePe', 'Google Pay'] },
   ];
   return {
     side,
     asset: 'USDT',
-    total: 8,
+    total: 10,
     updatedAt: new Date().toISOString(),
     offers: side === 'buy' ? buyOffers : sellOffers
   };
