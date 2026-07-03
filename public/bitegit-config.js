@@ -1,4 +1,4 @@
-// ─── Bitegit Global Config ────────────────────────────────────────────────────
+// ─── Bitcovex Global Config ────────────────────────────────────────────────────
 (function () {
   var BACKEND_URL = '/api/v1';
 
@@ -10,5 +10,5 @@
     BACKEND_URL = 'http://localhost:3000/api/v1';
   }
 
-  window.BITEGIT_API_BASE = BACKEND_URL;
+  window.BITCOVEX_API_BASE = BACKEND_URL;
 })();

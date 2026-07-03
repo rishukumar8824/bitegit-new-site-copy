@@ -1,5 +1,5 @@
 (() => {
-  const THEME_KEY = 'bitegit_theme_mode';
+  const THEME_KEY = 'bitcovex_theme_mode';
   const DARK = 'dark';
   const LIGHT = 'light';
 
@@ -49,7 +49,7 @@
     return initial;
   }
 
-  window.BitegitTheme = {
+  window.BitcovexTheme = {
     getTheme,
     setTheme,
     initThemeToggle

@@ -564,7 +564,7 @@ function syncP2PHintCache() {
 
 function getStoredP2PAccessToken() {
   try {
-    return String(localStorage.getItem('bitegit_token') || '').trim();
+    return String(localStorage.getItem('bitcovex_token') || '').trim();
   } catch (_) {
     return '';
   }
@@ -1767,7 +1767,9 @@ async function loadProfilePanel(options = {}) {
   applyProfileAvatarToNode(profileAvatarMobile, currentUser, initial || 'U');
   setNodeText(profileName, currentUser.username || 'P2P User');
   setNodeText(profileNameMobile, currentUser.username || 'P2P User');
-  setNodeText(profileEmail, currentUser.email || '--');
+  var _e = currentUser.email || '';
+  var _masked = _e ? (_e.slice(0,2) + '****' + _e.slice(_e.indexOf('@'))) : '';
+  setNodeText(profileEmail, _masked || '--');
   setNodeText(profileSignupTimeMobile, formatSignupTimeLabel(currentUser.createdAt));
   const currentKycStatus = normalizeKycStatus(currentUser?.kyc?.status);
   const isKycVerified = currentKycStatus === 'VERIFIED';
@@ -3068,8 +3070,8 @@ async function logoutUser() {
     currentUser = null;
     try { localStorage.removeItem('_p2p_hint'); } catch(_) {}
     try { localStorage.removeItem('_p2p_sec_dep'); _mySecDep = null; } catch(_) {}
-    try { localStorage.removeItem('bitegit_token'); } catch(_) {}
-    try { localStorage.removeItem('bitegit_refresh_token'); } catch(_) {}
+    try { localStorage.removeItem('bitcovex_token'); } catch(_) {}
+    try { localStorage.removeItem('bitcovex_refresh_token'); } catch(_) {}
     try { localStorage.removeItem('_p2p_badge'); } catch(_) {}
     _clearOrdersCache();
     _stopFallbackPoll();

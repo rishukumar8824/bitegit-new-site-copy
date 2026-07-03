@@ -1,10 +1,10 @@
-const BITEGIT_API = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
+const BITCOVEX_API = (window.BITCOVEX_API_BASE || 'http://localhost:3000/api/v1');
 function tradeFetch(path, opts) {
-  var token = localStorage.getItem('bitegit_token') || '';
+  var token = localStorage.getItem('bitcovex_token') || '';
   opts = opts || {};
   var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  return fetch(BITEGIT_API + path, Object.assign({}, opts, { headers: headers, credentials: 'include' }));
+  return fetch(BITCOVEX_API + path, Object.assign({}, opts, { headers: headers, credentials: 'include' }));
 }
 
 const pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -428,8 +428,8 @@ async function loadTradeUserSession() {
 async function logoutTradeSession() {
   try {
     await tradeFetch('/auth/logout', { method: 'POST' });
-    localStorage.removeItem('bitegit_token');
-    localStorage.removeItem('bitegit_refresh_token');
+    localStorage.removeItem('bitcovex_token');
+    localStorage.removeItem('bitcovex_refresh_token');
   } catch (_) {
     // ignore logout errors
   }
@@ -446,8 +446,8 @@ function initTradeTheme() {
     }
   };
 
-  if (window.BitegitTheme?.initThemeToggle) {
-    window.BitegitTheme.initThemeToggle([tradeThemeToggle, tradeDrawerThemeToggle]);
+  if (window.BitcovexTheme?.initThemeToggle) {
+    window.BitcovexTheme.initThemeToggle([tradeThemeToggle, tradeDrawerThemeToggle]);
   }
 
   tradeThemeToggle?.addEventListener('click', () => {
@@ -652,7 +652,7 @@ function setPairIdentity() {
       pairCoin.innerHTML = `<span class="coin-fallback">${base.slice(0, 1)}</span>`;
     }
   }
-  document.title = `${displayPair} | Bitegit Trade`;
+  document.title = `${displayPair} | Bitcovex Trade`;
   chartNeedsAutoFit = true;
 }
 

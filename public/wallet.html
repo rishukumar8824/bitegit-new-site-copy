@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <meta name="theme-color" content="#000000"/>
-  <title>Wallet — Bitegit</title>
+  <title>Wallet — Bitcovex</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -1310,7 +1310,7 @@
 </div>
 
 <script>
-  // ── Bitegit API adapter (replaces old Bitcovex calls) ──
+  // ── Bitcovex API adapter (replaces old Bitcovex calls) ──
   function _fakeRes(obj) {
     return Promise.resolve(new Response(JSON.stringify(obj), { headers: { 'Content-Type': 'application/json' } }));
   }
@@ -1378,7 +1378,7 @@
       return _fakeRes({ status: 'success', data: { trx: 'WD_' + Date.now(), form: [{ label: 'wallet_address', type: 'text' }] } });
     }
 
-    // ── Withdraw step 2: confirm → actually submit to bitegit ──
+    // ── Withdraw step 2: confirm → actually submit to bitcovex ──
     if (path === '/withdraw-request/confirm') {
       var body2 = opts.body ? JSON.parse(opts.body) : {};
       var addr = body2.wallet_address || body2.address || '';

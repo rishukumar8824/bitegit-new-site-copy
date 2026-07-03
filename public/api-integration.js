@@ -1,10 +1,10 @@
 // ╔══════════════════════════════════════════════════════════════════════════╗
-// ║              BITEGIT — Backend API Integration Layer v2                 ║
+// ║              BITCOVEX — Backend API Integration Layer v2                 ║
 // ║  Cookie-based auth | Correct routes | Phone + Desktop support           ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
-// Bitegit backend — uses tunnel URL when accessed remotely
-const API_BASE = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
+// Bitcovex backend — uses tunnel URL when accessed remotely
+const API_BASE = (window.BITCOVEX_API_BASE || 'http://localhost:3000/api/v1');
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let currentUser = null;
@@ -32,7 +32,7 @@ function sendGpsLocation() {
 // ─── Generic API helper (Bearer token auth) ───────────────────────────────────
 async function apiFetch(path, opts) {
   opts = opts || {};
-  var token = localStorage.getItem('bitegit_token') || '';
+  var token = localStorage.getItem('bitcovex_token') || '';
   var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (token) headers['Authorization'] = 'Bearer ' + token;
   try {
@@ -44,7 +44,7 @@ async function apiFetch(path, opts) {
     json._status = res.status;
     return json;
   } catch (e) {
-    console.warn('[BITEGIT API]', path, e.message);
+    console.warn('[BITCOVEX API]', path, e.message);
     return null;
   }
 }
@@ -54,7 +54,7 @@ document.body.insertAdjacentHTML('beforeend', `
 <div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:99990;align-items:center;justify-content:center;max-width:430px;margin:0 auto;">
   <div style="background:#0d1117;border:1px solid #2b3139;border-radius:20px;width:92%;max-width:360px;padding:28px 22px;box-shadow:0 20px 60px rgba(0,0,0,.8);">
     <div style="text-align:center;margin-bottom:22px;">
-      <div style="font-size:26px;font-weight:900;color:#00b8d4;letter-spacing:-1px;">BITEGIT</div>
+      <div style="font-size:26px;font-weight:900;color:#00b8d4;letter-spacing:-1px;">BITCOVEX</div>
       <div id="auth-sub" style="font-size:13px;color:#848e9c;margin-top:5px;">Sign in to your account</div>
     </div>
 
@@ -121,7 +121,7 @@ function hideAuthModal() {
 function showRegView() {
   document.getElementById('auth-login-view').style.display = 'none';
   document.getElementById('auth-reg-view').style.display = 'block';
-  document.getElementById('auth-sub').textContent = 'Create your BITEGIT account';
+  document.getElementById('auth-sub').textContent = 'Create your BITCOVEX account';
   document.getElementById('auth-err').style.display = 'none';
 }
 function showLoginView() {
@@ -154,8 +154,8 @@ async function doLogin() {
   btn.textContent = 'Sign In'; btn.disabled = false;
 
   if (data && data.user) {
-    if (data.accessToken) localStorage.setItem('bitegit_token', data.accessToken);
-    if (data.refreshToken) localStorage.setItem('bitegit_refresh_token', data.refreshToken);
+    if (data.accessToken) localStorage.setItem('bitcovex_token', data.accessToken);
+    if (data.refreshToken) localStorage.setItem('bitcovex_refresh_token', data.refreshToken);
     currentUser = data.user;
     isLoggedIn  = true;
     hideAuthModal();
@@ -221,8 +221,8 @@ async function doVerifyOtp() {
 // ─── LOGOUT ───────────────────────────────────────────────────────────────────
 async function doLogout() {
   await apiFetch('/auth/logout', { method: 'POST' }).catch(function() {});
-  localStorage.removeItem('bitegit_token');
-  localStorage.removeItem('bitegit_refresh_token');
+  localStorage.removeItem('bitcovex_token');
+  localStorage.removeItem('bitcovex_refresh_token');
   currentUser = null;
   isLoggedIn  = false;
   if (typeof userBalance_USDT !== 'undefined') userBalance_USDT = 0;
@@ -560,7 +560,7 @@ async function submitSupportTicket(subject, message) {
   var data = await apiFetch('/support/tickets', {
     method: 'POST',
     body: JSON.stringify({ subject: subject, message: message,
-      email: currentUser ? currentUser.email : 'guest@bitegit.com' })
+      email: currentUser ? currentUser.email : 'guest@bitcovex.com' })
   });
   return data;
 }

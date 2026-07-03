@@ -1,11 +1,11 @@
-const BITEGIT_API = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
+const BITCOVEX_API = (window.BITCOVEX_API_BASE || 'http://localhost:3000/api/v1');
 
 function authFetch(path, opts) {
   opts = opts || {};
-  var token = localStorage.getItem('bitegit_token') || '';
+  var token = localStorage.getItem('bitcovex_token') || '';
   var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  return fetch(BITEGIT_API + path, Object.assign({}, opts, { headers: headers, credentials: 'include' }));
+  return fetch(BITCOVEX_API + path, Object.assign({}, opts, { headers: headers, credentials: 'include' }));
 }
 
 const authForm = document.getElementById('authForm');
@@ -199,10 +199,10 @@ function setMode(nextMode) {
 
   if (authTitle) {
     authTitle.textContent = isSignup
-      ? 'Create your Bitegit account'
+      ? 'Create your Bitcovex account'
       : isForgot
         ? 'Reset your password'
-        : 'Welcome to Bitegit';
+        : 'Welcome to Bitcovex';
   }
 
   if (authSwitchPrefix) {
@@ -316,8 +316,8 @@ async function checkExistingSession() {
 }
 
 async function postJson(path, payload) {
-  const url = path.startsWith('http') ? path : BITEGIT_API + path;
-  const token = localStorage.getItem('bitegit_token') || '';
+  const url = path.startsWith('http') ? path : BITCOVEX_API + path;
+  const token = localStorage.getItem('bitcovex_token') || '';
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
   const response = await fetch(url, {
@@ -430,8 +430,8 @@ async function handleSubmit(event) {
 
     if (state.mode === MODE_LOGIN && (data?.accessToken || data?.token)) {
       const tok = data.accessToken || data.token;
-      localStorage.setItem('bitegit_token', tok);
-      if (data.refreshToken) localStorage.setItem('bitegit_refresh_token', data.refreshToken);
+      localStorage.setItem('bitcovex_token', tok);
+      if (data.refreshToken) localStorage.setItem('bitcovex_refresh_token', data.refreshToken);
     }
 
     if (state.mode === MODE_FORGOT) {
@@ -520,8 +520,8 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
-if (window.BitegitTheme?.initThemeToggle) {
-  window.BitegitTheme.initThemeToggle([authThemeToggle, authDrawerThemeToggle]);
+if (window.BitcovexTheme?.initThemeToggle) {
+  window.BitcovexTheme.initThemeToggle([authThemeToggle, authDrawerThemeToggle]);
 }
 
 setMode(state.mode);

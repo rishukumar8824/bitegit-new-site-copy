@@ -1,10 +1,10 @@
-const BITEGIT_API = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
+const BITCOVEX_API = (window.BITCOVEX_API_BASE || 'http://localhost:3000/api/v1');
 function chatFetch(path, opts) {
-  var token = localStorage.getItem('bitegit_token') || '';
+  var token = localStorage.getItem('bitcovex_token') || '';
   opts = opts || {};
   var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  return fetch(BITEGIT_API + path, Object.assign({}, opts, { headers: headers, credentials: 'include' }));
+  return fetch(BITCOVEX_API + path, Object.assign({}, opts, { headers: headers, credentials: 'include' }));
 }
 
 const orderId = new URLSearchParams(window.location.search).get('orderId');

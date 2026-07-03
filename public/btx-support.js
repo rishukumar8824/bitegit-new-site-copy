@@ -368,7 +368,7 @@
       wrap.innerHTML = `
         <div class="btxTs">Just now</div>
         <div class="btxMsgAdmin">
-          <div class="btxMsgText">👋 Hey Bitegit user!<br>I'm Bunz Support. Select a topic or connect to a live agent.</div>
+          <div class="btxMsgText">👋 Hey Bitcovex user!<br>I'm Bunz Support. Select a topic or connect to a live agent.</div>
           <div class="btxMsgMeta">🤖 Bot · just now</div>
         </div>
         <div class="btxChipRow">

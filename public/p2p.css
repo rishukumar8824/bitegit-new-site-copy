@@ -4459,7 +4459,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-buy-btn:not(:disabled):hover { opacity: 0.88; }
 
 /* ── Mobile cards — Bybit-exact ── */
-.bbt-card { background:#111214; border-radius:0; padding:13px 14px 12px; border-bottom:1px solid rgba(255,255,255,0.06); position:relative; }
+.bbt-card { background:#000; border-radius:0; padding:13px 14px 12px; border-bottom:1px solid rgba(255,255,255,0.06); position:relative; }
 
 /* Brand mark — top left of each card */
 .bbt-card-brand-mark { display:flex; align-items:center; gap:6px; margin-bottom:10px; }

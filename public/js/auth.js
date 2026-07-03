@@ -1,4 +1,4 @@
-// Wire Bitbase's OWN login/register UI to the Bitegit backend.
+// Wire Bitbase's OWN login/register UI to the Bitcovex backend.
 // Reuses the page's native input/button components (no custom UI):
 // clones the email field to make a matching password field, then wires the
 // existing submit button to /api/p2p/login (Mongo auth, auto-registers).
@@ -75,9 +75,9 @@
         const { r, d } = await post('/api/p2p/login', { email, password });
         if (!r.ok) return setMsg(d.message || 'Login failed. Try again.');
         const tok = d.accessToken || d.token;
-        if (tok) localStorage.setItem('bitegit_token', tok);
-        if (d.refreshToken) localStorage.setItem('bitegit_refresh_token', d.refreshToken);
-        if (d.user) localStorage.setItem('bitegit_user', JSON.stringify(d.user));
+        if (tok) localStorage.setItem('bitcovex_token', tok);
+        if (d.refreshToken) localStorage.setItem('bitcovex_refresh_token', d.refreshToken);
+        if (d.user) localStorage.setItem('bitcovex_user', JSON.stringify(d.user));
         setMsg('Success! Redirecting...', true);
         setTimeout(() => { location.href = 'index.html'; }, 700);
       } catch (err) { setMsg('Network error. Try again.'); }

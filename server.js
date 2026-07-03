@@ -2296,7 +2296,7 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
     }
 
     const statusMessageByState = {
-      VERIFIED: 'KYC verified successfully! You can now trade on Bitegit.',
+      VERIFIED: 'KYC verified successfully! You can now trade on Bitcovex.',
       REJECTED: rejectionReason || 'KYC verification failed. Please re-submit with clearer photos.',
       PENDING_REVIEW: 'KYC submitted successfully. Our team will review your documents shortly.'
     };

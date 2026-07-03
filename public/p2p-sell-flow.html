@@ -1057,7 +1057,7 @@
   // ============================================================
   async function checkAuth() {
     try {
-      const tok = localStorage.getItem('bitegit_token') || '';
+      const tok = localStorage.getItem('bitcovex_token') || '';
       const headers = tok ? { 'Authorization': 'Bearer ' + tok } : {};
       const res = await fetch('/api/p2p/me', { credentials: 'include', headers });
       if (res.ok) {

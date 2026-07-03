@@ -160,7 +160,7 @@ function updateHomeAuthUi(user) {
 
   if (!loggedIn) {
     localStorage.removeItem('_p2p_hint');
-    localStorage.removeItem('bitegit_token');
+    localStorage.removeItem('bitcovex_token');
   }
 
   // Update html auth class — CSS rules handle all visibility, no flash possible
@@ -175,7 +175,7 @@ function updateHomeAuthUi(user) {
   }
 
   if (heroUserName) {
-    heroUserName.textContent = currentSessionUser?.username || currentSessionUser?.email || 'Bitegit User';
+    heroUserName.textContent = currentSessionUser?.username || currentSessionUser?.email || 'Bitcovex User';
   }
   var heroWelcomeName = document.getElementById('heroWelcomeName');
   if (heroWelcomeName) {
@@ -212,8 +212,8 @@ async function logoutHomeSession() {
   } catch (_) {
     // Ignore logout network failures and reset local UI state anyway.
   }
-  localStorage.removeItem('bitegit_token');
-  localStorage.removeItem('bitegit_refresh_token');
+  localStorage.removeItem('bitcovex_token');
+  localStorage.removeItem('bitcovex_refresh_token');
   localStorage.removeItem('_p2p_hint');
   updateHomeAuthUi(null);
   setHomeNavOpen(false);

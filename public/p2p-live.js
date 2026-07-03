@@ -230,7 +230,7 @@
         <div class="empty-card" style="margin:0 16px 12px;">
           <div class="empty-card-icon">💳</div>
           <div class="empty-card-title">No active payment methods yet</div>
-          <div class="empty-card-copy">Add your real UPI, bank, or wallet details here before publishing Bitegit sell ads.</div>
+          <div class="empty-card-copy">Add your real UPI, bank, or wallet details here before publishing Bitcovex sell ads.</div>
         </div>
       `;
 
@@ -255,7 +255,7 @@
         <div class="empty-card" style="margin:0 16px 12px;">
           <div class="empty-card-icon">＋</div>
           <div class="empty-card-title">No payment catalog loaded</div>
-          <div class="empty-card-copy">Refresh once the Bitegit P2P API is reachable to load available payment methods.</div>
+          <div class="empty-card-copy">Refresh once the Bitcovex P2P API is reachable to load available payment methods.</div>
         </div>
       `;
   }
@@ -378,7 +378,7 @@
     return escapeHtml(terms).replace(/\n/g, "<br>");
   }
 
-  function _mapBitegitAd(o, side) {
+  function _mapBitcovexAd(o, side) {
     return {
       id: o.id,
       price: o.price,
@@ -408,8 +408,8 @@
         p2pRequest('/p2p/offers?side=buy&asset=USDT&limit=20'),
         p2pRequest('/p2p/offers?side=sell&asset=USDT&limit=20')
       ]);
-      liveState.publicBuyAds = Array.isArray(buyRes.offers) ? buyRes.offers.map(o => _mapBitegitAd(o, 'buy')) : [];
-      liveState.publicSellAds = Array.isArray(sellRes.offers) ? sellRes.offers.map(o => _mapBitegitAd(o, 'sell')) : [];
+      liveState.publicBuyAds = Array.isArray(buyRes.offers) ? buyRes.offers.map(o => _mapBitcovexAd(o, 'buy')) : [];
+      liveState.publicSellAds = Array.isArray(sellRes.offers) ? sellRes.offers.map(o => _mapBitcovexAd(o, 'sell')) : [];
       applyLiveAdOverrides();
     } catch(e) {
       throw new Error('Could not load public P2P ads.');
@@ -422,7 +422,7 @@
         p2pRequest('/p2p/my-ads'),
         p2pRequest('/p2p/payment-methods')
       ]);
-      liveState.myAds = Array.isArray(myAdsRes.offers) ? myAdsRes.offers.map(o => _mapBitegitAd(o)) : [];
+      liveState.myAds = Array.isArray(myAdsRes.offers) ? myAdsRes.offers.map(o => _mapBitcovexAd(o)) : [];
       applyLiveAdOverrides();
       if (pmRes.ok) {
         if (Array.isArray(pmRes.catalog)) {
@@ -590,7 +590,7 @@
         liveState.booted = true;
       } catch (error) {
         if (!silent) {
-          showToast(error && error.message ? error.message : "Could not refresh Bitegit P2P data.", "!");
+          showToast(error && error.message ? error.message : "Could not refresh Bitcovex P2P data.", "!");
         }
       } finally {
         liveState.syncPromise = null;
@@ -658,12 +658,12 @@
     const owner = buildParticipantFromAdOwner(ad);
     const metrics = getLiveBitcovexAdMetrics(ad);
     const buyDeskPresets = [
-      { name: "Bitegit Desk 🏅", initial: "B", avatarClass: "av-z", totalOrders: 342, completionRate: 98, ageLabel: "45m" },
+      { name: "Bitcovex Desk 🏅", initial: "B", avatarClass: "av-z", totalOrders: 342, completionRate: 98, ageLabel: "45m" },
       { name: "Verified Desk", initial: "V", avatarClass: "av-v", totalOrders: 17, completionRate: 100, ageLabel: "30m" },
       { name: "Liquidity Desk", initial: "L", avatarClass: "av-a", totalOrders: 512, completionRate: 99, ageLabel: "15m" },
     ];
     const sellDeskPresets = [
-      { name: "Bitegit Desk 🏅", initial: "B", avatarClass: "av-z", totalOrders: 268, completionRate: 97, ageLabel: "42m" },
+      { name: "Bitcovex Desk 🏅", initial: "B", avatarClass: "av-z", totalOrders: 268, completionRate: 97, ageLabel: "42m" },
       { name: "Market Maker Desk", initial: "M", avatarClass: "av-s", totalOrders: 194, completionRate: 98, ageLabel: "28m" },
       { name: "Settlement Desk", initial: "S", avatarClass: "av-d", totalOrders: 423, completionRate: 99, ageLabel: "12m" },
     ];
@@ -733,7 +733,7 @@
             <div class="empty-card">
               <div class="empty-card-icon">P2P</div>
               <div class="empty-card-title">No P2P ads yet</div>
-              <div class="empty-card-copy">Verified Bitegit seller ads will appear here once traders publish them.</div>
+              <div class="empty-card-copy">Verified Bitcovex seller ads will appear here once traders publish them.</div>
               <div class="empty-card-actions" id="listing-auth-actions">
                 <a class="empty-card-link" href="/login" onclick="return openBitcovexRoute('/login')">Sign In</a>
                 <button class="empty-card-link secondary" onclick="switchNav('ads')">My Ads</button>
@@ -801,7 +801,7 @@
             <div class="empty-card">
               <div class="empty-card-icon">↘</div>
               <div class="empty-card-title">No buyer ads yet</div>
-              <div class="empty-card-copy">Bitegit buy requests appear here once users publish ads.</div>
+              <div class="empty-card-copy">Bitcovex buy requests appear here once users publish ads.</div>
               <div class="empty-card-actions">
                 <button class="empty-card-link" onclick="switchNav('ads')">My Ads</button>
                 <button class="empty-card-link secondary" onclick="switchNav('orders')">My Orders</button>
@@ -872,7 +872,7 @@
         <div class="empty-card">
           <div class="empty-card-icon">ADS</div>
           <div class="empty-card-title">No ads yet</div>
-          <div class="empty-card-copy">Create your first Bitegit P2P ad to start receiving orders here.</div>
+          <div class="empty-card-copy">Create your first Bitcovex P2P ad to start receiving orders here.</div>
           <div class="empty-card-actions">
             <button class="empty-card-link" onclick="goToScreen('screen-create-ad')">Create Your First Ad</button>
           </div>
@@ -886,7 +886,7 @@
         <div class="empty-card">
           <div class="empty-card-icon">ADS</div>
           <div class="empty-card-title">No ${escapeHtml(filter)} ads</div>
-          <div class="empty-card-copy">Try another filter or publish a new Bitegit P2P ad.</div>
+          <div class="empty-card-copy">Try another filter or publish a new Bitcovex P2P ad.</div>
           <div class="empty-card-actions">
             <button class="empty-card-link" onclick="goToScreen('screen-create-ad')">Create Ad</button>
             <button class="empty-card-link secondary" onclick="filterAds('all', document.querySelector('#screen-ads .oft'))">Show All</button>
@@ -1048,7 +1048,7 @@
           <div class="empty-card">
             <div class="empty-card-icon">×</div>
             <div class="empty-card-title">No cancelled orders</div>
-            <div class="empty-card-copy">Cancelled Bitegit P2P trades appear here when an order is cancelled.</div>
+            <div class="empty-card-copy">Cancelled Bitcovex P2P trades appear here when an order is cancelled.</div>
           </div>
         `;
     }
@@ -1306,8 +1306,8 @@
 
     title.textContent = `${linkedMethod ? "Update" : "Add"} ${method.name}`;
     subtitle.textContent = linkedMethod
-      ? "Update your saved payment account details for Bitegit P2P orders."
-      : "Save your real payment account details so Bitegit P2P traders can use this method.";
+      ? "Update your saved payment account details for Bitcovex P2P orders."
+      : "Save your real payment account details so Bitcovex P2P traders can use this method.";
     fieldsWrap.innerHTML = (method.fields || []).length
       ? method.fields.map((field) => renderPaymentMethodField(field, linkedMethod)).join("")
       : `<div class="empty-card" style="margin:0;"><div class="empty-card-icon">ℹ</div><div class="empty-card-title">No extra fields required</div><div class="empty-card-copy">You can still save an optional remark for this payment method.</div></div>`;
