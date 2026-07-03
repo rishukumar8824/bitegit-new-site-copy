@@ -13,6 +13,12 @@ try {
   rateLimitFactory = null;
 }
 
+// Uses req.ip (set by Express after trust-proxy rules) instead of raw
+// X-Forwarded-For to prevent clients forging their IP to bypass rate limits.
+function getRateLimitKey(req) {
+  return String(req.ip || req.socket?.remoteAddress || req.connection?.remoteAddress || 'unknown').trim();
+}
+
 function createFallbackRateLimiter({ windowMs, max, message, skip }) {
   const state = new Map();
 
@@ -20,8 +26,7 @@ function createFallbackRateLimiter({ windowMs, max, message, skip }) {
     if (req.method === 'OPTIONS' || (typeof skip === 'function' && skip(req))) {
       return next();
     }
-    const forwardedRaw = String(req.headers['x-forwarded-for'] || '').trim();
-    const ip = forwardedRaw.split(',')[0].trim() || String(req.ip || req.connection?.remoteAddress || 'unknown');
+    const ip = getRateLimitKey(req);
     const now = Date.now();
     const existing = state.get(ip);
 
@@ -55,6 +60,7 @@ function buildRateLimiter({ windowMs, max, message, skip }) {
     max,
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: (req) => getRateLimitKey(req),
     skip: (req) => req.method === 'OPTIONS' || (typeof skip === 'function' && skip(req)),
     handler: (req, res) => {
       const retryAfterFromHeader = Number(res.getHeader('Retry-After'));
@@ -149,9 +155,7 @@ function applySecurityHeaders(app) {
                 'https://api.coingecko.com',
                 'https://api.resend.com',
                 'https://*.tradingview.com',
-                'wss://*.tradingview.com',
-                'https://bitcovex-backend.onrender.com',
-                'https://*.onrender.com'
+                'wss://*.tradingview.com'
               ],
               frameSrc: ["'self'", 'https://*.tradingview.com'],
               fontSrc: ["'self'", 'https:', 'data:'],
@@ -185,7 +189,7 @@ function applySecurityHeaders(app) {
       (req, res, next) => {
         res.setHeader(
           'Content-Security-Policy',
-          "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.binance.com https://data-api.binance.vision https://api.bybit.com https://api.coingecko.com https://api.resend.com https://*.tradingview.com wss://*.tradingview.com https://bitcovex-backend.onrender.com https://*.onrender.com; frame-src 'self' https://*.tradingview.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https: data:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
+          "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.binance.com https://data-api.binance.vision https://api.bybit.com https://api.coingecko.com https://api.resend.com https://*.tradingview.com wss://*.tradingview.com; frame-src 'self' https://*.tradingview.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https: data:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
         );
         res.setHeader('X-Frame-Options', 'DENY');
         res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -209,7 +213,7 @@ function applySecurityHardening(app) {
   // Scope global limiter to API endpoints to avoid throttling normal page/assets rendering.
   app.use('/api', limiters.global);
   app.use(['/auth/login', '/auth/register', '/api/p2p/login', '/api/admin/auth/login', '/api/admin/login'], limiters.login);
-  app.use(['/api/signup/send-code', '/api/signup/verify-code'], limiters.otp);
+  app.use(['/api/signup/send-code', '/api/signup/verify-code', '/api/p2p/forgot-password'], limiters.otp);
   app.use(['/api/withdrawals', '/api/admin/wallet/withdrawals'], limiters.withdrawal);
 
   return limiters;
