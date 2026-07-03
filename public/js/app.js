@@ -97,6 +97,9 @@
         #cvx-desktop-pairs { display: none !important; }
         [data-cvx-html-more] { display: none !important; }
       }
+      /* Hide Bitbase Zendesk chat widget */
+      #launcher, [data-slot="zendesk_launcher"], [data-slot="zendesk_launcher_container"] { display: none !important; }
+      iframe[title="Button to launch messaging window"] { display: none !important; }
     `;
     document.head.appendChild(s);
   }
@@ -530,17 +533,17 @@
       return true;
     };
     const qs = '?symbols=' + encodeURIComponent(JSON.stringify(ALL_LOAD_SYMS));
-    // 1. Try server proxy (avoids CORS/IP blocks)
-    try {
-      const data = await fetch(API_BASE + '/api/v3/ticker/24hr' + qs).then(x => x.json());
-      if (parseTicker(data)) return;
-    } catch (e) {}
-    // 2. Try direct Binance
+    // 1. Try direct Binance first (fastest — no Render cold start wait)
     try {
       const data = await fetch('https://api.binance.com/api/v3/ticker/24hr' + qs).then(x => x.json());
       if (parseTicker(data)) return;
     } catch (e) {}
-    // 3. Fallback: backend exchange-ticker
+    // 2. Server proxy fallback
+    try {
+      const data = await fetch(API_BASE + '/api/v3/ticker/24hr' + qs).then(x => x.json());
+      if (parseTicker(data)) return;
+    } catch (e) {}
+    // 3. Backend exchange-ticker last resort
     try {
       const r = await fetch(API_BASE + '/api/p2p/exchange-ticker').then((x) => x.json());
       if (r && r.ticker) { tickerMap = {}; r.ticker.forEach((t) => { tickerMap[t.symbol] = t; }); }
