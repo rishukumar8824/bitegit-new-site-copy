@@ -71,12 +71,77 @@
 
     <main class="mk-main">
 
-      <!-- Tabs — centered like Gate.io -->
+      <!-- Top-level tabs: Market | Leaderboard -->
+      <div class="mk-top-tabs-wrap">
+        <div id="mkTopTabs" class="mk-top-tabs" role="tablist" aria-label="Page sections">
+          <button type="button" class="active" data-top="market" role="tab" aria-selected="true">Market</button>
+          <button type="button" data-top="leaderboard" role="tab" aria-selected="false">Leaderboard</button>
+        </div>
+      </div>
+
+      <!-- Leaderboard placeholder (hidden by default) -->
+      <div id="mkLeaderboardPanel" class="mk-leaderboard-panel" style="display:none">
+        <div class="mk-coming-soon">
+          <span class="mk-coming-soon-icon">🏆</span>
+          <h2>Leaderboard</h2>
+          <p>Coming Soon — top traders ranking will appear here.</p>
+        </div>
+      </div>
+
+      <!-- Market content panel -->
+      <div id="mkMarketPanel">
+
+      <!-- Sub-tabs: Spot / Futures / TradFi / New -->
       <div class="mk-tabs-center">
         <div id="marketsTabs" class="mk-tabs" role="tablist" aria-label="Market categories">
           <button type="button" class="active" data-tab="spot" role="tab" aria-selected="true">Spot</button>
           <button type="button" data-tab="futures" role="tab" aria-selected="false">Futures</button>
+          <button type="button" data-tab="tradfi" role="tab" aria-selected="false">TradFi</button>
           <button type="button" data-tab="new" role="tab" aria-selected="false">New</button>
+        </div>
+      </div>
+
+      <!-- Hot coins section (visible on Spot tab only) -->
+      <div id="mkHotCoins" class="mk-hot-section">
+        <div class="mk-hot-label">🔥 Hot</div>
+        <div class="mk-hot-scroll" id="mkHotScroll">
+          <!-- Cards injected by JS -->
+          <div class="mk-hot-card" data-sym="BTCUSDT">
+            <span class="mk-hot-ico mk-hot-ico--btc">₿</span>
+            <span class="mk-hot-name">BTC</span>
+            <span class="mk-hot-price" id="hotPrice-BTCUSDT">$--</span>
+            <span class="mk-hot-chg" id="hotChg-BTCUSDT">--%</span>
+          </div>
+          <div class="mk-hot-card" data-sym="ETHUSDT">
+            <span class="mk-hot-ico mk-hot-ico--eth">Ξ</span>
+            <span class="mk-hot-name">ETH</span>
+            <span class="mk-hot-price" id="hotPrice-ETHUSDT">$--</span>
+            <span class="mk-hot-chg" id="hotChg-ETHUSDT">--%</span>
+          </div>
+          <div class="mk-hot-card" data-sym="SOLUSDT">
+            <span class="mk-hot-ico mk-hot-ico--sol">S</span>
+            <span class="mk-hot-name">SOL</span>
+            <span class="mk-hot-price" id="hotPrice-SOLUSDT">$--</span>
+            <span class="mk-hot-chg" id="hotChg-SOLUSDT">--%</span>
+          </div>
+          <div class="mk-hot-card" data-sym="XRPUSDT">
+            <span class="mk-hot-ico mk-hot-ico--xrp">X</span>
+            <span class="mk-hot-name">XRP</span>
+            <span class="mk-hot-price" id="hotPrice-XRPUSDT">$--</span>
+            <span class="mk-hot-chg" id="hotChg-XRPUSDT">--%</span>
+          </div>
+          <div class="mk-hot-card" data-sym="BNBUSDT">
+            <span class="mk-hot-ico mk-hot-ico--bnb">B</span>
+            <span class="mk-hot-name">BNB</span>
+            <span class="mk-hot-price" id="hotPrice-BNBUSDT">$--</span>
+            <span class="mk-hot-chg" id="hotChg-BNBUSDT">--%</span>
+          </div>
+          <div class="mk-hot-card" data-sym="DOGEUSDT">
+            <span class="mk-hot-ico mk-hot-ico--doge">Ð</span>
+            <span class="mk-hot-name">DOGE</span>
+            <span class="mk-hot-price" id="hotPrice-DOGEUSDT">$--</span>
+            <span class="mk-hot-chg" id="hotChg-DOGEUSDT">--%</span>
+          </div>
         </div>
       </div>
 
@@ -112,6 +177,8 @@
         </table>
         <a class="mk-viewall-link" href="/markets">View All 4,500+ Coins &rsaquo;</a>
       </div>
+
+      </div><!-- /mkMarketPanel -->
 
     </main>
 

@@ -5731,6 +5731,12 @@ app.get('/assets', (req, res) => {
 app.get('/chart', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chart.html'));
 });
+app.get('/aboutUs', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'about.html'));
+});
+app.get('/about', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'about.html'));
+});
 // Redirect .html URLs to clean URLs
 app.get('/p2p.html', (req, res) => res.redirect(301, '/p2p'));
 app.get('/index.html', (req, res) => res.redirect(301, '/'));

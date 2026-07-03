@@ -10,6 +10,10 @@ const marketsNavOverlay  = document.getElementById('marketsNavOverlay');
 const marketsNavClose    = document.getElementById('marketsNavClose');
 const marketsLoginBtn    = document.getElementById('marketsLoginBtn');
 const marketsSignupBtn   = document.getElementById('marketsSignupBtn');
+const mkTopTabs          = document.getElementById('mkTopTabs');
+const mkLeaderboardPanel = document.getElementById('mkLeaderboardPanel');
+const mkMarketPanel      = document.getElementById('mkMarketPanel');
+const mkHotCoins         = document.getElementById('mkHotCoins');
 
 // ── Config ──
 const SYMBOLS = [
@@ -49,10 +53,14 @@ const COINGECKO_IDS = {
 // ── State ──
 let allRows    = [];
 let currentTab = 'spot';
+let currentTopTab = 'market';
 let sortKey    = 'volume';
 let sortDir    = 'desc';
 let searchQ    = '';
 let refreshTimer = null;
+
+// Hot coin symbols to highlight
+const HOT_SYMS = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','BNBUSDT','DOGEUSDT'];
 
 // ── Helpers ──
 function fmtPrice(v) {
@@ -103,10 +111,63 @@ function coinIco(base) {
   return `<span class="mk-coin-ico"><span class="mk-coin-fb">${fb}</span></span>`;
 }
 
+// ── Hot coins ──
+function renderHotCoins(rows) {
+  if (!mkHotCoins) return;
+  // Only show on spot tab
+  mkHotCoins.style.display = currentTab === 'spot' ? '' : 'none';
+  if (!rows || !rows.length) return;
+  const bySymbol = {};
+  rows.forEach(r => { bySymbol[r.symbol] = r; });
+  HOT_SYMS.forEach(sym => {
+    const item = bySymbol[sym];
+    if (!item) return;
+    const priceEl = document.getElementById('hotPrice-' + sym);
+    const chgEl   = document.getElementById('hotChg-' + sym);
+    if (priceEl) priceEl.textContent = fmtPrice(item.lastPrice);
+    if (chgEl) {
+      const chg = Number(item.change24h || 0);
+      const sign = chg >= 0 ? '+' : '';
+      chgEl.textContent = sign + chg.toFixed(2) + '%';
+      chgEl.className = 'mk-hot-chg ' + (chg >= 0 ? 'up' : 'dn');
+    }
+  });
+  // Click to go to chart
+  mkHotCoins.querySelectorAll('.mk-hot-card[data-sym]').forEach(card => {
+    card.onclick = () => {
+      window.location.href = `/chart.html?symbol=${encodeURIComponent(card.dataset.sym)}`;
+    };
+  });
+}
+
+// ── Top-tab switching (Market | Leaderboard) ──
+function setTopTab(tab) {
+  currentTopTab = tab;
+  if (mkTopTabs) {
+    mkTopTabs.querySelectorAll('button[data-top]').forEach(btn => {
+      const active = btn.dataset.top === tab;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+  }
+  if (tab === 'leaderboard') {
+    if (mkLeaderboardPanel) mkLeaderboardPanel.style.display = '';
+    if (mkMarketPanel) mkMarketPanel.style.display = 'none';
+  } else {
+    if (mkLeaderboardPanel) mkLeaderboardPanel.style.display = 'none';
+    if (mkMarketPanel) mkMarketPanel.style.display = '';
+  }
+}
+
 // ── Render ──
 function renderTable() {
   if (currentTab === 'new') {
     marketsRows.innerHTML = `<tr class="mk-loading-row"><td colspan="4">New listings coming soon — stay tuned.</td></tr>`;
+    if (mkCount) mkCount.textContent = '';
+    return;
+  }
+  if (currentTab === 'tradfi') {
+    marketsRows.innerHTML = `<tr class="mk-loading-row"><td colspan="4">TradFi markets coming soon — stay tuned.</td></tr>`;
     if (mkCount) mkCount.textContent = '';
     return;
   }
@@ -215,7 +276,7 @@ async function fetchFromCoinGecko() {
 }
 
 async function loadMarkets() {
-  if (currentTab === 'new') { renderTable(); return; }
+  if (currentTab === 'new' || currentTab === 'tradfi') { renderTable(); return; }
   if (currentTab === 'all' && allRows.length) { renderTable(); return; }
 
   let rows = await fetchFromServer();
@@ -225,12 +286,13 @@ async function loadMarkets() {
     allRows = rows;
     renderTable();
     renderTicker(rows);
+    renderHotCoins(rows);
   }
 }
 
 // ── Tab switching ──
 function setTab(tab) {
-  currentTab = ['all', 'spot', 'futures', 'new'].includes(tab) ? tab : 'spot';
+  currentTab = ['all', 'spot', 'futures', 'tradfi', 'new'].includes(tab) ? tab : 'spot';
   if (marketsTabs) {
     marketsTabs.querySelectorAll('button[data-tab]').forEach(btn => {
       const active = btn.dataset.tab === currentTab;
@@ -238,6 +300,8 @@ function setTab(tab) {
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
     });
   }
+  // Show/hide hot coins section
+  if (mkHotCoins) mkHotCoins.style.display = currentTab === 'spot' ? '' : 'none';
   clearInterval(refreshTimer);
   loadMarkets();
   startRefresh();
@@ -245,7 +309,7 @@ function setTab(tab) {
 
 function startRefresh() {
   clearInterval(refreshTimer);
-  if (currentTab !== 'new' && currentTab !== 'all') {
+  if (!['new', 'tradfi', 'all'].includes(currentTab)) {
     refreshTimer = setInterval(loadMarkets, 6000);
   }
 }
@@ -295,6 +359,11 @@ async function loadCurrentUser() {
 }
 
 // ── Event listeners ──
+mkTopTabs?.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-top]');
+  if (btn) setTopTab(btn.dataset.top);
+});
+
 marketsTabs?.addEventListener('click', e => {
   const btn = e.target.closest('button[data-tab]');
   if (btn) setTab(btn.dataset.tab);
@@ -322,5 +391,6 @@ window.addEventListener('keydown', e => {
 });
 
 // ── Init ──
+setTopTab('market');
 setTab('spot');
 loadCurrentUser();
