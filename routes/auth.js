@@ -1,9 +1,8 @@
 const { getIpLocation } = require('../lib/geo-lookup');
 
 function normalizeIp(req) {
-  const forwardedRaw = String(req.headers['x-forwarded-for'] || '').trim();
-  const firstForwardedIp = forwardedRaw.split(',')[0].trim();
-  return firstForwardedIp || String(req.ip || req.connection?.remoteAddress || 'unknown');
+  // Use req.ip (trust-proxy-aware) — never read raw X-Forwarded-For directly
+  return String(req.ip || req.socket?.remoteAddress || req.connection?.remoteAddress || 'unknown').trim();
 }
 
 function createIpRateLimiter({ windowMs, maxAttempts }) {
@@ -83,8 +82,8 @@ function registerAuthRoutes(app, deps) {
   } = deps;
 
   const loginLimiter = createIpRateLimiter({
-    windowMs: 10 * 60 * 1000,
-    maxAttempts: 30
+    windowMs: 15 * 60 * 1000,
+    maxAttempts: 5
   });
 
   const registerLimiter = createIpRateLimiter({

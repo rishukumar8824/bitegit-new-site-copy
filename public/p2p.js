@@ -5789,13 +5789,17 @@ if (openAuthBtn) {
   openAuthBtn.addEventListener('click', () => setAuthModalOpen(true, { mode: 'login' }));
 }
 if (openSignupBtn) {
-  openSignupBtn.addEventListener('click', () => setAuthModalOpen(true, { mode: 'signup' }));
+  openSignupBtn.addEventListener('click', () => {
+    window.location.href = '/auth?mode=signup&redirect=/p2p';
+  });
 }
 if (openAuthBtnDrawer) {
   openAuthBtnDrawer.addEventListener('click', () => setAuthModalOpen(true, { mode: 'login', fromDrawer: true }));
 }
 if (openSignupBtnDrawer) {
-  openSignupBtnDrawer.addEventListener('click', () => setAuthModalOpen(true, { mode: 'signup', fromDrawer: true }));
+  openSignupBtnDrawer.addEventListener('click', () => {
+    window.location.href = '/auth?mode=signup&redirect=/p2p';
+  });
 }
 if (closeAuthBtn) {
   closeAuthBtn.addEventListener('click', () => setAuthModalOpen(false));

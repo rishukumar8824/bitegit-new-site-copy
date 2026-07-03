@@ -1823,7 +1823,19 @@ app.post('/api/p2p/login', async (req, res) => {
 
   try {
     const existingCredential = await repos.getP2PCredential(email);
-    if (existingCredential && !repos.verifyPassword(password, existingCredential.passwordHash)) {
+    if (!existingCredential) {
+      if (auditLogService) {
+        await auditLogService.safeLog({
+          userId: '',
+          action: 'login_failed',
+          ipAddress: requestIp,
+          metadata: { reason: 'account_not_found', route: '/api/p2p/login', email }
+        });
+      }
+      // Generic message — don't reveal whether email exists (prevents enumeration)
+      return res.status(401).json({ message: 'Invalid email or password.' });
+    }
+    if (!repos.verifyPassword(password, existingCredential.passwordHash)) {
       if (auditLogService) {
         await auditLogService.safeLog({
           userId: '',
@@ -1835,14 +1847,7 @@ app.post('/api/p2p/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
-    let userRole = tokenService.normalizeRole(existingCredential?.role || 'USER');
-    if (!existingCredential) {
-      const hash = repos.hashPassword(password);
-      await repos.setP2PCredential(email, hash, {
-        role: 'USER'
-      });
-      userRole = 'USER';
-    }
+    const userRole = tokenService.normalizeRole(existingCredential.role || 'USER');
 
     const { token, user } = await createP2PUserSession(email, userRole);
     const tokenPair = await issueAuthTokenPairForUser(user);
@@ -2042,6 +2047,91 @@ app.post('/api/p2p/reset-password', async (req, res) => {
     return res.json({ message: 'Password reset successfully. Please login.' });
   } catch (error) {
     return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+app.post('/api/p2p/register', async (req, res) => {
+  if (!repos) return res.status(503).json({ message: 'Service unavailable.' });
+
+  const requestIp = getRequestIp(req);
+  const ipCheck = loginAttemptLimiter(`p2p_register:${requestIp}`);
+  if (!ipCheck.allowed) {
+    res.setHeader('Retry-After', String(ipCheck.retryAfterSeconds));
+    return res.status(429).json({ message: 'Too many attempts. Please try again later.', retryAfterSeconds: ipCheck.retryAfterSeconds });
+  }
+
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '').trim();
+  const otpCode = String(req.body.otpCode || '').trim();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ message: 'Enter a valid email address.' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+  }
+  if (!/^\d{6}$/.test(otpCode)) {
+    return res.status(400).json({ message: 'Enter the 6-digit verification code sent to your email.' });
+  }
+
+  try {
+    // Verify OTP
+    const otpState = await repos.getSignupOtp(email);
+    if (!otpState) {
+      return res.status(400).json({ message: 'Verification code expired. Please request a new code.' });
+    }
+    if (new Date(otpState.expiresAt).getTime() < Date.now()) {
+      await repos.deleteSignupOtp(email);
+      return res.status(400).json({ message: 'Verification code expired. Please request a new code.' });
+    }
+    if (otpState.code !== otpCode) {
+      const attempts = Number(otpState.attempts || 0) + 1;
+      if (attempts >= 5) {
+        await repos.deleteSignupOtp(email);
+        return res.status(400).json({ message: 'Too many failed attempts. Request a new code.' });
+      }
+      await repos.upsertSignupOtp(email, { ...otpState, attempts, expiresAt: new Date(otpState.expiresAt).getTime() });
+      return res.status(400).json({ message: 'Invalid verification code.' });
+    }
+
+    // OTP valid — check email not already registered
+    const existing = await repos.getP2PCredential(email);
+    if (existing) {
+      await repos.deleteSignupOtp(email);
+      return res.status(409).json({ message: 'An account with this email already exists. Please login.' });
+    }
+
+    // Create account
+    await repos.deleteSignupOtp(email);
+    const hash = repos.hashPassword(password);
+    await repos.setP2PCredential(email, hash, { role: 'USER' });
+
+    // Auto-login after registration
+    const { token, user } = await createP2PUserSession(email, 'USER');
+    const tokenPair = await issueAuthTokenPairForUser(user);
+    await walletService.ensureWallet(user.id, { username: user.username });
+    setCookie(res, P2P_USER_COOKIE_NAME, token, P2P_USER_TTL_MS / 1000);
+    setP2PAuthCookies(res, tokenPair);
+
+    if (auditLogService) {
+      await auditLogService.safeLog({
+        userId: user.id,
+        action: 'register_success',
+        ipAddress: requestIp,
+        metadata: { email, route: '/api/p2p/register' }
+      });
+    }
+
+    const kycProfile = await getP2PKycProfileByEmail(user.email);
+    return res.status(201).json({
+      message: 'Account created successfully.',
+      user: { id: user.id, username: user.username, email: user.email, role: user.role, kyc: kycProfile },
+      accessToken: tokenPair.accessToken,
+      refreshToken: tokenPair.refreshToken
+    });
+  } catch (error) {
+    console.error('[p2p/register] error:', error?.message);
+    return res.status(500).json({ message: 'Server error while creating account.' });
   }
 });
 
