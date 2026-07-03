@@ -1007,7 +1007,7 @@ body.p2p-kyc-open { overflow: hidden; }
 
 .offer-action-btn {
   min-height: 36px;
-  border-radius: 999px;
+  border-radius: 6px;
   border: 0;
   padding: 0 1.1rem;
   font-size: 0.84rem;
@@ -4449,7 +4449,7 @@ body.mob-screen-open .p2p-secondary-nav {
 
 .bbt-td-action { text-align: right; }
 .bbt-buy-btn {
-  padding: 9px 22px; border-radius: 20px; border: none; cursor: pointer;
+  padding: 9px 22px; border-radius: 6px; border: none; cursor: pointer;
   font-size: 14px; font-weight: 700; white-space: nowrap;
   transition: opacity 0.15s;
 }
@@ -4887,7 +4887,7 @@ body.mob-screen-open .p2p-secondary-nav {
   min-width: 60px;
   padding: 7px 14px;
   border: none;
-  border-radius: 20px;
+  border-radius: 6px;
   background: #2ebd85;
   color: #fff;
   font-size: 12px;
