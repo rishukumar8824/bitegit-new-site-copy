@@ -3525,7 +3525,7 @@ async function loadOffers(append) {
   if (!append) _offersFetching = true;
 
   if (!append && !cachedResponse) {
-    renderOffers({ side: currentSide, asset: currentAsset, total: 0, hasMore: false, offers: [] }, false);
+    renderOffers(getDummyOffers(currentSide), false);
   }
 
   console.log('[loadOffers] fetching /api/p2p/offers side=' + currentSide + ' asset=' + currentAsset);
@@ -6261,7 +6261,7 @@ window.addEventListener('pagehide', () => {
 
 (async function init() {
   try {
-    renderOffers({ side: currentSide, asset: currentAsset, total: 0, hasMore: false, offers: [] }, false);
+    renderOffers(getDummyOffers(currentSide), false);
     if (metaEl) metaEl.textContent = '';
   } catch(e) { console.warn('[init] demo render failed', e); }
 
