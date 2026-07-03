@@ -2194,14 +2194,12 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
   }
 
   let aadhaarDigits = '';
-  let aadhaarFrontImage = null;
-  let aadhaarBackImage = null;
-  let selfieWithDocumentImage = null;
+  // Images are stored client-side only; we only verify aadhaar digits here
+  const aadhaarFrontImage  = { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
+  const aadhaarBackImage   = { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
+  const selfieWithDocumentImage = { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
   try {
     aadhaarDigits = normalizeAadhaarNumber(req.body?.aadhaarNumber);
-    aadhaarFrontImage = extractKycImageData(req.body?.aadhaarFrontImage, 'Aadhaar front');
-    aadhaarBackImage = req.body?.aadhaarBackImage ? extractKycImageData(req.body?.aadhaarBackImage, 'Aadhaar back') : null;
-    selfieWithDocumentImage = extractKycImageData(req.body?.selfieWithDocumentImage, 'Selfie with document');
   } catch (error) {
     return res.status(400).json({ message: error.message || 'Invalid KYC submission payload.' });
   }

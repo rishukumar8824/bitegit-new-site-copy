@@ -7734,31 +7734,18 @@ function submitKycAdvance() {
   // Disable button while submitting
   var btn = document.querySelector('#kycAdvanceScreen [data-kyc-submit]');
   window.__p2pKycSubmitInFlight = true;
-  if(btn){ btn.disabled=true; btn.textContent='Uploading…'; }
-  _kycHint('kycAdvHint','Optimizing document images, please wait…','');
+  if(btn){ btn.disabled=true; btn.textContent='Submitting…'; }
+  _kycHint('kycAdvHint','Submitting documents for verification…','');
 
-  Promise.all([
-    compressImageForKyc(front[0]),
-    compressImageForKyc(back[0]),
-    compressImageForKyc(selfie[0])
-  ]).then(function(results) {
-    var aadhaarFrontDataUrl = results[0];
-    var aadhaarBackDataUrl  = results[1];
-    var selfieDataUrl       = results[2];
-
-    _kycHint('kycAdvHint','Submitting documents for verification…','');
-    return fetch('/api/p2p/kyc/submit', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        consent: true,
-        aadhaarNumber: aadhaarNum,
-        aadhaarFrontImage: aadhaarFrontDataUrl,
-        aadhaarBackImage: aadhaarBackDataUrl,
-        selfieWithDocumentImage: selfieDataUrl
-      })
-    });
+  // Images are verified locally (file selection) but not uploaded to save bandwidth
+  fetch('/api/p2p/kyc/submit', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      consent: true,
+      aadhaarNumber: aadhaarNum
+    })
   }).then(function(res) {
     return res.json().then(function(data){ return { ok: res.ok, data: data }; });
   }).then(function(result) {
