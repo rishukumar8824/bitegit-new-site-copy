@@ -43,13 +43,14 @@
     LINK: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png',
     DOT:  'https://s2.coinmarketcap.com/static/img/coins/64x64/6636.png',
     HBAR: 'https://s2.coinmarketcap.com/static/img/coins/64x64/4642.png',
+    PAXG: 'https://s2.coinmarketcap.com/static/img/coins/64x64/4705.png',
   };
-  const SPOT_PAIRS    = ['BTC', 'ETH', 'SOL', 'HYPE', 'XAU'];
+  const SPOT_PAIRS    = ['BTC', 'ETH', 'SOL', 'XRP', 'PAXG'];
   const FUTURES_PAIRS = ['BTC', 'ETH', 'SOL', 'XRP', 'BNB', 'DOGE', 'ADA', 'AVAX'];
   const TRADFI_PAIRS  = ['XAU', 'LINK', 'DOT', 'HBAR', 'XLM'];
   const COIN_COLORS = { BTC:'#F7931A', ETH:'#627EEA', SOL:'#9945FF', HYPE:'#4FAAFF', XAU:'#E5C55A',
     XRP:'#00AAE4', BNB:'#F3BA2F', DOGE:'#C3A634', ADA:'#0D1E2D', AVAX:'#E84142',
-    PAXG:'#D4AF37', LINK:'#2A5ADA', DOT:'#E6007A', HBAR:'#222' };
+    PAXG:'#D4AF37', LINK:'#2A5ADA', DOT:'#E6007A', HBAR:'#222', XLM:'#000' };
   const COIN_NAME = { BTC:'Bitcoin', ETH:'Ethereum', SOL:'Solana', HYPE:'Hyperliquid', XAU:'Gold',
     XRP:'Ripple', BNB:'BNB', DOGE:'Dogecoin', ADA:'Cardano', AVAX:'Avalanche',
     PAXG:'PAX Gold', LINK:'Chainlink', DOT:'Polkadot', HBAR:'Hedera' };
@@ -133,7 +134,7 @@
       if (_mobileRenderRows) _mobileRenderRows();
       return;
     }
-    if (!tickerMap) return;
+    // Build immediately — show skeleton rows even before ticker loads
     const desktopPairs = document.getElementById('cvx-desktop-pairs');
     if (!desktopPairs) return;
 
@@ -186,16 +187,20 @@
       return wrap;
     }
 
+    // Binance uses PAXGUSDT for gold; map display symbol → API symbol
+    const TICKER_SYM = { XAU: 'PAXG', XLM: 'XLM', HYPE: 'HYPE' };
+    function getTickerKey(sym) { return (TICKER_SYM[sym] || sym) + 'USDT'; }
+
     function renderRows() {
       rowsDiv.innerHTML = '';
       const pairsList = activeTab === 1 ? FUTURES_PAIRS : activeTab === 2 ? TRADFI_PAIRS : SPOT_PAIRS;
+      const loading = !tickerMap;
       pairsList.forEach(sym => {
-        const t = tickerMap ? tickerMap[sym + 'USDT'] : null;
-        const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : '—';
+        const t = tickerMap ? (tickerMap[getTickerKey(sym)] || tickerMap[sym + 'USDT']) : null;
+        const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : (loading ? '···' : '—');
         const chg = t ? Number(t.change24h) : 0;
-        const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : '—';
-        const vol = fmtVol(t ? (t.quoteVolume || 0) : 0);
-        const chgColor = chg >= 0 ? UP : DOWN;
+        const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : (loading ? '···' : '—');
+        const chgColor = !t ? 'rgba(255,255,255,0.3)' : chg >= 0 ? UP : DOWN;
 
         const row = document.createElement('a');
         row.href = 'trade.html';
@@ -203,16 +208,14 @@
 
         row.appendChild(makeIcon(sym));
 
-        // Col 1: pair name (flex:1, truncate)
         const nameCol = document.createElement('div');
         nameCol.style.cssText = 'flex:1;min-width:0;overflow:hidden;padding-left:8px;';
         nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>`;
         row.appendChild(nameCol);
 
-        // Col 2: price + change% (no volume column — match bitbase)
         const priceCol = document.createElement('div');
         priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:90px;';
-        priceCol.innerHTML = `<div style="font-size:15px;font-weight:600;">${price}</div>
+        priceCol.innerHTML = `<div style="font-size:15px;font-weight:600;${loading?'color:rgba(255,255,255,0.25);':''}">${price}</div>
           <div style="font-size:12px;font-weight:500;color:${chgColor};margin-top:3px;">${chgStr}</div>`;
         row.appendChild(priceCol);
 
@@ -251,9 +254,8 @@
     desktopPairs.parentElement.insertBefore(wrapper, desktopPairs);
   }
 
-  // ── 4. DESKTOP PAIRS — update prices in-place (keep Bitbase HTML/size) ───────
+  // ── 4. DESKTOP PAIRS — update prices in-place ────────────────────────────────
   async function fixDesktopPairs() {
-    if (document.getElementById('cvx-dp-fixed')) return;
     if (window.innerWidth <= 767) return;
     const dp = document.getElementById('cvx-desktop-pairs');
     if (!dp) return;
@@ -292,10 +294,6 @@
       }
     });
 
-    const marker = document.createElement('span');
-    marker.id = 'cvx-dp-fixed';
-    marker.style.display = 'none';
-    document.body.appendChild(marker);
   }
 
   // ── 5. GEM SVG ────────────────────────────────────────────────────────────
@@ -516,7 +514,7 @@
 
   async function loadTicker() {
     const ALL_LOAD_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOTUSDT','HBARUSDT','LINKUSDT','XLMUSDT',
-                           'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','HYPEUSDT','XAUUSDT'];
+                           'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','PAXGUSDT'];
     const parseTicker = (data) => {
       if (!Array.isArray(data) || !data.length) return false;
       tickerMap = {};
@@ -1422,9 +1420,11 @@
     fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
     fixAppSection(); hideBrokenElements();
     wireTopNav(); wireWordmarks();
-    // If we have cached prices, render instantly — no wait
+    // Build pairs section immediately (shows skeleton rows if no cache)
+    buildMobileMarket();
+    // If cached prices exist, fill in instantly
     if (tickerMap) { applyPrices(); buildMobileMarket(); fixDesktopPairs(); }
-    // Always fetch fresh in background and re-render
+    // Always fetch fresh and re-render with live data
     loadTicker().then(() => { applyPrices(); buildMobileMarket(); fixDesktopPairs(); });
     wireTrade(); revealImages(); fixTradePage();
     setInterval(() => {
