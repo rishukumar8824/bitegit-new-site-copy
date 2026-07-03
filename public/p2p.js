@@ -319,7 +319,7 @@ const P2P_THEME_STORAGE_KEY = 'p2p_theme_mode';
 const KYC_REQUIRED_CODES = new Set(['KYC_REQUIRED', 'KYC_PENDING', 'KYC_REJECTED']);
 const KYC_ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
 const KYC_MAX_FILE_SIZE = 6 * 1024 * 1024;
-const KYC_TARGET_IMAGE_BYTES = 320 * 1024;
+const KYC_TARGET_IMAGE_BYTES = 150 * 1024;
 // SVG icon helpers for payment methods
 var PM_ICONS = {
   UPI: '<svg viewBox="0 0 40 40" width="40" height="40"><rect width="40" height="40" rx="10" fill="#f0f0f0"/><text x="9" y="27" font-size="14" font-weight="900" fill="#888" font-family="Arial,sans-serif" font-style="italic">UPI</text><polygon points="30,14 36,22 30,22" fill="#f26522"/><polygon points="30,22 36,22 30,30" fill="#1a9b3c"/></svg>',
@@ -2528,9 +2528,10 @@ async function submitKycForm(event) {
     const aadhaarFrontImage = await compressImageForKyc(aadhaarFile);
     const selfieWithDocumentImage = await compressImageForKyc(selfieFile);
 
-    setKycHint('Running AI face match verification...', '');
+    setKycHint('Submitting documents for verification...', '');
     const response = await fetch('/api/p2p/kyc/submit', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         aadhaarNumber,
@@ -7786,7 +7787,8 @@ function submitKycAdvance() {
       if(btn){ btn.disabled=false; btn.textContent='Submit for Verification'; }
     }
   }).catch(function(err) {
-    _kycHint('kycAdvHint','Network error. Please check connection and retry.','error');
+    var errMsg = (err && err.message) ? err.message : 'Network error. Please check connection and retry.';
+    _kycHint('kycAdvHint', errMsg, 'error');
     if(btn){ btn.disabled=false; btn.textContent='Submit for Verification'; }
   }).finally(function() {
     window.__p2pKycSubmitInFlight = false;

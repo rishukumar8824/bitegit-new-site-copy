@@ -2244,14 +2244,16 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
       nextStatus = 'PENDING_REVIEW';
     }
 
+    // Store only hashes/metadata — not raw image bytes — to keep MongoDB documents small
+    // and avoid request timeouts on constrained hosting
     await repos.upsertP2PKycRequest(userId, email, {
       requestId,
       status: nextStatus,
       aadhaarMasked: maskAadhaar(aadhaarDigits),
       aadhaarHash: hashSensitive(aadhaarDigits),
-      aadhaarFrontImage: encryptText(aadhaarFrontImage.dataUrl),
-      aadhaarBackImage: aadhaarBackImage ? encryptText(aadhaarBackImage.dataUrl) : '',
-      selfieWithDocumentImage: encryptText(selfieWithDocumentImage.dataUrl),
+      aadhaarFrontImage: '',
+      aadhaarBackImage: '',
+      selfieWithDocumentImage: '',
       rejectionReason,
       faceMatch: {
         provider: faceMatch.provider,
