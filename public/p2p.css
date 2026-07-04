@@ -4459,7 +4459,7 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-buy-btn:not(:disabled):hover { opacity: 0.88; }
 
 /* ── Mobile cards — legacy (overridden by Bitget-style block at end of file) ── */
-.bbt-card { background:#000; border-radius:0; padding:13px 14px 12px; border-bottom:1px solid rgba(255,255,255,0.06); position:relative; }
+.bbt-card { background:#000; border-radius:0; padding:10px 14px 9px; border-bottom:1px solid rgba(255,255,255,0.06); position:relative; }
 
 /* Brand mark — top left of each card */
 .bbt-card-brand-mark { display:flex; align-items:center; gap:6px; margin-bottom:10px; }
@@ -4767,22 +4767,21 @@ body.mob-screen-open .p2p-secondary-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   gap: 6px;
 }
 .bbt-hd-left {
   display: flex;
   align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
+  gap: 6px;
   flex: 1;
   min-width: 0;
 }
 .bbt-avatar {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: #fff;
   display: flex;
@@ -4790,11 +4789,35 @@ body.mob-screen-open .p2p-secondary-nav {
   justify-content: center;
   flex-shrink: 0;
 }
+.bbt-name-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 .bbt-name {
   font-size: 12px;
   font-weight: 700;
   color: #eaecef;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.bbt-online-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2ebd85;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.bbt-resp-time {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 1px;
 }
 .bbt-time-chip {
   font-size: 10px;
@@ -4821,19 +4844,19 @@ body.mob-screen-open .p2p-secondary-nav {
   display: flex;
   align-items: baseline;
   gap: 2px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 .bbt-psign {
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.7);
   line-height: 1;
 }
 .bbt-pnum {
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 700;
   color: #fff;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
   line-height: 1;
 }
 
@@ -4842,9 +4865,9 @@ body.mob-screen-open .p2p-secondary-nav {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 10.5px;
   color: rgba(255,255,255,0.65);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 .bbt-lbl { color: rgba(255,255,255,0.38); flex-shrink: 0; }
 .bbt-val { color: rgba(255,255,255,0.78); }
@@ -4854,32 +4877,29 @@ body.mob-screen-open .p2p-secondary-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 6px;
+  margin-top: 5px;
   gap: 8px;
 }
 .bbt-pays {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 4px;
   flex: 1;
   min-width: 0;
 }
 .bbt-pay-item {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 10.5px;
-  color: rgba(255,255,255,0.62);
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 1px 6px;
   white-space: nowrap;
 }
-.bbt-pay-bar {
-  width: 3px;
-  height: 11px;
-  border-radius: 2px;
-  background: #F68F15;
-  flex-shrink: 0;
-}
+.bbt-pay-bar { display: none; }
 .bbt-pay-name { }
 
 /* Buy / Sell button — green rounded pill */
