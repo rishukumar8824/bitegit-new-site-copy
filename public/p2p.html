@@ -38,12 +38,12 @@
           </a>
         </div>
         <nav class="p2p-main-nav" aria-label="Primary navigation">
-          <a href="/p2p">Buy Crypto</a>
-          <a href="/p2p">Markets</a>
-          <a href="/p2p">Trade</a>
-          <a href="/p2p">Futures</a>
+          <a href="/">Buy Crypto</a>
+          <a href="/markets">Markets</a>
+          <a href="/trade">Trade</a>
+          <a href="/futures">Futures</a>
           <a href="/p2p" class="active">P2P</a>
-          <a href="/p2p">Earn</a>
+          <a href="/">Earn</a>
         </nav>
         <div class="p2p-header-actions">
           <button id="openAuthBtn" class="p2p-login-btn" type="button" data-auth-guest-only>Log In</button>
@@ -96,14 +96,13 @@
         <button id="p2pNavClose" type="button" aria-label="Close">✕</button>
       </div>
       <nav class="p2p-drawer-links" aria-label="Mobile navigation">
-        <a href="/p2p" class="p2p-dl-item">Buy Crypto</a>
-        <a href="/p2p" class="p2p-dl-item">Markets</a>
-        <a href="/p2p" class="p2p-dl-item">Trade</a>
-        <a href="/p2p" class="p2p-dl-item">Futures</a>
+        <a href="/" class="p2p-dl-item">Buy Crypto</a>
+        <a href="/markets" class="p2p-dl-item">Markets</a>
+        <a href="/trade" class="p2p-dl-item">Trade</a>
+        <a href="/futures" class="p2p-dl-item">Futures</a>
         <a href="/p2p" class="p2p-dl-item p2p-dl-active">P2P</a>
-        <a href="/p2p" class="p2p-dl-item">Earn</a>
-        <a href="/p2p" class="p2p-dl-item">Finance</a>
-        <a href="/p2p" class="p2p-dl-item">Activity</a>
+        <a href="/" class="p2p-dl-item">Earn</a>
+        <a href="/wallet" class="p2p-dl-item">Assets</a>
       </nav>
       <div class="p2p-drawer-footer">
         <div class="p2p-drawer-lang">
@@ -379,29 +378,119 @@
       </section>
 
       <!-- ── Profile ── -->
-      <section id="profile" class="p2p-panel p2p-profile-panel">
-        <div class="p2p-panel-head">
-          <h2>P2P Profile</h2>
-          <p>Identity and 30-day performance overview.</p>
-        </div>
-        <article class="p2p-profile-card">
-          <div class="p2p-profile-avatar" id="profileAvatar">U</div>
-          <div class="p2p-profile-info">
-            <h3 id="profileName">Guest User</h3>
-            <p id="profileEmail"></p>
-            <span id="profileIdentityTag" class="p2p-identity-tag">Identity Not Submitted</span>
+      <section id="profile" class="p2p-panel p2p-profile-panel" style="padding:0;background:transparent;">
+
+        <!-- Top user card -->
+        <div style="background:#111;padding:20px 16px 16px;margin-bottom:1px;">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+            <div id="profileAvatar" style="width:56px;height:56px;border-radius:50%;background:#F68F15;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#000;flex-shrink:0;">U</div>
+            <div style="flex:1;min-width:0;">
+              <h3 id="profileName" style="margin:0 0 4px;font-size:16px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Guest User</h3>
+              <p id="profileEmail" style="margin:0 0 6px;font-size:12px;color:rgba(255,255,255,0.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p>
+              <!-- Verification badges -->
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#26a17b;background:rgba(38,161,123,0.12);border-radius:4px;padding:2px 7px;font-weight:600;">✓ Email</span>
+                <span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#26a17b;background:rgba(38,161,123,0.12);border-radius:4px;padding:2px 7px;font-weight:600;">✓ SMS</span>
+                <span id="profileIdentityTag" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:rgba(255,255,255,0.35);background:rgba(255,255,255,0.07);border-radius:4px;padding:2px 7px;font-weight:600;">Identity Not Verified</span>
+              </div>
+            </div>
           </div>
-          <button id="profileDepositBtn" type="button" class="p2p-deposit-btn">Deposit</button>
-          <button type="button" class="p2p-deposit-btn" onclick="openWithdrawModal()" style="background:#1a1a2e;border:1px solid rgba(0,212,212,0.3);color:#F68F15;margin-left:8px;">Withdraw</button>
-        </article>
-        <div class="p2p-metrics-grid">
-          <article><span>Completed Orders (30D)</span><strong id="profileCompletedOrders30d">0</strong></article>
-          <article><span>Completion Rate (30D)</span><strong id="profileCompletionRate30d">0%</strong></article>
-          <article><span>Avg Release Time</span><strong id="profileAvgReleaseTime">--</strong></article>
-          <article><span>Avg Payment Time</span><strong id="profileAvgPaymentTime">--</strong></article>
+          <!-- Action buttons -->
+          <div style="display:flex;gap:8px;">
+            <button id="profileDepositBtn" type="button" style="flex:1;padding:10px;background:#F68F15;border:none;border-radius:8px;color:#000;font-size:13px;font-weight:700;cursor:pointer;">Deposit</button>
+            <button type="button" onclick="openWithdrawModal()" style="flex:1;padding:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Withdraw</button>
+          </div>
         </div>
-        <p id="profileMeta" class="p2p-profile-meta">Profile data sync pending.</p>
-        <p class="p2p-deposit-line">Deposit <strong id="profileDeposit">₹0</strong></p>
+
+        <!-- 30-day stats -->
+        <div style="background:#111;padding:14px 16px;margin-bottom:1px;">
+          <p style="margin:0 0 10px;font-size:11px;color:rgba(255,255,255,0.4);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">30-Day Stats</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+            <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+              <p style="margin:0 0 2px;font-size:11px;color:rgba(255,255,255,0.4);">Completed Orders</p>
+              <strong id="profileCompletedOrders30d" style="font-size:15px;color:#fff;">0</strong>
+            </div>
+            <div style="padding:8px 0 8px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+              <p style="margin:0 0 2px;font-size:11px;color:rgba(255,255,255,0.4);">Completion Rate</p>
+              <strong id="profileCompletionRate30d" style="font-size:15px;color:#fff;">0%</strong>
+            </div>
+            <div style="padding:8px 0 0;">
+              <p style="margin:0 0 2px;font-size:11px;color:rgba(255,255,255,0.4);">Avg Release Time</p>
+              <strong id="profileAvgReleaseTime" style="font-size:15px;color:#fff;">--</strong>
+            </div>
+            <div style="padding:8px 0 0 16px;">
+              <p style="margin:0 0 2px;font-size:11px;color:rgba(255,255,255,0.4);">Avg Payment Time</p>
+              <strong id="profileAvgPaymentTime" style="font-size:15px;color:#fff;">--</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Menu items — Bitget style -->
+        <div style="background:#111;margin-bottom:1px;">
+          <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:18px;">🎟️</span>
+              <span style="font-size:14px;color:#fff;font-weight:500;">P2P Coupon</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+          <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:18px;">💳</span>
+              <span style="font-size:14px;color:#fff;font-weight:500;">Payment Method</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:#F68F15;font-weight:600;">Add →</span>
+            </div>
+          </a>
+          <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:18px;">🏪</span>
+              <span style="font-size:14px;color:#fff;font-weight:500;">Advertiser</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:#F68F15;font-weight:600;background:rgba(246,143,21,0.1);border-radius:4px;padding:2px 8px;">Apply Now →</span>
+            </div>
+          </a>
+          <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:18px;">⭐</span>
+              <span style="font-size:14px;color:#fff;font-weight:500;">Leave A Review</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+          <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:18px;">🔔</span>
+              <span style="font-size:14px;color:#fff;font-weight:500;">Manage Notifications</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+          <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:18px;">👥</span>
+              <span style="font-size:14px;color:#fff;font-weight:500;">Following</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+          <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;text-decoration:none;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:18px;">🚫</span>
+              <span style="font-size:14px;color:#fff;font-weight:500;">Manage the Blacklist</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        </div>
+
+        <!-- Deposit balance -->
+        <div style="background:#111;padding:14px 16px;margin-bottom:1px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:13px;color:rgba(255,255,255,0.5);">P2P Deposit Balance</span>
+            <strong id="profileDeposit" style="font-size:14px;color:#F68F15;">₹0</strong>
+          </div>
+        </div>
+
+        <p id="profileMeta" style="display:none;"></p>
       </section>
 
     </main>

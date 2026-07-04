@@ -1162,8 +1162,8 @@
             <span id="cvx-op-sell-qty">Sell 0.0000 BTC</span>
             <span id="cvx-op-buy-qty">Buy 0.0000 BTC</span>
           </div>
-          <button onclick="location.href='register.html'" style="width:100%;padding:13px;background:#fff;border:none;border-radius:8px;color:#000;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">Register Now</button>
-          <div style="text-align:center;"><a href="login.html" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;">Login</a></div>
+          <button onclick="location.href='/auth?mode=signup'" style="width:100%;padding:13px;background:#fff;border:none;border-radius:8px;color:#000;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">Register Now</button>
+          <div style="text-align:center;"><a href="/auth" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;">Login</a></div>
         </div>
       `;
       document.body.appendChild(ov);

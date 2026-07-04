@@ -2615,40 +2615,10 @@ function initTheme() {
 
 function setAuthModalOpen(open, opts) {
   var mode = (opts && opts.mode) || 'login';
-  var fromDrawer = Boolean(opts && opts.fromDrawer);
-
-  if (!authModal) return;
-
   if (open) {
-    if (fromDrawer) {
-      setP2PNavOpen(false);
-    }
-
-    if (authStepLogin) authStepLogin.style.display = '';
-    if (authStepForgot) authStepForgot.style.display = 'none';
-    if (authStepReset) authStepReset.style.display = 'none';
-    if (authTitle) {
-      authTitle.textContent = mode === 'signup' ? 'P2P Access' : 'P2P Login';
-    }
-
-    authModal.classList.remove('hidden');
-    authModal.setAttribute('aria-hidden', 'false');
-    syncBodyInteractionState();
-
-    if (mode === 'signup') {
-      setUserStatus('P2P access stays inside this page. Enter your account email and password to continue.');
-    }
-
-    setTimeout(function() {
-      if (emailInput) {
-        emailInput.focus();
-      }
-    }, 40);
-    return;
+    var dest = mode === 'signup' ? '/auth?mode=signup&redirect=/p2p' : '/auth?redirect=/p2p';
+    window.location.href = dest;
   }
-  authModal.classList.add('hidden');
-  authModal.setAttribute('aria-hidden', 'true');
-  syncBodyInteractionState();
 }
 
 function updateUserUi() {
