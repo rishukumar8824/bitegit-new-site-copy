@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign Up — Bitegit</title>
+  <title>Sign Up — Bitcovex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -15,11 +15,11 @@
       --border: rgba(255,255,255,0.08);
       --text: #eaecef;
       --muted: #848e9c;
-      --accent: #f0b90b;
+      --accent: #F68F15;
       --green: #2ecc71;
       --input-bg: #1e2329;
       --input-border: #2b3139;
-      --input-focus: #f0b90b;
+      --input-focus: #F68F15;
       --error: #f6465d;
       --radius: 8px;
     }
@@ -211,10 +211,10 @@
 
 <!-- Top bar -->
 <header class="topbar">
-  <a class="topbar-logo" href="/">BITEGIT</a>
+  <a class="topbar-logo" href="/">BITCOVEX</a>
   <div class="topbar-right">
     <span style="color:var(--muted);font-size:13px;">Already have an account?</span>
-    <a class="topbar-btn" href="/login.html">Log In</a>
+    <a class="topbar-btn" href="/login">Log In</a>
   </div>
 </header>
 
@@ -248,7 +248,7 @@
     <!-- Step 1: Registration form -->
     <div id="step1">
       <h1>Create Account</h1>
-      <p class="welcome-sub">Join Bitegit — it's free</p>
+      <p class="welcome-sub">Join Bitcovex — it's free</p>
 
       <div class="tabs" role="tablist">
         <button class="tab-btn active" id="tabEmail" data-ch="email" role="tab">Email</button>
@@ -293,7 +293,7 @@
         <div class="terms-check">
           <input type="checkbox" id="termsCheck" />
           <label class="terms-text" for="termsCheck">
-            I agree to Bitegit's <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I confirm I am at least 18 years old.
+            I agree to Bitcovex's <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I confirm I am at least 18 years old.
           </label>
         </div>
         <div class="err-msg" id="termsErr" style="margin-top:-12px;margin-bottom:12px;">You must agree to the terms.</div>
@@ -321,7 +321,7 @@
       </div>
 
       <div class="login-prompt">
-        Already have an account? <a href="/login.html">Log In</a>
+        Already have an account? <a href="/login">Log In</a>
       </div>
     </div>
 
@@ -329,17 +329,16 @@
     <div id="step2">
       <div class="step2-icon">✅</div>
       <div class="step2-title">Account Created!</div>
-      <div class="step2-sub">Welcome to Bitegit, <span id="step2Email"></span>. Your account is ready. Redirecting to login…</div>
+      <div class="step2-sub">Welcome to Bitcovex, <span id="step2Email"></span>. Your account is ready. Redirecting to login…</div>
       <div class="status-msg show success" id="step2Status">Registration successful!</div>
     </div>
 
   </div>
 </div>
 
-<script src="/bitegit-config.js"></script>
 <script>
 (function () {
-  const API = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
+  const API = (window.BITCOVEX_CONFIG && window.BITCOVEX_CONFIG.apiBase ? window.BITCOVEX_CONFIG.apiBase + '/v1' : '/api/v1');
   let channel = 'email';
   let otpTimer = null;
   let otpWaitUntil = 0;
@@ -540,11 +539,11 @@
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        if (data.token) localStorage.setItem('bitegit_token', data.token);
+        if (data.token) localStorage.setItem('cvx_token', data.token);
         step1.classList.add('hidden-step');
         step2Email.textContent = channel === 'email' ? contact.toLowerCase() : contact;
         step2.classList.add('active');
-        setTimeout(() => { window.location.href = '/login.html'; }, 2500);
+        setTimeout(() => { window.location.href = '/login'; }, 2500);
       } else {
         showStatus(data.message || 'Registration failed. Please try again.', 'fail');
       }

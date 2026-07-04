@@ -374,11 +374,11 @@
       const authRow = document.createElement('div');
       authRow.style.cssText = 'display:flex;gap:10px;padding:8px 16px 16px;flex-shrink:0;';
       const loginBtn = document.createElement('a');
-      loginBtn.href = '/auth'; loginBtn.textContent = 'Log in';
+      loginBtn.href = '/login'; loginBtn.textContent = 'Log in';
       loginBtn.style.cssText = 'flex:1;text-align:center;padding:11px 0;border-radius:6px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;letter-spacing:0.01em;';
       const signupBtn = document.createElement('a');
-      signupBtn.href = '/auth?mode=signup'; signupBtn.textContent = 'Sign up';
-      signupBtn.style.cssText = 'flex:1;text-align:center;padding:11px 0;border-radius:6px;background:#F0B90B;color:#181a20;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:0.01em;';
+      signupBtn.href = '/signup'; signupBtn.textContent = 'Sign up';
+      signupBtn.style.cssText = 'flex:1;text-align:center;padding:11px 0;border-radius:6px;background:#F68F15;color:#000;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:0.01em;';
       if (!window._cvxLoggedIn) {
         authRow.appendChild(loginBtn);
         authRow.appendChild(signupBtn);
@@ -1078,7 +1078,7 @@
               <div id="cvx-t-idx-mark" style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:1px;">Index -- &nbsp;|&nbsp; Mark --</div>
             </div>
             <div style="flex:1;"></div>
-            <a href="register.html" style="background:#F0B90B;color:#000;font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;text-decoration:none;">Sign up</a>
+            <a href="/signup" style="background:#F68F15;color:#000;font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;text-decoration:none;">Sign up</a>
           </div>
           <!-- Row 2: price + stats grid -->
           <div style="display:flex;padding:8px 12px 8px;gap:0;align-items:flex-start;">
@@ -1162,8 +1162,8 @@
             <span id="cvx-op-sell-qty">Sell 0.0000 BTC</span>
             <span id="cvx-op-buy-qty">Buy 0.0000 BTC</span>
           </div>
-          <button onclick="location.href='/auth?mode=signup'" style="width:100%;padding:13px;background:#fff;border:none;border-radius:8px;color:#000;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">Register Now</button>
-          <div style="text-align:center;"><a href="/auth" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;">Login</a></div>
+          <button onclick="location.href='/signup'" style="width:100%;padding:13px;background:#fff;border:none;border-radius:8px;color:#000;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">Register Now</button>
+          <div style="text-align:center;"><a href="/login" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;">Login</a></div>
         </div>
       `;
       document.body.appendChild(ov);

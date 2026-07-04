@@ -5759,6 +5759,15 @@ app.get('/market.html', (req, res) => res.redirect(301, '/markets'));
 app.get('/auth', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'auth.html'));
 });
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+app.get('/signup', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'signup.html'));
+});
+app.get('/login.html', (req, res) => res.redirect(301, '/login'));
+app.get('/signup.html', (req, res) => res.redirect(301, '/signup'));
+app.get('/register.html', (req, res) => res.redirect(301, '/signup'));
 app.get('/p2p', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p.html'));
 });

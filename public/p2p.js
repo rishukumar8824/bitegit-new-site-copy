@@ -2616,7 +2616,7 @@ function initTheme() {
 function setAuthModalOpen(open, opts) {
   var mode = (opts && opts.mode) || 'login';
   if (open) {
-    var dest = mode === 'signup' ? '/auth?mode=signup&redirect=/p2p' : '/auth?redirect=/p2p';
+    var dest = mode === 'signup' ? '/signup' : '/login';
     window.location.href = dest;
   }
 }
@@ -3052,12 +3052,12 @@ async function logoutUser() {
     _clearOrdersCache();
     _stopFallbackPoll();
     mobileOrdersCache.clear();
-    window.location.href = '/auth';
+    window.location.href = '/login';
   }
 }
 
 function requireLoginNotice() {
-  window.location.href = '/auth?redirect=' + encodeURIComponent(window.location.pathname + window.location.hash);
+  window.location.href = '/login';
 }
 
 async function loadExchangeTicker() {
@@ -5447,7 +5447,7 @@ function _ordShowLogin() {
     '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">' +
     '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>' +
     '<p style="color:rgba(255,255,255,0.45);font-size:14px;margin:0;text-align:center;">Login to view your orders</p>' +
-    '<button onclick="window.location.href=\'/auth?redirect=/p2p\'" style="background:#F68F15;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
+    '<button onclick="window.location.href=\'/login\'" style="background:#F68F15;color:#000;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;min-width:120px;">Sign In</button>' +
     '</div>';
 }
 
@@ -5791,7 +5791,7 @@ if (openAuthBtn) {
 }
 if (openSignupBtn) {
   openSignupBtn.addEventListener('click', () => {
-    window.location.href = '/auth?mode=signup&redirect=/p2p';
+    window.location.href = '/signup';
   });
 }
 if (openAuthBtnDrawer) {
@@ -5799,7 +5799,7 @@ if (openAuthBtnDrawer) {
 }
 if (openSignupBtnDrawer) {
   openSignupBtnDrawer.addEventListener('click', () => {
-    window.location.href = '/auth?mode=signup&redirect=/p2p';
+    window.location.href = '/signup';
   });
 }
 if (closeAuthBtn) {
