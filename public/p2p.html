@@ -567,131 +567,162 @@
     </div>
 
     <!-- Mobile Profile Screen -->
-    <div id="mobProfileScreen" class="mob-screen hidden">
-      <!-- Header -->
-      <div class="mob-screen-head bg-profile-head">
-        <button class="mob-back-btn" data-mob-back="p2p" aria-label="Back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <!-- mobProfileScreen — Bybit P2P Profile clone -->
+    <div id="mobProfileScreen" class="mob-screen hidden" style="background:#000;display:flex;flex-direction:column;overflow-y:auto;">
+
+      <!-- Header: ← | Help & Support -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;flex-shrink:0;">
+        <button class="mob-back-btn" data-mob-back="p2p" aria-label="Back" style="background:none;border:none;color:#fff;cursor:pointer;padding:4px;display:flex;align-items:center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <h2></h2>
-        <div style="width:34px"></div>
+        <span style="font-size:14px;color:rgba(255,255,255,0.5);cursor:pointer;">Help &amp; Support</span>
       </div>
 
-      <!-- Bitget-style User Hero -->
-      <div class="bg-profile-hero">
-        <div class="bg-profile-avatar" id="profileAvatarMobile">U</div>
-        <div class="bg-profile-info">
-          <div class="bg-name-row">
-            <span id="profileNameMobile" class="bg-profile-name">BGUSER-XXXXXXXX</span>
-            <button id="profileEditBtn" type="button" class="bg-edit-icon" aria-label="Edit profile">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <!-- User hero: avatar + name + badges -->
+      <div style="display:flex;align-items:center;gap:14px;padding:8px 16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div id="profileAvatarMobile" style="width:72px;height:72px;border-radius:50%;background:#F68F15;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;flex-shrink:0;">U</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span id="profileNameMobile" style="font-size:20px;font-weight:700;color:#fff;">Guest User</span>
+            <button id="profileEditBtn" type="button" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;padding:2px;display:flex;" aria-label="Edit">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
           </div>
-          <p class="bg-deposit-line">Security deposit <strong id="profileDepositMobile">0 USDT</strong> <span id="profileSecDepStatus" style="font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(246,70,93,0.15);color:#f6465d;margin-left:4px;vertical-align:middle;">None</span></p>
-          <span id="profileAssetsMobile" style="display:none;"></span>
-          <span id="mobMerchantBadge" style="display:none;margin:6px auto 0;padding:4px 12px;border-radius:999px;font-size:0.75rem;font-weight:800;letter-spacing:0.04em;align-items:center;gap:5px;"></span>
-          <div class="bg-verify-row">
-            <span class="bg-verify-chip" id="profileIdentityTagMobile">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1db954" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Identity
+          <!-- Badges row — Email | SMS | Identity | Deposit -->
+          <div style="display:flex;align-items:center;flex-wrap:wrap;row-gap:4px;">
+            <span id="profileEmailChip" onclick="window.openEmailVerifyModal&&window.openEmailVerifyModal()" style="display:inline-flex;align-items:center;gap:3px;font-size:11.5px;color:#2ebd85;padding-right:9px;border-right:1px solid rgba(255,255,255,0.12);cursor:pointer;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2ebd85" stroke-width="2"/><polyline points="9 12 11 14 15 10" stroke="#2ebd85" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Email
             </span>
-            <span class="bg-verify-chip">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1db954" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Phone
+            <span style="display:inline-flex;align-items:center;gap:3px;font-size:11.5px;color:#2ebd85;padding:0 9px;border-right:1px solid rgba(255,255,255,0.12);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2ebd85" stroke-width="2"/><polyline points="9 12 11 14 15 10" stroke="#2ebd85" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>SMS
             </span>
-            <span class="bg-verify-chip" id="profileEmailChip" onclick="window.openEmailVerifyModal && window.openEmailVerifyModal()" style="cursor:pointer;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1db954" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Email
+            <span id="profileIdentityTagMobile" style="display:inline-flex;align-items:center;gap:3px;font-size:11.5px;color:#2ebd85;padding:0 9px;border-right:1px solid rgba(255,255,255,0.12);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2ebd85" stroke-width="2"/><polyline points="9 12 11 14 15 10" stroke="#2ebd85" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Identity Verification
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:3px;font-size:11.5px;color:rgba(255,255,255,0.38);padding-left:9px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.38)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.6" fill="rgba(255,255,255,0.38)"/></svg>Deposit
             </span>
           </div>
         </div>
       </div>
 
-      <div class="bg-section-divider"></div>
-
-      <!-- 30D Stats - Bitget 2×2 grid -->
-      <div class="bg-stats-section">
-        <div class="bg-stats-grid">
-          <div class="bg-stat-item">
-            <span class="bg-stat-label">30D trades</span>
-            <div>
-              <strong id="profileThirtyDayTradesMobile" class="bg-stat-val">0</strong>
-              <span class="bg-stat-sub">Buy 0 | Sell 0</span>
-            </div>
-          </div>
-          <div class="bg-stat-item">
-            <span class="bg-stat-label">30D completion rate</span>
-            <strong id="profileCompletionRateMobile" class="bg-stat-val">0%</strong>
-          </div>
-          <div class="bg-stat-item">
-            <span class="bg-stat-label">30D avg. release time</span>
-            <strong id="profileAvgReleaseTimeMobile" class="bg-stat-val">-</strong>
-          </div>
-          <div class="bg-stat-item">
-            <span class="bg-stat-label">30D avg. payment time</span>
-            <strong id="profileAvgPaymentTimeMobile" class="bg-stat-val">-</strong>
-          </div>
+      <!-- 30D Stats — Bybit list style -->
+      <div style="border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <span style="font-size:13px;color:rgba(255,255,255,0.45);">Completed Order(s) in 30 Days</span>
+          <strong id="profileThirtyDayTradesMobile" style="font-size:13px;color:#fff;font-weight:700;">0 Order(s)</strong>
         </div>
-        <button class="bg-more-btn" onclick="window.showMobScreen && window.showMobScreen('mobTradingDataScreen')">
-          More <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <span style="font-size:13px;color:rgba(255,255,255,0.45);">Completion Rate Within 30 Days</span>
+          <strong id="profileCompletionRateMobile" style="font-size:13px;color:#fff;font-weight:700;">0 %</strong>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <span style="font-size:13px;color:rgba(255,255,255,0.45);">Avg. Release Time</span>
+          <strong id="profileAvgReleaseTimeMobile" style="font-size:13px;color:#fff;font-weight:700;">0 Minute(s)</strong>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;">
+          <span style="font-size:13px;color:rgba(255,255,255,0.45);">Avg. Payment Time</span>
+          <strong id="profileAvgPaymentTimeMobile" style="font-size:13px;color:#fff;font-weight:700;">0 Minute(s)</strong>
+        </div>
+        <div style="text-align:center;padding:8px 0 14px;" onclick="window.showMobScreen&&window.showMobScreen('mobTradingDataScreen')" style="cursor:pointer;">
+          <span style="font-size:13px;color:rgba(255,255,255,0.35);">More Data &rsaquo;</span>
+        </div>
       </div>
 
-      <div class="bg-section-divider"></div>
+      <!-- Menu items — exact Bybit SVG icons -->
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+            <span style="font-size:15px;color:#fff;">P2P Coupon</span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div data-open-payment="1" style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;-webkit-tap-highlight-color:transparent;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            <span style="font-size:15px;color:#fff;">Payment Method</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="font-size:13px;color:rgba(255,255,255,0.4);">Add</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div onclick="openP2PScreen('merchantScreen')" style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;-webkit-tap-highlight-color:transparent;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span style="font-size:15px;color:#fff;">Advertiser</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="font-size:13px;color:#F68F15;">Apply Now</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F68F15" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+            <span style="font-size:15px;color:#fff;">Leave A Review</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="font-size:13px;color:rgba(255,255,255,0.35);">0%</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span style="font-size:15px;color:#fff;">Manage Notifications</span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span style="font-size:15px;color:#fff;">Following</span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
+            <span style="font-size:15px;color:#fff;">Manage the Blacklist</span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div data-open-kyc="1" style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;-webkit-tap-highlight-color:transparent;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span style="font-size:15px;color:#fff;">KYC Verification</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span id="kycStatusBadge" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(246,70,93,0.15);border:1px solid rgba(246,70,93,0.3);color:#f6465d;">Not Done</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div onclick="doP2PLogout()" style="display:flex;align-items:center;justify-content:space-between;padding:16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6465d" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span style="font-size:15px;color:#f6465d;">Logout</span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(246,70,93,0.4)" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
 
-      <!-- Bitget-style Menu -->
-      <ul class="bg-menu-list">
-        <li class="bg-menu-item" data-open-payment="1" style="cursor:pointer;-webkit-tap-highlight-color:transparent;">
-          <div class="bg-menu-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-          </div>
-          <span class="bg-menu-label">Payment methods</span>
-          <svg class="bg-menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </li>
-        <li class="bg-menu-item" data-open-kyc="1" style="cursor:pointer;-webkit-tap-highlight-color:transparent;">
-          <div class="bg-menu-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </div>
-          <span class="bg-menu-label">KYC Verification <span id="kycStatusBadge" style="font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(246,70,93,0.15);border:1px solid rgba(246,70,93,0.3);color:#f6465d;margin-left:6px;">Not Done</span></span>
-          <svg class="bg-menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </li>
-        <li class="bg-menu-item" onclick="openP2PScreen('merchantScreen');closeDotMenu && closeDotMenu();" style="cursor:pointer;-webkit-tap-highlight-color:transparent;">
-          <div class="bg-menu-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 3H8L6 7h12l-2-4z"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
-          </div>
-          <span class="bg-menu-label">Apply to Become Merchant</span>
-          <svg class="bg-menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </li>
-        <li class="bg-menu-item" onclick="window.showMobScreen && window.showMobScreen('mobSupportScreen')" style="cursor:pointer;-webkit-tap-highlight-color:transparent;">
-          <div class="bg-menu-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </div>
-          <span class="bg-menu-label">Support</span>
-          <svg class="bg-menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </li>
-        <li class="bg-menu-item" onclick="window.showMobScreen && window.showMobScreen('mob2FAScreen')" style="cursor:pointer;-webkit-tap-highlight-color:transparent;">
-          <div class="bg-menu-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>
-          </div>
-          <span class="bg-menu-label">2FA Security</span>
-          <svg class="bg-menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </li>
-        <li class="bg-menu-item" onclick="doP2PLogout()" style="cursor:pointer;-webkit-tap-highlight-color:transparent;">
-          <div class="bg-menu-icon-wrap" style="color:#f6465d;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </div>
-          <span class="bg-menu-label" style="color:#f6465d;">Logout</span>
-        </li>
-      </ul>
-
-      <!-- hidden hooks for p2p.js -->
-      <p id="profileMeta" class="hidden"></p>
-      <p id="profileEmail" class="hidden"></p>
-      <p id="profileAvgPaymentTime" class="hidden"></p>
-      <p id="profileDeposit" class="hidden"></p>
-      <p id="profileSignupTimeMobile" class="hidden"></p>
-      <strong id="profileTotalTradesMobile" class="hidden">0</strong>
-      <strong id="profileCancelledTradesMobile" class="hidden">0</strong>
-      <strong id="profileKycMobile" class="hidden">Not Submitted</strong>
-      <div id="profileRatingRow" class="hidden"></div>
-      <button id="profileDepositBtn" class="hidden"></button>
+      <!-- Hidden JS hooks (do not remove) -->
+      <span id="mobMerchantBadge" style="display:none;"></span>
+      <span id="profileAssetsMobile" style="display:none;"></span>
+      <span id="profileSecDepStatus" style="display:none;"></span>
+      <p id="profileMeta" style="display:none;"></p>
+      <p id="profileEmail" style="display:none;"></p>
+      <p id="profileAvgPaymentTime" style="display:none;"></p>
+      <p id="profileDeposit" style="display:none;"></p>
+      <p id="profileDepositMobile" style="display:none;"></p>
+      <p id="profileSignupTimeMobile" style="display:none;"></p>
+      <strong id="profileTotalTradesMobile" style="display:none;">0</strong>
+      <strong id="profileCancelledTradesMobile" style="display:none;">0</strong>
+      <strong id="profileKycMobile" style="display:none;">Not Submitted</strong>
+      <div id="profileRatingRow" style="display:none;"></div>
+      <button id="profileDepositBtn" style="display:none;"></button>
     </div>
 
     <!-- ── Profile Edit Screen ── -->
