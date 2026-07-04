@@ -3912,8 +3912,7 @@ body.mob-screen-open .p2p-secondary-nav {
   font-weight: 600;
   cursor: pointer;
 }
-.mob-tab-post-ad svg { stroke: #F68F15; }
-.mob-tab-post-ad span { color: #F68F15; }
+/* Ads tab — same grey/white as other tabs, no permanent orange */
 
 /* ══ Mobile Post Ad Screen ══ */
 .mob-post-tabs {
