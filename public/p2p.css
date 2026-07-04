@@ -409,6 +409,22 @@ body.p2p-kyc-open { overflow: hidden; }
   border-bottom-color: var(--p2p-brand);
 }
 
+/* ── Currency pill (INR ▼) ── */
+.p2p-currency-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
 /* ── 3-dot menu ── */
 .p2p-dot-menu-wrap { position: relative; display: flex; align-items: center; }
 .p2p-dot-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3px; padding: 0 0.7rem; height: 44px; -webkit-tap-highlight-color: transparent; }
