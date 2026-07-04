@@ -3205,9 +3205,12 @@ function renderOffers(data, append) {
         ${_topPickBadge}
         <div class="bbt-hd">
           <div class="bbt-hd-left">
-            <div class="bbt-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
+            <div class="bbt-avatar-wrap">
+              <div class="bbt-avatar" style="background:${_avatarBg}">${escapeHtml(initial)}</div>
+              ${_onlineDot}
+            </div>
             <div class="bbt-name-wrap">
-              <span class="bbt-name">${_onlineDot}${escapeHtml(offer.advertiser)}${verificationBadge}</span>
+              <span class="bbt-name">${escapeHtml(offer.advertiser)}${verificationBadge}</span>
               ${_respTag}
             </div>
           </div>
