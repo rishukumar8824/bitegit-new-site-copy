@@ -346,6 +346,10 @@
       }
 
       setLoading(true);
+      await attemptLogin(email, password, 0);
+    }
+
+    async function attemptLogin(email, password, attempt) {
       try {
         const res = await fetch('/api/p2p/login', {
           method: 'POST',
@@ -354,17 +358,25 @@
           body: JSON.stringify({ email, password })
         });
         const data = await res.json();
+        if (res.status === 503 && attempt < 4) {
+          // DB cold start — auto-retry with countdown
+          let secs = 4;
+          const iv = setInterval(() => {
+            document.getElementById('loginBtn').innerHTML =
+              `<span class="spinner"></span>Retrying in ${secs--}s…`;
+            if (secs < 0) { clearInterval(iv); attemptLogin(email, password, attempt + 1); }
+          }, 1000);
+          return;
+        }
         if (!res.ok) {
           showError(data.message || 'Login failed. Please try again.');
           setLoading(false);
           return;
         }
-        // Save tokens — keys must match what p2p.js reads
         const token = data.accessToken || data.token || '';
         if (token) localStorage.setItem('bitcovex_token', token);
         if (data.refreshToken) localStorage.setItem('bitcovex_refresh_token', data.refreshToken);
         if (data.user) localStorage.setItem('cvx_user', JSON.stringify(data.user));
-        // Redirect back or to P2P dashboard
         const params = new URLSearchParams(window.location.search);
         window.location.href = params.get('redirect') || '/p2p';
       } catch (e) {
