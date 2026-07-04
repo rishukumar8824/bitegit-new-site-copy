@@ -1774,6 +1774,7 @@ async function withOrderMutation(orderId, mutator, maxRetries = 4) {
 }
 
 app.post('/api/p2p/login', async (req, res) => {
+  if (!repos) return res.status(503).json({ message: 'Service is starting up. Please try again in a moment.' });
   const requestIp = getRequestIp(req);
   const requestUa = String(req.headers['user-agent'] || '').trim().slice(0, 1024);
   const ipCheck = loginAttemptLimiter(`p2p_login:${getRequestIp(req)}`);

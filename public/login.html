@@ -266,10 +266,6 @@
     <h1>Welcome Back</h1>
     <p class="subtitle">Log in to your Bitcovex account</p>
 
-    <div class="info-box">
-      New users: login auto-creates your account. Use any password (min 6 chars).
-    </div>
-
     <div class="field">
       <label for="email">Email Address</label>
       <input type="email" id="email" placeholder="you@example.com" autocomplete="email" inputmode="email">
@@ -363,17 +359,14 @@
           setLoading(false);
           return;
         }
-        // Save token to localStorage
+        // Save tokens — keys must match what p2p.js reads
         const token = data.accessToken || data.token || '';
-        if (token) {
-          localStorage.setItem('cvx_token', token);
-        }
-        // Save user info if available
-        if (data.user) {
-          localStorage.setItem('cvx_user', JSON.stringify(data.user));
-        }
-        // Redirect to P2P dashboard
-        window.location.href = '/p2p';
+        if (token) localStorage.setItem('bitcovex_token', token);
+        if (data.refreshToken) localStorage.setItem('bitcovex_refresh_token', data.refreshToken);
+        if (data.user) localStorage.setItem('cvx_user', JSON.stringify(data.user));
+        // Redirect back or to P2P dashboard
+        const params = new URLSearchParams(window.location.search);
+        window.location.href = params.get('redirect') || '/p2p';
       } catch (e) {
         showError('Network error. Please check your connection and try again.');
         setLoading(false);

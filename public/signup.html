@@ -329,7 +329,7 @@
     <div id="step2">
       <div class="step2-icon">✅</div>
       <div class="step2-title">Account Created!</div>
-      <div class="step2-sub">Welcome to Bitcovex, <span id="step2Email"></span>. Your account is ready. Redirecting to login…</div>
+      <div class="step2-sub">Welcome to Bitcovex, <span id="step2Email"></span>. Account created! Taking you to P2P…</div>
       <div class="status-msg show success" id="step2Status">Registration successful!</div>
     </div>
 
@@ -338,15 +338,11 @@
 
 <script>
 (function () {
-  const API = (window.BITCOVEX_CONFIG && window.BITCOVEX_CONFIG.apiBase ? window.BITCOVEX_CONFIG.apiBase + '/v1' : '/api/v1');
-  let channel = 'email';
   let otpTimer = null;
-  let otpWaitUntil = 0;
   const OTP_WAIT = 60;
 
   const form = document.getElementById('signupForm');
   const contactInp = document.getElementById('contactInp');
-  const contactLbl = document.getElementById('contactLbl');
   const contactErr = document.getElementById('contactErr');
   const passwordInp = document.getElementById('passwordInp');
   const passwordErr = document.getElementById('passwordErr');
@@ -362,36 +358,9 @@
   const referralSection = document.getElementById('referralSection');
   const referralArrow = document.getElementById('referralArrow');
   const referralInp = document.getElementById('referralInp');
-  const tabEmail = document.getElementById('tabEmail');
-  const tabPhone = document.getElementById('tabPhone');
   const step1 = document.getElementById('step1');
   const step2 = document.getElementById('step2');
   const step2Email = document.getElementById('step2Email');
-
-  // Tab switching
-  [tabEmail, tabPhone].forEach(btn => {
-    btn.addEventListener('click', () => {
-      [tabEmail, tabPhone].forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
-      btn.classList.add('active');
-      btn.setAttribute('aria-selected', 'true');
-      channel = btn.dataset.ch;
-      if (channel === 'email') {
-        contactLbl.textContent = 'Email Address';
-        contactInp.type = 'email';
-        contactInp.placeholder = 'Enter your email';
-        contactInp.autocomplete = 'email';
-        contactErr.textContent = 'Please enter a valid email address.';
-      } else {
-        contactLbl.textContent = 'Phone Number';
-        contactInp.type = 'tel';
-        contactInp.placeholder = '+1 234 567 8900';
-        contactInp.autocomplete = 'tel';
-        contactErr.textContent = 'Please enter a valid phone number.';
-      }
-      contactInp.value = '';
-      clearErrors();
-    });
-  });
 
   // Toggle password
   togglePw.addEventListener('click', () => {
@@ -406,12 +375,11 @@
     referralArrow.textContent = open ? '▼' : '▶';
   });
 
-  // OTP timer
   function startOtpTimer() {
-    otpWaitUntil = Date.now() + OTP_WAIT * 1000;
+    const until = Date.now() + OTP_WAIT * 1000;
     clearInterval(otpTimer);
     otpTimer = setInterval(() => {
-      const left = Math.ceil((otpWaitUntil - Date.now()) / 1000);
+      const left = Math.ceil((until - Date.now()) / 1000);
       if (left <= 0) {
         clearInterval(otpTimer);
         sendOtpBtn.disabled = false;
@@ -423,48 +391,42 @@
     }, 500);
   }
 
-  // Send OTP
+  function showStatus(text, type) {
+    statusMsg.textContent = text;
+    statusMsg.className = 'status-msg show ' + type;
+  }
+
+  function clearErrors() {
+    [contactErr, passwordErr, otpErr, termsErr].forEach(el => el.classList.remove('show'));
+    [contactInp, passwordInp, otpInp].forEach(el => el.classList.remove('error'));
+    statusMsg.className = 'status-msg';
+  }
+
+  // Send OTP via /api/signup/send-code
   sendOtpBtn.addEventListener('click', async () => {
-    const contact = contactInp.value.trim();
-    if (channel === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) {
+    const email = contactInp.value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       contactErr.classList.add('show'); contactInp.classList.add('error');
       showStatus('Please enter a valid email first.', 'fail'); return;
     }
-    if (channel === 'phone' && !/^\+?\d{7,15}$/.test(contact.replace(/\s/g, ''))) {
-      contactErr.classList.add('show'); contactInp.classList.add('error');
-      showStatus('Please enter a valid phone number first.', 'fail'); return;
-    }
-
     const pw = passwordInp.value;
     if (!pw || pw.length < 8) {
-      showStatus('Enter your password (min 8 chars) first.', 'fail');
-      return;
+      showStatus('Enter your password (min 8 chars) first.', 'fail'); return;
     }
     sendOtpBtn.disabled = true;
     sendOtpBtn.textContent = 'Sending…';
     try {
-      // bitegit-backend: register first → sends OTP to email
-      const body = channel === 'email'
-        ? { email: contact.toLowerCase(), password: pw }
-        : { phone: contact.replace(/\s/g, ''), password: pw };
-
-      const res = await fetch(API + '/auth/register', {
+      const res = await fetch('/api/signup/send-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(body)
+        body: JSON.stringify({ contact: email })
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok || res.status === 201) {
-        showStatus(data.message || 'Account created! Check your email for the verification code.', 'success');
+      if (res.ok) {
+        showStatus('Verification code sent to your email.', 'success');
         startOtpTimer();
-        if (data.otp || data.devCode) {
-          const code = data.otp || data.devCode;
-          otpInp.value = code;
-          showStatus(`OTP has been auto-filled. Please verify to continue.`, 'success');
-        }
       } else {
-        showStatus(data.message || 'Registration failed. Try again.', 'fail');
+        showStatus(data.message || 'Failed to send code. Try again.', 'fail');
         sendOtpBtn.disabled = false;
         sendOtpBtn.textContent = 'Send Code';
       }
@@ -475,33 +437,13 @@
     }
   });
 
-  function clearErrors() {
-    [contactErr, passwordErr, otpErr, termsErr].forEach(el => el.classList.remove('show'));
-    [contactInp, passwordInp, otpInp].forEach(el => el.classList.remove('error'));
-    hideStatus();
-  }
-
-  function showStatus(text, type) {
-    statusMsg.textContent = text;
-    statusMsg.className = 'status-msg show ' + type;
-  }
-
-  function hideStatus() {
-    statusMsg.className = 'status-msg';
-  }
-
-  function setLoading(on) {
-    submitBtn.disabled = on;
-    submitBtn.textContent = on ? 'Creating account…' : 'Create Account';
-  }
-
-  function validate() {
+  // Submit registration via /api/p2p/register
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
     let ok = true;
-    const contact = contactInp.value.trim();
-    if (channel === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) {
-      contactErr.classList.add('show'); contactInp.classList.add('error'); ok = false;
-    }
-    if (channel === 'phone' && !/^\+?\d{7,15}$/.test(contact.replace(/\s/g, ''))) {
+    const email = contactInp.value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       contactErr.classList.add('show'); contactInp.classList.add('error'); ok = false;
     }
     if (passwordInp.value.length < 8) {
@@ -513,51 +455,43 @@
     if (!termsCheck.checked) {
       termsErr.classList.add('show'); ok = false;
     }
-    return ok;
-  }
+    if (!ok) return;
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearErrors();
-    if (!validate()) return;
-
-    setLoading(true);
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account…';
     try {
-      // bitegit-backend verify-email with the OTP sent after registration
-      const body = {
-        otp: otpInp.value.trim(),
-        token: otpInp.value.trim(),
-        ...(referralInp.value.trim() ? { referralCode: referralInp.value.trim() } : {})
-      };
-
-      const res = await fetch(API + '/auth/verify-email', {
+      const res = await fetch('/api/p2p/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(body)
+        body: JSON.stringify({ email, password: passwordInp.value, otpCode: otpInp.value.trim() })
       });
       const data = await res.json().catch(() => ({}));
-
-      if (res.ok) {
-        if (data.token) localStorage.setItem('cvx_token', data.token);
+      if (res.ok || res.status === 201) {
+        // Save tokens — same keys p2p.js reads
+        if (data.accessToken) localStorage.setItem('bitcovex_token', data.accessToken);
+        if (data.refreshToken) localStorage.setItem('bitcovex_refresh_token', data.refreshToken);
+        if (data.user) localStorage.setItem('cvx_user', JSON.stringify(data.user));
         step1.classList.add('hidden-step');
-        step2Email.textContent = channel === 'email' ? contact.toLowerCase() : contact;
+        step2Email.textContent = email;
         step2.classList.add('active');
-        setTimeout(() => { window.location.href = '/login'; }, 2500);
+        // Auto-login happened on server — redirect straight to P2P
+        setTimeout(() => { window.location.href = '/p2p'; }, 1800);
       } else {
         showStatus(data.message || 'Registration failed. Please try again.', 'fail');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
       }
     } catch {
       showStatus('Network error. Please try again.', 'fail');
-    } finally {
-      setLoading(false);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
     }
   });
 
-  // Social stubs
   document.getElementById('googleBtn').addEventListener('click', () => showStatus('Google sign-up coming soon.', 'fail'));
   document.getElementById('appleBtn').addEventListener('click', () => showStatus('Apple sign-up coming soon.', 'fail'));
 })();
 </script>
-<script src="js/app.js"></script></body>
+</body>
 </html>
