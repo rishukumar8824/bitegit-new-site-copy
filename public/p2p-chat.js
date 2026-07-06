@@ -1,4 +1,4 @@
-const BITCOVEX_API = (window.BITCOVEX_API_BASE || 'http://localhost:3000/api/v1');
+const BITCOVEX_API = (window.BITCOVEX_API_BASE || '/api');
 function chatFetch(path, opts) {
   var token = localStorage.getItem('bitcovex_token') || '';
   opts = opts || {};

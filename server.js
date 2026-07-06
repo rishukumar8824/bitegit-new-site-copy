@@ -3523,6 +3523,27 @@ app.post('/api/p2p/orders/:orderId/mark-paid', requiresP2PUser, async (req, res)
 });
 
 // Convenience: cancel order
+app.post('/api/p2p/orders/:orderId/release', requiresP2PUser, async (req, res) => {
+  try {
+    const updatedOrder = await walletService.releaseOrder(req.params.orderId, req.p2pUser);
+    const normalizedOrder = normalizeOrderState(updatedOrder);
+    const normalizedMessages = toClientMessages(updatedOrder.messages || []);
+    const participantPayload = {
+      order: normalizedOrder,
+      orderId: normalizedOrder.id,
+      reference: normalizedOrder.reference,
+      status: normalizedOrder.status,
+      updatedAt: normalizedOrder.updatedAt
+    };
+    broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
+    broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
+    broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
+    return res.json({ ok: true, order: normalizedOrder });
+  } catch (e) {
+    return res.status(400).json({ message: e.message || 'Failed to release order' });
+  }
+});
+
 app.post('/api/p2p/orders/:orderId/cancel', requiresP2PUser, async (req, res) => {
   try {
     const updatedOrder = await walletService.cancelOrder(req.params.orderId, req.p2pUser, 'CANCELLED');
@@ -5773,6 +5794,12 @@ app.get('/p2p', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p.html'));
 });
 
+app.get('/forgot-password', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'forgot-password.html'));
+});
+app.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'forgot-password.html'));
+});
 app.get('/p2p-order-flow', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p-order-flow.html'));
 });
