@@ -2224,6 +2224,33 @@ app.put('/api/p2p/profile', requiresP2PUser, async (req, res) => {
   }
 });
 
+app.post('/api/p2p/change-password', requiresP2PUser, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ ok: false, message: 'currentPassword and newPassword are required.' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ ok: false, message: 'New password must be at least 8 characters.' });
+    }
+    const collections = getCollections();
+    const repos = createRepositories(collections);
+    const cred = await collections.p2pCredentials.findOne({ email: req.p2pUser.email });
+    if (!cred) return res.status(404).json({ ok: false, message: 'User not found.' });
+    if (!repos.verifyPassword(currentPassword, cred.passwordHash)) {
+      return res.status(401).json({ ok: false, message: 'Current password is incorrect.' });
+    }
+    const newHash = repos.hashPassword(newPassword);
+    await collections.p2pCredentials.updateOne(
+      { email: req.p2pUser.email },
+      { $set: { passwordHash: newHash, updatedAt: new Date() } }
+    );
+    return res.json({ ok: true, message: 'Password changed successfully.' });
+  } catch (err) {
+    return res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+});
+
 app.get('/api/p2p/me', async (req, res) => {
   const user = await getP2PUserFromRequest(req, res);
 

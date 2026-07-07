@@ -86,6 +86,10 @@
       <span class="menu-label">User Nickname</span>
       <span class="menu-chev">›</span>
     </div>
+    <div class="menu-item" onclick="showScreen('screenChangePassword')">
+      <span class="menu-label">Change Password</span>
+      <span class="menu-chev">›</span>
+    </div>
     <div class="menu-item" onclick="openSecurityModal()">
       <span class="menu-label">Identity Verification</span>
       <div class="menu-right"><span style="color:#ff9f43">Uncompleted</span><span class="menu-chev">›</span></div>
@@ -362,6 +366,34 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
+     SCREEN: CHANGE PASSWORD
+════════════════════════════════════════════════ -->
+<div class="screen hidden" id="screenChangePassword">
+  <div class="s-header">
+    <button class="s-back" onclick="goBack()">‹</button>
+    <span class="s-title">Change Password</span>
+    <span style="width:32px"></span>
+  </div>
+  <div style="padding:1.2rem 1rem;display:flex;flex-direction:column;gap:1rem">
+    <div>
+      <div class="nick-label">Current Password</div>
+      <input class="nick-input" id="cpCurrent" type="password" placeholder="Enter current password"/>
+    </div>
+    <div>
+      <div class="nick-label">New Password</div>
+      <input class="nick-input" id="cpNew" type="password" placeholder="Min 8 characters"/>
+    </div>
+    <div>
+      <div class="nick-label">Confirm New Password</div>
+      <input class="nick-input" id="cpConfirm" type="password" placeholder="Re-enter new password"/>
+    </div>
+  </div>
+  <div style="padding:.5rem 0 2rem">
+    <button class="g-btn" id="cpSaveBtn" onclick="changePassword()">Update Password</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
      MODAL: SECURITY VERIFICATION
 ════════════════════════════════════════════════ -->
 <div class="modal-overlay hidden" id="modalSecurity" onclick="closeSecModal(event)">
@@ -526,6 +558,38 @@
   else if(page === 'notification') { showScreen('screenGeneralSettings'); showScreen('screenNotification'); }
   else if(page === 'payment') { showScreen('screenGeneralSettings'); showScreen('screenPaymentMethod'); }
   else if(page === 'nickname') showScreen('screenNickname');
+
+  function changePassword() {
+    var cur = document.getElementById('cpCurrent').value;
+    var nw = document.getElementById('cpNew').value;
+    var cf = document.getElementById('cpConfirm').value;
+    if(!cur) { alert('Enter current password'); return; }
+    if(!nw || nw.length < 8) { alert('New password must be at least 8 characters'); return; }
+    if(nw !== cf) { alert('Passwords do not match'); return; }
+    var btn = document.getElementById('cpSaveBtn');
+    btn.disabled = true;
+    var token = localStorage.getItem('bitcovex_token') || '';
+    fetch('/api/p2p/change-password', {
+      method: 'POST',
+      credentials: 'include',
+      headers: Object.assign({'Content-Type':'application/json'}, token ? {'Authorization':'Bearer '+token} : {}),
+      body: JSON.stringify({ currentPassword: cur, newPassword: nw })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      btn.disabled = false;
+      if(d && d.ok) {
+        document.getElementById('cpCurrent').value = '';
+        document.getElementById('cpNew').value = '';
+        document.getElementById('cpConfirm').value = '';
+        alert('Password changed successfully!');
+        goBack();
+      } else {
+        alert(d.message || 'Failed to change password');
+      }
+    })
+    .catch(function(){ btn.disabled = false; alert('Network error'); });
+  }
 
   loadProfile();
 </script>
