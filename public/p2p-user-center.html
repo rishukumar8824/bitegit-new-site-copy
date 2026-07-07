@@ -333,8 +333,7 @@
           <div class="profile-name" id="profileUsername">User</div>
           <div class="profile-badges" id="profileBadges">
             <span class="pbadge"><span class="pbadge-check">✓</span> Email</span>
-            <span class="pbadge"><span class="pbadge-check">✓</span> SMS</span>
-            <span class="pbadge"><span class="pbadge-check">✓</span> Identity Verification</span>
+            <span class="pbadge" id="kycBadge" onclick="location.href='/kyc'" style="cursor:pointer"><span class="pbadge-clock">⏱</span> KYC Unverified</span>
             <span class="pbadge"><span class="pbadge-clock">⏱</span> Deposit</span>
           </div>
         </div>
@@ -745,6 +744,28 @@
   }
 
   loadProfile();
+
+  // Load real KYC status for badge
+  (function() {
+    var token = localStorage.getItem('bitcovex_token') || '';
+    fetch('/api/p2p/kyc/status', { credentials:'include', headers: token ? {'Authorization':'Bearer '+token} : {} })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data) {
+      var badge = document.getElementById('kycBadge');
+      if(!badge) return;
+      var s = data && data.kyc ? (data.kyc.status || '').toUpperCase() : '';
+      if(s === 'VERIFIED') {
+        badge.innerHTML = '<span class="pbadge-check">✓</span> KYC Verified';
+        badge.style.color = '#00b897';
+      } else if(s === 'PENDING' || s === 'SUBMITTED' || s === 'UNDER_REVIEW') {
+        badge.innerHTML = '<span class="pbadge-clock">⏱</span> KYC Pending';
+        badge.style.color = '#3498db';
+      } else {
+        badge.innerHTML = '<span style="color:#f6465d">✕</span> KYC Unverified';
+        badge.style.color = '#f6465d';
+      }
+    }).catch(function(){});
+  })();
 </script>
 <script src="js/app.js"></script>
 </body>
