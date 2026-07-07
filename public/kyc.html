@@ -7,124 +7,145 @@
   <title>Identity Verification — Bitcovex</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    html,body{width:100%;min-height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+    html,body{width:100%;min-height:100%;background:#060608;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
     .hidden{display:none!important}
-    .screen{min-height:100vh;display:flex;flex-direction:column;background:#000}
+    .screen{min-height:100vh;display:flex;flex-direction:column;background:#060608}
 
     /* ── Topbar ── */
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem .5rem}
-    .back-btn{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;line-height:1;padding:.2rem}
-    .biz-btn{background:rgba(255,255,255,.1);border:none;border-radius:50px;color:#fff;font-size:.78rem;padding:.4rem .85rem;cursor:pointer;display:flex;align-items:center;gap:.3rem}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem .5rem;position:sticky;top:0;background:#060608;z-index:50}
+    .back-btn{background:rgba(255,255,255,.08);border:none;color:#fff;font-size:1.1rem;cursor:pointer;line-height:1;padding:.45rem .7rem;border-radius:50px;display:flex;align-items:center;justify-content:center;width:36px;height:36px}
+    .biz-btn{background:rgba(246,143,21,.12);border:1px solid rgba(246,143,21,.3);border-radius:50px;color:#F68F15;font-size:.75rem;padding:.4rem .85rem;cursor:pointer;font-weight:700}
 
-    /* ── Screen 1: Proof of Identity ── */
-    .poi-title{font-size:1.7rem;font-weight:800;padding:1.2rem 1rem .1rem}
-    .poi-section-label{font-size:.82rem;color:#666;padding:.9rem 1rem .4rem;letter-spacing:.01em}
+    /* ── Status Screen ── */
+    .status-banner{margin:1.2rem 1rem .5rem;background:linear-gradient(135deg,rgba(246,143,21,.15) 0%,rgba(246,143,21,.04) 100%);border:1px solid rgba(246,143,21,.25);border-radius:20px;padding:1.4rem 1.2rem;position:relative;overflow:hidden}
+    .status-banner::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(246,143,21,.2) 0%,transparent 70%);pointer-events:none}
+    .level-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(246,143,21,.18);border:1px solid rgba(246,143,21,.4);border-radius:50px;padding:.28rem .75rem;font-size:.72rem;font-weight:800;color:#F68F15;margin-bottom:.7rem}
+    .kyc-lvl-card{background:rgba(255,255,255,.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:1.1rem 1.1rem;margin-bottom:.65rem;transition:border-color .2s}
+    .kyc-lvl-card:first-child{border-color:rgba(246,143,21,.2);background:rgba(246,143,21,.05)}
+    .lvl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
+    .lvl-name{font-size:.82rem;font-weight:700;color:#aaa;display:flex;align-items:center;gap:.4rem}
+    .lvl-name::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5}
+    .lvl-badge-unverified{background:rgba(246,70,93,.12);color:#f6465d;border:1px solid rgba(246,70,93,.2);font-size:.68rem;font-weight:800;padding:.2rem .65rem;border-radius:50px}
+    .lvl-badge-pending{background:rgba(52,152,219,.12);color:#3498db;border:1px solid rgba(52,152,219,.25);font-size:.68rem;font-weight:800;padding:.2rem .65rem;border-radius:50px}
+    .lvl-badge-verified{background:rgba(0,184,151,.12);color:#00b897;border:1px solid rgba(0,184,151,.25);font-size:.68rem;font-weight:800;padding:.2rem .65rem;border-radius:50px}
+    .lvl-badge-locked{background:#111;color:#444;border:1px solid #222;font-size:.68rem;font-weight:800;padding:.2rem .65rem;border-radius:50px}
+    .lvl-desc{font-size:.76rem;color:#555;margin-bottom:.9rem;line-height:1.5}
+    .lvl-stats{display:flex;gap:.5rem}
+    .lvl-stat{flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:.5rem .6rem;text-align:center}
+    .lvl-stat-label{font-size:.6rem;color:#444;margin-bottom:.15rem;text-transform:uppercase;letter-spacing:.03em}
+    .lvl-stat-val{font-size:.78rem;font-weight:700}
 
-    .country-row{margin:0 1rem;background:#1a1a1a;border-radius:14px;padding:.85rem 1rem;display:flex;align-items:center;gap:.7rem;cursor:pointer;border:1px solid rgba(255,255,255,.07)}
+    /* ── Proof of Identity ── */
+    .poi-title{font-size:1.65rem;font-weight:800;padding:1.2rem 1rem .15rem;letter-spacing:-.02em}
+    .poi-section-label{font-size:.76rem;color:#555;padding:.9rem 1rem .45rem;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+    .country-row{margin:0 1rem;background:rgba(255,255,255,.05);border-radius:16px;padding:.9rem 1.1rem;display:flex;align-items:center;gap:.75rem;cursor:pointer;border:1px solid rgba(255,255,255,.08);transition:border-color .2s,background .15s}
+    .country-row:active{background:rgba(255,255,255,.08)}
     .country-flag{font-size:1.5rem;line-height:1}
-    .country-name{flex:1;font-size:1rem;font-weight:600}
-    .location-btn{display:flex;align-items:center;gap:.3rem;color:#888;font-size:.78rem}
-    .location-icon{font-size:.85rem}
+    .country-name{flex:1;font-size:.97rem;font-weight:700}
+    .location-btn{display:flex;align-items:center;gap:.3rem;color:#555;font-size:.75rem;background:rgba(255,255,255,.05);border-radius:50px;padding:.25rem .65rem;border:1px solid rgba(255,255,255,.08)}
 
-    /* Aadhaar card */
     .quick-section{padding:.4rem 1rem .6rem}
-    .aadhaar-card{position:relative;background:#1a1a1a;border:1.5px solid rgba(255,255,255,.15);border-radius:14px;padding:1rem 1rem;display:flex;align-items:center;gap:.8rem;cursor:pointer;overflow:hidden}
-    .aadhaar-card:active{background:#222}
-    .recommended-badge{position:absolute;top:0;right:0;background:#F68F15;color:#fff;font-size:.65rem;font-weight:800;padding:.22rem .65rem;border-radius:0 12px 0 10px;letter-spacing:.02em}
-    .aadhaar-icon{width:36px;height:36px;flex-shrink:0}
-    .aadhaar-label{font-size:1rem;font-weight:600}
+    .aadhaar-card{position:relative;background:linear-gradient(135deg,rgba(246,143,21,.1) 0%,rgba(246,143,21,.04) 100%);border:1.5px solid rgba(246,143,21,.3);border-radius:16px;padding:1.1rem 1.1rem;display:flex;align-items:center;gap:.9rem;cursor:pointer;overflow:hidden;transition:border-color .2s,background .15s}
+    .aadhaar-card:active{background:rgba(246,143,21,.15)}
+    .aadhaar-card::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(246,143,21,.05),transparent);pointer-events:none}
+    .recommended-badge{position:absolute;top:0;right:0;background:linear-gradient(135deg,#F68F15,#e07a0d);color:#fff;font-size:.62rem;font-weight:800;padding:.25rem .75rem;border-radius:0 14px 0 10px;letter-spacing:.03em}
+    .aadhaar-icon{width:40px;height:40px;flex-shrink:0;background:rgba(246,143,21,.15);border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .aadhaar-label{font-size:1rem;font-weight:700}
+    .aadhaar-sub{font-size:.73rem;color:#888;margin-top:.1rem}
 
-    /* No Aadhaar toggle */
-    .no-aadhaar-toggle{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem;cursor:pointer;color:#666;font-size:.88rem}
-    .toggle-arrow{font-size:.85rem;transition:transform .25s}
+    .no-aadhaar-toggle{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;cursor:pointer;font-size:.85rem;color:#777;border-top:1px solid rgba(255,255,255,.05);margin:0 1rem}
+    .toggle-arrow{font-size:.75rem;transition:transform .25s;color:#555}
     .toggle-arrow.open{transform:rotate(180deg)}
-    .other-docs{padding:0 1rem;display:flex;flex-direction:column;gap:.55rem;overflow:hidden;transition:max-height .3s ease;max-height:0}
-    .other-docs.open{max-height:300px;padding-bottom:.8rem}
-    .doc-card{background:#1a1a1a;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.9rem 1rem;display:flex;align-items:center;gap:.8rem;cursor:pointer}
-    .doc-card:active{background:#222}
-    .doc-icon{font-size:1.3rem;width:32px;text-align:center}
-    .doc-label{font-size:.95rem;font-weight:600}
+    .other-docs{padding:0 1rem;display:flex;flex-direction:column;gap:.5rem;overflow:hidden;transition:max-height .3s ease;max-height:0}
+    .other-docs.open{max-height:320px;padding-bottom:.8rem}
+    .doc-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.9rem 1.1rem;display:flex;align-items:center;gap:.85rem;cursor:pointer;transition:border-color .2s,background .15s}
+    .doc-card:active{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.15)}
+    .doc-icon-wrap{width:36px;height:36px;background:rgba(255,255,255,.07);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+    .doc-label{font-size:.93rem;font-weight:700}
+    .doc-sub{font-size:.72rem;color:#555;margin-top:.08rem}
 
-    /* Bottom CTA */
-    .bottom-area{flex:1;display:flex;align-items:flex-end;padding:1.5rem 1rem 2.5rem}
-    .earn-btn{width:100%;background:#F68F15;border:none;border-radius:50px;padding:1rem;font-size:1.05rem;font-weight:800;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem}
-    .earn-btn:active{filter:brightness(.9)}
+    .bottom-area{flex:1;display:flex;align-items:flex-end;padding:1.5rem 1rem calc(2rem + env(safe-area-inset-bottom))}
+    .earn-btn{width:100%;background:linear-gradient(135deg,#F68F15,#e07a0d);border:none;border-radius:50px;padding:1rem;font-size:1.05rem;font-weight:800;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;box-shadow:0 4px 20px rgba(246,143,21,.35)}
+    .earn-btn:active{filter:brightness(.9);transform:scale(.99)}
 
-    /* ── Country Picker Bottom Sheet ── */
-    .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;flex-direction:column;justify-content:flex-end}
-    .sheet-box{background:#111;border-radius:20px 20px 0 0;max-height:88vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
-    .sheet-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.1rem .8rem}
-    .sheet-title{font-size:1.1rem;font-weight:700}
-    .sheet-close{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:.2rem}
+    /* ── Country Picker ── */
+    .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;flex-direction:column;justify-content:flex-end;backdrop-filter:blur(4px)}
+    .sheet-box{background:#0f0f11;border-radius:24px 24px 0 0;max-height:90vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);border-top:1px solid rgba(255,255,255,.08)}
+    .sheet-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.2rem .8rem}
+    .sheet-title{font-size:1.05rem;font-weight:700}
+    .sheet-close{background:rgba(255,255,255,.1);border:none;color:#fff;font-size:1rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
     .search-wrap{padding:0 1rem .8rem}
-    .search-input{width:100%;background:#1e1e1e;border:1px solid rgba(255,255,255,.1);border-radius:50px;padding:.7rem 1rem .7rem 2.5rem;color:#fff;font-size:.9rem;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%23888' stroke-width='2'/%3E%3Cpath d='M20 20l-4-4' stroke='%23888' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:.85rem center;background-size:15px}
-    .search-input::placeholder{color:#555}
-    .country-list{overflow-y:auto;flex:1}
-    .country-list-label{font-size:.75rem;color:#555;padding:.5rem 1.1rem .3rem;letter-spacing:.04em;text-transform:uppercase}
-    .country-item{display:flex;align-items:center;gap:.75rem;padding:.78rem 1.1rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)}
-    .country-item:active{background:#1e1e1e}
+    .search-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:50px;padding:.7rem 1rem .7rem 2.5rem;color:#fff;font-size:.9rem;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%23666' stroke-width='2'/%3E%3Cpath d='M20 20l-4-4' stroke='%23666' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:.85rem center;background-size:15px;font-family:inherit}
+    .search-input::placeholder{color:#444}
+    .country-list{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+    .country-list-label{font-size:.7rem;color:#444;padding:.5rem 1.2rem .3rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+    .country-item{display:flex;align-items:center;gap:.8rem;padding:.75rem 1.2rem;cursor:pointer}
+    .country-item:active{background:rgba(255,255,255,.05)}
     .ci-flag{font-size:1.3rem;width:28px;text-align:center}
-    .ci-name{flex:1;font-size:.92rem;color:#fff}
-    .ci-code{font-size:.82rem;color:#555}
+    .ci-name{flex:1;font-size:.9rem;color:#ddd;font-weight:500}
+    .ci-code{font-size:.78rem;color:#444}
     .ci-check{color:#F68F15;font-size:1rem}
 
-    /* ── Intro Screen (Sumsub-style) ── */
-    .intro-screen{min-height:100vh;background:#1c1c1e;display:flex;flex-direction:column}
+    /* ── Intro Screen ── */
+    .intro-screen{min-height:100vh;background:#0a0a10;display:flex;flex-direction:column}
     .intro-close-row{display:flex;justify-content:flex-end;padding:1rem 1rem .5rem}
-    .intro-close{width:36px;height:36px;background:rgba(255,255,255,.12);border:none;border-radius:50%;color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
-    .intro-content{flex:1;padding:1rem 1.2rem 0;display:flex;flex-direction:column;gap:1.4rem}
-    .intro-heading{font-size:1.5rem;font-weight:800;text-align:center}
-    .intro-sub{font-size:.85rem;color:#8a8a8e;text-align:center;margin-top:-.6rem}
+    .intro-close{width:36px;height:36px;background:rgba(255,255,255,.1);border:none;border-radius:50%;color:#aaa;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .intro-content{flex:1;padding:1rem 1.2rem 0;display:flex;flex-direction:column;gap:1.5rem}
+    .intro-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:.5rem}
+    .intro-shield{width:72px;height:72px;background:linear-gradient(135deg,rgba(246,143,21,.2),rgba(246,143,21,.06));border:1.5px solid rgba(246,143,21,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem}
+    .intro-heading{font-size:1.45rem;font-weight:800;text-align:center;letter-spacing:-.02em}
+    .intro-sub{font-size:.82rem;color:#555;text-align:center;line-height:1.5}
     .intro-steps{display:flex;flex-direction:column;gap:.6rem}
-    .intro-step{background:#2c2c2e;border-radius:14px;padding:.95rem 1rem;display:flex;align-items:center;gap:.9rem}
-    .intro-step-icon{font-size:1.4rem;width:36px;text-align:center;flex-shrink:0}
-    .intro-step-title{font-size:.95rem;font-weight:700}
-    .intro-step-sub{font-size:.75rem;color:#8a8a8e;margin-top:.15rem}
-    .intro-footer{padding:1.2rem 1rem 2.5rem}
-    .continue-btn{width:100%;background:#3a7bd5;border:none;border-radius:14px;padding:.95rem;font-size:1rem;font-weight:700;color:#fff;cursor:pointer}
+    .intro-step{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:1rem 1rem;display:flex;align-items:center;gap:.9rem;transition:border-color .2s}
+    .intro-step-num{width:32px;height:32px;border-radius:50%;background:rgba(246,143,21,.15);border:1px solid rgba(246,143,21,.3);color:#F68F15;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .intro-step-title{font-size:.93rem;font-weight:700;color:#eee}
+    .intro-step-sub{font-size:.73rem;color:#555;margin-top:.12rem}
+    .intro-footer{padding:1.2rem 1rem calc(2.5rem + env(safe-area-inset-bottom))}
+    .continue-btn{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;border-radius:14px;padding:1rem;font-size:1rem;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,.35)}
     .continue-btn:active{filter:brightness(.9)}
-    .powered-by{text-align:center;font-size:.72rem;color:#555;margin-top:.7rem}
+    .powered-by{text-align:center;font-size:.7rem;color:#333;margin-top:.75rem}
 
-    /* ── Upload Screen ── */
-    .upload-screen{min-height:100vh;background:#000;display:flex;flex-direction:column}
+    /* ── Upload Screens ── */
+    .upload-screen{min-height:100vh;background:#060608;display:flex;flex-direction:column}
     .upload-topbar{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem}
-    .upload-title-wrap{padding:.2rem 1rem 1rem}
-    .upload-page-title{font-size:1.3rem;font-weight:800}
-    .upload-page-sub{font-size:.82rem;color:#666;margin-top:.3rem}
-    .upload-steps-row{display:flex;align-items:center;padding:0 1rem .8rem;gap:4px}
-    .ustep{height:3px;flex:1;border-radius:3px;background:#222}
+    .upload-title-wrap{padding:.2rem 1rem .9rem}
+    .upload-page-title{font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+    .upload-page-sub{font-size:.78rem;color:#555;margin-top:.3rem;line-height:1.5}
+    .upload-steps-row{display:flex;align-items:center;padding:0 1rem .8rem;gap:5px}
+    .ustep{height:3px;flex:1;border-radius:3px;background:#1a1a1a;transition:background .3s}
     .ustep.active{background:#F68F15}
     .ustep.done{background:#00b897}
-    .upload-card{margin:0 1rem;background:#1a1a1a;border:1.5px dashed rgba(255,255,255,.18);border-radius:18px;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;padding:2rem 1rem;cursor:pointer;position:relative;transition:border-color .2s}
-    .upload-card.has-img{border-style:solid;border-color:#F68F15}
+    .upload-card{margin:0 1rem;background:rgba(255,255,255,.04);border:1.5px dashed rgba(255,255,255,.15);border-radius:20px;min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;padding:2rem 1rem;cursor:pointer;position:relative;transition:border-color .2s,background .15s}
+    .upload-card:active{background:rgba(255,255,255,.07)}
+    .upload-card.has-img{border-style:solid;border-color:#F68F15;background:rgba(246,143,21,.05)}
     .upload-card input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
-    .upload-card-icon{font-size:2.8rem;opacity:.5}
-    .upload-card-title{font-size:.95rem;font-weight:700}
-    .upload-card-hint{font-size:.75rem;color:#555;text-align:center}
-    .upload-preview-img{width:100%;max-height:190px;object-fit:cover;border-radius:12px;display:none}
-    .tips-row{margin:1rem 1rem 0;background:#111;border-radius:12px;padding:.8rem 1rem}
-    .tips-title-row{font-size:.78rem;color:#F68F15;font-weight:700;margin-bottom:.4rem}
-    .tip-item{font-size:.73rem;color:#666;margin:.2rem 0;display:flex;gap:.4rem}
-    .tip-item::before{content:"•";color:#F68F15}
-    .upload-bottom{position:sticky;bottom:0;background:#000;padding:1rem 1rem calc(1.2rem + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.06);margin-top:auto}
-    .upload-next-btn{width:100%;background:#F68F15;border:none;border-radius:50px;padding:.9rem;font-size:1rem;font-weight:800;color:#fff;cursor:pointer}
-    .upload-next-btn:disabled{opacity:.4;cursor:not-allowed}
+    .upload-card-icon{font-size:3rem;opacity:.35}
+    .upload-card-title{font-size:.97rem;font-weight:700}
+    .upload-card-hint{font-size:.73rem;color:#444;text-align:center;line-height:1.5}
+    .upload-preview-img{width:100%;max-height:195px;object-fit:cover;border-radius:14px;display:none}
+    .tips-row{margin:1rem 1rem 0;background:rgba(246,143,21,.06);border:1px solid rgba(246,143,21,.15);border-radius:14px;padding:.9rem 1.1rem}
+    .tips-title-row{font-size:.76rem;color:#F68F15;font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.35rem}
+    .tip-item{font-size:.72rem;color:#666;margin:.22rem 0;display:flex;gap:.5rem;line-height:1.4}
+    .tip-item::before{content:"•";color:#F68F15;flex-shrink:0}
+    .upload-bottom{position:sticky;bottom:0;background:#060608;padding:1rem 1rem calc(1.4rem + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.05);margin-top:auto}
+    .upload-next-btn{width:100%;background:linear-gradient(135deg,#F68F15,#e07a0d);border:none;border-radius:50px;padding:.95rem;font-size:1rem;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 4px 18px rgba(246,143,21,.3)}
+    .upload-next-btn:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;background:#333}
 
     /* ── Selfie Screen ── */
-    .selfie-guide{margin:0 1rem;background:#1a1a1a;border-radius:18px;padding:1.5rem 1rem;display:flex;flex-direction:column;align-items:center;gap:.8rem}
-    .selfie-circle{width:130px;height:130px;border-radius:50%;border:2.5px dashed rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:4rem}
-    .selfie-rules{width:100%;display:flex;flex-direction:column;gap:.5rem;margin-top:.3rem}
-    .selfie-rule{display:flex;align-items:center;gap:.6rem;font-size:.78rem;color:#888}
-    .selfie-rule-icon{font-size:1rem;width:22px;text-align:center}
+    .selfie-guide{margin:0 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:1.8rem 1rem;display:flex;flex-direction:column;align-items:center;gap:.9rem}
+    .selfie-circle{width:140px;height:140px;border-radius:50%;border:2px solid rgba(246,143,21,.3);background:rgba(246,143,21,.05);display:flex;align-items:center;justify-content:center;font-size:4rem;box-shadow:0 0 30px rgba(246,143,21,.1)}
+    .selfie-rules{width:100%;display:flex;flex-direction:column;gap:.55rem;margin-top:.3rem}
+    .selfie-rule{display:flex;align-items:center;gap:.65rem;font-size:.78rem;color:#666}
+    .selfie-rule-icon{font-size:1rem;width:24px;text-align:center;flex-shrink:0}
 
-    /* ── Pending / Verified ── */
-    .result-screen{min-height:100vh;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;gap:1.2rem;text-align:center}
+    /* ── Result Screens ── */
+    .result-screen{min-height:100vh;background:#060608;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;gap:1.2rem;text-align:center}
     .result-icon{font-size:4rem}
     .result-title{font-size:1.4rem;font-weight:800}
-    .result-sub{font-size:.85rem;color:#666;line-height:1.6;max-width:280px}
+    .result-sub{font-size:.85rem;color:#555;line-height:1.6;max-width:280px}
 
     /* ── Toast ── */
-    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:.6rem 1.2rem;border-radius:50px;font-size:.82rem;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw}
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1a1a1e;border:1px solid rgba(255,255,255,.1);color:#fff;padding:.65rem 1.3rem;border-radius:50px;font-size:.82rem;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw;backdrop-filter:blur(10px)}
     .toast.show{opacity:1}
   </style>
 </head>
@@ -133,57 +154,70 @@
 <!-- ═══ SCREEN 0: STATUS HOME (default) ═══ -->
 <div class="screen" id="screenStatus">
   <div class="topbar">
-    <button class="back-btn" onclick="history.back()">←</button>
+    <button class="back-btn" onclick="history.back()">‹</button>
     <span style="font-size:1rem;font-weight:700;flex:1;text-align:center">Identity Verification</span>
-    <span style="width:32px"></span>
+    <span style="width:36px"></span>
+  </div>
+
+  <!-- Hero banner -->
+  <div class="status-banner">
+    <div class="level-badge">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="#F68F15"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+      KYC Verification
+    </div>
+    <div style="font-size:1.25rem;font-weight:800;margin-bottom:.3rem">Unlock Full Access</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,.45);line-height:1.5">Complete identity verification to unlock P2P trading, higher limits, and exclusive benefits.</div>
   </div>
 
   <!-- KYC Level Cards -->
   <div style="padding:.5rem 1rem 0">
     <!-- Lv1 -->
-    <div style="background:#1a1a1a;border-radius:16px;padding:1rem 1.1rem;margin-bottom:.7rem;border:1px solid rgba(255,255,255,.07)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
-        <span style="font-size:.82rem;font-weight:700;color:#888">Lv.1 Basic Verification</span>
-        <span id="lv1StatusBadge" style="font-size:.72rem;font-weight:800;padding:.22rem .7rem;border-radius:50px;background:rgba(246,70,93,.15);color:#f6465d">Unverified</span>
+    <div class="kyc-lvl-card">
+      <div class="lvl-head">
+        <span class="lvl-name">Lv.1 Basic Verification</span>
+        <span id="lv1StatusBadge" class="lvl-badge-unverified">Unverified</span>
       </div>
-      <div style="font-size:.78rem;color:#555;margin-bottom:.85rem">Submit your government ID to unlock P2P trading</div>
-      <div style="display:flex;gap:.5rem">
-        <div style="flex:1;background:#111;border-radius:10px;padding:.55rem .7rem;text-align:center">
-          <div style="font-size:.65rem;color:#555;margin-bottom:.15rem">Daily Limit</div>
-          <div style="font-size:.82rem;font-weight:700" id="lv1Limit">—</div>
+      <div class="lvl-desc">Submit your government-issued ID to unlock P2P trading and increase limits.</div>
+      <div class="lvl-stats">
+        <div class="lvl-stat">
+          <div class="lvl-stat-label">Daily Limit</div>
+          <div class="lvl-stat-val" id="lv1Limit" style="color:#F68F15">—</div>
         </div>
-        <div style="flex:1;background:#111;border-radius:10px;padding:.55rem .7rem;text-align:center">
-          <div style="font-size:.65rem;color:#555;margin-bottom:.15rem">Withdrawal</div>
-          <div style="font-size:.82rem;font-weight:700" id="lv1Withdraw">—</div>
+        <div class="lvl-stat">
+          <div class="lvl-stat-label">Withdrawal</div>
+          <div class="lvl-stat-val" id="lv1Withdraw" style="color:#F68F15">—</div>
         </div>
-        <div style="flex:1;background:#111;border-radius:10px;padding:.55rem .7rem;text-align:center">
-          <div style="font-size:.65rem;color:#555;margin-bottom:.15rem">P2P</div>
-          <div style="font-size:.82rem;font-weight:700" id="lv1P2p">Locked</div>
+        <div class="lvl-stat">
+          <div class="lvl-stat-label">P2P</div>
+          <div class="lvl-stat-val" id="lv1P2p" style="color:#f6465d">Locked</div>
         </div>
       </div>
     </div>
 
     <!-- Lv2 -->
-    <div style="background:#1a1a1a;border-radius:16px;padding:1rem 1.1rem;margin-bottom:1.2rem;border:1px solid rgba(255,255,255,.07);opacity:.5">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
-        <span style="font-size:.82rem;font-weight:700;color:#888">Lv.2 Advanced Verification</span>
-        <span style="font-size:.72rem;font-weight:800;padding:.22rem .7rem;border-radius:50px;background:#1e1e1e;color:#444">Locked</span>
+    <div class="kyc-lvl-card" style="opacity:.4">
+      <div class="lvl-head">
+        <span class="lvl-name">Lv.2 Advanced Verification</span>
+        <span class="lvl-badge-locked">Locked</span>
       </div>
-      <div style="font-size:.78rem;color:#555">Complete Lv.1 first to unlock advanced limits</div>
+      <div class="lvl-desc" style="margin-bottom:0">Complete Lv.1 first to unlock advanced limits and priority support.</div>
     </div>
   </div>
 
-  <!-- Verify Now button (shown only when unverified) -->
-  <div style="padding:0 1rem 2rem" id="verifyNowWrap">
-    <button class="earn-btn" onclick="showScreen('screenPOI')">🎁 Verify Now to Earn $20</button>
+  <!-- Verify Now -->
+  <div style="padding:.8rem 1rem calc(2rem + env(safe-area-inset-bottom))" id="verifyNowWrap">
+    <button class="earn-btn" onclick="showScreen('screenPOI')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+      Verify Now — Earn $20
+    </button>
   </div>
 </div>
 
 <!-- ═══ SCREEN 1: PROOF OF IDENTITY ═══ -->
 <div class="screen hidden" id="screenPOI">
   <div class="topbar">
-    <button class="back-btn" onclick="history.back()">←</button>
-    <button class="biz-btn">Business Verification ⇆</button>
+    <button class="back-btn" onclick="showScreen('screenStatus')">‹</button>
+    <button class="biz-btn">Business ⇆</button>
   </div>
 
   <div class="poi-title">Proof of Identity</div>
@@ -193,45 +227,56 @@
     <span class="country-flag" id="selectedFlag">🇮🇳</span>
     <span class="country-name" id="selectedName">India</span>
     <div class="location-btn">
-      <span class="location-icon">📍</span> Location <span style="font-size:.7rem">▼</span>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      Location <span style="font-size:.65rem">▼</span>
     </div>
   </div>
 
   <div class="poi-section-label">Quick verification</div>
   <div class="quick-section">
     <div class="aadhaar-card" onclick="goToIntro('aadhaar')">
-      <div class="recommended-badge">Recommended</div>
-      <svg class="aadhaar-icon" viewBox="0 0 36 36" fill="none">
-        <rect width="36" height="36" rx="8" fill="#1a1a2e"/>
-        <circle cx="18" cy="14" r="5" stroke="#F68F15" stroke-width="1.8" fill="none"/>
-        <path d="M8 28c0-5 4.5-8 10-8s10 3 10 8" stroke="#F68F15" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-        <path d="M22 20c1.5.8 3 2.5 3 5" stroke="#F68F15" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".5"/>
-      </svg>
-      <span class="aadhaar-label">Aadhaar</span>
+      <div class="recommended-badge">✦ Recommended</div>
+      <div class="aadhaar-icon">
+        <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
+          <circle cx="18" cy="14" r="5" stroke="#F68F15" stroke-width="2" fill="none"/>
+          <path d="M8 28c0-5 4.5-8 10-8s10 3 10 8" stroke="#F68F15" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <div>
+        <div class="aadhaar-label">Aadhaar Card</div>
+        <div class="aadhaar-sub">Front &amp; Back + Selfie</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(246,143,21,.5)" stroke-width="2.5" style="margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
   </div>
 
   <div class="no-aadhaar-toggle" id="noAadhaarToggle" onclick="toggleOtherDocs()">
-    <span>No Aadhaar? Use other documents.</span>
+    <span style="color:#555;font-size:.83rem">No Aadhaar? Use other documents</span>
     <span class="toggle-arrow" id="toggleArrow">▼</span>
   </div>
   <div class="other-docs" id="otherDocs">
     <div class="doc-card" onclick="goToIntro('id_card')">
-      <span class="doc-icon">🪪</span>
-      <span class="doc-label">ID Card</span>
+      <div class="doc-icon-wrap">🪪</div>
+      <div><div class="doc-label">ID Card</div><div class="doc-sub">National Identity Card</div></div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <div class="doc-card" onclick="goToIntro('passport')">
-      <span class="doc-icon">📘</span>
-      <span class="doc-label">Passport</span>
+      <div class="doc-icon-wrap">📘</div>
+      <div><div class="doc-label">Passport</div><div class="doc-sub">International Travel Document</div></div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <div class="doc-card" onclick="goToIntro('driving')">
-      <span class="doc-icon">🚗</span>
-      <span class="doc-label">Driving Licence</span>
+      <div class="doc-icon-wrap">🚗</div>
+      <div><div class="doc-label">Driving Licence</div><div class="doc-sub">Government-issued driving permit</div></div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
   </div>
 
   <div class="bottom-area">
-    <button class="earn-btn" onclick="goToIntro('aadhaar')">🎁 Verify to Earn $20</button>
+    <button class="earn-btn" onclick="goToIntro('aadhaar')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+      Verify to Earn $20
+    </button>
   </div>
 </div>
 
@@ -255,37 +300,38 @@
     <button class="intro-close" onclick="showScreen('screenPOI')">✕</button>
   </div>
   <div class="intro-content">
-    <div>
+    <div class="intro-logo-wrap">
+      <div class="intro-shield">🛡️</div>
       <div class="intro-heading">Verify your identity</div>
-      <div class="intro-sub">It will only take 2 minutes</div>
+      <div class="intro-sub">Takes only 2 minutes · Your data is encrypted &amp; secure</div>
     </div>
     <div class="intro-steps">
       <div class="intro-step">
-        <span class="intro-step-icon">🪪</span>
+        <div class="intro-step-num">1</div>
         <div>
-          <div class="intro-step-title">Identity document</div>
-          <div class="intro-step-sub">Take a photo of your ID</div>
+          <div class="intro-step-title">Identity Document</div>
+          <div class="intro-step-sub">Photo of your Aadhaar (front &amp; back)</div>
         </div>
       </div>
       <div class="intro-step">
-        <span class="intro-step-icon">🤳</span>
+        <div class="intro-step-num">2</div>
         <div>
-          <div class="intro-step-title">Selfie</div>
-          <div class="intro-step-sub">Take a selfie</div>
+          <div class="intro-step-title">Face Selfie</div>
+          <div class="intro-step-sub">Selfie holding your ID clearly visible</div>
         </div>
       </div>
       <div class="intro-step">
-        <span class="intro-step-icon">📋</span>
+        <div class="intro-step-num">3</div>
         <div>
-          <div class="intro-step-title">Profile details</div>
-          <div class="intro-step-sub">Verify and complete your personal information.</div>
+          <div class="intro-step-title">Personal Details</div>
+          <div class="intro-step-sub">Confirm your name, date of birth, and ID number</div>
         </div>
       </div>
     </div>
   </div>
   <div class="intro-footer">
-    <button class="continue-btn" onclick="startUpload()">Continue</button>
-    <div class="powered-by">Powered by Bitcovex Verify</div>
+    <button class="continue-btn" onclick="startUpload()">Start Verification</button>
+    <div class="powered-by">🔒 Secured by Bitcovex Verify · End-to-end encrypted</div>
   </div>
 </div>
 
@@ -508,10 +554,14 @@
 
 <!-- ═══ SCREEN: VERIFIED ═══ -->
 <div class="screen hidden result-screen" id="screenVerified">
-  <div style="font-size:4rem">✅</div>
-  <div class="result-title">Verified!</div>
-  <div class="result-sub">Your identity has been successfully verified. You now have full access to all features.</div>
-  <button class="earn-btn" style="margin-top:1rem" onclick="history.back()">Done</button>
+  <div style="width:90px;height:90px;border-radius:50%;background:rgba(0,184,151,.12);border:2px solid rgba(0,184,151,.3);display:flex;align-items:center;justify-content:center;font-size:3rem;box-shadow:0 0 40px rgba(0,184,151,.15)">✅</div>
+  <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.02em">Identity Verified!</div>
+  <div style="font-size:.85rem;color:#555;line-height:1.6;max-width:270px;text-align:center">Your identity has been successfully verified. You now have full access to all P2P features and higher limits.</div>
+  <div style="background:rgba(0,184,151,.08);border:1px solid rgba(0,184,151,.2);border-radius:14px;padding:.8rem 1.5rem;text-align:center">
+    <div style="font-size:.7rem;color:#00b897;font-weight:700;margin-bottom:.2rem">✦ BENEFITS UNLOCKED</div>
+    <div style="font-size:.8rem;color:#aaa">Unlimited P2P · Higher withdrawals · Priority support</div>
+  </div>
+  <button class="earn-btn" style="margin-top:.5rem;max-width:280px" onclick="history.back()">Go to P2P Trading</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -767,30 +817,21 @@
       var s = (data.kyc.status || '').toUpperCase();
 
       if(s === 'VERIFIED') {
-        badge.textContent = 'Verified ✓';
-        badge.style.background = 'rgba(0,184,151,.15)';
-        badge.style.color = '#00b897';
-        lv1Limit.textContent = '₹50,000';
-        lv1Withdraw.textContent = '5 BTC';
-        lv1P2p.textContent = 'Active';
-        lv1P2p.style.color = '#00b897';
-        verifyWrap.innerHTML = '<button class="earn-btn" style="background:#00b897" onclick="history.back()">✓ Fully Verified</button>';
-        // Also show verified screen after a moment
+        badge.className = 'lvl-badge-verified'; badge.textContent = 'Verified ✓';
+        lv1Limit.textContent = '₹50,000'; lv1Limit.style.color = '#00b897';
+        lv1Withdraw.textContent = '5 BTC'; lv1Withdraw.style.color = '#00b897';
+        lv1P2p.textContent = 'Active'; lv1P2p.style.color = '#00b897';
+        verifyWrap.innerHTML = '<button class="earn-btn" style="background:linear-gradient(135deg,#00b897,#009e80);box-shadow:0 4px 20px rgba(0,184,151,.35)" onclick="history.back()">✓ Fully Verified — Go Back</button>';
         setTimeout(function(){ showScreen('screenVerified'); }, 300);
       } else if(s === 'PENDING' || s === 'SUBMITTED' || s === 'UNDER_REVIEW') {
-        badge.textContent = 'Under Review ⏳';
-        badge.style.background = 'rgba(52,152,219,.15)';
-        badge.style.color = '#3498db';
-        lv1Limit.textContent = 'Pending';
-        lv1Withdraw.textContent = 'Pending';
-        lv1P2p.textContent = 'Pending';
-        lv1P2p.style.color = '#3498db';
-        verifyWrap.innerHTML = '<button class="earn-btn" style="background:#3498db;cursor:default">⏳ Under Review — Up to 24 hrs</button>';
+        badge.className = 'lvl-badge-pending'; badge.textContent = '⏳ Under Review';
+        lv1Limit.textContent = 'Pending'; lv1Limit.style.color = '#3498db';
+        lv1Withdraw.textContent = 'Pending'; lv1Withdraw.style.color = '#3498db';
+        lv1P2p.textContent = 'Pending'; lv1P2p.style.color = '#3498db';
+        verifyWrap.innerHTML = '<button class="earn-btn" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);box-shadow:0 4px 20px rgba(37,99,235,.3);cursor:default">⏳ Under Review — 24 to 48 hours</button>';
       } else if(s === 'REJECTED' || s === 'FAILED') {
-        badge.textContent = 'Rejected ✕';
-        badge.style.background = 'rgba(246,70,93,.15)';
-        badge.style.color = '#f6465d';
-        verifyWrap.innerHTML = '<div style="font-size:.78rem;color:#f6465d;margin-bottom:.6rem;text-align:center">'+(data.kyc.rejectionReason||'Verification rejected. Please try again.')+'</div>'
+        badge.className = 'lvl-badge-unverified'; badge.textContent = '✕ Rejected';
+        verifyWrap.innerHTML = '<div style="font-size:.78rem;color:#f6465d;margin-bottom:.7rem;text-align:center;padding:0 .5rem;line-height:1.5">'+(data.kyc.rejectionReason||'Verification rejected. Please re-submit with clear documents.')+'</div>'
           +'<button class="earn-btn" onclick="showScreen(\'screenPOI\')">🔄 Re-submit Verification</button>';
       }
       // else stays unverified (default)

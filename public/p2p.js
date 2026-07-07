@@ -3248,8 +3248,26 @@ function renderOffers(data, append) {
       if (_exB) _exB.remove();
       cardsEl.insertAdjacentHTML('beforeend', cardsHtml.join('') + _P2P_BENEFITS_HTML);
     } else {
-      cardsEl.innerHTML = _bsBar + cardsHtml.join('') + _P2P_BENEFITS_HTML;
-      // wire injected Buy/Sell bar to real sideTabs
+      // Build sticky coin tabs
+      const _coinSVGs = {
+        USDT: '<svg width="14" height="14" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.122 0 1.048 3.309 1.919 7.709 2.121v7.596h3.913v-7.6c4.393-.202 7.694-1.073 7.694-2.12 0-1.046-3.301-1.917-7.694-2.12" fill="white"/></svg>',
+        BTC:  '<svg width="14" height="14" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F7931A"/><path d="M22.5 14.3c.3-2.1-1.3-3.2-3.5-4l.7-2.8-1.7-.4-.7 2.7-1.4-.3.7-2.7-1.7-.4-.7 2.8-2.8-.7-.4 1.8s1.3.3 1.2.3c.7.2.8.6.8.9l-2 7.9c-.1.2-.3.5-.8.4 0 .1-1.2-.3-1.2-.3l-.8 2 2.6.7-.7 2.8 1.7.4.7-2.8 1.4.4-.7 2.8 1.7.4.7-2.8c2.9.5 5-.2 5.9-2.8.7-2.1 0-3.3-1.5-4.1 1.1-.3 1.9-1 2.1-2.6z" fill="white"/></svg>',
+        ETH:  '<svg width="14" height="14" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#627EEA"/><path d="M16.498 4v8.87l7.497 3.35z" fill="white" fill-opacity=".6"/><path d="M16.498 4L9 16.22l7.498-3.35z" fill="white"/><path d="M16.498 21.968v6.027L24 17.616z" fill="white" fill-opacity=".6"/><path d="M16.498 27.995v-6.028L9 17.616z" fill="white"/><path d="M16.498 20.573l7.497-4.353-7.497-3.348z" fill="white" fill-opacity=".2"/><path d="M9 16.22l7.498 4.353v-7.701z" fill="white" fill-opacity=".6"/></svg>',
+        BNB:  '<svg width="14" height="14" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F3BA2F"/><path d="M12.116 13.884L16 10l3.886 3.886 2.26-2.26L16 5.48l-6.144 6.144zM5.48 16l2.26-2.26 2.26 2.26-2.26 2.26zm6.636 2.116L16 22l3.886-3.886 2.261 2.259L16 26.52l-6.146-6.144zM22 16l2.26-2.26 2.26 2.26-2.26 2.26zm-3.771 0L16 13.771 13.771 16 16 18.229z" fill="white"/></svg>',
+        XRP:  '<svg width="14" height="14" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#00AAE4"/><path d="M21.5 9h2.6l-5.3 5.3c-1.5 1.5-4 1.5-5.5 0L7.9 9h2.6l4 4c.8.8 2.2.8 3 0zM10.5 23H7.9l5.4-5.4c1.5-1.5 4-1.5 5.5 0l5.3 5.4h-2.6l-4-4c-.8-.8-2.2-.8-3 0z" fill="white"/></svg>'
+      };
+      const _coinBar = '<div class="bbt-coin-bar" id="bbtCoinBar">' +
+        ['USDT','BTC','ETH','BNB','XRP'].map(function(c){
+          return '<button class="bbt-coin-tab' + (currentAsset===c?' bbt-coin-active':'') + '" data-bbt-coin="' + c + '">' + (_coinSVGs[c]||'') + c + '</button>';
+        }).join('') + '</div>';
+      const _stickyHdr = '<div class="bbt-sticky-header" id="bbtStickyHeader">' + _bsBar.replace('<div class="bbt-bs-bar"','<div class="bbt-bs-bar" style="border-bottom:none"') + _coinBar + '</div>';
+
+      cardsEl.style.transition = 'opacity 0.12s';
+      cardsEl.style.opacity = '0';
+      cardsEl.innerHTML = _stickyHdr + cardsHtml.join('') + _P2P_BENEFITS_HTML;
+      requestAnimationFrame(function(){ cardsEl.style.opacity = '1'; });
+
+      // Wire Buy/Sell bar
       var _bsEl = document.getElementById('bbtBuySellBar');
       if (_bsEl && !_bsEl._wired) {
         _bsEl._wired = true;
@@ -3258,6 +3276,22 @@ function renderOffers(data, append) {
           if (!btn) return;
           var realTab = document.querySelector('.gt-side-tab[data-side="' + btn.dataset.bbtSide + '"]');
           if (realTab) realTab.click();
+        });
+      }
+      // Wire coin tabs
+      var _cbEl = document.getElementById('bbtCoinBar');
+      if (_cbEl && !_cbEl._wired) {
+        _cbEl._wired = true;
+        _cbEl.addEventListener('click', function(e) {
+          var btn = e.target.closest('[data-bbt-coin]');
+          if (!btn) return;
+          var coinVal = btn.dataset.bbtCoin;
+          // Update real coin picker
+          if (typeof pickCoin === 'function') pickCoin(null, coinVal);
+          else {
+            var sel = document.getElementById('assetFilter');
+            if (sel) { sel.value = coinVal; sel.dispatchEvent(new Event('change')); }
+          }
         });
       }
     }
@@ -9674,5 +9708,28 @@ window.deleteMobAd = async function(offerId) {
   });
   // Also ping when network comes back online
   window.addEventListener('online', _pingServer);
+})();
+
+// ── Scroll-to-hide header on mobile P2P ──
+(function() {
+  var _pCards = document.getElementById('p2pCards');
+  if (!_pCards) return;
+  var _lastY = 0, _ticking = false;
+  _pCards.addEventListener('scroll', function() {
+    if (_ticking) return;
+    _ticking = true;
+    requestAnimationFrame(function() {
+      var y = _pCards.scrollTop;
+      if (y <= 8) {
+        document.body.classList.remove('p2p-scroll-down');
+      } else if (y > _lastY + 2) {
+        document.body.classList.add('p2p-scroll-down');
+      } else if (y < _lastY - 8) {
+        document.body.classList.remove('p2p-scroll-down');
+      }
+      _lastY = y;
+      _ticking = false;
+    });
+  }, { passive: true });
 })();
 

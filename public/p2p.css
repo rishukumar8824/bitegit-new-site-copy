@@ -5079,3 +5079,95 @@ body.mob-screen-open .p2p-secondary-nav {
   /* Alert bar sits right under filter row */
   .p2p-alert-bar { margin-top: 0; }
 }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE SCROLL-TO-HIDE HEADER + STICKY COIN TABS
+═══════════════════════════════════════════════════ */
+
+/* Smooth transitions */
+@media (max-width: 768px) {
+  body.p2p-page .p2p-header {
+    transition: transform 0.24s cubic-bezier(0.4,0,0.2,1);
+    will-change: transform;
+  }
+  body.p2p-page .p2p-subnav {
+    transition: top 0.24s cubic-bezier(0.4,0,0.2,1);
+  }
+  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls {
+    transition: max-height 0.24s ease, opacity 0.18s ease;
+    max-height: 320px;
+    overflow: hidden;
+  }
+  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
+    transition: max-height 0.2s ease, opacity 0.15s ease;
+    max-height: 80px;
+    overflow: hidden;
+  }
+
+  /* Scroll-down state: header+controls collapse, subnav pins to top */
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-header {
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-subnav {
+    top: 0 !important;
+  }
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls {
+    max-height: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
+    max-height: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-main-wrap {
+    height: calc(100dvh - 44px) !important;
+  }
+}
+
+/* ── Sticky coin + buy/sell bar inside #p2pCards ── */
+.bbt-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #000;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.bbt-coin-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: #000;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.bbt-coin-bar::-webkit-scrollbar { display: none; }
+.bbt-coin-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 11px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255,255,255,0.35);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.bbt-coin-tab.bbt-coin-active {
+  color: #fff;
+  border-bottom-color: #F68F15;
+}
+/* Override existing bbt-bs-bar border so sticky header unifies it */
+.bbt-sticky-header .bbt-bs-bar {
+  border-bottom: none;
+}
