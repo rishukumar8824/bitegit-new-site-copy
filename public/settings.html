@@ -90,9 +90,9 @@
       <span class="menu-label">Change Password</span>
       <span class="menu-chev">›</span>
     </div>
-    <div class="menu-item" onclick="openSecurityModal()">
+    <div class="menu-item" onclick="location.href='/kyc'">
       <span class="menu-label">Identity Verification</span>
-      <div class="menu-right"><span style="color:#ff9f43">Uncompleted</span><span class="menu-chev">›</span></div>
+      <div class="menu-right"><span id="kycStatusText" style="color:#ff9f43">Uncompleted</span><span class="menu-chev">›</span></div>
     </div>
   </div>
 </div>
@@ -592,6 +592,21 @@
   }
 
   loadProfile();
+
+  // Load KYC status for settings badge
+  (function() {
+    var token = localStorage.getItem('bitcovex_token') || '';
+    fetch('/api/p2p/kyc/status', { credentials:'include', headers: token ? {'Authorization':'Bearer '+token} : {} })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data) {
+      var el = document.getElementById('kycStatusText');
+      if(!el || !data || !data.kyc) return;
+      var s = (data.kyc.status || '').toUpperCase();
+      if(s === 'VERIFIED') { el.textContent = 'Verified'; el.style.color = '#00b897'; }
+      else if(s === 'PENDING' || s === 'SUBMITTED' || s === 'UNDER_REVIEW') { el.textContent = 'Under Review'; el.style.color = '#3498db'; }
+      else if(s === 'REJECTED') { el.textContent = 'Rejected'; el.style.color = '#f6465d'; }
+    }).catch(function(){});
+  })();
 </script>
 <script src="js/app.js"></script></body>
 </html>
