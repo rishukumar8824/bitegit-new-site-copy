@@ -130,8 +130,57 @@
 </head>
 <body>
 
+<!-- ═══ SCREEN 0: STATUS HOME (default) ═══ -->
+<div class="screen" id="screenStatus">
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <span style="font-size:1rem;font-weight:700;flex:1;text-align:center">Identity Verification</span>
+    <span style="width:32px"></span>
+  </div>
+
+  <!-- KYC Level Cards -->
+  <div style="padding:.5rem 1rem 0">
+    <!-- Lv1 -->
+    <div style="background:#1a1a1a;border-radius:16px;padding:1rem 1.1rem;margin-bottom:.7rem;border:1px solid rgba(255,255,255,.07)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+        <span style="font-size:.82rem;font-weight:700;color:#888">Lv.1 Basic Verification</span>
+        <span id="lv1StatusBadge" style="font-size:.72rem;font-weight:800;padding:.22rem .7rem;border-radius:50px;background:rgba(246,70,93,.15);color:#f6465d">Unverified</span>
+      </div>
+      <div style="font-size:.78rem;color:#555;margin-bottom:.85rem">Submit your government ID to unlock P2P trading</div>
+      <div style="display:flex;gap:.5rem">
+        <div style="flex:1;background:#111;border-radius:10px;padding:.55rem .7rem;text-align:center">
+          <div style="font-size:.65rem;color:#555;margin-bottom:.15rem">Daily Limit</div>
+          <div style="font-size:.82rem;font-weight:700" id="lv1Limit">—</div>
+        </div>
+        <div style="flex:1;background:#111;border-radius:10px;padding:.55rem .7rem;text-align:center">
+          <div style="font-size:.65rem;color:#555;margin-bottom:.15rem">Withdrawal</div>
+          <div style="font-size:.82rem;font-weight:700" id="lv1Withdraw">—</div>
+        </div>
+        <div style="flex:1;background:#111;border-radius:10px;padding:.55rem .7rem;text-align:center">
+          <div style="font-size:.65rem;color:#555;margin-bottom:.15rem">P2P</div>
+          <div style="font-size:.82rem;font-weight:700" id="lv1P2p">Locked</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lv2 -->
+    <div style="background:#1a1a1a;border-radius:16px;padding:1rem 1.1rem;margin-bottom:1.2rem;border:1px solid rgba(255,255,255,.07);opacity:.5">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+        <span style="font-size:.82rem;font-weight:700;color:#888">Lv.2 Advanced Verification</span>
+        <span style="font-size:.72rem;font-weight:800;padding:.22rem .7rem;border-radius:50px;background:#1e1e1e;color:#444">Locked</span>
+      </div>
+      <div style="font-size:.78rem;color:#555">Complete Lv.1 first to unlock advanced limits</div>
+    </div>
+  </div>
+
+  <!-- Verify Now button (shown only when unverified) -->
+  <div style="padding:0 1rem 2rem" id="verifyNowWrap">
+    <button class="earn-btn" onclick="showScreen('screenPOI')">🎁 Verify Now to Earn $20</button>
+  </div>
+</div>
+
 <!-- ═══ SCREEN 1: PROOF OF IDENTITY ═══ -->
-<div class="screen" id="screenPOI">
+<div class="screen hidden" id="screenPOI">
   <div class="topbar">
     <button class="back-btn" onclick="history.back()">←</button>
     <button class="biz-btn">Business Verification ⇆</button>
@@ -646,14 +695,53 @@
 
   // ── Check KYC status on load ──
   (function() {
+    // Always show status screen first (default = unverified)
+    showScreen('screenStatus');
+
     var token = localStorage.getItem('bitcovex_token') || '';
     fetch('/api/p2p/kyc/status', { credentials:'include', headers: token ? {'Authorization':'Bearer '+token} : {} })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(data) {
-      if(!data || !data.kyc) return;
+      var badge = document.getElementById('lv1StatusBadge');
+      var lv1Limit = document.getElementById('lv1Limit');
+      var lv1Withdraw = document.getElementById('lv1Withdraw');
+      var lv1P2p = document.getElementById('lv1P2p');
+      var verifyWrap = document.getElementById('verifyNowWrap');
+
+      if(!data || !data.kyc) {
+        // Not started — show unverified defaults
+        return;
+      }
       var s = (data.kyc.status || '').toUpperCase();
-      if(s === 'VERIFIED') showScreen('screenVerified');
-      else if(s === 'PENDING' || s === 'SUBMITTED' || s === 'UNDER_REVIEW') showScreen('screenPending');
+
+      if(s === 'VERIFIED') {
+        badge.textContent = 'Verified ✓';
+        badge.style.background = 'rgba(0,184,151,.15)';
+        badge.style.color = '#00b897';
+        lv1Limit.textContent = '₹50,000';
+        lv1Withdraw.textContent = '5 BTC';
+        lv1P2p.textContent = 'Active';
+        lv1P2p.style.color = '#00b897';
+        verifyWrap.innerHTML = '<button class="earn-btn" style="background:#00b897" onclick="history.back()">✓ Fully Verified</button>';
+        // Also show verified screen after a moment
+        setTimeout(function(){ showScreen('screenVerified'); }, 300);
+      } else if(s === 'PENDING' || s === 'SUBMITTED' || s === 'UNDER_REVIEW') {
+        badge.textContent = 'Under Review ⏳';
+        badge.style.background = 'rgba(52,152,219,.15)';
+        badge.style.color = '#3498db';
+        lv1Limit.textContent = 'Pending';
+        lv1Withdraw.textContent = 'Pending';
+        lv1P2p.textContent = 'Pending';
+        lv1P2p.style.color = '#3498db';
+        verifyWrap.innerHTML = '<button class="earn-btn" style="background:#3498db;cursor:default">⏳ Under Review — Up to 24 hrs</button>';
+      } else if(s === 'REJECTED' || s === 'FAILED') {
+        badge.textContent = 'Rejected ✕';
+        badge.style.background = 'rgba(246,70,93,.15)';
+        badge.style.color = '#f6465d';
+        verifyWrap.innerHTML = '<div style="font-size:.78rem;color:#f6465d;margin-bottom:.6rem;text-align:center">'+(data.kyc.rejectionReason||'Verification rejected. Please try again.')+'</div>'
+          +'<button class="earn-btn" onclick="showScreen(\'screenPOI\')">🔄 Re-submit Verification</button>';
+      }
+      // else stays unverified (default)
     }).catch(function(){});
   })();
 </script>
