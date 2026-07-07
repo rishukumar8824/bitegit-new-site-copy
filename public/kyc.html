@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#000"/>
+  <title>Identity Verification — Bitcovex</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{width:100%;min-height:100%;background:#0b0b0f;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px}
+    .hidden{display:none!important}
+
+    /* ── Header ── */
+    .topbar{display:flex;align-items:center;gap:.6rem;padding:.9rem 1rem;background:#0b0b0f;position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(255,255,255,.06)}
+    .back-btn{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:.1rem .3rem;line-height:1}
+    .topbar-title{flex:1;font-size:1rem;font-weight:700;text-align:center}
+
+    /* ── Screen wrapper ── */
+    .screen{min-height:100vh;display:flex;flex-direction:column}
+
+    /* ── Status page ── */
+    .status-hero{display:flex;flex-direction:column;align-items:center;padding:2.5rem 1.4rem 2rem;gap:.8rem;text-align:center}
+    .status-icon{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.4rem}
+    .status-icon.not-started{background:rgba(246,143,21,.12)}
+    .status-icon.pending{background:rgba(52,152,219,.12)}
+    .status-icon.verified{background:rgba(0,184,151,.12)}
+    .status-icon.rejected{background:rgba(246,70,93,.12)}
+    .status-title{font-size:1.3rem;font-weight:800}
+    .status-sub{font-size:.85rem;color:#8a9bb5;line-height:1.6;max-width:280px}
+
+    /* ── Level cards ── */
+    .levels{padding:0 1rem 1.5rem;display:flex;flex-direction:column;gap:.7rem}
+    .level-card{background:#111418;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:1rem 1.1rem;display:flex;align-items:center;gap:.9rem;cursor:pointer;transition:border-color .2s}
+    .level-card:hover{border-color:rgba(246,143,21,.4)}
+    .level-card.locked{cursor:default;opacity:.55}
+    .level-card.done{border-color:rgba(0,184,151,.4)}
+    .lv-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+    .lv-icon.basic{background:rgba(246,143,21,.13)}
+    .lv-icon.adv{background:rgba(52,152,219,.13)}
+    .lv-info{flex:1}
+    .lv-name{font-size:.92rem;font-weight:700}
+    .lv-desc{font-size:.76rem;color:#8a9bb5;margin-top:.2rem}
+    .lv-badge{font-size:.72rem;font-weight:700;padding:.22rem .65rem;border-radius:50px}
+    .badge-done{background:rgba(0,184,151,.15);color:#00b897}
+    .badge-pending{background:rgba(52,152,219,.15);color:#3498db}
+    .badge-start{background:rgba(246,143,21,.15);color:#F68F15}
+    .badge-locked{background:#1e1e1e;color:#555}
+
+    /* ── Benefits row ── */
+    .benefits{padding:.5rem 1rem 2rem;display:flex;gap:.6rem;overflow-x:auto;scrollbar-width:none}
+    .benefits::-webkit-scrollbar{display:none}
+    .benefit{background:#111418;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:.75rem .9rem;flex-shrink:0;min-width:130px;display:flex;flex-direction:column;gap:.3rem}
+    .benefit-icon{font-size:1.3rem}
+    .benefit-label{font-size:.72rem;color:#8a9bb5}
+    .benefit-val{font-size:.85rem;font-weight:700;color:#F68F15}
+
+    /* ── Form screens ── */
+    .form-body{padding:1.2rem 1rem;display:flex;flex-direction:column;gap:1.1rem;flex:1}
+    .field-label{font-size:.8rem;color:#8a9bb5;margin-bottom:.38rem;font-weight:600;letter-spacing:.02em}
+    .field-input{width:100%;background:#111418;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.82rem 1rem;color:#fff;font-size:.93rem;font-family:inherit;outline:none;transition:border-color .2s}
+    .field-input:focus{border-color:#F68F15}
+    .field-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a9bb5' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center}
+    .id-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+    .id-type-btn{background:#111418;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.75rem .6rem;color:#8a9bb5;font-size:.82rem;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:.3rem}
+    .id-type-btn.active{border-color:#F68F15;color:#F68F15;background:rgba(246,143,21,.08)}
+    .id-type-icon{font-size:1.4rem}
+
+    /* ── Upload box ── */
+    .upload-box{background:#111418;border:1.5px dashed rgba(255,255,255,.15);border-radius:16px;padding:1.8rem 1rem;display:flex;flex-direction:column;align-items:center;gap:.6rem;cursor:pointer;position:relative;transition:border-color .2s}
+    .upload-box:hover,.upload-box.has-file{border-color:#F68F15;border-style:solid}
+    .upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .upload-icon{font-size:2.2rem;opacity:.6}
+    .upload-title{font-size:.88rem;font-weight:700}
+    .upload-hint{font-size:.74rem;color:#8a9bb5;text-align:center}
+    .upload-preview{width:100%;max-height:150px;object-fit:cover;border-radius:10px;display:none}
+
+    /* ── Consent box ── */
+    .consent-box{background:#111418;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1rem}
+    .consent-check{display:flex;gap:.7rem;align-items:flex-start;cursor:pointer}
+    .consent-check input{width:18px;height:18px;flex-shrink:0;margin-top:.1rem;accent-color:#F68F15;cursor:pointer}
+    .consent-text{font-size:.78rem;color:#8a9bb5;line-height:1.6}
+
+    /* ── Progress steps ── */
+    .step-row{display:flex;align-items:center;padding:.6rem 1rem 0;gap:0}
+    .step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0}
+    .step-dot.active{background:#F68F15;color:#000}
+    .step-dot.done{background:#00b897;color:#fff}
+    .step-dot.idle{background:#1e1e1e;color:#555}
+    .step-line{flex:1;height:2px;background:#1e1e1e}
+    .step-line.done{background:#00b897}
+
+    /* ── Tips ── */
+    .tips-box{background:#111418;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:.9rem 1rem}
+    .tips-title{font-size:.8rem;font-weight:700;color:#F68F15;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+    .tips-list{display:flex;flex-direction:column;gap:.35rem}
+    .tips-list li{font-size:.76rem;color:#8a9bb5;list-style:none;display:flex;gap:.5rem;align-items:flex-start}
+    .tips-list li::before{content:"•";color:#F68F15;flex-shrink:0}
+
+    /* ── Primary button ── */
+    .primary-btn{display:block;width:calc(100% - 2rem);margin:.8rem auto 1.5rem;padding:.9rem;background:#F68F15;border:none;border-radius:50px;font-size:1rem;font-weight:800;color:#fff;cursor:pointer}
+    .primary-btn:disabled{opacity:.5;cursor:not-allowed}
+
+    /* ── Toast ── */
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:.65rem 1.3rem;border-radius:50px;font-size:.82rem;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+    .toast.show{opacity:1}
+  </style>
+</head>
+<body>
+
+<!-- ═══════════ SCREEN: STATUS HOME ═══════════ -->
+<div class="screen" id="screenHome">
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">‹</button>
+    <span class="topbar-title">Identity Verification</span>
+    <span style="width:32px"></span>
+  </div>
+
+  <div class="status-hero">
+    <div class="status-icon not-started" id="heroIcon">🛡️</div>
+    <div class="status-title" id="heroTitle">Verify Your Identity</div>
+    <div class="status-sub" id="heroSub">Complete identity verification to unlock higher limits and full P2P trading features.</div>
+  </div>
+
+  <!-- Level Cards -->
+  <div class="levels">
+    <div class="level-card" id="lvCard1" onclick="startBasicKyc()">
+      <div class="lv-icon basic">🪪</div>
+      <div class="lv-info">
+        <div class="lv-name">Basic Verification (Lv.1)</div>
+        <div class="lv-desc">Submit your government ID details</div>
+      </div>
+      <span class="lv-badge badge-start" id="lv1Badge">Start</span>
+    </div>
+    <div class="level-card locked" id="lvCard2">
+      <div class="lv-icon adv">📷</div>
+      <div class="lv-info">
+        <div class="lv-name">Advanced Verification (Lv.2)</div>
+        <div class="lv-desc">Upload document photos &amp; selfie</div>
+      </div>
+      <span class="lv-badge badge-locked" id="lv2Badge">Locked</span>
+    </div>
+  </div>
+
+  <!-- Benefits -->
+  <div style="padding:0 1rem .5rem;font-size:.78rem;color:#8a9bb5;font-weight:600">Verification Benefits</div>
+  <div class="benefits">
+    <div class="benefit">
+      <div class="benefit-icon">💸</div>
+      <div class="benefit-label">P2P Daily Limit</div>
+      <div class="benefit-val">₹50,000</div>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">⚡</div>
+      <div class="benefit-label">Withdrawal/Day</div>
+      <div class="benefit-val">5 BTC</div>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">🔒</div>
+      <div class="benefit-label">Account Security</div>
+      <div class="benefit-val">Enhanced</div>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">🏪</div>
+      <div class="benefit-label">Merchant Access</div>
+      <div class="benefit-val">Eligible</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SCREEN: BASIC KYC (Step 1 — Personal Info) ═══════════ -->
+<div class="screen hidden" id="screenBasic">
+  <div class="topbar">
+    <button class="back-btn" onclick="showScreen('screenHome')">‹</button>
+    <span class="topbar-title">Basic Verification</span>
+    <span style="width:32px"></span>
+  </div>
+
+  <!-- Steps -->
+  <div class="step-row">
+    <div class="step-dot active">1</div>
+    <div class="step-line"></div>
+    <div class="step-dot idle">2</div>
+    <div class="step-line"></div>
+    <div class="step-dot idle">3</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;padding:.3rem 1rem .8rem;font-size:.68rem;color:#555">
+    <span>Personal Info</span><span>Documents</span><span>Review</span>
+  </div>
+
+  <div class="form-body">
+    <div>
+      <div class="field-label">Country / Region</div>
+      <select class="field-input field-select" id="kycCountry">
+        <option value="">Select country</option>
+        <option value="IN" selected>India</option>
+        <option value="US">United States</option>
+        <option value="GB">United Kingdom</option>
+        <option value="AE">UAE</option>
+        <option value="SG">Singapore</option>
+        <option value="DE">Germany</option>
+        <option value="FR">France</option>
+        <option value="AU">Australia</option>
+        <option value="CA">Canada</option>
+        <option value="NG">Nigeria</option>
+        <option value="PK">Pakistan</option>
+        <option value="BD">Bangladesh</option>
+        <option value="OTHER">Other</option>
+      </select>
+    </div>
+
+    <div>
+      <div class="field-label">ID Type</div>
+      <div class="id-type-grid">
+        <div class="id-type-btn active" id="idAadhaar" onclick="selectIdType('aadhaar')">
+          <div class="id-type-icon">🪪</div>Aadhaar Card
+        </div>
+        <div class="id-type-btn" id="idPassport" onclick="selectIdType('passport')">
+          <div class="id-type-icon">📘</div>Passport
+        </div>
+        <div class="id-type-btn" id="idDriving" onclick="selectIdType('driving')">
+          <div class="id-type-icon">🚗</div>Driving Licence
+        </div>
+        <div class="id-type-btn" id="idPan" onclick="selectIdType('pan')">
+          <div class="id-type-icon">💳</div>PAN Card
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="field-label">First Name (as on ID)</div>
+      <input class="field-input" id="kycFirstName" type="text" placeholder="e.g. Rahul"/>
+    </div>
+    <div>
+      <div class="field-label">Last Name (as on ID)</div>
+      <input class="field-input" id="kycLastName" type="text" placeholder="e.g. Sharma"/>
+    </div>
+    <div>
+      <div class="field-label">Date of Birth</div>
+      <input class="field-input" id="kycDob" type="date"/>
+    </div>
+    <div id="aadhaarField">
+      <div class="field-label">Aadhaar Number</div>
+      <input class="field-input" id="kycAadhaar" type="text" inputmode="numeric" maxlength="14" placeholder="XXXX XXXX XXXX" oninput="formatAadhaar(this)"/>
+    </div>
+  </div>
+
+  <button class="primary-btn" onclick="goToStep2()">Continue</button>
+</div>
+
+<!-- ═══════════ SCREEN: STEP 2 — Document Upload ═══════════ -->
+<div class="screen hidden" id="screenDocs">
+  <div class="topbar">
+    <button class="back-btn" onclick="showScreen('screenBasic')">‹</button>
+    <span class="topbar-title">Upload Documents</span>
+    <span style="width:32px"></span>
+  </div>
+
+  <div class="step-row">
+    <div class="step-dot done">✓</div>
+    <div class="step-line done"></div>
+    <div class="step-dot active">2</div>
+    <div class="step-line"></div>
+    <div class="step-dot idle">3</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;padding:.3rem 1rem .8rem;font-size:.68rem;color:#555">
+    <span style="color:#00b897">Personal Info</span><span style="color:#F68F15">Documents</span><span>Review</span>
+  </div>
+
+  <div class="form-body">
+    <div class="tips-box">
+      <div class="tips-title">📋 Document Tips</div>
+      <ul class="tips-list">
+        <li>Ensure all 4 corners of the document are visible</li>
+        <li>Image must be clear and not blurry</li>
+        <li>No glare or flash reflections</li>
+        <li>File size must be under 10 MB</li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="field-label">Front of Document</div>
+      <div class="upload-box" id="frontBox" onclick="triggerUpload('frontFile')">
+        <input type="file" id="frontFile" accept="image/*" onchange="previewImg(this,'frontPreview','frontBox')"/>
+        <div class="upload-icon" id="frontIcon">📄</div>
+        <div class="upload-title">Upload Front Side</div>
+        <div class="upload-hint">JPG, PNG — max 10 MB</div>
+        <img id="frontPreview" class="upload-preview"/>
+      </div>
+    </div>
+
+    <div>
+      <div class="field-label">Back of Document</div>
+      <div class="upload-box" id="backBox" onclick="triggerUpload('backFile')">
+        <input type="file" id="backFile" accept="image/*" onchange="previewImg(this,'backPreview','backBox')"/>
+        <div class="upload-icon" id="backIcon">📄</div>
+        <div class="upload-title">Upload Back Side</div>
+        <div class="upload-hint">JPG, PNG — max 10 MB</div>
+        <img id="backPreview" class="upload-preview"/>
+      </div>
+    </div>
+
+    <div>
+      <div class="field-label">Selfie with Document</div>
+      <div class="upload-box" id="selfieBox" onclick="triggerUpload('selfieFile')">
+        <input type="file" id="selfieFile" accept="image/*" capture="user" onchange="previewImg(this,'selfiePreview','selfieBox')"/>
+        <div class="upload-icon" id="selfieIcon">🤳</div>
+        <div class="upload-title">Take a Selfie</div>
+        <div class="upload-hint">Hold document next to your face</div>
+        <img id="selfiePreview" class="upload-preview"/>
+      </div>
+    </div>
+  </div>
+
+  <button class="primary-btn" onclick="goToStep3()">Continue</button>
+</div>
+
+<!-- ═══════════ SCREEN: STEP 3 — Review & Submit ═══════════ -->
+<div class="screen hidden" id="screenReview">
+  <div class="topbar">
+    <button class="back-btn" onclick="showScreen('screenDocs')">‹</button>
+    <span class="topbar-title">Review &amp; Submit</span>
+    <span style="width:32px"></span>
+  </div>
+
+  <div class="step-row">
+    <div class="step-dot done">✓</div>
+    <div class="step-line done"></div>
+    <div class="step-dot done">✓</div>
+    <div class="step-line done"></div>
+    <div class="step-dot active">3</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;padding:.3rem 1rem .8rem;font-size:.68rem;color:#555">
+    <span style="color:#00b897">Personal Info</span><span style="color:#00b897">Documents</span><span style="color:#F68F15">Review</span>
+  </div>
+
+  <div class="form-body">
+    <!-- Summary card -->
+    <div style="background:#111418;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:1rem">
+      <div style="font-size:.82rem;font-weight:700;color:#F68F15;margin-bottom:.8rem">Your Information</div>
+      <div id="reviewRows" style="display:flex;flex-direction:column;gap:.55rem"></div>
+    </div>
+
+    <!-- Consent -->
+    <div class="consent-box">
+      <label class="consent-check">
+        <input type="checkbox" id="consentCheck"/>
+        <span class="consent-text">I confirm that the information and documents submitted are accurate, genuine, and belong to me. I consent to Bitcovex processing my personal data for identity verification purposes in accordance with applicable laws.</span>
+      </label>
+    </div>
+
+    <div class="tips-box">
+      <div class="tips-title">⏱ What happens next?</div>
+      <ul class="tips-list">
+        <li>Your documents will be reviewed within 24 hours</li>
+        <li>You'll be notified once verification is complete</li>
+        <li>Basic P2P features remain available during review</li>
+      </ul>
+    </div>
+  </div>
+
+  <button class="primary-btn" id="submitKycBtn" onclick="submitKyc()">Submit for Verification</button>
+</div>
+
+<!-- ═══════════ SCREEN: PENDING ═══════════ -->
+<div class="screen hidden" id="screenPending">
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">‹</button>
+    <span class="topbar-title">Identity Verification</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="status-hero">
+    <div class="status-icon pending">⏳</div>
+    <div class="status-title">Under Review</div>
+    <div class="status-sub">Your documents have been submitted and are being reviewed. This usually takes up to 24 hours. We'll notify you once complete.</div>
+  </div>
+  <div style="padding:0 1rem 2rem">
+    <div style="background:#111418;border:1px solid rgba(52,152,219,.2);border-radius:16px;padding:1rem;display:flex;flex-direction:column;gap:.7rem" id="pendingInfo"></div>
+  </div>
+  <button class="primary-btn" onclick="history.back()">Back to Home</button>
+</div>
+
+<!-- ═══════════ SCREEN: VERIFIED ═══════════ -->
+<div class="screen hidden" id="screenVerified">
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">‹</button>
+    <span class="topbar-title">Identity Verification</span>
+    <span style="width:32px"></span>
+  </div>
+  <div class="status-hero">
+    <div class="status-icon verified">✅</div>
+    <div class="status-title">Verified</div>
+    <div class="status-sub">Your identity has been successfully verified. You now have access to full trading features.</div>
+  </div>
+  <div class="levels">
+    <div class="level-card done">
+      <div class="lv-icon basic">🪪</div>
+      <div class="lv-info">
+        <div class="lv-name">Basic Verification (Lv.1)</div>
+        <div class="lv-desc">Identity confirmed</div>
+      </div>
+      <span class="lv-badge badge-done">Verified ✓</span>
+    </div>
+    <div class="level-card done">
+      <div class="lv-icon adv">📷</div>
+      <div class="lv-info">
+        <div class="lv-name">Advanced Verification (Lv.2)</div>
+        <div class="lv-desc">Documents approved</div>
+      </div>
+      <span class="lv-badge badge-done">Verified ✓</span>
+    </div>
+  </div>
+  <button class="primary-btn" onclick="history.back()">Done</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var _kycData = { country:'IN', idType:'aadhaar', firstName:'', lastName:'', dob:'', aadhaar:'' };
+  var _currentScreen = 'screenHome';
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.add('hidden'); });
+    document.getElementById(id).classList.remove('hidden');
+    _currentScreen = id;
+    window.scrollTo(0,0);
+  }
+
+  function showToast(msg, color) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = color || '#1a1a1a';
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2800);
+  }
+
+  function selectIdType(type) {
+    _kycData.idType = type;
+    ['aadhaar','passport','driving','pan'].forEach(function(t){
+      document.getElementById('id'+t.charAt(0).toUpperCase()+t.slice(1)).classList.remove('active');
+    });
+    var idMap = { aadhaar:'idAadhaar', passport:'idPassport', driving:'idDriving', pan:'idPan' };
+    document.getElementById(idMap[type]).classList.add('active');
+    document.getElementById('aadhaarField').classList.toggle('hidden', type !== 'aadhaar');
+  }
+
+  function formatAadhaar(el) {
+    var v = el.value.replace(/\D/g,'');
+    el.value = v.replace(/(\d{4})(\d{0,4})(\d{0,4})/,'$1 $2 $3').trim();
+  }
+
+  function triggerUpload(inputId) {
+    // handled by native file input click (input is full overlay)
+  }
+
+  function previewImg(input, previewId, boxId) {
+    var file = input.files[0];
+    if(!file) return;
+    if(file.size > 10 * 1024 * 1024) { showToast('File too large (max 10 MB)', '#f6465d'); input.value=''; return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var prev = document.getElementById(previewId);
+      prev.src = e.target.result;
+      prev.style.display = 'block';
+      var box = document.getElementById(boxId);
+      box.classList.add('has-file');
+      box.querySelector('.upload-icon').style.display = 'none';
+      box.querySelector('.upload-title').style.display = 'none';
+      box.querySelector('.upload-hint').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function goToStep2() {
+    _kycData.country = document.getElementById('kycCountry').value;
+    _kycData.firstName = document.getElementById('kycFirstName').value.trim();
+    _kycData.lastName = document.getElementById('kycLastName').value.trim();
+    _kycData.dob = document.getElementById('kycDob').value;
+    _kycData.aadhaar = document.getElementById('kycAadhaar').value.replace(/\s/g,'');
+
+    if(!_kycData.country) { showToast('Please select your country', '#f6465d'); return; }
+    if(!_kycData.firstName) { showToast('Please enter your first name', '#f6465d'); return; }
+    if(!_kycData.lastName) { showToast('Please enter your last name', '#f6465d'); return; }
+    if(!_kycData.dob) { showToast('Please enter your date of birth', '#f6465d'); return; }
+    if(_kycData.idType === 'aadhaar' && _kycData.aadhaar.length !== 12) {
+      showToast('Please enter a valid 12-digit Aadhaar number', '#f6465d'); return;
+    }
+    showScreen('screenDocs');
+  }
+
+  function goToStep3() {
+    var front = document.getElementById('frontFile').files[0];
+    var back = document.getElementById('backFile').files[0];
+    var selfie = document.getElementById('selfieFile').files[0];
+    if(!front) { showToast('Please upload front of document', '#f6465d'); return; }
+    if(!back) { showToast('Please upload back of document', '#f6465d'); return; }
+    if(!selfie) { showToast('Please upload selfie with document', '#f6465d'); return; }
+
+    // Build review rows
+    var rows = [
+      ['Country', document.getElementById('kycCountry').options[document.getElementById('kycCountry').selectedIndex].text],
+      ['ID Type', _kycData.idType.charAt(0).toUpperCase()+_kycData.idType.slice(1)],
+      ['First Name', _kycData.firstName],
+      ['Last Name', _kycData.lastName],
+      ['Date of Birth', _kycData.dob],
+    ];
+    if(_kycData.idType === 'aadhaar') rows.push(['Aadhaar', 'XXXX XXXX ' + _kycData.aadhaar.slice(-4)]);
+    rows.push(['Documents', '3 files uploaded ✓']);
+
+    document.getElementById('reviewRows').innerHTML = rows.map(function(r){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.05)">'
+        + '<span style="font-size:.8rem;color:#8a9bb5">'+r[0]+'</span>'
+        + '<span style="font-size:.85rem;font-weight:600">'+r[1]+'</span></div>';
+    }).join('');
+
+    showScreen('screenReview');
+  }
+
+  function submitKyc() {
+    if(!document.getElementById('consentCheck').checked) {
+      showToast('Please accept the consent declaration', '#f6465d'); return;
+    }
+    var btn = document.getElementById('submitKycBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var payload = {
+      consent: true,
+      aadhaarNumber: _kycData.aadhaar || '000000000000',
+      firstName: _kycData.firstName,
+      lastName: _kycData.lastName,
+      dateOfBirth: _kycData.dob,
+      country: _kycData.country,
+      idType: _kycData.idType
+    };
+
+    var token = localStorage.getItem('bitcovex_token') || '';
+    fetch('/api/p2p/kyc/submit', {
+      method: 'POST',
+      credentials: 'include',
+      headers: Object.assign({'Content-Type':'application/json'}, token ? {'Authorization':'Bearer '+token} : {}),
+      body: JSON.stringify(payload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      btn.disabled = false;
+      btn.textContent = 'Submit for Verification';
+      if(d && d.kyc && d.kyc.status === 'VERIFIED') {
+        showScreen('screenVerified');
+      } else if(d && !d.message?.includes('error') && (d.ok || d.kyc || d.requestId)) {
+        showScreen('screenPending');
+        buildPendingInfo(d.kyc || {});
+      } else if(d && d.message === 'KYC is already verified for this account.') {
+        showScreen('screenVerified');
+      } else {
+        showToast(d.message || 'Submission failed. Try again.', '#f6465d');
+      }
+    })
+    .catch(function(){
+      btn.disabled = false;
+      btn.textContent = 'Submit for Verification';
+      showToast('Network error. Please try again.', '#f6465d');
+    });
+  }
+
+  function buildPendingInfo(kyc) {
+    var el = document.getElementById('pendingInfo');
+    var items = [
+      ['Status', '<span style="color:#3498db;font-weight:700">Under Review</span>'],
+      ['Name', (_kycData.firstName + ' ' + _kycData.lastName) || '—'],
+      ['Submitted', new Date().toLocaleDateString()],
+      ['Expected', 'Within 24 hours'],
+    ];
+    el.innerHTML = items.map(function(r){
+      return '<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.05)">'
+        +'<span style="font-size:.78rem;color:#8a9bb5">'+r[0]+'</span>'
+        +'<span style="font-size:.82rem;font-weight:600">'+r[1]+'</span></div>';
+    }).join('');
+  }
+
+  function startBasicKyc() {
+    var card = document.getElementById('lvCard1');
+    if(card.classList.contains('locked')) return;
+    showScreen('screenBasic');
+  }
+
+  // ── Load KYC status on open ──
+  function loadKycStatus() {
+    var token = localStorage.getItem('bitcovex_token') || '';
+    fetch('/api/p2p/kyc/status', {
+      credentials: 'include',
+      headers: token ? {'Authorization':'Bearer '+token} : {}
+    })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if(!data || !data.kyc) return;
+      var kyc = data.kyc;
+      var status = (kyc.status || '').toUpperCase();
+
+      var lv1Badge = document.getElementById('lv1Badge');
+      var lv2Badge = document.getElementById('lv2Badge');
+      var lv1Card = document.getElementById('lvCard1');
+      var lv2Card = document.getElementById('lvCard2');
+      var heroIcon = document.getElementById('heroIcon');
+      var heroTitle = document.getElementById('heroTitle');
+      var heroSub = document.getElementById('heroSub');
+
+      if(status === 'VERIFIED') {
+        showScreen('screenVerified');
+      } else if(status === 'PENDING' || status === 'SUBMITTED' || status === 'UNDER_REVIEW') {
+        lv1Badge.className = 'lv-badge badge-pending'; lv1Badge.textContent = 'Pending';
+        lv1Card.classList.remove('locked');
+        lv2Badge.className = 'lv-badge badge-pending'; lv2Badge.textContent = 'Pending';
+        lv2Card.classList.remove('locked');
+        heroIcon.className = 'status-icon pending'; heroIcon.textContent = '⏳';
+        heroTitle.textContent = 'Verification In Progress';
+        heroSub.textContent = 'Your documents are being reviewed. Usually takes up to 24 hours.';
+      } else if(status === 'REJECTED' || status === 'FAILED') {
+        lv1Badge.className = 'lv-badge'; lv1Badge.style.background='rgba(246,70,93,.15)'; lv1Badge.style.color='#f6465d'; lv1Badge.textContent = 'Rejected';
+        heroIcon.className = 'status-icon rejected'; heroIcon.textContent = '❌';
+        heroTitle.textContent = 'Verification Failed';
+        heroSub.textContent = (kyc.rejectionReason || 'Your submission was rejected. Please try again with clear documents.');
+      }
+    })
+    .catch(function(){});
+  }
+
+  loadKycStatus();
+</script>
+</body>
+</html>

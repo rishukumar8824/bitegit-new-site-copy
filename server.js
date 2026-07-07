@@ -5850,7 +5850,7 @@ app.get('/p2p-user-center', (req, res) => {
 });
 
 app.get('/kyc', (req, res) => {
-  res.redirect('/p2p#kyc');
+  res.sendFile(path.join(__dirname, 'public', 'kyc.html'));
 });
 
 app.get('/earn', (req, res) => {
