@@ -35,18 +35,6 @@
     .avatar-edit{position:absolute;bottom:0;right:0;width:22px;height:22px;background:#2a2a2a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#8a9bb5}
     .profile-email{font-size:.9rem;color:#fff;font-weight:500}
     .profile-uid{font-size:.78rem;color:#8a9bb5;display:flex;align-items:center;gap:.3rem}
-    /* SECURITY MODAL */
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:flex-end}
-    .modal-sheet{background:#111;border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:1.2rem 1rem 2rem}
-    .modal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem}
-    .modal-title{font-size:1.05rem;font-weight:700}
-    .modal-close{background:none;border:none;color:#8a9bb5;font-size:1.3rem;cursor:pointer}
-    .sec-progress{font-size:2.2rem;font-weight:800;margin:0 0 1rem}
-    .sec-progress span{font-size:2.2rem;color:#3a3a3a;font-weight:800}
-    .sec-item{border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.85rem 1rem;margin-bottom:.65rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:.95rem;font-weight:600}
-    .sec-check{color:#c8f439;font-size:1rem}
-    .sec-chev{color:#8a9bb5;font-size:.9rem}
-    .sec-subtitle{font-size:.78rem;color:#8a9bb5;margin-bottom:1rem;line-height:1.5}
     /* NICKNAME */
     .nick-section{padding:1.2rem 1rem .5rem}
     .nick-label{font-size:.88rem;color:#8a9bb5;margin-bottom:.5rem}
@@ -420,15 +408,6 @@
     } else { history.back(); }
   }
 
-  function openSecurityModal() {
-    document.getElementById('modalSecurity').classList.remove('hidden');
-  }
-  function closeSecModal(e) {
-    if(e.target.id === 'modalSecurity') closeSecModalBtn();
-  }
-  function closeSecModalBtn() {
-    document.getElementById('modalSecurity').classList.add('hidden');
-  }
 
   function selectLang(el, val) {
     document.querySelectorAll('#langList .select-item .check-mark').forEach(function(c){ c.remove(); });
