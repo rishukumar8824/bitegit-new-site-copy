@@ -5129,47 +5129,39 @@ body.mob-screen-open .p2p-secondary-nav {
   }
 }
 
-/* ── Sticky coin + buy/sell bar inside #p2pCards ── */
-.bbt-sticky-header {
+/* ── Buy/Sell bar (scrolls away) + Sticky coin bar ── */
+.bbt-coin-sticky {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #000;
+  background: #0a0a0a;
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 .bbt-coin-bar {
   display: flex;
   align-items: center;
-  padding: 0 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  background: #000;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: #0a0a0a;
 }
-.bbt-coin-bar::-webkit-scrollbar { display: none; }
 .bbt-coin-tab {
+  flex: 1;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 9px 11px;
+  padding: 10px 4px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
   color: rgba(255,255,255,0.35);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: color 0.15s, border-color 0.15s;
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
-  flex-shrink: 0;
 }
 .bbt-coin-tab.bbt-coin-active {
   color: #fff;
   border-bottom-color: #F68F15;
-}
-/* Override existing bbt-bs-bar border so sticky header unifies it */
-.bbt-sticky-header .bbt-bs-bar {
-  border-bottom: none;
 }

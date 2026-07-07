@@ -3260,11 +3260,11 @@ function renderOffers(data, append) {
         ['USDT','BTC','ETH','BNB','XRP'].map(function(c){
           return '<button class="bbt-coin-tab' + (currentAsset===c?' bbt-coin-active':'') + '" data-bbt-coin="' + c + '">' + (_coinSVGs[c]||'') + c + '</button>';
         }).join('') + '</div>';
-      const _stickyHdr = '<div class="bbt-sticky-header" id="bbtStickyHeader">' + _bsBar.replace('<div class="bbt-bs-bar"','<div class="bbt-bs-bar" style="border-bottom:none"') + _coinBar + '</div>';
+      const _coinSticky = '<div class="bbt-coin-sticky" id="bbtCoinSticky">' + _coinBar + '</div>';
 
       cardsEl.style.transition = 'opacity 0.12s';
       cardsEl.style.opacity = '0';
-      cardsEl.innerHTML = _stickyHdr + cardsHtml.join('') + _P2P_BENEFITS_HTML;
+      cardsEl.innerHTML = _bsBar + _coinSticky + cardsHtml.join('') + _P2P_BENEFITS_HTML;
       requestAnimationFrame(function(){ cardsEl.style.opacity = '1'; });
 
       // Wire Buy/Sell bar
