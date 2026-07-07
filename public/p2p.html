@@ -173,7 +173,7 @@
                 <option value="XRP">XRP</option>
               </select>
               <!-- Dropdown panel -->
-              <div id="coinPickerDropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:99;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:6px;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+              <div id="coinPickerDropdown" style="display:none;position:fixed;top:auto;left:auto;z-index:9999;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:6px;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
                 <div onclick="pickCoin(event,'USDT')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:#fff;font-size:0.84rem;font-weight:600;" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='transparent'">
                   <svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.122 0 1.048 3.309 1.919 7.709 2.121v7.596h3.913v-7.6c4.393-.202 7.694-1.073 7.694-2.12 0-1.046-3.301-1.917-7.694-2.12" fill="white"/></svg> USDT
                 </div>
@@ -514,7 +514,7 @@
         <span class="nav-label">Orders</span>
       </a>
       <a href="#" class="mob-tab mob-tab-post-ad" data-mob="post" data-mobile-tab="post">
-        <svg class="nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <svg class="nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
         <span class="nav-label">Ads</span>
       </a>
       <a href="#" class="mob-tab" data-mob="profile" data-mobile-tab="profile">
@@ -2247,7 +2247,12 @@
     };
     function toggleCoinPicker() {
       var dd = document.getElementById('coinPickerDropdown');
-      dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+      var wrap = document.getElementById('coinPickerWrap');
+      if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
+      var r = wrap.getBoundingClientRect();
+      dd.style.top = (r.bottom + 4) + 'px';
+      dd.style.left = r.left + 'px';
+      dd.style.display = 'block';
     }
     function pickCoin(e, val) {
       e.stopPropagation();

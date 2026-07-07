@@ -2178,7 +2178,8 @@ body.p2p-kyc-open { overflow: hidden; }
   transition: color 0.15s;
 }
 
-.p2p-mobile-bottom-nav a.active { color: #fff; }
+.p2p-mobile-bottom-nav a.active { color: #F68F15; }
+.p2p-mobile-bottom-nav a.active .nav-icon { stroke: #F68F15; }
 .p2p-mobile-bottom-nav a:hover { color: rgba(255,255,255,0.8); }
 
 .p2p-mobile-bottom-nav .nav-icon {
@@ -5125,9 +5126,7 @@ body.mob-screen-open .p2p-secondary-nav {
     transition: top 0.24s cubic-bezier(0.4,0,0.2,1);
   }
   body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls {
-    transition: max-height 0.24s ease, opacity 0.18s ease;
-    max-height: 320px;
-    overflow: hidden;
+    overflow: visible;
   }
   body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
     transition: max-height 0.2s ease, opacity 0.15s ease;
