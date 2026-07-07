@@ -4866,10 +4866,33 @@ body.mob-screen-open .p2p-secondary-nav {
   white-space: nowrap;
 }
 .bbt-orders {
-  font-size: 10.5px;
-  color: rgba(255,255,255,0.38);
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
   white-space: nowrap;
   flex-shrink: 0;
+  text-align: right;
+  line-height: 1.4;
+}
+.bbt-rate {
+  color: #2ebd85;
+  font-weight: 700;
+  font-size: 11px;
+}
+.bbt-badges {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+.bbt-fast-release {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: #4ade80;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Price */
@@ -4924,13 +4947,19 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-pay-item {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
-  color: rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 4px;
-  padding: 1px 6px;
+  gap: 4px;
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.65);
   white-space: nowrap;
+}
+.bbt-pay-item::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #F68F15;
+  flex-shrink: 0;
 }
 .bbt-pay-bar { display: none; }
 .bbt-pay-name { }
@@ -5106,7 +5135,7 @@ body.mob-screen-open .p2p-secondary-nav {
     overflow: hidden;
   }
 
-  /* Scroll-down state: header+controls collapse, subnav pins to top */
+  /* Scroll-down state: only header hides, subnav + controls stay */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-header {
     transform: translateY(-100%);
     pointer-events: none;
@@ -5114,18 +5143,10 @@ body.mob-screen-open .p2p-secondary-nav {
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-subnav {
     top: 0 !important;
   }
-  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls {
-    max-height: 0 !important;
-    opacity: 0;
-    pointer-events: none;
-  }
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
     max-height: 0 !important;
     opacity: 0;
     pointer-events: none;
-  }
-  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-main-wrap {
-    height: calc(100dvh - 44px) !important;
   }
 }
 
