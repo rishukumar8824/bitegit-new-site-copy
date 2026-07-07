@@ -3389,7 +3389,7 @@ body.mob-screen-open .p2p-secondary-nav {
 @media (max-width: 768px) {
 
   /* Tighter main padding + room for bottom nav */
-  .p2p-main-wrap { padding: 0 0.75rem 0; }
+  .p2p-main-wrap { padding: 0; }
 
   body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) {
     height: 100dvh;
@@ -4757,12 +4757,14 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 /* First card — rounded box, inset from edges */
 .bbt-top-pick {
-  background: #1a1c22;
-  border-bottom: none;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.09);
-  margin: 8px 12px 4px;
-  padding: 8px 12px 8px;
+  background: #111318;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin: 0;
+  padding: 8px 14px 8px;
+  border-top: 1.5px solid rgba(246,143,21,0.15);
 }
 .bbt-top-pick-badge {
   position: absolute;
