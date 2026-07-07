@@ -7646,6 +7646,9 @@ function submitFundPassword() {
 // ===== END PROFILE FEATURE SCREENS =====
 
 function openKycScreen() {
+  location.href = '/kyc';
+}
+function openKycScreen_old() {
   var kycStatus = normalizeKycStatus(currentUser && currentUser.kyc && currentUser.kyc.status);
   if (kycStatus === 'PENDING_REVIEW') {
     var el = document.getElementById('kycUnderReviewScreen');
