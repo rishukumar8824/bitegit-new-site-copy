@@ -4667,16 +4667,13 @@ body.mob-screen-open .p2p-secondary-nav {
   display: block;
   border-radius: 12px;
 }
-.bft-css-card {
-  width: 140px;
-  height: 140px;
+.bft-svg-card {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 16px;
-  line-height: 1;
+  overflow: hidden;
+  line-height: 0;
 }
 /* Covers the "Bybit P2P" speech bubble in p2p-people.png */
 .bft-bubble-cover {
@@ -5183,11 +5180,7 @@ body.mob-screen-open .p2p-secondary-nav {
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-subnav {
     top: 0 !important;
   }
-  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row1 {
-    max-height: 0 !important;
-    opacity: 0;
-    pointer-events: none;
-  }
+  /* Buy/Sell row stays visible always — no collapse on scroll */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
     max-height: 0 !important;
     opacity: 0;
