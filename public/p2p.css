@@ -427,6 +427,31 @@ body.p2p-kyc-open { overflow: hidden; }
   margin-right: 4px;
 }
 
+/* INR pill inside subnav-left (mobile) */
+.p2p-subnav-inr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 16px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-left: 4px;
+  font-family: 'Manrope', sans-serif;
+  flex-shrink: 0;
+  height: 26px;
+  line-height: 1;
+}
+/* On desktop, hide the pill (the subnav-right already has the currency pill) */
+@media (min-width: 1024px) {
+  .p2p-subnav-inr-pill { display: none; }
+}
+
 /* ── 3-dot menu ── */
 .p2p-dot-menu-wrap { position: relative; display: flex; align-items: center; }
 .p2p-dot-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3px; padding: 0 0.7rem; height: 44px; -webkit-tap-highlight-color: transparent; }
@@ -3459,10 +3484,11 @@ body.mob-screen-open .p2p-secondary-nav {
 
   /* Subnav: equal-width tabs, no horizontal scroll */
   .p2p-subnav { top: 52px; }
-  .p2p-subnav-inner { padding: 0 0.5rem; overflow-x: hidden; }
+  .p2p-subnav-inner { padding: 0 0.5rem; overflow-x: auto; scrollbar-width: none; }
+  .p2p-subnav-inner::-webkit-scrollbar { display: none; }
   .p2p-subnav-right { display: none; }
-  .p2p-subnav-left { flex: 1; display: flex; }
-  .p2p-subnav-left a { flex: 1; text-align: center; justify-content: center; padding: 0 0.4rem; font-size: 0.78rem; }
+  .p2p-subnav-left { flex: 1; display: flex; align-items: center; min-width: 0; }
+  .p2p-subnav-left a { flex: 1; text-align: center; justify-content: center; padding: 0 0.4rem; font-size: 0.78rem; white-space: nowrap; }
 
   /* Hero: compact, hide promo banner */
   .p2p-hero { padding: 0.9rem 0 0.6rem; flex-direction: column; gap: 0; }
@@ -4913,11 +4939,11 @@ body.mob-screen-open .p2p-secondary-nav {
   white-space: nowrap;
   flex-shrink: 0;
   text-align: right;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 .bbt-rate {
-  color: #2ebd85;
-  font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  font-weight: 400;
   font-size: 11px;
 }
 .bbt-badges {
@@ -4951,8 +4977,8 @@ body.mob-screen-open .p2p-secondary-nav {
   line-height: 1;
 }
 .bbt-pnum {
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 26px;
+  font-weight: 700;
   color: #fff;
   letter-spacing: -0.5px;
   line-height: 1;
@@ -5157,7 +5183,7 @@ body.mob-screen-open .p2p-secondary-nav {
   .gt-amount-wrap { height: 38px; flex: 1; }
   .gt-amount-input { font-size: 13px; }
   .gt-pay-wrap { height: 38px; padding: 0 8px; }
-  .gt-pay-label { font-size: 11px; max-width: 90px; }
+  .gt-pay-label { font-size: 11px; max-width: 150px; white-space: nowrap; overflow: visible; text-overflow: clip; }
   .gt-filter-icon-btn { height: 38px; width: 36px; }
 
   /* Remove extra gap in gt-controls */

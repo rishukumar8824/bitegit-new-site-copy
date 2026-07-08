@@ -3247,7 +3247,7 @@ function renderOffers(data, append) {
               <div class="bbt-badges">${_respTag}${_fastRelease}</div>
             </div>
           </div>
-          <span class="bbt-orders">${repOrders} Orders<br><span class="bbt-rate">${repRate}%</span></span>
+          <span class="bbt-orders">${repOrders} Orders (${repRate}%)</span>
         </div>
         <div class="bbt-price-row">
           <span class="bbt-psign">₹</span><span class="bbt-pnum">${Number(offer.price).toFixed(2)}</span>
