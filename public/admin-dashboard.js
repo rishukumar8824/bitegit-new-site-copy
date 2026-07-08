@@ -52,7 +52,10 @@ const viewLoaders = {
   monitoring: loadMonitoring,
   audit: loadAudit,
   adminusers: loadAdminUsers,
-  merchants: loadMerchants
+  merchants: loadMerchants,
+  futures: loadFutures,
+  ledger: loadLedger,
+  apikeys: loadApiKeys
 };
 
 const PAGE_TITLES = {
@@ -73,7 +76,10 @@ const PAGE_TITLES = {
   monitoring: 'Monitoring',
   audit: 'Audit Logs',
   adminusers: 'Admin Users',
-  merchants: 'Merchant Applications'
+  merchants: 'Merchant Applications',
+  futures: 'Futures & Derivatives',
+  ledger: 'Transaction Ledger',
+  apikeys: 'API Keys Management'
 };
 
 function formatNumber(value, digits = 2) {
@@ -1166,6 +1172,12 @@ async function loadP2P() {
 
   const disputesList = document.getElementById('p2pDisputesList');
   const disputes = Array.isArray(disputesPayload.disputes) ? disputesPayload.disputes : [];
+  // Update P2P dispute badge count
+  const p2pBadge = document.getElementById('p2pDisputeBadge');
+  if (p2pBadge) {
+    if (disputes.length > 0) { p2pBadge.textContent = disputes.length; p2pBadge.style.display = ''; }
+    else { p2pBadge.style.display = 'none'; }
+  }
   disputesList.innerHTML = disputes.map((order) => renderP2PDisputeCard(order)).join('');
   if (disputes.length === 0) {
     disputesList.innerHTML = '<p class="text-sm text-slate-500">No active disputes.</p>';
@@ -3810,3 +3822,363 @@ async function wdAction(withdrawalId, decision, btn) {
     btn.textContent = decision === 'APPROVED' ? '✓ Approve' : '✕ Reject';
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FUTURES / DERIVATIVES
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _futuresPage = 0;
+
+async function loadFutures() {
+  const userFilter = (document.getElementById('futuresUserSearch')?.value || '').trim();
+  const tbody = document.getElementById('futuresPositionsBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-2);padding:20px;">Loading…</td></tr>';
+
+  try {
+    const q = new URLSearchParams({ limit: '50' });
+    if (userFilter) q.set('userId', userFilter);
+    const data = await apiRequest('/futures/positions?' + q.toString());
+    const positions = Array.isArray(data.positions) ? data.positions : [];
+
+    // Stats cards
+    const openCount = positions.filter(p => p.status === 'OPEN').length;
+    const totalPnl = positions.reduce((s, p) => s + Number(p.unrealizedPnl || p.pnl || 0), 0);
+    renderCards('futuresCards', [
+      { icon: '📊', label: 'Total Positions', value: String(positions.length) },
+      { icon: '✅', label: 'Open Positions', value: String(openCount) },
+      { icon: '💰', label: 'Total Unrealized PnL', value: `₹${formatNumber(totalPnl, 2)}` }
+    ]);
+
+    if (!positions.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-2);padding:20px;">No futures positions found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = positions.map(p => {
+      const pnl = Number(p.unrealizedPnl || p.pnl || 0);
+      const pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+      const statusColor = p.status === 'OPEN' ? '#1bd67d' : p.status === 'LIQUIDATED' ? '#f6465d' : 'var(--text-2)';
+      return `<tr>
+        <td class="admin-td" style="font-family:monospace;font-size:11px;">${escapeHtml(p.id || '-')}</td>
+        <td class="admin-td" style="font-size:12px;">${escapeHtml(p.userId || p.username || '-')}</td>
+        <td class="admin-td" style="font-weight:700;color:#00b8d4;">${escapeHtml(p.symbol || '-')}</td>
+        <td class="admin-td"><span style="color:${p.side === 'LONG' ? '#1bd67d' : '#f6465d'};font-weight:700;">${escapeHtml(p.side || '-')}</span></td>
+        <td class="admin-td">${formatNumber(p.size || p.quantity || 0, 4)}</td>
+        <td class="admin-td">₹${formatNumber(p.entryPrice || 0, 4)}</td>
+        <td class="admin-td">${escapeHtml(String(p.leverage || '-'))}x</td>
+        <td class="admin-td" style="color:${pnlColor};font-weight:700;">₹${formatNumber(pnl, 2)}</td>
+        <td class="admin-td"><span style="color:${statusColor};font-weight:700;">${escapeHtml(p.status || '-')}</span></td>
+        <td class="admin-td">
+          ${p.status === 'OPEN' ? `<button onclick="forceCloseFuturesPosition('${escapeHtml(p.id)}',this)" style="padding:4px 10px;border-radius:6px;background:rgba(246,70,93,0.12);color:#f6465d;border:1px solid rgba(246,70,93,0.3);font-size:11px;font-weight:700;cursor:pointer;">Force Close</button>` : '<span style="color:var(--text-2);font-size:11px;">—</span>'}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--red);padding:20px;">Error: ${escapeHtml(e.message)}</td></tr>`;
+  }
+
+  // Also load liquidations
+  loadFuturesLiquidations();
+}
+
+async function loadFuturesLiquidations() {
+  const tbody = document.getElementById('futuresLiquidationsBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:20px;">Loading…</td></tr>';
+  try {
+    const data = await apiRequest('/futures/liquidations?limit=30');
+    const liquidations = Array.isArray(data.liquidations) ? data.liquidations : [];
+    if (!liquidations.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:20px;">No recent liquidations.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = liquidations.map(l => `<tr>
+      <td class="admin-td" style="font-family:monospace;font-size:11px;">${escapeHtml(l.id || '-')}</td>
+      <td class="admin-td" style="font-size:12px;">${escapeHtml(l.userId || '-')}</td>
+      <td class="admin-td" style="color:#00b8d4;font-weight:700;">${escapeHtml(l.symbol || '-')}</td>
+      <td class="admin-td">${formatNumber(l.size || l.quantity || 0, 4)}</td>
+      <td class="admin-td">₹${formatNumber(l.liquidationPrice || l.price || 0, 4)}</td>
+      <td class="admin-td" style="color:var(--red);font-weight:700;">₹${formatNumber(l.loss || l.realizedLoss || 0, 2)}</td>
+      <td class="admin-td" style="font-size:11px;">${formatDate(l.createdAt || l.liquidatedAt)}</td>
+    </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px;">Error: ${escapeHtml(e.message)}</td></tr>`;
+  }
+}
+
+async function forceCloseFuturesPosition(positionId, btn) {
+  if (!confirm('Force close this futures position? This cannot be undone.')) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    await apiRequest(`/futures/positions/${encodeURIComponent(positionId)}/force-close`, { method: 'POST', body: JSON.stringify({}) });
+    showMessage('Position force-closed successfully.', 'success');
+    loadFutures();
+  } catch(e) {
+    showMessage(e.message || 'Force close failed.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Force Close';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const futuresReloadBtn = document.getElementById('futuresReloadBtn');
+  if (futuresReloadBtn) futuresReloadBtn.addEventListener('click', function() { loadFutures(); });
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LEDGER
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _ledgerPage = 1;
+const _ledgerPageSize = 50;
+
+async function loadLedger(page) {
+  if (typeof page === 'number') _ledgerPage = page;
+  const tbody = document.getElementById('ledgerTableBody');
+  const countEl = document.getElementById('ledgerCount');
+  const pageEl = document.getElementById('ledgerPageInfo');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:20px;">Loading…</td></tr>';
+
+  const userId = (document.getElementById('ledgerUserFilter')?.value || '').trim();
+  const type   = (document.getElementById('ledgerTypeFilter')?.value || '').trim();
+
+  // Build export URL with current filters
+  const exportLink = document.getElementById('ledgerExportBtn');
+  if (exportLink) {
+    const ep = new URLSearchParams();
+    if (userId) ep.set('userId', userId);
+    if (type)   ep.set('type', type);
+    exportLink.href = `/api/admin/ledger/export.csv?${ep.toString()}`;
+  }
+
+  try {
+    const q = new URLSearchParams({ limit: String(_ledgerPageSize), offset: String((_ledgerPage - 1) * _ledgerPageSize) });
+    if (userId) q.set('userId', userId);
+    if (type)   q.set('type', type);
+
+    const data = await apiRequest('/ledger?' + q.toString());
+    const entries = Array.isArray(data.entries) ? data.entries : (Array.isArray(data.transactions) ? data.transactions : []);
+    const total   = Number(data.total || data.count || entries.length);
+
+    if (countEl) countEl.textContent = `${total.toLocaleString()} entries`;
+    if (pageEl) pageEl.textContent = `Page ${_ledgerPage}`;
+
+    const prevBtn = document.getElementById('ledgerPrevBtn');
+    const nextBtn = document.getElementById('ledgerNextBtn');
+    if (prevBtn) prevBtn.disabled = _ledgerPage <= 1;
+    if (nextBtn) nextBtn.disabled = entries.length < _ledgerPageSize;
+
+    if (!entries.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:20px;">No ledger entries found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = entries.map(e => {
+      const amount = Number(e.amount || e.credit || e.debit || 0);
+      const isCredit = e.type === 'DEPOSIT' || e.type === 'REFERRAL_BONUS' || e.type === 'ADJUSTMENT' || e.credit;
+      const amountColor = isCredit ? 'var(--green)' : 'var(--red)';
+      const amountPrefix = isCredit ? '+' : '-';
+      return `<tr>
+        <td class="admin-td" style="font-family:monospace;font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(e.id||'-')}">${escapeHtml(String(e.id||'-').slice(0,12))}…</td>
+        <td class="admin-td" style="font-size:12px;">${escapeHtml(e.userId || e.username || '-')}</td>
+        <td class="admin-td"><span style="padding:2px 8px;border-radius:6px;background:rgba(0,184,212,0.1);color:#00b8d4;font-size:11px;font-weight:700;">${escapeHtml(e.type || '-')}</span></td>
+        <td class="admin-td" style="font-weight:700;">${escapeHtml(e.asset || e.coin || e.currency || 'USDT')}</td>
+        <td class="admin-td" style="text-align:right;color:${amountColor};font-weight:700;font-family:monospace;">${amountPrefix}${formatNumber(Math.abs(amount), 6)}</td>
+        <td class="admin-td" style="text-align:right;font-family:monospace;font-size:12px;">${e.balanceAfter != null ? formatNumber(e.balanceAfter, 6) : '—'}</td>
+        <td class="admin-td" style="font-family:monospace;font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(e.reference||e.txHash||'-')}">${escapeHtml(String(e.reference || e.txHash || e.orderId || '—').slice(0,14))}</td>
+        <td class="admin-td" style="font-size:11px;white-space:nowrap;">${formatDate(e.createdAt || e.timestamp)}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--red);padding:20px;">Error: ${escapeHtml(e.message)}</td></tr>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const ledgerReloadBtn = document.getElementById('ledgerReloadBtn');
+  if (ledgerReloadBtn) ledgerReloadBtn.addEventListener('click', function() { _ledgerPage = 1; loadLedger(1); });
+
+  const prevBtn = document.getElementById('ledgerPrevBtn');
+  if (prevBtn) prevBtn.addEventListener('click', function() { if (_ledgerPage > 1) loadLedger(_ledgerPage - 1); });
+
+  const nextBtn = document.getElementById('ledgerNextBtn');
+  if (nextBtn) nextBtn.addEventListener('click', function() { loadLedger(_ledgerPage + 1); });
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// API KEYS MANAGEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function loadApiKeys() {
+  // Load stats
+  const statsBody = document.getElementById('apikeysStatsBody');
+  if (statsBody) {
+    try {
+      const stats = await apiRequest('/apikeys/stats');
+      statsBody.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 0;">
+          <div style="background:var(--bg-input);border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:var(--text-1);">${escapeHtml(String(stats.total || 0))}</div>
+            <div style="font-size:11px;color:var(--text-2);margin-top:4px;">Total Keys</div>
+          </div>
+          <div style="background:var(--bg-input);border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:#1bd67d;">${escapeHtml(String(stats.active || 0))}</div>
+            <div style="font-size:11px;color:var(--text-2);margin-top:4px;">Active</div>
+          </div>
+          <div style="background:var(--bg-input);border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:#f6465d;">${escapeHtml(String(stats.revoked || 0))}</div>
+            <div style="font-size:11px;color:var(--text-2);margin-top:4px;">Revoked</div>
+          </div>
+          <div style="background:var(--bg-input);border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:#ffd87a;">${escapeHtml(String(stats.usersWithKeys || stats.uniqueUsers || 0))}</div>
+            <div style="font-size:11px;color:var(--text-2);margin-top:4px;">Users</div>
+          </div>
+        </div>`;
+    } catch(e) {
+      statsBody.innerHTML = `<div style="color:var(--red);padding:12px;font-size:12px;">Failed to load stats: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  // Load all keys
+  const tbody = document.getElementById('apikeysTableBody');
+  const countEl = document.getElementById('apikeysCount');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:20px;">Loading…</td></tr>';
+
+  try {
+    const statusFilter = (document.getElementById('apikeyStatusFilter')?.value || '').trim();
+    const q = new URLSearchParams({ limit: '100' });
+    if (statusFilter) q.set('status', statusFilter);
+
+    const data = await apiRequest('/apikeys?' + q.toString());
+    const keys = Array.isArray(data.keys) ? data.keys : (Array.isArray(data.apiKeys) ? data.apiKeys : []);
+
+    if (countEl) countEl.textContent = `${keys.length} keys`;
+
+    if (!keys.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:20px;">No API keys found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = keys.map(k => {
+      const statusColor = k.status === 'ACTIVE' ? '#1bd67d' : k.status === 'REVOKED' ? '#f6465d' : '#ffd87a';
+      const perms = Array.isArray(k.permissions) ? k.permissions.join(', ') : (k.permissions || k.scopes || '—');
+      const keyId = escapeHtml(k.id || k.keyId || '-');
+      const canRevoke = k.status === 'ACTIVE';
+      return `<tr>
+        <td class="admin-td" style="font-family:monospace;font-size:11px;">${keyId.slice(0,16)}…</td>
+        <td class="admin-td" style="font-size:12px;">${escapeHtml(k.userId || '-')}</td>
+        <td class="admin-td">${escapeHtml(k.label || k.name || '—')}</td>
+        <td class="admin-td" style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(String(perms))}">${escapeHtml(String(perms))}</td>
+        <td class="admin-td"><span style="color:${statusColor};font-weight:700;">${escapeHtml(k.status || '-')}</span></td>
+        <td class="admin-td" style="font-size:11px;">${k.lastUsedAt ? formatDate(k.lastUsedAt) : '—'}</td>
+        <td class="admin-td" style="font-size:11px;">${formatDate(k.createdAt)}</td>
+        <td class="admin-td">
+          ${canRevoke
+            ? `<button onclick="revokeApiKey('${escapeHtml(k.id || k.keyId)}',this)" style="padding:4px 10px;border-radius:6px;background:rgba(246,70,93,0.12);color:#f6465d;border:1px solid rgba(246,70,93,0.3);font-size:11px;font-weight:700;cursor:pointer;">Revoke</button>`
+            : '<span style="color:var(--text-2);font-size:11px;">—</span>'
+          }
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--red);padding:20px;">Error: ${escapeHtml(e.message)}</td></tr>`;
+  }
+}
+
+async function revokeApiKey(keyId, btn) {
+  if (!confirm('Revoke this API key? The user will lose access immediately.')) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    await apiRequest(`/apikeys/key/${encodeURIComponent(keyId)}/revoke`, { method: 'POST', body: JSON.stringify({}) });
+    showMessage('API key revoked successfully.', 'success');
+    loadApiKeys();
+  } catch(e) {
+    // Try alternate endpoint pattern
+    try {
+      // Extract userId from table row if needed, try user-level revoke
+      showMessage(e.message || 'Revoke failed.', 'error');
+    } catch(_) {}
+    btn.disabled = false;
+    btn.textContent = 'Revoke';
+  }
+}
+
+async function searchApiKeysByUser(userId) {
+  const resultsEl = document.getElementById('apikeyUserResults');
+  if (!resultsEl) return;
+  if (!userId.trim()) { resultsEl.innerHTML = ''; return; }
+  resultsEl.innerHTML = '<div style="color:var(--text-2);font-size:12px;padding:8px 0;">Loading…</div>';
+  try {
+    const data = await apiRequest(`/apikeys/user/${encodeURIComponent(userId.trim())}`);
+    const keys = Array.isArray(data.keys) ? data.keys : (Array.isArray(data.apiKeys) ? data.apiKeys : []);
+    if (!keys.length) {
+      resultsEl.innerHTML = '<div style="color:var(--text-2);font-size:12px;padding:8px 0;">No API keys for this user.</div>';
+      return;
+    }
+    resultsEl.innerHTML = keys.map(k => {
+      const statusColor = k.status === 'ACTIVE' ? '#1bd67d' : k.status === 'REVOKED' ? '#f6465d' : '#ffd87a';
+      return `<div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;background:var(--bg-input);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text-1);">${escapeHtml(k.label || k.name || 'Unnamed Key')}</div>
+            <div style="font-size:11px;font-family:monospace;color:var(--text-2);margin-top:2px;">${escapeHtml((k.id || k.keyId || '').slice(0,20))}…</div>
+          </div>
+          <span style="color:${statusColor};font-size:11px;font-weight:700;">${escapeHtml(k.status || '-')}</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:11px;color:var(--text-2);">Last used: ${k.lastUsedAt ? formatDate(k.lastUsedAt) : 'Never'}</span>
+          ${k.status === 'ACTIVE'
+            ? `<button onclick="revokeApiKey('${escapeHtml(k.id||k.keyId)}',this);this.closest('.apikeyUserResults')&&searchApiKeysByUser('${escapeHtml(userId)}')" style="padding:3px 10px;border-radius:6px;background:rgba(246,70,93,0.12);color:#f6465d;border:1px solid rgba(246,70,93,0.3);font-size:11px;font-weight:700;cursor:pointer;">Revoke</button>`
+            : ''}
+          ${k.status === 'ACTIVE'
+            ? `<button onclick="revokeAllUserApiKeys('${escapeHtml(userId)}')" style="padding:3px 10px;border-radius:6px;background:rgba(246,70,93,0.18);color:#f6465d;border:1px solid rgba(246,70,93,0.4);font-size:11px;font-weight:700;cursor:pointer;">Revoke All</button>`
+            : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    resultsEl.innerHTML = `<div style="color:var(--red);font-size:12px;padding:8px 0;">Error: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function revokeAllUserApiKeys(userId) {
+  if (!confirm(`Revoke ALL API keys for user ${userId}? This cannot be undone.`)) return;
+  try {
+    await apiRequest(`/apikeys/user/${encodeURIComponent(userId)}/revoke-all`, { method: 'POST', body: JSON.stringify({}) });
+    showMessage('All API keys revoked for user.', 'success');
+    searchApiKeysByUser(userId);
+    loadApiKeys();
+  } catch(e) {
+    showMessage(e.message || 'Revoke all failed.', 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchBtn = document.getElementById('apikeySearchBtn');
+  if (searchBtn) {
+    searchBtn.addEventListener('click', function() {
+      const userId = (document.getElementById('apikeyUserInput')?.value || '').trim();
+      searchApiKeysByUser(userId);
+    });
+  }
+
+  const apikeyUserInput = document.getElementById('apikeyUserInput');
+  if (apikeyUserInput) {
+    apikeyUserInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') searchApiKeysByUser(this.value.trim());
+    });
+  }
+
+  const apikeysReloadBtn = document.getElementById('apikeysReloadBtn');
+  if (apikeysReloadBtn) apikeysReloadBtn.addEventListener('click', function() { loadApiKeys(); });
+
+  const apikeyStatusFilter = document.getElementById('apikeyStatusFilter');
+  if (apikeyStatusFilter) apikeyStatusFilter.addEventListener('change', function() { loadApiKeys(); });
+});

@@ -74,6 +74,12 @@
       <button class="admin-nav-btn" data-view="p2p">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
         P2P Control
+        <span class="nav-badge" id="p2pDisputeBadge" style="display:none">0</span>
+      </button>
+
+      <button class="admin-nav-btn" data-view="futures">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+        Futures / Derivatives
       </button>
 
       <div class="sidebar-section-title">Operations</div>
@@ -81,6 +87,16 @@
       <button class="admin-nav-btn" data-view="revenue">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         Revenue
+      </button>
+
+      <button class="admin-nav-btn" data-view="ledger">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Ledger
+      </button>
+
+      <button class="admin-nav-btn" data-view="apikeys">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        API Keys
       </button>
 
       <button class="admin-nav-btn" data-view="risk">
@@ -829,6 +845,165 @@
                 <tbody id="adminUsersTableBody"></tbody>
               </table>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── FUTURES / DERIVATIVES ── -->
+      <section class="admin-panel hidden" data-panel="futures">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:var(--text-1);">Futures &amp; Derivatives</div>
+          <button id="futuresReloadBtn" class="btn-secondary btn-sm">Reload</button>
+        </div>
+        <div class="stat-grid" id="futuresCards"></div>
+        <div style="display:grid;gap:16px;grid-template-columns:1fr 1fr;margin-top:16px;">
+          <!-- Open Positions -->
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <span class="panel-card-title">Open Positions</span>
+              <div style="display:flex;gap:6px;">
+                <input id="futuresUserSearch" class="input-dark" style="width:180px;height:32px;padding:4px 10px;font-size:12px;" placeholder="Filter by user ID…" />
+                <button onclick="loadFutures()" class="btn-secondary btn-sm">Filter</button>
+              </div>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead><tr>
+                  <th class="admin-th">Position ID</th>
+                  <th class="admin-th">User</th>
+                  <th class="admin-th">Symbol</th>
+                  <th class="admin-th">Side</th>
+                  <th class="admin-th">Size</th>
+                  <th class="admin-th">Entry Price</th>
+                  <th class="admin-th">Leverage</th>
+                  <th class="admin-th">PnL</th>
+                  <th class="admin-th">Status</th>
+                  <th class="admin-th">Actions</th>
+                </tr></thead>
+                <tbody id="futuresPositionsBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Liquidations -->
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <span class="panel-card-title">Recent Liquidations</span>
+              <button onclick="loadFuturesLiquidations()" class="btn-secondary btn-sm">Reload</button>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead><tr>
+                  <th class="admin-th">ID</th>
+                  <th class="admin-th">User</th>
+                  <th class="admin-th">Symbol</th>
+                  <th class="admin-th">Size</th>
+                  <th class="admin-th">Price</th>
+                  <th class="admin-th">Loss</th>
+                  <th class="admin-th">Time</th>
+                </tr></thead>
+                <tbody id="futuresLiquidationsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── LEDGER ── -->
+      <section class="admin-panel hidden" data-panel="ledger">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">Transaction Ledger</span>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input id="ledgerUserFilter" class="input-dark" style="width:180px;height:34px;padding:4px 10px;" placeholder="User ID…" />
+              <select id="ledgerTypeFilter" class="input-dark" style="width:160px;height:34px;padding:4px 10px;">
+                <option value="">All Types</option>
+                <option value="DEPOSIT">Deposit</option>
+                <option value="WITHDRAWAL">Withdrawal</option>
+                <option value="P2P_BUY">P2P Buy</option>
+                <option value="P2P_SELL">P2P Sell</option>
+                <option value="SPOT_BUY">Spot Buy</option>
+                <option value="SPOT_SELL">Spot Sell</option>
+                <option value="FEE">Fee</option>
+                <option value="ADJUSTMENT">Adjustment</option>
+                <option value="REFERRAL_BONUS">Referral Bonus</option>
+              </select>
+              <button id="ledgerReloadBtn" class="btn-primary btn-sm">Search</button>
+              <a id="ledgerExportBtn" href="/api/admin/ledger/export.csv" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;">↓ Export CSV</a>
+              <span id="ledgerCount" style="font-size:11px;color:var(--text-2);"></span>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr>
+                <th class="admin-th">Tx ID</th>
+                <th class="admin-th">User</th>
+                <th class="admin-th">Type</th>
+                <th class="admin-th">Asset</th>
+                <th class="admin-th" style="text-align:right;">Amount</th>
+                <th class="admin-th" style="text-align:right;">Balance After</th>
+                <th class="admin-th">Reference</th>
+                <th class="admin-th">Time</th>
+              </tr></thead>
+              <tbody id="ledgerTableBody"></tbody>
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);">
+            <button id="ledgerPrevBtn" class="btn-secondary btn-sm" disabled>← Prev</button>
+            <span id="ledgerPageInfo" style="font-size:12px;color:var(--text-2);">Page 1</span>
+            <button id="ledgerNextBtn" class="btn-secondary btn-sm">Next →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── API KEYS MANAGEMENT ── -->
+      <section class="admin-panel hidden" data-panel="apikeys">
+        <div style="display:grid;gap:16px;grid-template-columns:1fr 1fr;margin-bottom:16px;">
+          <div class="panel-card" id="apikeysStatsCard">
+            <div class="panel-card-header"><span class="panel-card-title">API Keys Overview</span></div>
+            <div class="panel-card-body" id="apikeysStatsBody">
+              <div style="color:var(--text-2);text-align:center;padding:20px;">Loading…</div>
+            </div>
+          </div>
+          <div class="panel-card">
+            <div class="panel-card-header"><span class="panel-card-title">Lookup Keys by User</span></div>
+            <div class="panel-card-body">
+              <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <input id="apikeyUserInput" class="input-dark" style="flex:1;height:36px;" placeholder="Enter User ID…" />
+                <button id="apikeySearchBtn" class="btn-primary btn-sm" style="white-space:nowrap;">Search</button>
+              </div>
+              <div id="apikeyUserResults"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">All API Keys</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="apikeyStatusFilter" class="input-dark" style="width:140px;height:34px;padding:4px 10px;">
+                <option value="">All Statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="DISABLED">Disabled</option>
+                <option value="REVOKED">Revoked</option>
+              </select>
+              <button id="apikeysReloadBtn" class="btn-secondary btn-sm">Reload</button>
+              <span id="apikeysCount" style="font-size:11px;color:var(--text-2);"></span>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr>
+                <th class="admin-th">Key ID</th>
+                <th class="admin-th">User</th>
+                <th class="admin-th">Label</th>
+                <th class="admin-th">Permissions</th>
+                <th class="admin-th">Status</th>
+                <th class="admin-th">Last Used</th>
+                <th class="admin-th">Created</th>
+                <th class="admin-th">Actions</th>
+              </tr></thead>
+              <tbody id="apikeysTableBody"></tbody>
+            </table>
           </div>
         </div>
       </section>
