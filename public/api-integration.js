@@ -452,52 +452,68 @@ async function loadWithdrawHistory() {
   };
 })();
 
-// ─── Override openDepositPage → fetch real deposit address ───────────────────
+// ─── Real deposit addresses per network ──────────────────────────────────────
+var _DEPOSIT_ADDRESSES = {
+  'BEP20': { addr: '0x01e0bb0ae1228012899ffdddefd96329087150b5', label: 'BEP20 (Binance Smart Chain)', confirmations: 15, withdrawUnlock: 60 },
+  'BSC':   { addr: '0x01e0bb0ae1228012899ffdddefd96329087150b5', label: 'BEP20 (Binance Smart Chain)', confirmations: 15, withdrawUnlock: 60 },
+  'TRC20': { addr: 'TGtoZDgjh2R8fo5fSuBzgUQmKzgAj4SwXy',        label: 'TRC20 (Tron)',               confirmations: 3,  withdrawUnlock: 3  },
+  'TRX':   { addr: 'TGtoZDgjh2R8fo5fSuBzgUQmKzgAj4SwXy',        label: 'TRC20 (Tron)',               confirmations: 3,  withdrawUnlock: 3  },
+  'ERC20': { addr: '0x01e0bb0ae1228012899ffdddefd96329087150b5', label: 'ERC20 (Ethereum)',            confirmations: 12, withdrawUnlock: 96 },
+  'ETH':   { addr: '0x01e0bb0ae1228012899ffdddefd96329087150b5', label: 'ERC20 (Ethereum)',            confirmations: 12, withdrawUnlock: 96 },
+  'SOL':   { addr: 'r4xMYMwTG1zzoxaiR6E3dsWbTtjFjGaxbSuehGuUHdU', label: 'SOL (Solana)',             confirmations: 5,  withdrawUnlock: 5  },
+};
+
+// ─── Override openDepositPage → show real deposit address ────────────────────
 (function() {
   var _orig = window.openDepositPage;
   window.openDepositPage = function(fromPage) {
     if (_orig) _orig(fromPage);
+    // Auto-load TRC20 as default when deposit page opens
+    setTimeout(function() { window.selectDepNetwork('USDT', 'TRC20'); }, 100);
   };
-  // When deposit address page is shown, load real address
+
   var _origSelNet = window.selectDepNetwork;
-  window.selectDepNetwork = async function(sym, net) {
+  window.selectDepNetwork = function(sym, net) {
     if (_origSelNet) _origSelNet(sym, net);
+    var key = (net || 'TRC20').toUpperCase();
+    var info = _DEPOSIT_ADDRESSES[key] || _DEPOSIT_ADDRESSES['TRC20'];
+    var addr = info.addr;
+
+    // Set address text
     var addrEl = document.getElementById('dep-wallet-addr');
-    if (addrEl) addrEl.textContent = 'Loading…';
-    var data = await apiFetch('/wallet/balances');
-    if (data && data.wallet) {
-      var addr = data.wallet.depositAddress;
-      var actualNet = data.wallet.depositNetwork || net;
-      if (addrEl && addr) addrEl.textContent = addr;
-      var netEl = document.getElementById('dep-net-label');
-      if (netEl && actualNet) netEl.textContent = actualNet;
-      // Draw simple QR
-      if (addr) drawSimpleQR(addr);
-    } else if (addrEl) {
-      addrEl.textContent = 'Contact support to get deposit address';
-    }
+    if (addrEl) addrEl.textContent = addr;
+
+    // Set network label
+    var netEl = document.getElementById('dep-net-label');
+    if (netEl) netEl.textContent = info.label;
+
+    // Set confirmation info if elements exist
+    var confEl = document.getElementById('dep-confirmations');
+    if (confEl) confEl.textContent = info.confirmations + ' confirmations';
+    var wuEl = document.getElementById('dep-withdraw-unlock');
+    if (wuEl) wuEl.textContent = info.withdrawUnlock + ' confirmations';
+
+    // Draw real QR code
+    drawRealQR(addr);
   };
 })();
 
-// ─── Simple QR pattern draw ───────────────────────────────────────────────────
-function drawSimpleQR(addr) {
+// ─── Real QR code via qrserver.com ───────────────────────────────────────────
+function drawRealQR(addr) {
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=' + encodeURIComponent(addr);
+  // Try img element first
+  var img = document.getElementById('dep-qr-img');
+  if (img) { img.src = qrUrl; return; }
+  // Replace canvas with img
   var canvas = document.getElementById('dep-qr-canvas');
-  if (!canvas) return;
-  var ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 150, 150);
-  ctx.fillStyle = '#000';
-  for (var i = 0; i < 15; i++) {
-    for (var j = 0; j < 15; j++) {
-      var c = addr.charCodeAt((i * 15 + j) % addr.length);
-      if ((c * 17 + i * 13 + j * 7) % 3 === 0) ctx.fillRect(4 + i*9, 4 + j*9, 8, 8);
-    }
+  if (canvas) {
+    var newImg = document.createElement('img');
+    newImg.id = 'dep-qr-img';
+    newImg.src = qrUrl;
+    newImg.alt = 'Deposit QR Code';
+    newImg.style.cssText = 'width:200px;height:200px;border-radius:12px;display:block;';
+    canvas.parentNode.replaceChild(newImg, canvas);
   }
-  [[0,0],[0,10],[10,0]].forEach(function(pos) {
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
-    ctx.strokeRect(4 + pos[0]*9, 4 + pos[1]*9, 36, 36);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(14 + pos[0]*9, 14 + pos[1]*9, 16, 16);
-  });
 }
 
 // ─── Load Transaction History ─────────────────────────────────────────────────
