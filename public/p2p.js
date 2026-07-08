@@ -42,7 +42,7 @@ const _P2P_BENEFITS_HTML = (function() {
     +       '<div class="p2p-why-item"><strong>Trade your way:</strong> Pick offers, payment methods, and prices that suit you — you\'re in control.</div>'
     +     '</div>'
     +   '</div>'
-    +   '<div class="p2p-benefit-img"><div class="bft-img-wrap bft-css-card"><svg width="90" height="90" viewBox="0 0 90 90" fill="none"><circle cx="45" cy="45" r="45" fill="rgba(246,143,21,0.08)"/><circle cx="45" cy="45" r="28" fill="rgba(246,143,21,0.12)"/><text x="45" y="52" text-anchor="middle" font-size="26" fill="#F68F15" font-family="Arial">₿</text></svg><span class="bft-badge">BITCOVEX P2P</span></div></div>'
+    +   '<div class="p2p-benefit-img"><div class="bft-img-wrap"><img src="/img/p2p-people.png" alt="BITCOVEX P2P" loading="lazy"/><span class="bft-brand-cover">BITCOVEX</span><span class="bft-badge">BITCOVEX P2P</span></div></div>'
     + '</div>'
 
     /* ── Section 4: Block Trading (text left + image right) ── */
@@ -56,7 +56,7 @@ const _P2P_BENEFITS_HTML = (function() {
     +       '<div class="p2p-why-item"><strong>Secure escrow:</strong> Funds are only released after confirmation, ensuring worry-free trades.</div>'
     +     '</div>'
     +   '</div>'
-    +   '<div class="p2p-benefit-img"><div class="bft-img-wrap bft-css-card"><svg width="90" height="90" viewBox="0 0 90 90" fill="none"><circle cx="45" cy="45" r="45" fill="rgba(46,189,133,0.08)"/><circle cx="45" cy="45" r="28" fill="rgba(46,189,133,0.12)"/><text x="45" y="48" text-anchor="middle" font-size="13" fill="#2ebd85" font-family="Arial" font-weight="bold">0%</text><text x="45" y="62" text-anchor="middle" font-size="9" fill="#2ebd85" font-family="Arial">FEES</text></svg><span class="bft-badge">BITCOVEX 0% FEES</span></div></div>'
+    +   '<div class="p2p-benefit-img"><div class="bft-img-wrap"><img src="/img/p2p-fees.png" alt="BITCOVEX P2P Block Trading" loading="lazy"/><span class="bft-brand-cover">BITCOVEX</span><span class="bft-badge">BITCOVEX 0% FEES</span></div></div>'
     + '</div>'
 
     + '</div>';
@@ -9679,7 +9679,7 @@ window.deleteMobAd = async function(offerId) {
         document.body.classList.remove('p2p-scroll-down');
       } else if (y > _lastY + 2) {
         document.body.classList.add('p2p-scroll-down');
-      } else if (y < _lastY - 8) {
+      } else if (y < _lastY) {
         document.body.classList.remove('p2p-scroll-down');
       }
       _lastY = y;
