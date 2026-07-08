@@ -530,30 +530,83 @@
 
       <!-- ── P2P CONTROL ── -->
       <section class="admin-panel hidden" data-panel="p2p">
-        <div style="display:grid;gap:16px;grid-template-columns:2fr 1fr;">
-          <div class="panel-card">
-            <div class="panel-card-header">
-              <span class="panel-card-title">P2P Ads</span>
-              <button id="p2pReloadBtn" class="btn-secondary btn-sm">Reload</button>
+        <!-- P2P Tab Bar -->
+        <div class="panel-card" style="margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px;">
+            <div id="p2pTabBar" style="display:flex;overflow-x:auto;gap:0;">
+              <button class="p2p-tab active" data-p2p-tab="trades" style="display:flex;align-items:center;gap:6px;padding:14px 18px;background:none;border:none;color:var(--text-1);font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--accent);white-space:nowrap;">
+                <span style="width:8px;height:8px;border-radius:50%;background:#f6465d;display:inline-block;"></span>
+                Running Trades <span id="p2pTabCount-trades" class="nav-badge" style="background:rgba(246,70,93,0.2);color:#f6465d;">0</span>
+              </button>
+              <button class="p2p-tab" data-p2p-tab="ads" style="display:flex;align-items:center;gap:6px;padding:14px 18px;background:none;border:none;color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
+                <span style="width:8px;height:8px;border-radius:50%;background:#02c076;display:inline-block;"></span>
+                Running Ads <span id="p2pTabCount-ads" class="nav-badge" style="background:rgba(2,192,118,0.2);color:#02c076;">0</span>
+              </button>
+              <button class="p2p-tab" data-p2p-tab="completed" style="display:flex;align-items:center;gap:6px;padding:14px 18px;background:none;border:none;color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
+                ✅ Completed <span id="p2pTabCount-completed" class="nav-badge">0</span>
+              </button>
+              <button class="p2p-tab" data-p2p-tab="disputed" style="display:flex;align-items:center;gap:6px;padding:14px 18px;background:none;border:none;color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
+                <span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>
+                Disputed <span id="p2pTabCount-disputed" class="nav-badge" style="background:rgba(245,158,11,0.2);color:#f59e0b;">0</span>
+              </button>
+              <button class="p2p-tab" data-p2p-tab="cancelled" style="display:flex;align-items:center;gap:6px;padding:14px 18px;background:none;border:none;color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;">
+                🚫 Cancelled <span id="p2pTabCount-cancelled" class="nav-badge">0</span>
+              </button>
             </div>
-            <div id="p2pAdsList" style="padding:8px 16px;display:flex;flex-direction:column;gap:8px;"></div>
+            <button id="p2pReloadBtn" class="btn-secondary btn-sm" style="margin-right:8px;flex-shrink:0;">↺ Reload</button>
           </div>
-          <div style="display:flex;flex-direction:column;gap:16px;">
-            <div class="panel-card">
-              <div class="panel-card-header"><span class="panel-card-title">P2P Settings</span></div>
-              <div class="panel-card-body">
-                <form id="p2pSettingsForm" style="display:flex;flex-direction:column;gap:10px;">
-                  <input name="p2pFeePercent" type="number" step="0.01" class="input-dark" placeholder="P2P Fee (%)" />
-                  <input name="minOrderLimit" type="number" class="input-dark" placeholder="Min Order Limit" />
-                  <input name="maxOrderLimit" type="number" class="input-dark" placeholder="Max Order Limit" />
-                  <input name="autoExpiryMinutes" type="number" class="input-dark" placeholder="Auto Expiry (min)" />
-                  <button type="submit" class="btn-primary">Save P2P Settings</button>
-                </form>
+        </div>
+
+        <!-- Sub-filters (shown for trades tab) -->
+        <div id="p2pSubFilters" class="panel-card" style="border-radius:0;border-top:none;border-bottom:none;padding:8px 16px;display:flex;gap:8px;align-items:center;">
+          <span id="p2pSubFilter-disputed" style="display:none;padding:3px 10px;border-radius:20px;background:rgba(246,70,93,0.15);color:#f6465d;border:1px solid rgba(246,70,93,0.3);font-size:11px;font-weight:700;cursor:pointer;">DISPUTED: 0</span>
+          <span id="p2pSubFilter-payment" style="display:none;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);font-size:11px;font-weight:700;cursor:pointer;">PAYMENT SENT: 0</span>
+        </div>
+
+        <!-- P2P Table Panel -->
+        <div class="panel-card" style="border-top-left-radius:0;border-top-right-radius:0;border-top:none;">
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr>
+                <th class="admin-th">ORDER ID</th>
+                <th class="admin-th">BUYER</th>
+                <th class="admin-th">SELLER</th>
+                <th class="admin-th">AMOUNT</th>
+                <th class="admin-th">ASSET</th>
+                <th class="admin-th">STATUS</th>
+                <th class="admin-th">CREATED</th>
+                <th class="admin-th">ACTION</th>
+              </tr></thead>
+              <tbody id="p2pTradesTableBody"><tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:32px;">Loading…</td></tr></tbody>
+            </table>
+          </div>
+          <!-- Hidden: old ads list kept for backward compat dispute cards -->
+          <div id="p2pAdsList" style="display:none;"></div>
+          <div id="p2pDisputesList" style="display:none;"></div>
+        </div>
+
+        <!-- P2P Settings (hidden but preserved for form submission) -->
+        <form id="p2pSettingsForm" style="display:none;">
+          <input name="p2pFeePercent" type="number" step="0.01" value="0" />
+          <input name="minOrderLimit" type="number" value="0" />
+          <input name="maxOrderLimit" type="number" value="0" />
+          <input name="autoExpiryMinutes" type="number" value="15" />
+        </form>
+
+        <!-- P2P Chat Modal -->
+        <div id="p2pChatModal" style="display:none;position:fixed;inset:0;z-index:10500;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:16px;">
+          <div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:16px;max-width:600px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
+              <div>
+                <div style="font-size:15px;font-weight:700;color:#fff;">P2P Order Chat</div>
+                <div id="p2pChatModalMeta" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px;"></div>
               </div>
+              <button onclick="document.getElementById('p2pChatModal').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;">✕</button>
             </div>
-            <div class="panel-card">
-              <div class="panel-card-header"><span class="panel-card-title">Open Disputes</span></div>
-              <div id="p2pDisputesList" style="padding:8px 16px;display:flex;flex-direction:column;gap:8px;"></div>
+            <div id="p2pChatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;min-height:300px;max-height:400px;"></div>
+            <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;display:flex;gap:8px;">
+              <textarea id="p2pChatInput" placeholder="Send as Admin…" rows="2" style="flex:1;background:#0f172a;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 10px;color:#e2e8f0;font-size:13px;resize:none;outline:none;"></textarea>
+              <button onclick="sendP2PChatMessage()" style="background:#00b8d4;color:#000;font-size:13px;font-weight:700;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;align-self:flex-end;">Send</button>
             </div>
           </div>
         </div>
@@ -1283,13 +1336,28 @@
           <button class="btn-secondary" onclick="upAction('freeze')" style="padding:11px;gap:6px;display:flex;align-items:center;justify-content:center;">🔒 Freeze Account</button>
           <button class="btn-secondary" onclick="upAction('unfreeze')" style="padding:11px;gap:6px;display:flex;align-items:center;justify-content:center;">🔓 Unfreeze Account</button>
           <button class="btn-danger"    onclick="upAction('ban')"     style="padding:11px;gap:6px;display:flex;align-items:center;justify-content:center;">🚫 Ban User</button>
-          <button class="btn-secondary" onclick="upAction('force-logout')" style="padding:11px;gap:6px;display:flex;align-items:center;justify-content:center;">↩ Force Logout</button>
+          <button class="btn-secondary" onclick="upAction('unban')"   style="padding:11px;gap:6px;display:flex;align-items:center;justify-content:center;">✅ Unban User</button>
+        </div>
+        <button class="btn-secondary" onclick="upAction('force-logout')" style="padding:11px;gap:6px;display:flex;align-items:center;justify-content:center;width:100%;">↩️ Force Logout</button>
+
+        <div style="border-top:1px solid var(--border);padding-top:14px;">
+          <div style="font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Block / Unblock User</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
+            <button class="btn-danger"    onclick="upAction('block-ip')"    style="padding:10px;gap:6px;display:flex;align-items:center;justify-content:center;font-size:12px;">🌐 Block IP</button>
+            <button class="btn-secondary" onclick="upAction('unblock-ip')"  style="padding:10px;gap:6px;display:flex;align-items:center;justify-content:center;font-size:12px;">✅ Unblock IP</button>
+            <button class="btn-danger"    onclick="upAction('block-device')" style="padding:10px;gap:6px;display:flex;align-items:center;justify-content:center;font-size:12px;">📱 Block Device</button>
+            <button class="btn-secondary" onclick="upAction('unblock-device')" style="padding:10px;gap:6px;display:flex;align-items:center;justify-content:center;font-size:12px;">✅ Unblock Device</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <button onclick="upAction('block-all')" style="padding:10px;background:rgba(139,0,0,0.25);border:1px solid rgba(246,70,93,0.5);color:#f6465d;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">🔴 Block All (IP+Device)</button>
+            <button onclick="upAction('unblock-all')" style="padding:10px;background:rgba(2,192,118,0.1);border:1px solid rgba(2,192,118,0.3);color:#02c076;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">🟢 Unblock All</button>
+          </div>
         </div>
 
         <div style="border-top:1px solid var(--border);padding-top:14px;">
           <div style="font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Admin Impersonation</div>
           <button onclick="upAction('login-as')" style="padding:11px;gap:8px;display:flex;align-items:center;justify-content:center;width:100%;background:#1565c0;border:1px solid #1e88e5;color:#fff;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;">
-            👤 Login as this User
+            🕵️ Login as this User
           </button>
           <p style="font-size:11px;color:var(--text-2);margin:8px 0 0;text-align:center;">Opens user dashboard in a new tab. SUPER_ADMIN only.</p>
         </div>
@@ -1304,17 +1372,15 @@
               </select>
               <input id="upAdjustAmount" class="input-dark" type="number" min="0" step="0.0001" placeholder="Amount (USDT)" style="flex:1;height:36px;" />
             </div>
-            <input id="upAdjustReason" class="input-dark" placeholder="Reason for adjustment…" style="height:36px;" />
-            <button class="btn-primary" onclick="upAction('adjust')" style="padding:11px;">✅ Apply Adjustment</button>
+            <textarea id="upAdjustReason" class="input-dark" placeholder="Reason for adjustment…" style="min-height:60px;resize:vertical;"></textarea>
+            <button class="btn-primary" onclick="upAction('adjust')" style="padding:11px;background:#00b8d4;border-color:#00b8d4;">✅ Apply Adjustment</button>
           </div>
         </div>
 
         <div style="border-top:1px solid var(--border);padding-top:14px;">
           <div style="font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Reset Password</div>
-          <div style="display:flex;gap:8px;">
-            <input id="upNewPassword" class="input-dark" type="text" placeholder="New password (min 8 chars)" style="flex:1;height:36px;" />
-            <button class="btn-danger" onclick="upAction('reset')" style="padding:10px 16px;">Reset</button>
-          </div>
+          <input id="upNewPassword" class="input-dark" type="text" placeholder="New password (min 8 chars)" style="width:100%;height:36px;margin-bottom:8px;box-sizing:border-box;" />
+          <button class="btn-secondary" onclick="upAction('reset')" style="width:100%;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px;">🔑 Reset Password</button>
         </div>
 
       </div>

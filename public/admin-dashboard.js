@@ -1170,67 +1170,260 @@ async function adminFreezeEscrow(orderId, btn) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// P2P — Tabbed Control Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _p2pActiveTab = 'trades';
+
+function p2pStatusBadge(status) {
+  const s = String(status || '').toUpperCase();
+  const map = {
+    DISPUTED:     'background:rgba(246,70,93,0.15);color:#f6465d;border:1px solid rgba(246,70,93,0.35);',
+    PAYMENT_SENT: 'background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.35);',
+    ACTIVE:       'background:rgba(2,192,118,0.15);color:#02c076;border:1px solid rgba(2,192,118,0.35);',
+    COMPLETED:    'background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.35);',
+    CANCELLED:    'background:rgba(100,116,139,0.10);color:#94a3b8;border:1px solid rgba(100,116,139,0.2);',
+    PENDING:      'background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.35);',
+    IN_PROGRESS:  'background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.35);',
+  };
+  const style = map[s] || map[s.replace(/ /g,'_')] || 'background:rgba(255,255,255,0.06);color:var(--text-2);border:1px solid var(--border);';
+  return `<span style="padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;${style}">${s || '—'}</span>`;
+}
+
+function renderP2PTradesTable(orders, tab) {
+  const tbody = document.getElementById('p2pTradesTableBody');
+  if (!tbody) return;
+  if (!orders.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:40px;">No ${tab} orders found.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = orders.map(o => {
+    const id = escapeHtml(o.id || o.reference || '-');
+    const buyer  = escapeHtml(o.buyerUsername  || o.buyerUserId  || '-');
+    const seller = escapeHtml(o.sellerUsername || o.sellerUserId || '-');
+    const amount = o.amountInr ? `₹${formatNumber(o.amountInr, 2)}` : formatNumber(o.assetAmount || o.escrowAmount || 0, 4);
+    const asset  = escapeHtml(o.asset || 'USDT');
+    const status = String(o.status || '').toUpperCase();
+    const created = formatDate(o.createdAt);
+
+    // Action buttons based on status and tab
+    let actions = `<button onclick="openP2PChat('${escapeHtml(o.id)}')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text-2);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">💬 Chat</button>`;
+    if (status === 'DISPUTED') {
+      actions += ` <button onclick="openP2PChat('${escapeHtml(o.id)}')" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.1);color:#f59e0b;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">Dispute ⚠️</button>`;
+    } else if (status === 'PAYMENT_SENT' || status === 'PAID') {
+      actions += ` <button onclick="adminReleaseEscrow('${escapeHtml(o.id)}',this)" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(2,192,118,0.4);background:rgba(2,192,118,0.12);color:#02c076;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">Release</button>`;
+    } else if (status === 'ACTIVE') {
+      actions += ` <button onclick="adminP2PCancelOrder('${escapeHtml(o.id)}',this)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(100,116,139,0.1);color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">Cancel</button>`;
+    }
+
+    return `<tr>
+      <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${id.slice(0,12)}…</td>
+      <td class="admin-td" style="font-size:12px;color:#3b82f6;font-weight:600;">${buyer}</td>
+      <td class="admin-td" style="font-size:12px;color:#22c55e;font-weight:600;">${seller}</td>
+      <td class="admin-td" style="font-weight:700;">${amount}</td>
+      <td class="admin-td">${asset}</td>
+      <td class="admin-td">${p2pStatusBadge(o.status)}</td>
+      <td class="admin-td" style="font-size:11px;white-space:nowrap;">${created}</td>
+      <td class="admin-td" style="white-space:nowrap;">${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+function switchP2PTab(tab) {
+  _p2pActiveTab = tab;
+  // Update tab button styles
+  document.querySelectorAll('.p2p-tab').forEach(btn => {
+    const isActive = btn.getAttribute('data-p2p-tab') === tab;
+    btn.style.color = isActive ? 'var(--text-1)' : 'var(--text-2)';
+    btn.style.borderBottom = isActive ? '2px solid var(--accent)' : '2px solid transparent';
+  });
+  // Show/hide sub-filters
+  const subFilters = document.getElementById('p2pSubFilters');
+  if (subFilters) subFilters.style.display = tab === 'trades' ? 'flex' : 'none';
+  loadP2PTab(tab);
+}
+
+async function loadP2PTab(tab) {
+  const tbody = document.getElementById('p2pTradesTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:32px;"><div class="spin" style="margin:auto;"></div></td></tr>';
+
+  try {
+    let orders = [];
+    if (tab === 'trades') {
+      const data = await apiRequest('/p2p/trades?status=ACTIVE&limit=50').catch(() => apiRequest('/p2p/orders?status=ACTIVE&limit=50').catch(() => ({ trades: [], orders: [] })));
+      orders = Array.isArray(data.trades) ? data.trades : Array.isArray(data.orders) ? data.orders : [];
+    } else if (tab === 'ads') {
+      const data = await apiRequest('/p2p/ads?status=ACTIVE&limit=50').catch(() => ({ ads: [] }));
+      orders = Array.isArray(data.ads) ? data.ads : [];
+      // Render ads as table rows (slightly different fields)
+      if (!orders.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:40px;">No active ads found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = orders.map(ad => {
+        const id = escapeHtml(ad.id || '-');
+        const advertiser = escapeHtml(ad.advertiser || ad.userId || '-');
+        const side = (ad.side || '').toUpperCase();
+        const sideColor = side === 'BUY' ? '#02c076' : '#f6465d';
+        return `<tr>
+          <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${id.slice(0,12)}…</td>
+          <td class="admin-td" style="color:${sideColor};font-weight:700;">${side}</td>
+          <td class="admin-td">${advertiser}</td>
+          <td class="admin-td">₹${formatNumber(ad.price, 2)}</td>
+          <td class="admin-td">${escapeHtml(ad.asset || 'USDT')}</td>
+          <td class="admin-td">${p2pStatusBadge(ad.moderationStatus || ad.status || 'ACTIVE')}</td>
+          <td class="admin-td" style="font-size:11px;">₹${formatNumber(ad.minLimit,2)} – ₹${formatNumber(ad.maxLimit,2)}</td>
+          <td class="admin-td">
+            <button class="btn-primary btn-sm" data-p2p-action="approve-ad" data-offer-id="${id}">Approve</button>
+            <button class="btn-secondary btn-sm" data-p2p-action="suspend-ad" data-offer-id="${id}">Suspend</button>
+            <button class="btn-danger btn-sm" data-p2p-action="reject-ad" data-offer-id="${id}">Reject</button>
+          </td>
+        </tr>`;
+      }).join('');
+      return;
+    } else if (tab === 'completed') {
+      const data = await apiRequest('/p2p/trades?status=COMPLETED&limit=50').catch(() => apiRequest('/p2p/orders?status=COMPLETED&limit=50').catch(() => ({ trades: [], orders: [] })));
+      orders = Array.isArray(data.trades) ? data.trades : Array.isArray(data.orders) ? data.orders : [];
+    } else if (tab === 'disputed') {
+      const data = await apiRequest('/p2p/disputes?limit=50').catch(() => apiRequest('/p2p/trades?status=DISPUTED&limit=50').catch(() => ({ disputes: [], trades: [] })));
+      orders = Array.isArray(data.disputes) ? data.disputes : Array.isArray(data.trades) ? data.trades : [];
+    } else if (tab === 'cancelled') {
+      const data = await apiRequest('/p2p/trades?status=CANCELLED&limit=50').catch(() => apiRequest('/p2p/orders?status=CANCELLED&limit=50').catch(() => ({ trades: [], orders: [] })));
+      orders = Array.isArray(data.trades) ? data.trades : Array.isArray(data.orders) ? data.orders : [];
+    }
+
+    // Update sub-filter counts for trades tab
+    if (tab === 'trades') {
+      const disputed = orders.filter(o => (o.status||'').toUpperCase() === 'DISPUTED').length;
+      const paymentSent = orders.filter(o => ['PAYMENT_SENT','PAID'].includes((o.status||'').toUpperCase())).length;
+      const dispEl = document.getElementById('p2pSubFilter-disputed');
+      const payEl  = document.getElementById('p2pSubFilter-payment');
+      if (dispEl) { dispEl.style.display = disputed > 0 ? '' : 'none'; dispEl.textContent = `DISPUTED: ${disputed}`; }
+      if (payEl)  { payEl.style.display  = paymentSent > 0 ? '' : 'none'; payEl.textContent = `PAYMENT SENT: ${paymentSent}`; }
+    }
+
+    renderP2PTradesTable(orders, tab);
+  } catch (err) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--red);padding:32px;">Error: ${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+async function openP2PChat(orderId) {
+  const modal = document.getElementById('p2pChatModal');
+  const metaEl = document.getElementById('p2pChatModalMeta');
+  const messagesEl = document.getElementById('p2pChatMessages');
+  if (!modal || !messagesEl) return;
+
+  metaEl.textContent = `Order: ${orderId}`;
+  messagesEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-2);">Loading chat…</div>';
+  modal.style.display = 'flex';
+  modal._orderId = orderId;
+
+  try {
+    const data = await apiRequest(`/p2p/trades/${encodeURIComponent(orderId)}/chat`).catch(() =>
+      apiRequest(`/p2p/orders/${encodeURIComponent(orderId)}/messages`).catch(() => ({ messages: [], chatMessages: [] }))
+    );
+    const msgs = Array.isArray(data.messages) ? data.messages : Array.isArray(data.chatMessages) ? data.chatMessages : [];
+    const buyerLabel  = data.buyerUsername  || data.buyerUserId  || 'Buyer';
+    const sellerLabel = data.sellerUsername || data.sellerUserId || 'Seller';
+    metaEl.textContent = `Order: ${orderId} • Buyer: ${buyerLabel} • Seller: ${sellerLabel}`;
+
+    if (!msgs.length) {
+      messagesEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-2);">No chat messages yet.</div>';
+    } else {
+      messagesEl.innerHTML = msgs.map(msg => buildDisputeMsgBubble(msg, buyerLabel, sellerLabel)).join('');
+      setTimeout(() => { messagesEl.scrollTop = messagesEl.scrollHeight; }, 50);
+    }
+  } catch (err) {
+    messagesEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--red);">Error: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function sendP2PChatMessage() {
+  const modal = document.getElementById('p2pChatModal');
+  const input = document.getElementById('p2pChatInput');
+  if (!modal || !input) return;
+  const orderId = modal._orderId;
+  const message = (input.value || '').trim();
+  if (!orderId || !message) return;
+  input.value = '';
+  try {
+    await apiRequest(`/p2p/trades/${encodeURIComponent(orderId)}/chat`, { method: 'POST', body: JSON.stringify({ message }) })
+      .catch(() => apiRequest(`/p2p/orders/${encodeURIComponent(orderId)}/admin-reply`, { method: 'POST', body: JSON.stringify({ message }) }));
+    await openP2PChat(orderId);
+  } catch (err) {
+    showMessage(err.message || 'Failed to send message.', 'error');
+  }
+}
+
+async function adminP2PCancelOrder(orderId, btn) {
+  if (!confirm('Cancel this P2P order?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    await apiRequest(`/p2p/orders/${encodeURIComponent(orderId)}/cancel`, { method: 'POST', body: JSON.stringify({}) });
+    showMessage('Order cancelled.', 'success');
+    loadP2PTab(_p2pActiveTab);
+  } catch (err) {
+    showMessage(err.message || 'Cancel failed.', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Cancel'; }
+  }
+}
+
 async function loadP2P() {
-  const [adsPayload, disputesPayload, settingsPayload] = await Promise.all([
-    apiRequest('/p2p/ads?limit=30'),
-    apiRequest('/p2p/disputes?limit=20'),
-    apiRequest('/p2p/settings')
+  // Load all tabs counts first (parallel)
+  const [tradesData, adsData, completedData, disputesData, cancelledData, settingsPayload] = await Promise.all([
+    apiRequest('/p2p/trades?status=ACTIVE&limit=50').catch(() => apiRequest('/p2p/orders?status=ACTIVE&limit=50').catch(() => ({}))),
+    apiRequest('/p2p/ads?status=ACTIVE&limit=50').catch(() => ({ ads: [] })),
+    apiRequest('/p2p/trades?status=COMPLETED&limit=5').catch(() => apiRequest('/p2p/orders?status=COMPLETED&limit=5').catch(() => ({}))),
+    apiRequest('/p2p/disputes?limit=50').catch(() => apiRequest('/p2p/trades?status=DISPUTED&limit=50').catch(() => ({}))),
+    apiRequest('/p2p/trades?status=CANCELLED&limit=5').catch(() => apiRequest('/p2p/orders?status=CANCELLED&limit=5').catch(() => ({}))),
+    apiRequest('/p2p/settings').catch(() => ({ settings: {} }))
   ]);
 
-  const adsList = document.getElementById('p2pAdsList');
-  const ads = Array.isArray(adsPayload.ads) ? adsPayload.ads : [];
-  adsList.innerHTML = ads
-    .map(
-      (ad) => `
-      <article class="list-item">
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <p class="text-sm font-semibold">${ad.advertiser} • ${ad.asset}</p>
-            <p class="text-xs text-slate-400">${ad.id} • ${ad.side.toUpperCase()} • Price ₹${formatNumber(ad.price, 2)}</p>
-          </div>
-          ${statusBadge(ad.moderationStatus || 'PENDING')}
-        </div>
-        <p class="mt-2 text-xs text-slate-500">Limits: ₹${formatNumber(ad.minLimit, 2)} - ₹${formatNumber(ad.maxLimit, 2)}</p>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <button class="btn-primary" data-p2p-action="approve-ad" data-offer-id="${ad.id}">Approve</button>
-          <button class="btn-secondary" data-p2p-action="suspend-ad" data-offer-id="${ad.id}">Suspend</button>
-          <button class="btn-danger" data-p2p-action="reject-ad" data-offer-id="${ad.id}">Reject</button>
-        </div>
-      </article>
-    `
-    )
-    .join('');
+  const tradesCount   = (tradesData.trades || tradesData.orders || []).length;
+  const adsCount      = (adsData.ads || []).length;
+  const completedCount = (completedData.trades || completedData.orders || []).length;
+  const disputesArr   = disputesData.disputes || disputesData.trades || [];
+  const cancelledCount = (cancelledData.trades || cancelledData.orders || []).length;
 
-  if (ads.length === 0) {
-    adsList.innerHTML = '<p class="text-sm text-slate-500">No P2P ads found.</p>';
-  }
+  // Update tab count badges
+  const setCount = (tabName, count) => {
+    const el = document.getElementById(`p2pTabCount-${tabName}`);
+    if (el) el.textContent = count;
+  };
+  setCount('trades', tradesCount);
+  setCount('ads', adsCount);
+  setCount('completed', completedCount);
+  setCount('disputed', disputesArr.length);
+  setCount('cancelled', cancelledCount);
 
-  const disputesList = document.getElementById('p2pDisputesList');
-  const disputes = Array.isArray(disputesPayload.disputes) ? disputesPayload.disputes : [];
-  // Update P2P dispute badge count
+  // Update P2P dispute sidebar badge
   const p2pBadge = document.getElementById('p2pDisputeBadge');
   if (p2pBadge) {
-    if (disputes.length > 0) { p2pBadge.textContent = disputes.length; p2pBadge.style.display = ''; }
+    if (disputesArr.length > 0) { p2pBadge.textContent = disputesArr.length; p2pBadge.style.display = ''; }
     else { p2pBadge.style.display = 'none'; }
   }
-  disputesList.innerHTML = disputes.map((order) => renderP2PDisputeCard(order)).join('');
-  if (disputes.length === 0) {
-    disputesList.innerHTML = '<p class="text-sm text-slate-500">No active disputes.</p>';
-  }
-  // Scroll each chat box to bottom after render
-  setTimeout(function() {
-    disputes.forEach(function(order) {
-      var el = document.getElementById('disputeChat_' + (order.id || ''));
-      if (el) el.scrollTop = el.scrollHeight;
-    });
-  }, 50);
 
+  // Keep old dispute cards data available for backward compat
+  const disputesList = document.getElementById('p2pDisputesList');
+  if (disputesList) {
+    disputesList.innerHTML = disputesArr.map(order => renderP2PDisputeCard(order)).join('');
+  }
+
+  // Save settings
   const settings = settingsPayload.settings || {};
   const form = document.getElementById('p2pSettingsForm');
-  form.p2pFeePercent.value = settings.p2pFeePercent ?? 0;
-  form.minOrderLimit.value = settings.minOrderLimit ?? 0;
-  form.maxOrderLimit.value = settings.maxOrderLimit ?? 0;
-  form.autoExpiryMinutes.value = settings.autoExpiryMinutes ?? 15;
+  if (form) {
+    form.p2pFeePercent.value = settings.p2pFeePercent ?? 0;
+    form.minOrderLimit.value = settings.minOrderLimit ?? 0;
+    form.maxOrderLimit.value = settings.maxOrderLimit ?? 0;
+    form.autoExpiryMinutes.value = settings.autoExpiryMinutes ?? 15;
+  }
+
+  // Load current active tab
+  loadP2PTab(_p2pActiveTab);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2572,10 +2765,18 @@ async function loadUpOverview() {
   document.getElementById('upEmail').textContent = user.email || '-';
   document.getElementById('upStatusBadge').innerHTML = statusBadge(user.status || 'UNKNOWN');
   const el = document.getElementById('upOverviewContent');
+  // Copyable user ID helper
+  const copyUserId = `<button onclick="navigator.clipboard.writeText('${escapeHtml(user.userId||'')}').then(()=>showMessage('User ID copied!','success'))" style="background:none;border:none;cursor:pointer;color:var(--accent);font-size:11px;padding:0 4px;" title="Copy User ID">⧉</button>`;
+
   el.innerHTML = `
     <div style="background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;">
-      <div class="up-info-row"><span class="up-info-label">User ID</span><span class="up-info-value" style="font-family:monospace;color:var(--accent);font-size:11px;">${user.userId||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">User ID</span><span class="up-info-value" style="display:flex;align-items:center;gap:4px;"><span style="font-family:monospace;color:var(--accent);font-size:11px;">${user.userId||'-'}</span>${copyUserId}</span></div>
       <div class="up-info-row"><span class="up-info-label">Email</span><span class="up-info-value">${user.email||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Full Name</span><span class="up-info-value">${user.fullName||user.kyc?.fullName||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Mobile</span><span class="up-info-value" style="font-family:monospace;">${user.mobile||user.phone||user.phoneNumber||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Address</span><span class="up-info-value" style="font-size:12px;">${user.address||user.kyc?.address||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Country</span><span class="up-info-value">${user.country||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Date of Birth</span><span class="up-info-value">${user.dob||user.dateOfBirth||user.kyc?.dob||'-'}</span></div>
       <div class="up-info-row"><span class="up-info-label">Role</span><span class="up-info-value">${statusBadge(user.role||'USER')}</span></div>
       <div class="up-info-row"><span class="up-info-label">Account Status</span><span class="up-info-value">${statusBadge(user.status||'ACTIVE')}</span></div>
       <div class="up-info-row"><span class="up-info-label">KYC Status</span><span class="up-info-value">${statusBadge(user.kycStatus||'NOT_SUBMITTED')}</span></div>
@@ -3051,9 +3252,38 @@ async function upAction(action) {
       const data = await apiRequest(`/users/${encodeURIComponent(_upUserId)}/login-as`, { method:'POST', body:JSON.stringify({}) });
       showMessage(`Impersonating ${data.user?.email || 'user'}. Opening dashboard...`, 'success');
       window.open('/', '_blank');
+    } else if (action === 'unban') {
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/status`, { method:'PATCH', body:JSON.stringify({status:'ACTIVE'}) });
+      showMessage('User unbanned.','success');
+      await loadUpOverview();
     } else if (action === 'force-logout') {
       await apiRequest(`/users/${encodeURIComponent(_upUserId)}/force-logout`, { method:'POST', body:JSON.stringify({}) });
       showMessage('User force logged out.','success');
+    } else if (action === 'block-ip') {
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/block-ip`, { method:'POST', body:JSON.stringify({}) });
+      showMessage('IP blocked.','success');
+    } else if (action === 'unblock-ip') {
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/unblock-ip`, { method:'POST', body:JSON.stringify({}) });
+      showMessage('IP unblocked.','success');
+    } else if (action === 'block-device') {
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/block-device`, { method:'POST', body:JSON.stringify({}) });
+      showMessage('Device blocked.','success');
+    } else if (action === 'unblock-device') {
+      await apiRequest(`/users/${encodeURIComponent(_upUserId)}/unblock-device`, { method:'POST', body:JSON.stringify({}) });
+      showMessage('Device unblocked.','success');
+    } else if (action === 'block-all') {
+      if (!confirm('Block IP + Device for this user?')) return;
+      await Promise.all([
+        apiRequest(`/users/${encodeURIComponent(_upUserId)}/block-ip`, { method:'POST', body:JSON.stringify({}) }).catch(()=>{}),
+        apiRequest(`/users/${encodeURIComponent(_upUserId)}/block-device`, { method:'POST', body:JSON.stringify({}) }).catch(()=>{})
+      ]);
+      showMessage('IP and Device blocked.','success');
+    } else if (action === 'unblock-all') {
+      await Promise.all([
+        apiRequest(`/users/${encodeURIComponent(_upUserId)}/unblock-ip`, { method:'POST', body:JSON.stringify({}) }).catch(()=>{}),
+        apiRequest(`/users/${encodeURIComponent(_upUserId)}/unblock-device`, { method:'POST', body:JSON.stringify({}) }).catch(()=>{})
+      ]);
+      showMessage('IP and Device unblocked.','success');
     } else if (action === 'adjust') {
       const type   = document.getElementById('upAdjustType').value;
       const amount = parseFloat(document.getElementById('upAdjustAmount').value);
@@ -3164,6 +3394,21 @@ function wireEventListeners() {
   document.getElementById('p2pAdsList').addEventListener('click', handleP2PActions);
   document.getElementById('p2pDisputesList').addEventListener('click', handleP2PActions);
   document.getElementById('p2pReloadBtn').addEventListener('click', async () => loadP2P());
+
+  // P2P Tab switching
+  const p2pTabBar = document.getElementById('p2pTabBar');
+  if (p2pTabBar) {
+    p2pTabBar.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-p2p-tab]');
+      if (btn) switchP2PTab(btn.getAttribute('data-p2p-tab'));
+    });
+  }
+
+  // P2P Trades table — actions delegated
+  const p2pTradesBody = document.getElementById('p2pTradesTableBody');
+  if (p2pTradesBody) {
+    p2pTradesBody.addEventListener('click', handleP2PActions);
+  }
 
   // User profile drawer - tab switching + close via event delegation
   document.getElementById('userProfileDrawer').addEventListener('click', (e) => {
