@@ -4667,6 +4667,17 @@ body.mob-screen-open .p2p-secondary-nav {
   display: block;
   border-radius: 12px;
 }
+.bft-css-card {
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  line-height: 1;
+}
 .bft-badge {
   position: absolute;
   bottom: 14px;
@@ -5079,8 +5090,13 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* ── Mobile overrides ── */
 @media (max-width: 767px) {
-  /* Hide original Buy/Sell row — it lives inside #p2pCards now */
-  .gt-controls-row1 { display: none !important; }
+  /* Buy/Sell row — show on mobile, collapses on scroll */
+  .gt-controls-row1 {
+    display: flex !important;
+    max-height: 56px;
+    overflow: hidden;
+    transition: max-height 0.22s ease, opacity 0.18s ease;
+  }
 
   /* Row2 = sticky filter bar */
   .gt-controls-row2 {
@@ -5134,13 +5150,18 @@ body.mob-screen-open .p2p-secondary-nav {
     overflow: hidden;
   }
 
-  /* Scroll-down state: only header hides, subnav + controls stay */
+  /* Scroll-down state: header + Buy/Sell row collapse, filter row stays */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-header {
     transform: translateY(-100%);
     pointer-events: none;
   }
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-subnav {
     top: 0 !important;
+  }
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row1 {
+    max-height: 0 !important;
+    opacity: 0;
+    pointer-events: none;
   }
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
     max-height: 0 !important;

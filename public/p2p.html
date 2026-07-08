@@ -2249,24 +2249,28 @@
       var dd = document.getElementById('coinPickerDropdown');
       var wrap = document.getElementById('coinPickerWrap');
       if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
+      if (dd.parentElement !== document.body) document.body.appendChild(dd);
       var r = wrap.getBoundingClientRect();
+      dd.style.position = 'fixed';
       dd.style.top = (r.bottom + 4) + 'px';
       dd.style.left = r.left + 'px';
+      dd.style.zIndex = '9999';
       dd.style.display = 'block';
     }
     function pickCoin(e, val) {
-      e.stopPropagation();
+      if (e && e.stopPropagation) e.stopPropagation();
+      var dd = document.getElementById('coinPickerDropdown');
+      if (dd) dd.style.display = 'none';
       var sel = document.getElementById('assetFilter');
       if (sel) { sel.value = val; sel.dispatchEvent(new Event('change')); }
       document.getElementById('coinPickerIcon').innerHTML = coinSVGs[val] || '';
       document.getElementById('coinPickerLabel').textContent = val;
-      document.getElementById('coinPickerDropdown').style.display = 'none';
     }
     document.addEventListener('click', function(e) {
       var wrap = document.getElementById('coinPickerWrap');
-      if (wrap && !wrap.contains(e.target)) {
-        var dd = document.getElementById('coinPickerDropdown');
-        if (dd) dd.style.display = 'none';
+      var dd = document.getElementById('coinPickerDropdown');
+      if (dd && dd.style.display !== 'none' && !wrap.contains(e.target) && !dd.contains(e.target)) {
+        dd.style.display = 'none';
       }
     });
     </script>
