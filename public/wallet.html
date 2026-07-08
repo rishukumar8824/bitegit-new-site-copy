@@ -676,7 +676,7 @@
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </div>
     <div class="dep-addr-row">
-      <span class="dep-addr-txt" id="depAddress">0xf832c974d57a47ff5ecc52dd74a1d04ac0f52ee5</span>
+      <span class="dep-addr-txt" id="depAddress">TGtoZDgjh2R8fo5fSuBzgUQmKzgAj4SwXy</span>
       <button class="dep-copy-btn" onclick="copyDepAddress()">Copy</button>
     </div>
   </div>
@@ -1420,10 +1420,10 @@
   var _pendingWithdraw = null;
 
   var NETWORKS = {
-    'ERC20':  { name:'ERC20 (Ethereum)',           contract:'****31ec7', address:'0xf832c974d57a47ff5ecc52dd74a1d04ac0f52ee5', dep:12,  wd:64 },
-    'BEP20':  { name:'BEP20 (Binance Smart Chain)', contract:'****97955', address:'0xf832c974d57a47ff5ecc52dd74a1d04ac0f52ee5', dep:15,  wd:15 },
-    'TRC20':  { name:'TRC20 (Tron)',                contract:'****jLj6t', address:'TM1nE22SAvEaeY3i5BQwkTEXcnZsATUfnS',        dep:1,   wd:1  },
-    'MORPH':  { name:'Morph (Morph)',               contract:'****97955', address:'0xf832c974d57a47ff5ecc52dd74a1d04ac0f52ee5', dep:1,   wd:1  }
+    'ERC20':  { name:'ERC20 (Ethereum)',           contract:'****150b5', address:'0x01e0bb0ae1228012899ffdddefd96329087150b5', dep:12,  wd:96 },
+    'BEP20':  { name:'BEP20 (Binance Smart Chain)', contract:'****150b5', address:'0x01e0bb0ae1228012899ffdddefd96329087150b5', dep:15,  wd:60 },
+    'TRC20':  { name:'TRC20 (Tron)',                contract:'****XSwXy', address:'TGtoZDgjh2R8fo5fSuBzgUQmKzgAj4SwXy',        dep:3,   wd:3  },
+    'MORPH':  { name:'Morph (Morph)',               contract:'****150b5', address:'0x01e0bb0ae1228012899ffdddefd96329087150b5', dep:1,   wd:1  }
   };
   var currentNetwork = 'ERC20';
 
@@ -1586,7 +1586,7 @@
     // update QR center icon
     var iconEl = document.getElementById('depQRCenterIcon');
     if(iconEl) iconEl.innerHTML = DEP_QR_ICONS[coin] || DEP_QR_ICONS['USDT'];
-    updateNetworkUI('ERC20');
+    updateNetworkUI('TRC20');
     showScreen('screenDepositDetail');
   }
 
