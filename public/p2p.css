@@ -4681,22 +4681,28 @@ body.mob-screen-open .p2p-secondary-nav {
 /* Covers the "Bybit P2P" speech bubble in p2p-people.png */
 .bft-bubble-cover {
   position: absolute;
-  top: 30%;
-  left: 28%;
-  width: 52%;
-  height: 12%;
-  background: #F4A916;
-  border-radius: 22px 22px 22px 4px;
+  top: 24%;
+  left: 18%;
+  width: 68%;
+  height: 22%;
+  background: #0b0b0b;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+}
+.bft-bubble-cover::after {
+  content: 'BITCOVEX P2P';
+  background: #F4A916;
+  border-radius: 22px 22px 22px 4px;
+  padding: 7px 18px;
   font-size: 13px;
   font-weight: 900;
   color: #1a0e00;
   letter-spacing: 0.5px;
-  z-index: 3;
-  pointer-events: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  white-space: nowrap;
 }
 .bft-badge {
   position: absolute;
@@ -5110,12 +5116,11 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* ── Mobile overrides ── */
 @media (max-width: 767px) {
-  /* Buy/Sell row — show on mobile, collapses on scroll */
+  /* Buy/Sell row — show on mobile, instant hide/show (no slide animation) */
   .gt-controls-row1 {
     display: flex !important;
     max-height: 56px;
     overflow: hidden;
-    transition: max-height 0.22s ease, opacity 0.18s ease;
   }
 
   /* Row2 = sticky filter bar */
