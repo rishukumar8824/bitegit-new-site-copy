@@ -5115,13 +5115,19 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* ── Mobile overrides ── */
 @media (max-width: 767px) {
-  /* Buy/Sell row — always visible on mobile, no clipping */
+  /* Buy/Sell row — static, no animation, no transform; max-height enables collapse on scroll */
   .gt-controls-row1 {
     display: flex !important;
     align-items: center;
     padding: 0 14px;
     min-height: 48px;
-    overflow: visible;
+    max-height: 80px; /* allow collapse transition */
+    overflow: hidden;
+    animation: none !important;
+    transition: max-height 0.18s ease, opacity 0.15s ease, padding 0.18s ease, min-height 0.18s ease !important;
+    transform: none !important;
+    will-change: auto !important;
+    opacity: 1;
   }
   .gt-side-tabs { flex-shrink: 0; }
   .gt-side-tab { padding: 0 1.2rem; font-size: 1rem; min-height: 48px; }
@@ -5171,7 +5177,11 @@ body.mob-screen-open .p2p-secondary-nav {
     transition: none;
   }
   body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls {
-    overflow: visible;
+    overflow: visible; /* row1 handles its own overflow for collapse */
+  }
+  /* When scrolled down: allow gt-controls to clip row1 collapse */
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls {
+    overflow: hidden;
   }
   body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
     transition: max-height 0.2s ease, opacity 0.15s ease;
@@ -5197,7 +5207,17 @@ body.mob-screen-open .p2p-secondary-nav {
     margin-top: -44px;
     padding-top: 44px;
   }
-  /* Buy/Sell row stays visible always — no collapse on scroll */
+  /* Buy/Sell row — collapse vertically when scrolled down */
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row1 {
+    max-height: 0 !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* Alert bar collapse on scroll */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
     max-height: 0 !important;
     opacity: 0;

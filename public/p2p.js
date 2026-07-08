@@ -6171,7 +6171,12 @@ if (profileEditBtn) {
   });
 }
 
-p2pMenuToggle?.addEventListener('click', () => setP2PNavOpen(true));
+p2pMenuToggle?.addEventListener('click', () => {
+  // Use rAF to ensure any pending tab-switch layout/paint is committed first,
+  // so the drawer CSS transition fires smoothly even when clicking hamburger
+  // immediately after a tab switch (e.g. from Home → P2P → hamburger).
+  requestAnimationFrame(() => setP2PNavOpen(true));
+});
 p2pNavClose?.addEventListener('click', () => setP2PNavOpen(false));
 p2pNavOverlay?.addEventListener('click', () => setP2PNavOpen(false));
 
