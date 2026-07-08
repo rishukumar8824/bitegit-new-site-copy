@@ -6,12 +6,13 @@
   --p2p-panel-2: #111;
   --p2p-line: rgba(255, 255, 255, 0.07);
   --p2p-text: #f4f8ff;
-  --p2p-muted: #6b7a99;
-  --p2p-green: #F68F15;
+  --p2p-muted: #848E9C;
+  --p2p-green: #2EBD85;
   --p2p-red: #ff5f82;
   --p2p-accent: #F68F15;
   --p2p-brand: #F68F15;
   --p2p-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --bybit-green: #2EBD85;
 }
 
 * { box-sizing: border-box; }
@@ -701,11 +702,13 @@ body.p2p-kyc-open { overflow: hidden; }
 .gt-controls { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 0.5rem; }
 .gt-controls-row1 { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .gt-side-tabs { display: flex; gap: 0; }
-.gt-side-tab { min-height: 44px; padding: 0 1.1rem; border: none; border-bottom: 2.5px solid transparent; background: transparent; color: rgba(255,255,255,0.45); font-size: 1.05rem; font-weight: 700; cursor: pointer; font-family: 'Manrope', sans-serif; transition: color 0.15s, border-color 0.15s; }
-.gt-side-tab.active { color: #fff; border-bottom-color: #F68F15; }
+.gt-side-tab { min-height: 44px; padding: 0 1.1rem; border: none; border-bottom: 2.5px solid transparent; background: transparent; color: #848E9C; font-size: 1.05rem; font-weight: 700; cursor: pointer; font-family: 'Manrope', sans-serif; transition: color 0.15s, border-color 0.15s; }
+.gt-side-tab[data-side="buy"].active { color: #2EBD85; border-bottom-color: #2EBD85; }
+.gt-side-tab[data-side="sell"].active { color: var(--p2p-red); border-bottom-color: var(--p2p-red); }
+.gt-side-tab.active { color: #fff; border-bottom-color: #2EBD85; }
 .gt-controls-right { display: flex; align-items: center; gap: 0.45rem; }
 .gt-icon-btn { width: 38px; height: 38px; border-radius: 8px; border: none; background: rgba(255,255,255,0.07); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
-.gt-currency-wrap { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.07); border-radius: 8px; padding: 0 0.6rem; height: 38px; }
+.gt-currency-wrap { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.08); border-radius: 8px; padding: 0 0.6rem; height: 38px; }
 .gt-currency-select { background: transparent; border: none; color: #fff; font-size: 0.88rem; font-weight: 600; outline: none; cursor: pointer; -webkit-appearance: none; font-family: 'Manrope', sans-serif; }
 .gt-currency-select option { background: #111; }
 .gt-controls-row2 { display: flex; gap: 0.5rem; }
@@ -973,8 +976,8 @@ body.p2p-kyc-open { overflow: hidden; }
 /* JS-injected table cell classes */
 .p2p-price {
   font-size: 1.15rem;
-  font-weight: 800;
-  color: var(--p2p-green);
+  font-weight: 700;
+  color: #fff;
   margin: 0;
   white-space: nowrap;
 }
@@ -1041,8 +1044,9 @@ body.p2p-kyc-open { overflow: hidden; }
 .offer-action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 .buy-offer-btn {
-  background: var(--p2p-green);
-  color: #061309;
+  background: #2EBD85;
+  color: #fff;
+  border-radius: 20px;
 }
 
 .sell-offer-btn {
@@ -1064,10 +1068,11 @@ body.p2p-kyc-open { overflow: hidden; }
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  background: #000;
+  background: transparent;
   border-bottom: 1px solid rgba(255,255,255,0.06);
-  padding: 0.55rem 0.25rem;
+  padding: 0.75rem 0.25rem;
   margin-bottom: 0;
+  box-shadow: none;
 }
 .gt-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.04rem; }
 .gt-right { display: flex; align-items: flex-end; flex-shrink: 0; padding-bottom: 0; }
@@ -1077,15 +1082,15 @@ body.p2p-kyc-open { overflow: hidden; }
 .gt-div { color: #444; }
 .gt-online { display: flex; align-items: center; gap: 0.28rem; font-size: 0.72rem; color: #8a97ae; margin-bottom: 0; }
 .gt-dot { width: 7px; height: 7px; border-radius: 50%; background: #16c784; flex-shrink: 0; }
-.gt-price { font-size: 1.3rem; font-weight: 800; color: #fff; margin: 0; line-height: 1.1; }
+.gt-price { font-size: 1.75rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.1; }
 .gt-cur { font-size: 0.72rem; font-weight: 400; color: #8a97ae; }
 .gt-row { display: flex; gap: 0.4rem; font-size: 0.78rem; line-height: 1.4; }
 .gt-lbl { color: #6b7690; }
 .gt-val { color: #d0d5e0; font-weight: 500; }
 .gt-pays { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.05rem; }
 .gt-pay { font-size: 0.73rem; color: #c8cdd8; padding-left: 5px; border-left: 1.5px solid rgba(37,99,235,0.7); line-height: 1.4; }
-.gt-btn { min-width: 64px; height: 33px; border: none; border-radius: 999px; background: linear-gradient(135deg,#F68F15,#d4a00b); color: #fff; font-size: 0.8rem; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 0 1rem; font-family: 'Manrope', sans-serif; box-shadow: 0 2px 10px rgba(246,143,21,0.3); transition: transform 0.1s ease, opacity 0.12s; user-select: none; }
-.gt-btn-sell { background: linear-gradient(96deg,#f6465d,#ff6b81); color: #fff; box-shadow: 0 2px 10px rgba(246,70,93,0.25); }
+.gt-btn { min-width: 72px; height: 36px; border: none; border-radius: 20px; background: #2EBD85; color: #fff; font-size: 0.82rem; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 0 1.1rem; font-family: 'Manrope', sans-serif; box-shadow: none; transition: transform 0.1s ease, opacity 0.12s; user-select: none; }
+.gt-btn-sell { background: var(--p2p-red); color: #fff; box-shadow: none; }
 .gt-btn:active  { transform: scale(0.93); opacity: 0.78; }
 .gt-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
 
@@ -2155,14 +2160,14 @@ body.p2p-kyc-open { overflow: hidden; }
   left: 0;
   right: 0;
   z-index: 900;
-  background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(12px);
-  border-top: 1px solid var(--p2p-line);
+  background: #161A1E;
+  backdrop-filter: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: stretch;
-  min-height: calc(62px + env(safe-area-inset-bottom));
+  min-height: calc(60px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.35);
+  box-shadow: none;
 }
 
 .p2p-mobile-bottom-nav a {
@@ -2174,13 +2179,13 @@ body.p2p-kyc-open { overflow: hidden; }
   gap: 3px;
   padding: 0.6rem 0.25rem;
   text-decoration: none;
-  color: var(--p2p-muted);
+  color: #848E9C;
   font-size: 0;
   transition: color 0.15s;
 }
 
-.p2p-mobile-bottom-nav a.active { color: #F68F15; }
-.p2p-mobile-bottom-nav a.active .nav-icon { stroke: #F68F15; }
+.p2p-mobile-bottom-nav a.active { color: #2EBD85; }
+.p2p-mobile-bottom-nav a.active .nav-icon { stroke: #2EBD85; color: #2EBD85; }
 .p2p-mobile-bottom-nav a:hover { color: rgba(255,255,255,0.8); }
 
 .p2p-mobile-bottom-nav .nav-icon {
@@ -5134,7 +5139,7 @@ body.mob-screen-open .p2p-secondary-nav {
 
   /* Row2 = sticky filter bar */
   .gt-controls-row2 {
-    background: #000;
+    background: #0b0e11;
     padding: 8px 14px;
     margin: 0;
     gap: 6px;
@@ -5207,6 +5212,21 @@ body.mob-screen-open .p2p-secondary-nav {
     margin-top: -44px;
     padding-top: 44px;
   }
+  /* Filter row (USDT / Amount / Payment) — sticky below subnav when scrolled, NEVER cut off */
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row2 {
+    position: fixed !important;
+    top: 44px !important;
+    left: 0;
+    right: 0;
+    z-index: 209;
+    background: #0b0e11 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 8px 14px !important;
+  }
+  /* Compensate for fixed filter row height (~54px) so cards don't jump under it */
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-board {
+    padding-top: 54px;
+  }
   /* Buy/Sell row — collapse vertically when scrolled down */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row1 {
     max-height: 0 !important;
@@ -5270,5 +5290,5 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 .bbt-coin-tab.bbt-coin-active {
   color: #fff;
-  border-bottom-color: #F68F15;
+  border-bottom-color: #2EBD85;
 }
