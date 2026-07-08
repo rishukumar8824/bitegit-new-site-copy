@@ -243,7 +243,8 @@ body.p2p-kyc-open { overflow: hidden; }
   background: #0c0c0c;
   z-index: 400;
   transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  will-change: transform;
+  transition: transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   display: flex;
   flex-direction: column;
   border-left: 1px solid rgba(255,255,255,0.07);
@@ -3451,11 +3452,12 @@ body.mob-screen-open .p2p-secondary-nav {
     border-radius: 9px;
   }
 
-  /* Subnav: scrollable, no wrap */
+  /* Subnav: equal-width tabs, no horizontal scroll */
   .p2p-subnav { top: 52px; }
-  .p2p-subnav-inner { padding: 0 0.75rem; overflow-x: auto; }
+  .p2p-subnav-inner { padding: 0 0.5rem; overflow-x: hidden; }
   .p2p-subnav-right { display: none; }
-  .p2p-subnav-left a { padding: 0 0.7rem; font-size: 0.78rem; }
+  .p2p-subnav-left { flex: 1; display: flex; }
+  .p2p-subnav-left a { flex: 1; text-align: center; justify-content: center; padding: 0 0.4rem; font-size: 0.78rem; }
 
   /* Hero: compact, hide promo banner */
   .p2p-hero { padding: 0.9rem 0 0.6rem; flex-direction: column; gap: 0; }
@@ -5157,11 +5159,12 @@ body.mob-screen-open .p2p-secondary-nav {
 /* Smooth transitions */
 @media (max-width: 768px) {
   body.p2p-page .p2p-header {
-    transition: transform 0.24s cubic-bezier(0.4,0,0.2,1);
+    transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
     will-change: transform;
   }
+  /* No top-transition on subnav — instant snap prevents right-to-left slide artifact */
   body.p2p-page .p2p-subnav {
-    transition: top 0.24s cubic-bezier(0.4,0,0.2,1);
+    transition: none;
   }
   body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls {
     overflow: visible;
@@ -5185,6 +5188,17 @@ body.mob-screen-open .p2p-secondary-nav {
     max-height: 0 !important;
     opacity: 0;
     pointer-events: none;
+  }
+}
+
+/* ── Mobile tab switch slide-in ── */
+@keyframes p2p-tab-slide-in {
+  from { opacity: 0.3; transform: translateX(28px); }
+  to   { opacity: 1;   transform: translateX(0); }
+}
+@media (max-width: 767px) {
+  body.p2p-tab-enter .p2p-content {
+    animation: p2p-tab-slide-in 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   }
 }
 

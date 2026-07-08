@@ -2264,6 +2264,11 @@ function setMobileTab(tab, options = {}) {
   mobileActiveTab = normalized;
   document.body.dataset.mobileTab = normalized;
   setMobileNavActive(normalized);
+  // Smooth slide-in for mobile tab content
+  if (isMobileViewport()) {
+    document.body.classList.add('p2p-tab-enter');
+    setTimeout(function() { document.body.classList.remove('p2p-tab-enter'); }, 320);
+  }
 
   if (isMobileViewport()) {
     if (options.updateHash !== false) {
@@ -9696,24 +9701,18 @@ window.deleteMobAd = async function(offerId) {
 (function() {
   var _pCards = document.getElementById('p2pCards');
   if (!_pCards) return;
-  var _lastY = 0, _scrollUpAcc = 0, _ticking = false;
+  var _lastY = 0, _ticking = false;
   _pCards.addEventListener('scroll', function() {
     if (_ticking) return;
     _ticking = true;
     requestAnimationFrame(function() {
       var y = _pCards.scrollTop;
-      if (y <= 30) {
-        _scrollUpAcc = 0;
+      if (y <= 20) {
         document.body.classList.remove('p2p-scroll-down');
       } else if (y > _lastY + 2) {
-        _scrollUpAcc = 0;
         document.body.classList.add('p2p-scroll-down');
-      } else if (y < _lastY) {
-        _scrollUpAcc += (_lastY - y);
-        if (_scrollUpAcc >= 40) {
-          _scrollUpAcc = 0;
-          document.body.classList.remove('p2p-scroll-down');
-        }
+      } else if (y < _lastY - 2) {
+        document.body.classList.remove('p2p-scroll-down');
       }
       _lastY = y;
       _ticking = false;
