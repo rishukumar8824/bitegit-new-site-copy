@@ -501,47 +501,55 @@ async function loadOverview() {
 
 async function loadKyc() {
   const statusFilter = document.getElementById('kycStatusFilter')?.value || '';
-  const query = new URLSearchParams({ limit: '50' });
-  if (statusFilter) {
-    query.set('kycStatus', statusFilter);
-  }
+  const query = new URLSearchParams({ limit: '100' });
+  if (statusFilter) query.set('kycStatus', statusFilter);
+
   const payload = await apiRequest(`/users?${query.toString()}`);
   const users = Array.isArray(payload.users) ? payload.users : [];
 
-  const countEl = document.getElementById('kycCount');
-  if (countEl) {
-    countEl.textContent = `${users.length} users`;
+  // Update stats cards
+  const allKycUsers = statusFilter ? users : users;
+  // Fetch counts for all statuses for stats (best-effort from current result)
+  const pending  = users.filter(u => (u.kycStatus||'').toUpperCase().includes('PENDING')).length;
+  const approved = users.filter(u => (u.kycStatus||'').toUpperCase() === 'VERIFIED').length;
+  const rejected = users.filter(u => (u.kycStatus||'').toUpperCase() === 'REJECTED').length;
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  if (!statusFilter) {
+    setEl('kycStatPending', pending);
+    setEl('kycStatApproved', approved);
+    setEl('kycStatRejected', rejected);
+    // Update nav badge
+    const badge = document.getElementById('kycPendingBadge');
+    if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline-flex' : 'none'; }
   }
 
+  const countEl = document.getElementById('kycCount');
+  if (countEl) countEl.textContent = `${users.length} users`;
+
   const body = document.getElementById('kycTableBody');
-  if (!body) {
+  if (!body) return;
+
+  if (users.length === 0) {
+    body.innerHTML = '<tr><td class="admin-td" colspan="7" style="text-align:center;color:var(--text-2);padding:32px;">No users found.</td></tr>';
     return;
   }
 
-  body.innerHTML = users
-    .map(
-      (user) => `
-      <tr>
-        <td class="admin-td font-mono text-xs">${user.userId}</td>
-        <td class="admin-td">${user.email || '-'}</td>
-        <td class="admin-td font-mono">****</td>
-        <td class="admin-td">${statusBadge(user.kycStatus)}</td>
-        <td class="admin-td">${formatDate(user.updatedAt)}</td>
-        <td class="admin-td">
-          <div class="flex flex-wrap gap-1">
-            <button class="btn-secondary !text-xs !py-1" data-kyc-action="view-docs" data-user-id="${user.userId}">View Docs</button>
-            <button class="btn-primary !text-xs !py-1" data-kyc-action="approve" data-user-id="${user.userId}">Approve</button>
-            <button class="btn-danger !text-xs !py-1" data-kyc-action="reject" data-user-id="${user.userId}">Reject</button>
-          </div>
-        </td>
-      </tr>
-    `
-    )
-    .join('');
-
-  if (users.length === 0) {
-    body.innerHTML = '<tr><td class="admin-td text-slate-500" colspan="6">No users found.</td></tr>';
-  }
+  body.innerHTML = users.map((user) => {
+    const kyc = user.kyc || {};
+    const name = kyc.fullName || user.fullName || '—';
+    const aadhaarLast4 = kyc.aadhaarLast4 || '••••';
+    return `<tr>
+      <td class="admin-td" style="font-family:monospace;font-size:11px;">${escH(user.userId)}</td>
+      <td class="admin-td">${escH(name)}</td>
+      <td class="admin-td">${escH(user.email || '—')}</td>
+      <td class="admin-td" style="font-family:monospace;letter-spacing:2px;">••••&nbsp;${escH(aadhaarLast4)}</td>
+      <td class="admin-td">${formatDate(user.updatedAt)}</td>
+      <td class="admin-td">${statusBadge(user.kycStatus)}</td>
+      <td class="admin-td">
+        <button class="btn-secondary btn-sm" data-kyc-action="view-docs" data-user-id="${escH(user.userId)}">Review</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 async function viewKycDocuments(userId) {
@@ -552,41 +560,68 @@ async function viewKycDocuments(userId) {
 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
-  aadhaarContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
-  aadhaarBackContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
-  selfieContainer.innerHTML = '<p class="text-sm text-slate-500">Loading...</p>';
+  const loading = '<div style="padding:24px;color:var(--text-2);font-size:12px;">Loading…</div>';
+  aadhaarContainer.innerHTML = loading;
+  aadhaarBackContainer.innerHTML = loading;
+  selfieContainer.innerHTML = loading;
+
+  // Clear user info fields
+  ['kycInfoName','kycInfoEmail','kycInfoDob','kycInfoAddress','kycDocAadhaar','kycDocStatus'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '—';
+  });
+  document.getElementById('kycReviewRemarks').value = '';
 
   try {
+    // Fetch KYC documents metadata
     const data = await apiRequest(`/users/${encodeURIComponent(userId)}/kyc/documents`);
+    // Also fetch user profile for name/email/dob/address
+    const userPayload = await apiRequest(`/users/${encodeURIComponent(userId)}`).catch(() => ({}));
+    const user = userPayload.user || userPayload || {};
+    const kyc  = data || {};
 
-    document.getElementById('kycDocModalMeta').textContent = `User: ${userId} • Submitted: ${formatDate(data.submittedAt)}`;
-    document.getElementById('kycDocStatus').textContent = data.status || 'UNKNOWN';
-    document.getElementById('kycDocAadhaar').textContent = data.aadhaarMasked ? `${data.aadhaarMasked} (Last 4: ${data.aadhaarLast4 || '-'})` : '-';
+    document.getElementById('kycDocModalMeta').textContent = `User: ${userId} • Submitted: ${formatDate(kyc.submittedAt)}`;
+    document.getElementById('kycInfoName').textContent    = kyc.fullName  || user.fullName  || '—';
+    document.getElementById('kycInfoEmail').textContent   = user.email    || '—';
+    document.getElementById('kycInfoDob').textContent     = kyc.dob       || user.dob       || '—';
+    document.getElementById('kycInfoAddress').textContent = kyc.address   || user.address   || '—';
+    document.getElementById('kycDocStatus').textContent   = kyc.status    || user.kycStatus || 'UNKNOWN';
+    document.getElementById('kycDocAadhaar').textContent  = kyc.aadhaarMasked
+      ? `${kyc.aadhaarMasked} (Last 4: ${kyc.aadhaarLast4 || '—'})`
+      : (kyc.aadhaarLast4 ? `•••• •••• •••• ${kyc.aadhaarLast4}` : '—');
 
-    if (data.aadhaarFront) {
-      aadhaarContainer.innerHTML = `<img src="${data.aadhaarFront}" alt="Aadhaar Front" class="w-full h-auto object-contain max-h-80" />`;
+    // Load images via binary endpoint: /api/admin/users/:id/kyc/image/:type
+    // Supported types: 'aadhaar' | 'aadhaar-back' | 'selfie'
+    const imgStyle = 'width:100%;height:auto;object-fit:contain;max-height:200px;border-radius:6px;';
+    const noImg = (label) => `<div style="padding:20px;text-align:center;color:var(--text-2);font-size:12px;">No ${label} image</div>`;
+
+    if (kyc.hasAadhaarFront) {
+      // Use binary endpoint if available; fall back to base64 from documents response
+      const src = kyc.aadhaarFront || `/api/admin/users/${encodeURIComponent(userId)}/kyc/image/aadhaar`;
+      aadhaarContainer.innerHTML = `<img src="${src}" alt="Aadhaar Front" style="${imgStyle}" onerror="this.parentElement.innerHTML='<div style=\\'padding:16px;text-align:center;color:var(--red);font-size:12px;\\'>Image failed to load</div>'" />`;
     } else {
-      aadhaarContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No Aadhaar image available</p>';
+      aadhaarContainer.innerHTML = noImg('Aadhaar Front');
     }
 
-    if (data.aadhaarBack) {
-      aadhaarBackContainer.innerHTML = `<img src="${data.aadhaarBack}" alt="Aadhaar Back" class="w-full h-auto object-contain max-h-80" />`;
+    if (kyc.hasAadhaarBack) {
+      const src = kyc.aadhaarBack || `/api/admin/users/${encodeURIComponent(userId)}/kyc/image/aadhaar-back`;
+      aadhaarBackContainer.innerHTML = `<img src="${src}" alt="Aadhaar Back" style="${imgStyle}" onerror="this.parentElement.innerHTML='<div style=\\'padding:16px;text-align:center;color:var(--red);font-size:12px;\\'>Image failed to load</div>'" />`;
     } else {
-      aadhaarBackContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No Aadhaar back image available</p>';
+      aadhaarBackContainer.innerHTML = noImg('Aadhaar Back');
     }
 
-    if (data.selfie) {
-      selfieContainer.innerHTML = `<img src="${data.selfie}" alt="Selfie" class="w-full h-auto object-contain max-h-80" />`;
+    if (kyc.hasSelfie || kyc.selfie) {
+      const src = kyc.selfie || `/api/admin/users/${encodeURIComponent(userId)}/kyc/image/selfie`;
+      selfieContainer.innerHTML = `<img src="${src}" alt="Selfie" style="${imgStyle}" onerror="this.parentElement.innerHTML='<div style=\\'padding:16px;text-align:center;color:var(--red);font-size:12px;\\'>Image failed to load</div>'" />`;
     } else {
-      selfieContainer.innerHTML = '<p class="text-sm text-slate-500 p-4 text-center">No selfie image available</p>';
+      selfieContainer.innerHTML = noImg('Selfie');
     }
 
     document.getElementById('kycDocActions').innerHTML = `
-      <button class="btn-primary" data-kyc-doc-action="approve" data-user-id="${userId}">Approve KYC</button>
-      <button class="btn-danger" data-kyc-doc-action="reject" data-user-id="${userId}">Reject KYC</button>
+      <button class="btn-primary" style="flex:1;" data-kyc-doc-action="approve" data-user-id="${escH(userId)}">✓ Approve KYC</button>
+      <button class="btn-danger"  style="flex:1;" data-kyc-doc-action="reject"  data-user-id="${escH(userId)}">✕ Reject KYC</button>
     `;
   } catch (error) {
-    aadhaarContainer.innerHTML = `<p class="text-sm text-rose-400 p-4">Error: ${error.message}</p>`;
+    aadhaarContainer.innerHTML = `<div style="padding:16px;color:var(--red);font-size:12px;">Error: ${escH(error.message)}</div>`;
     aadhaarBackContainer.innerHTML = '';
     selfieContainer.innerHTML = '';
     showMessage(error.message || 'Failed to load KYC documents.', 'error');
@@ -1516,11 +1551,19 @@ async function loadRevenue() {
 // Risk Management
 // ─────────────────────────────────────────────────────────────────────────────
 
+function saveAutoFlagRules() {
+  // console.warn: no backend endpoint for auto-flag rules yet — stored client-side only
+  console.warn('[Risk] Auto-flag rules: no backend endpoint — changes are not persisted');
+  showMessage('Auto-flag rules saved (client-side only — no backend endpoint yet).', 'success');
+}
+
 async function loadRisk() {
-  const [configPayload, blockedIpsPayload, suspiciousPayload] = await Promise.all([
+  const [configPayload, blockedIpsPayload, suspiciousPayload, flaggedPayload] = await Promise.all([
     apiRequest('/risk/config').catch(() => ({ config: {} })),
     apiRequest('/risk/blocked-ips').catch(() => ({ blockedIPs: [] })),
-    apiRequest('/risk/suspicious').catch(() => ({ alerts: [] }))
+    apiRequest('/risk/suspicious').catch(() => ({ alerts: [] })),
+    // console.warn: /api/admin/risk/flagged may not exist
+    apiRequest('/risk/flagged').catch(() => ({ flagged: [] }))
   ]);
 
   const config = configPayload.config || {};
@@ -1528,7 +1571,9 @@ async function loadRisk() {
   if (form) {
     form.maxLeverage.value = config.maxLeverage ?? '';
     form.maxWithdrawalAmount.value = config.maxWithdrawalAmount ?? '';
+    if (form.maxSingleTx) form.maxSingleTx.value = config.maxSingleTx ?? '';
     form.minWithdrawalAmount.value = config.minWithdrawalAmount ?? '';
+    if (form.minKycLevel) form.minKycLevel.value = config.minKycLevel ?? 'FULL';
     form.amlRiskThreshold.value = config.amlRiskThreshold ?? 75;
   }
 
@@ -1553,18 +1598,47 @@ async function loadRisk() {
   const alertsList = document.getElementById('suspiciousAlertsList');
   if (alertsList) {
     alertsList.innerHTML = alerts.length === 0
-      ? '<p class="text-sm text-slate-500">No suspicious activity alerts.</p>'
+      ? '<p style="font-size:12px;color:var(--text-2);padding:8px;">No suspicious activity alerts.</p>'
       : alerts.map((alert) => `
         <div class="list-item">
-          <div class="flex items-start justify-between gap-2">
-            <p class="text-sm font-semibold">${alert.type || 'Alert'}</p>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <p style="font-size:13px;font-weight:600;color:var(--text-1);margin:0;">${escH(alert.type || 'Alert')}</p>
             ${statusBadge(alert.severity || 'MEDIUM')}
           </div>
-          <p class="text-xs text-slate-400">User: ${alert.userId || '-'}</p>
-          <p class="text-xs text-slate-500">${alert.reason || '-'}</p>
-          <p class="text-xs text-slate-600">${formatDate(alert.createdAt)}</p>
+          <p style="font-size:12px;color:var(--text-2);margin:4px 0 0;">User: ${escH(alert.userId || '—')}</p>
+          <p style="font-size:12px;color:var(--text-2);margin:2px 0 0;">${escH(alert.reason || '—')}</p>
+          <p style="font-size:11px;color:var(--text-2);opacity:.6;margin:2px 0 0;">${formatDate(alert.createdAt)}</p>
         </div>
       `).join('');
+  }
+
+  // Flagged accounts table
+  const flagged = Array.isArray(flaggedPayload.flagged) ? flaggedPayload.flagged
+    : Array.isArray(flaggedPayload.accounts) ? flaggedPayload.accounts : [];
+  const flaggedBody = document.getElementById('flaggedAccountsBody');
+  if (flaggedBody) {
+    if (flagged.length === 0) {
+      flaggedBody.innerHTML = '<tr><td class="admin-td" colspan="6" style="text-align:center;color:var(--text-2);padding:28px;">No flagged accounts.</td></tr>';
+    } else {
+      flaggedBody.innerHTML = flagged.map((acct) => {
+        const score = Number(acct.riskScore || acct.score || 0);
+        const scoreColor = score > 80 ? '#f6465d' : score > 50 ? '#F68F15' : '#02c076';
+        const isBlocked = (acct.status || '').toUpperCase() === 'BLOCKED';
+        return `<tr>
+          <td class="admin-td" style="font-family:monospace;font-size:11px;">${escH(acct.userId||'—')}</td>
+          <td class="admin-td">${escH(acct.email||'—')}</td>
+          <td class="admin-td"><span style="font-size:13px;font-weight:700;color:${scoreColor};">${score}</span></td>
+          <td class="admin-td" style="font-size:12px;">${escH(acct.reason||acct.flagReason||'—')}</td>
+          <td class="admin-td">${formatDate(acct.flaggedAt||acct.createdAt)}</td>
+          <td class="admin-td">
+            ${isBlocked
+              ? `<button class="btn-secondary btn-sm" data-risk-action="unblock-user" data-user-id="${escH(acct.userId)}">Unblock</button>`
+              : `<button class="btn-danger btn-sm" data-risk-action="block-user" data-user-id="${escH(acct.userId)}">Block</button>`
+            }
+          </td>
+        </tr>`;
+      }).join('');
+    }
   }
 }
 
@@ -1673,29 +1747,42 @@ async function setNetworkWithdrawal(network, enabled) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function loadNotifications() {
-  const payload = await apiRequest('/notifications?limit=20').catch(() => ({ notifications: [] }));
+  // console.warn: /api/admin/notifications may not exist — verify endpoint
+  console.warn('[Notifications] GET /api/admin/notifications — verify this endpoint exists');
+  const payload = await apiRequest('/notifications?limit=30').catch(() => ({ notifications: [] }));
   const notifs = Array.isArray(payload.notifications) ? payload.notifications : [];
-  const list = document.getElementById('notificationsList');
-  if (list) {
-    list.innerHTML = notifs.length === 0
-      ? '<p class="text-sm text-slate-500">No notifications yet.</p>'
-      : notifs.map((n) => `
-        <div class="list-item">
-          <div class="flex items-start justify-between gap-2">
-            <p class="text-sm font-semibold">${n.title || 'Notification'}</p>
-            ${statusBadge(n.priority || 'NORMAL')}
-          </div>
-          <p class="text-xs text-slate-400 mt-1 line-clamp-2">${n.message || '-'}</p>
-          <p class="text-xs text-slate-500 mt-1">${n.type || '-'} • ${formatDate(n.createdAt)}</p>
-        </div>
-      `).join('');
+
+  const tbody = document.getElementById('notificationsTableBody');
+  if (tbody) {
+    if (notifs.length === 0) {
+      tbody.innerHTML = '<tr><td class="admin-td" colspan="7" style="text-align:center;color:var(--text-2);padding:28px;">No notifications sent yet.</td></tr>';
+    } else {
+      const typeColor = { INFO: '#00b8d4', WARNING: '#F68F15', SUCCESS: '#02c076', ALERT: '#f6465d' };
+      tbody.innerHTML = notifs.map((n) => {
+        const tCol = typeColor[(n.type||'INFO').toUpperCase()] || 'var(--text-2)';
+        return `<tr>
+          <td class="admin-td" style="font-family:monospace;font-size:11px;">${escH(String(n.id||'').slice(0,10))}</td>
+          <td class="admin-td" style="font-size:13px;font-weight:600;">${escH(n.title||'—')}</td>
+          <td class="admin-td" style="font-size:12px;">${escH(n.target||n.userId||'All')}</td>
+          <td class="admin-td"><span style="font-size:11px;font-weight:700;color:${tCol};">${escH(n.type||'INFO')}</span></td>
+          <td class="admin-td">${statusBadge(n.priority||'NORMAL')}</td>
+          <td class="admin-td">${formatDate(n.createdAt||n.sentAt)}</td>
+          <td class="admin-td" style="font-size:12px;">${n.recipientCount != null ? n.recipientCount : '—'}</td>
+        </tr>`;
+      }).join('');
+    }
   }
 }
 
-async function broadcastNotification(title, message, priority, type) {
+async function broadcastNotification(title, message, priority, type, target, userId) {
+  const body = { title, message, priority, type };
+  if (target === 'specific' && userId) body.userId = userId;
+  else body.target = 'all';
+  // console.warn: /api/admin/notifications/broadcast — verify endpoint
+  console.warn('[Notifications] POST /api/admin/notifications/broadcast — verify this endpoint exists');
   await apiRequest('/notifications/broadcast', {
     method: 'POST',
-    body: JSON.stringify({ title, message, priority, type })
+    body: JSON.stringify(body)
   });
 }
 
@@ -1774,30 +1861,83 @@ async function loadBlockchain() {
 // Compliance
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Active compliance flag being reviewed
+let _activeComplianceFlag = null;
+
 async function loadCompliance() {
-  const payload = await apiRequest('/compliance/flags?limit=40');
+  const typeFilter = document.getElementById('compFlagTypeFilter')?.value || '';
+  const query = new URLSearchParams({ limit: '60' });
+  if (typeFilter) query.set('type', typeFilter);
+
+  const payload = await apiRequest(`/compliance/flags?${query.toString()}`).catch(() => ({ flags: [] }));
   const flags = Array.isArray(payload.flags) ? payload.flags : [];
-  const list = document.getElementById('complianceFlagsList');
-  list.innerHTML = flags
-    .map(
-      (flag) => `
-      <article class="list-item">
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <p class="text-sm font-semibold">${flag.id}</p>
-            <p class="text-xs text-slate-400">User: ${flag.userId || '-'} • ${flag.type}</p>
-          </div>
-          ${statusBadge(flag.severity)}
-        </div>
-        <p class="mt-2 text-sm text-slate-200">${flag.reason || '-'}</p>
-        <p class="mt-1 text-xs text-slate-500">Created: ${formatDate(flag.createdAt)}</p>
-      </article>
-    `
-    )
-    .join('');
+
+  // Stats
+  const total    = flags.length;
+  const highRisk = flags.filter(f => ['HIGH','CRITICAL'].includes((f.severity||'').toUpperCase())).length;
+  const pending  = flags.filter(f => !['REVIEWED','CLEARED'].includes((f.status||'').toUpperCase())).length;
+  const resolved = flags.filter(f => ['REVIEWED','CLEARED'].includes((f.status||'').toUpperCase())).length;
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setEl('compStatTotal',   total);
+  setEl('compStatHigh',    highRisk);
+  setEl('compStatPending', pending);
+  setEl('compStatResolved',resolved);
+
+  const body = document.getElementById('complianceFlagsTableBody');
+  if (!body) return;
 
   if (flags.length === 0) {
-    list.innerHTML = '<p class="text-sm text-slate-500">No compliance flags yet.</p>';
+    body.innerHTML = '<tr><td class="admin-td" colspan="7" style="text-align:center;color:var(--text-2);padding:28px;">No compliance flags found.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = flags.map((flag) => {
+    const sev = (flag.severity || 'MEDIUM').toUpperCase();
+    const sevColor = sev === 'CRITICAL' || sev === 'HIGH' ? '#f6465d' : sev === 'MEDIUM' ? '#F68F15' : '#02c076';
+    return `<tr>
+      <td class="admin-td" style="font-family:monospace;font-size:11px;">${escH(String(flag.id||'').slice(0,12))}</td>
+      <td class="admin-td" style="font-family:monospace;font-size:11px;">${escH(flag.userId||'—')}</td>
+      <td class="admin-td" style="font-size:12px;">${escH(flag.type||'—')}</td>
+      <td class="admin-td"><span style="font-size:11px;font-weight:700;color:${sevColor};">${sev}</span></td>
+      <td class="admin-td">${statusBadge(flag.status||'PENDING')}</td>
+      <td class="admin-td">${formatDate(flag.createdAt)}</td>
+      <td class="admin-td">
+        <button class="btn-secondary btn-sm" onclick="openComplianceFlagModal(${JSON.stringify(flag).replace(/"/g,'&quot;')})">Review</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openComplianceFlagModal(flag) {
+  _activeComplianceFlag = flag;
+  const modal = document.getElementById('complianceFlagModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('compFlagModalMeta').textContent = `Flag ID: ${flag.id} • Created: ${formatDate(flag.createdAt)}`;
+  document.getElementById('compFlagType').textContent     = flag.type     || '—';
+  document.getElementById('compFlagSeverity').textContent = flag.severity || '—';
+  document.getElementById('compFlagUserId').textContent   = flag.userId   || '—';
+  document.getElementById('compFlagStatus').textContent   = flag.status   || '—';
+  document.getElementById('compFlagReason').textContent   = flag.reason   || '—';
+  document.getElementById('compFlagNotes').value = '';
+}
+
+async function resolveComplianceFlag(resolution) {
+  if (!_activeComplianceFlag) return;
+  const notes = document.getElementById('compFlagNotes')?.value || '';
+  try {
+    // console.warn: PATCH /api/admin/compliance/flags/:id may not exist — using best-guess path
+    console.warn('[Compliance] PATCH /api/admin/compliance/flags/:id — verify this endpoint exists');
+    await apiRequest(`/compliance/flags/${encodeURIComponent(_activeComplianceFlag.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: resolution, notes })
+    });
+    showMessage(`Flag marked as ${resolution}.`, 'success');
+    document.getElementById('complianceFlagModal').style.display = 'none';
+    _activeComplianceFlag = null;
+    await loadCompliance();
+  } catch (e) {
+    showMessage(e.message || 'Failed to update flag.', 'error');
   }
 }
 
@@ -2079,35 +2219,31 @@ async function handleKycAction(event) {
 
 async function handleKycDocAction(event) {
   const button = event.target.closest('[data-kyc-doc-action]');
-  if (!button) {
-    return;
-  }
+  if (!button) return;
 
   const action = button.getAttribute('data-kyc-doc-action');
   const userId = button.getAttribute('data-user-id');
+  // Use remarks textarea instead of prompt
+  const remarks = (document.getElementById('kycReviewRemarks')?.value || '').trim();
 
   try {
     if (action === 'approve') {
-      const remarks = window.prompt('Approval remarks (optional):', '') || '';
       await reviewKyc(userId, 'APPROVED', remarks);
       showMessage('KYC approved.', 'success');
       document.getElementById('kycDocModal').classList.add('hidden');
       document.getElementById('kycDocModal').classList.remove('flex');
-      if (state.currentView === 'kyc') {
-        await loadKyc();
-      }
+      if (state.currentView === 'kyc') await loadKyc();
     } else if (action === 'reject') {
-      const reason = window.prompt('Rejection reason:', '');
-      if (!reason) {
+      if (!remarks) {
+        showMessage('Please enter rejection remarks before rejecting.', 'error');
+        document.getElementById('kycReviewRemarks')?.focus();
         return;
       }
-      await reviewKyc(userId, 'REJECTED', reason);
+      await reviewKyc(userId, 'REJECTED', remarks);
       showMessage('KYC rejected.', 'success');
       document.getElementById('kycDocModal').classList.add('hidden');
       document.getElementById('kycDocModal').classList.remove('flex');
-      if (state.currentView === 'kyc') {
-        await loadKyc();
-      }
+      if (state.currentView === 'kyc') await loadKyc();
     }
   } catch (error) {
     showMessage(error.message || 'KYC action failed.', 'error');
@@ -3121,7 +3257,9 @@ function wireEventListeners() {
         body: JSON.stringify({
           maxLeverage: Number(form.maxLeverage.value) || undefined,
           maxWithdrawalAmount: Number(form.maxWithdrawalAmount.value) || undefined,
+          maxSingleTx: Number(form.maxSingleTx?.value) || undefined,
           minWithdrawalAmount: Number(form.minWithdrawalAmount.value) || undefined,
+          minKycLevel: form.minKycLevel?.value || undefined,
           amlRiskThreshold: Number(form.amlRiskThreshold.value) || undefined
         })
       });
@@ -3140,36 +3278,37 @@ function wireEventListeners() {
   document.getElementById('broadcastNotifForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
+    const target = form.target ? form.target.value : 'all';
+    const userId = form.userId ? form.userId.value : '';
     try {
-      await broadcastNotification(form.title.value, form.message.value, form.priority.value, form.type.value);
+      await broadcastNotification(form.title.value, form.message.value, form.priority.value, form.type.value, target, userId);
       showMessage('Broadcast notification sent.', 'success');
       form.reset();
+      document.getElementById('notifUserIdWrap').style.display = 'none';
       await loadNotifications();
     } catch (error) {
       showMessage(error.message || 'Failed to broadcast notification.', 'error');
     }
   });
 
-  document.getElementById('userNotifForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    try {
-      await apiRequest('/notifications', {
-        method: 'POST',
-        body: JSON.stringify({
-          userId: form.userId.value,
-          title: form.title.value,
-          message: form.message.value,
-          priority: form.priority.value
-        })
+  // KYC filter tabs
+  document.querySelectorAll('.kyc-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.kyc-tab-btn').forEach(b => {
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-2)';
       });
-      showMessage('Notification sent to user.', 'success');
-      form.reset();
-      await loadNotifications();
-    } catch (error) {
-      showMessage(error.message || 'Failed to send notification.', 'error');
-    }
+      btn.style.background = 'var(--accent)';
+      btn.style.color = '#fff';
+      const filterEl = document.getElementById('kycStatusFilter');
+      if (filterEl) filterEl.value = btn.getAttribute('data-kyc-tab') || '';
+      loadKyc();
+    });
   });
+
+  // Compliance flag type filter
+  const compFlagTypeFilter = document.getElementById('compFlagTypeFilter');
+  if (compFlagTypeFilter) compFlagTypeFilter.addEventListener('change', () => loadCompliance());
 
   // Blockchain
   document.getElementById('blockchainReloadBtn').addEventListener('click', async () => loadBlockchain());

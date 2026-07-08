@@ -237,16 +237,24 @@
 
       <!-- ── KYC MANAGEMENT ── -->
       <section class="admin-panel hidden" data-panel="kyc">
+        <!-- KYC Stats Row -->
+        <div class="stat-grid" style="margin-bottom:16px;">
+          <div class="stat-card"><div class="stat-icon" style="background:rgba(246,184,20,0.12);color:#f6b814;">⏳</div><div class="stat-info"><div class="stat-label">Pending</div><div class="stat-value" id="kycStatPending">—</div></div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:rgba(2,192,118,0.12);color:#02c076;">✓</div><div class="stat-info"><div class="stat-label">Approved</div><div class="stat-value" id="kycStatApproved">—</div></div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:rgba(246,70,93,0.12);color:#f6465d;">✕</div><div class="stat-info"><div class="stat-label">Rejected</div><div class="stat-value" id="kycStatRejected">—</div></div></div>
+        </div>
         <div class="panel-card">
           <div class="panel-card-header">
             <span class="panel-card-title">KYC Submissions</span>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow-x:auto;">
-              <select id="kycStatusFilter" class="input-dark" style="width:160px;height:34px;padding:4px 10px;">
-                <option value="">All Statuses</option>
-                <option value="PENDING_REVIEW" selected>Pending Review</option>
-                <option value="VERIFIED">Verified</option>
-                <option value="REJECTED">Rejected</option>
-              </select>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <!-- Filter Tabs -->
+              <div style="display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                <button class="kyc-tab-btn active" data-kyc-tab="" style="padding:4px 12px;font-size:11px;font-weight:600;background:var(--accent);color:#fff;border:none;cursor:pointer;">All</button>
+                <button class="kyc-tab-btn" data-kyc-tab="PENDING_REVIEW" style="padding:4px 12px;font-size:11px;font-weight:600;background:transparent;color:var(--text-2);border:none;cursor:pointer;">Pending</button>
+                <button class="kyc-tab-btn" data-kyc-tab="VERIFIED" style="padding:4px 12px;font-size:11px;font-weight:600;background:transparent;color:var(--text-2);border:none;cursor:pointer;">Approved</button>
+                <button class="kyc-tab-btn" data-kyc-tab="REJECTED" style="padding:4px 12px;font-size:11px;font-weight:600;background:transparent;color:var(--text-2);border:none;cursor:pointer;">Rejected</button>
+              </div>
+              <input type="hidden" id="kycStatusFilter" value="" />
               <button id="kycReloadBtn" class="btn-primary btn-sm">Reload</button>
               <span style="font-size:11px;color:var(--text-2);" id="kycCount"></span>
             </div>
@@ -255,10 +263,11 @@
             <table class="admin-table">
               <thead><tr>
                 <th class="admin-th">User ID</th>
+                <th class="admin-th">Name</th>
                 <th class="admin-th">Email</th>
-                <th class="admin-th">Aadhaar</th>
-                <th class="admin-th">Status</th>
+                <th class="admin-th">Aadhaar Last 4</th>
                 <th class="admin-th">Submitted</th>
+                <th class="admin-th">Status</th>
                 <th class="admin-th">Actions</th>
               </tr></thead>
               <tbody id="kycTableBody"></tbody>
@@ -576,19 +585,29 @@
 
       <!-- ── RISK MANAGEMENT ── -->
       <section class="admin-panel hidden" data-panel="risk">
-        <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
+        <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-bottom:16px;">
+          <!-- Current Limits card -->
           <div class="panel-card">
-            <div class="panel-card-header"><span class="panel-card-title">Risk Configuration</span></div>
+            <div class="panel-card-header"><span class="panel-card-title">Transaction Limits</span></div>
             <div class="panel-card-body">
               <form id="riskConfigForm" style="display:flex;flex-direction:column;gap:10px;">
                 <div><label class="input-label">Max Leverage</label><input name="maxLeverage" type="number" class="input-dark" placeholder="100" /></div>
                 <div><label class="input-label">Max Daily Withdrawal (USDT)</label><input name="maxWithdrawalAmount" type="number" class="input-dark" placeholder="50000" /></div>
+                <div><label class="input-label">Max Single Transaction (USDT)</label><input name="maxSingleTx" type="number" class="input-dark" placeholder="10000" /></div>
                 <div><label class="input-label">Min Withdrawal (USDT)</label><input name="minWithdrawalAmount" type="number" class="input-dark" placeholder="10" /></div>
+                <div><label class="input-label">Min KYC Level for Withdrawal</label>
+                  <select name="minKycLevel" class="input-dark">
+                    <option value="NONE">None</option>
+                    <option value="BASIC">Basic</option>
+                    <option value="FULL" selected>Full</option>
+                  </select>
+                </div>
                 <div><label class="input-label">AML Risk Threshold (%)</label><input name="amlRiskThreshold" type="number" min="0" max="100" class="input-dark" placeholder="75" /></div>
                 <button type="submit" class="btn-primary">Save Risk Config</button>
               </form>
             </div>
           </div>
+          <!-- Blocked IPs -->
           <div class="panel-card">
             <div class="panel-card-header">
               <span class="panel-card-title">Blocked IPs / Countries</span>
@@ -600,12 +619,60 @@
                 <input id="blockIpReason" class="input-dark" style="flex:1;" placeholder="Reason" />
                 <button id="blockIpBtn" class="btn-danger btn-sm">Block</button>
               </div>
-              <div id="blockedIpsList" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
+              <div id="blockedIpsList" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;"></div>
             </div>
           </div>
+          <!-- Auto-flag Rules -->
+          <div class="panel-card">
+            <div class="panel-card-header"><span class="panel-card-title">Auto-Flag Rules</span></div>
+            <div class="panel-card-body" style="display:flex;flex-direction:column;gap:10px;">
+              <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--text-1);cursor:pointer;">
+                <span>Flag Tx &gt; ₹1L INR</span>
+                <input type="checkbox" id="ruleFlag1L" checked class="input-dark" style="width:16px;height:16px;" />
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--text-1);cursor:pointer;">
+                <span>Flag new account withdrawal in 24h</span>
+                <input type="checkbox" id="ruleFlagNewAcct" checked class="input-dark" style="width:16px;height:16px;" />
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--text-1);cursor:pointer;">
+                <span>Flag multiple failed logins</span>
+                <input type="checkbox" id="ruleFlagLogins" checked class="input-dark" style="width:16px;height:16px;" />
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--text-1);cursor:pointer;">
+                <span>Flag P2P dispute rate &gt; 10%</span>
+                <input type="checkbox" id="ruleFlagP2P" class="input-dark" style="width:16px;height:16px;" />
+              </label>
+              <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--text-1);cursor:pointer;">
+                <span>Flag unverified KYC withdrawal</span>
+                <input type="checkbox" id="ruleFlagKyc" checked class="input-dark" style="width:16px;height:16px;" />
+              </label>
+              <button onclick="saveAutoFlagRules()" class="btn-secondary btn-sm">Save Rules</button>
+            </div>
+          </div>
+          <!-- Suspicious Activity -->
           <div class="panel-card">
             <div class="panel-card-header"><span class="panel-card-title">Suspicious Activity</span></div>
-            <div id="suspiciousAlertsList" style="padding:8px 16px;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;"></div>
+            <div id="suspiciousAlertsList" style="padding:8px 16px;display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
+          </div>
+        </div>
+        <!-- Flagged Accounts Table -->
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">Flagged Accounts</span>
+            <button onclick="loadRisk()" class="btn-secondary btn-sm">Reload</button>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr>
+                <th class="admin-th">User ID</th>
+                <th class="admin-th">Email</th>
+                <th class="admin-th">Risk Score</th>
+                <th class="admin-th">Reason</th>
+                <th class="admin-th">Flagged At</th>
+                <th class="admin-th">Action</th>
+              </tr></thead>
+              <tbody id="flaggedAccountsBody"></tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -629,39 +696,68 @@
 
       <!-- ── NOTIFICATIONS ── -->
       <section class="admin-panel hidden" data-panel="notifications">
-        <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
+        <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
+          <!-- Send Broadcast card -->
           <div class="panel-card">
-            <div class="panel-card-header"><span class="panel-card-title">📢 Broadcast to All Users</span></div>
+            <div class="panel-card-header"><span class="panel-card-title">📢 Send Broadcast</span></div>
             <div class="panel-card-body">
               <form id="broadcastNotifForm" style="display:flex;flex-direction:column;gap:10px;">
-                <input name="title" class="input-dark" placeholder="Notification title" required />
-                <textarea name="message" class="input-dark" style="min-height:90px;" placeholder="Message body..." required></textarea>
-                <select name="priority" class="input-dark">
-                  <option value="LOW">Low Priority</option><option value="NORMAL" selected>Normal</option>
-                  <option value="HIGH">High Priority</option><option value="CRITICAL">🚨 Critical</option>
-                </select>
-                <button type="submit" class="btn-primary">Broadcast Now</button>
+                <div><label class="input-label">Title</label><input name="title" class="input-dark" placeholder="Notification title" required /></div>
+                <div><label class="input-label">Message</label><textarea name="message" class="input-dark" style="min-height:80px;" placeholder="Message body..." required></textarea></div>
+                <!-- Target selector -->
+                <div>
+                  <label class="input-label">Target</label>
+                  <select name="target" class="input-dark" id="notifTargetSelect" onchange="document.getElementById('notifUserIdWrap').style.display=this.value==='specific'?'block':'none'">
+                    <option value="all">All Users</option>
+                    <option value="specific">Specific User</option>
+                  </select>
+                </div>
+                <div id="notifUserIdWrap" style="display:none;">
+                  <label class="input-label">User ID</label>
+                  <input name="userId" class="input-dark" placeholder="User ID" />
+                </div>
+                <!-- Type -->
+                <div>
+                  <label class="input-label">Type</label>
+                  <select name="type" class="input-dark">
+                    <option value="INFO">ℹ Info</option>
+                    <option value="WARNING">⚠ Warning</option>
+                    <option value="SUCCESS">✓ Success</option>
+                    <option value="ALERT">🚨 Alert</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="input-label">Priority</label>
+                  <select name="priority" class="input-dark">
+                    <option value="LOW">Low</option><option value="NORMAL" selected>Normal</option>
+                    <option value="HIGH">High</option><option value="CRITICAL">Critical</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn-primary">Send Broadcast</button>
               </form>
             </div>
           </div>
-          <div class="panel-card">
-            <div class="panel-card-header"><span class="panel-card-title">👤 User Notification</span></div>
-            <div class="panel-card-body">
-              <form id="userNotifForm" style="display:flex;flex-direction:column;gap:10px;">
-                <input name="userId" class="input-dark" placeholder="User ID" required />
-                <input name="title" class="input-dark" placeholder="Title" required />
-                <textarea name="message" class="input-dark" style="min-height:90px;" placeholder="Message" required></textarea>
-                <select name="priority" class="input-dark"><option value="LOW">Low</option><option value="NORMAL" selected>Normal</option><option value="HIGH">High</option></select>
-                <button type="submit" class="btn-primary">Send Notification</button>
-              </form>
-            </div>
-          </div>
-          <div class="panel-card">
+          <!-- Recent Notifications table -->
+          <div class="panel-card" style="grid-column:span 2;min-width:0;">
             <div class="panel-card-header">
               <span class="panel-card-title">Recent Notifications</span>
               <button id="notifReloadBtn" class="btn-secondary btn-sm">Reload</button>
             </div>
-            <div id="notificationsList" style="padding:8px 16px;display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto;"></div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead><tr>
+                  <th class="admin-th">ID</th>
+                  <th class="admin-th">Title</th>
+                  <th class="admin-th">Target</th>
+                  <th class="admin-th">Type</th>
+                  <th class="admin-th">Priority</th>
+                  <th class="admin-th">Sent At</th>
+                  <th class="admin-th">Recipients</th>
+                </tr></thead>
+                <tbody id="notificationsTableBody"></tbody>
+              </table>
+            </div>
+            <div id="notificationsList" style="display:none;"></div>
           </div>
         </div>
       </section>
@@ -703,7 +799,14 @@
 
       <!-- ── COMPLIANCE ── -->
       <section class="admin-panel hidden" data-panel="compliance">
-        <div style="display:grid;gap:16px;grid-template-columns:360px 1fr;">
+        <!-- Compliance Stats Row -->
+        <div class="stat-grid" style="margin-bottom:16px;">
+          <div class="stat-card"><div class="stat-icon" style="background:rgba(246,143,21,0.12);color:#F68F15;">🚩</div><div class="stat-info"><div class="stat-label">Total Flags</div><div class="stat-value" id="compStatTotal">—</div></div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:rgba(246,70,93,0.12);color:#f6465d;">⚠</div><div class="stat-info"><div class="stat-label">High Risk</div><div class="stat-value" id="compStatHigh">—</div></div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:rgba(246,184,20,0.12);color:#f6b814;">🔍</div><div class="stat-info"><div class="stat-label">Pending Review</div><div class="stat-value" id="compStatPending">—</div></div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:rgba(2,192,118,0.12);color:#02c076;">✓</div><div class="stat-info"><div class="stat-label">Resolved</div><div class="stat-value" id="compStatResolved">—</div></div></div>
+        </div>
+        <div style="display:grid;gap:16px;grid-template-columns:340px 1fr;">
           <div class="panel-card">
             <div class="panel-card-header"><span class="panel-card-title">Create Compliance Flag</span></div>
             <div class="panel-card-body">
@@ -713,15 +816,25 @@
                   <option value="SUSPICIOUS_ACTIVITY">Suspicious Activity</option>
                   <option value="AML_REVIEW">AML Review</option>
                   <option value="KYC_MISMATCH">KYC Mismatch</option>
+                  <option value="LARGE_TX">Large Transaction</option>
                 </select>
                 <select name="severity" class="input-dark">
                   <option value="LOW">Low</option><option value="MEDIUM" selected>Medium</option>
                   <option value="HIGH">High</option><option value="CRITICAL">Critical</option>
                 </select>
-                <textarea name="reason" class="input-dark" style="min-height:100px;" placeholder="Reason for flag..." required></textarea>
+                <textarea name="reason" class="input-dark" style="min-height:90px;" placeholder="Reason for flag..." required></textarea>
                 <button type="submit" class="btn-danger">Create Flag</button>
               </form>
-              <button id="exportCsvBtn" class="btn-secondary" style="width:100%;margin-top:10px;">↓ Export Transaction CSV</button>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <select id="compFlagTypeFilter" class="input-dark" style="flex:1;height:34px;padding:4px 8px;font-size:12px;">
+                  <option value="">All Types</option>
+                  <option value="SUSPICIOUS_ACTIVITY">Suspicious Activity</option>
+                  <option value="AML_REVIEW">AML</option>
+                  <option value="LARGE_TX">Large Tx</option>
+                  <option value="KYC_MISMATCH">KYC Mismatch</option>
+                </select>
+                <button id="exportCsvBtn" class="btn-secondary btn-sm" style="white-space:nowrap;">↓ CSV</button>
+              </div>
             </div>
           </div>
           <div class="panel-card">
@@ -729,7 +842,20 @@
               <span class="panel-card-title">Compliance Flags</span>
               <button id="complianceReloadBtn" class="btn-secondary btn-sm">Reload</button>
             </div>
-            <div id="complianceFlagsList" style="padding:8px 16px;display:flex;flex-direction:column;gap:8px;"></div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead><tr>
+                  <th class="admin-th">Flag ID</th>
+                  <th class="admin-th">User ID</th>
+                  <th class="admin-th">Type</th>
+                  <th class="admin-th">Severity</th>
+                  <th class="admin-th">Status</th>
+                  <th class="admin-th">Created</th>
+                  <th class="admin-th">Action</th>
+                </tr></thead>
+                <tbody id="complianceFlagsTableBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -1014,34 +1140,79 @@
 
 <!-- ══════════ KYC DOCUMENT MODAL ══════════ -->
 <div id="kycDocModal" class="modal-overlay hidden">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:860px;width:95%;">
     <div class="modal-header">
       <div>
-        <div class="modal-title">KYC Documents</div>
+        <div class="modal-title">KYC Review</div>
         <div id="kycDocModalMeta" style="font-size:12px;color:var(--text-2);margin-top:3px;"></div>
       </div>
       <button id="kycDocModalClose" class="btn-secondary btn-sm">✕ Close</button>
     </div>
     <div class="modal-body">
-      <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+      <!-- User Info Row -->
+      <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:14px;padding:12px;background:var(--bg-card2);border-radius:10px;">
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:3px;">Name</div><div id="kycInfoName" style="font-size:13px;font-weight:600;color:var(--text-1);">—</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:3px;">Email</div><div id="kycInfoEmail" style="font-size:13px;color:var(--text-1);">—</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:3px;">Date of Birth</div><div id="kycInfoDob" style="font-size:13px;color:var(--text-1);">—</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:3px;">Address</div><div id="kycInfoAddress" style="font-size:12px;color:var(--text-1);">—</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:3px;">Aadhaar (masked)</div><div id="kycDocAadhaar" style="font-size:13px;font-weight:700;color:var(--accent);font-family:monospace;letter-spacing:2px;">—</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:3px;">Status</div><div id="kycDocStatus" style="font-size:13px;font-weight:700;color:var(--text-1);">—</div></div>
+      </div>
+      <!-- Document Images -->
+      <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
         <div>
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:8px;">Aadhaar Front</div>
-          <div id="kycDocAadhaarContainer" style="border-radius:10px;border:1px solid var(--border);background:var(--bg-input);min-height:220px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+          <div id="kycDocAadhaarContainer" style="border-radius:10px;border:1px solid var(--border);background:var(--bg-input);min-height:180px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
         </div>
         <div>
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:8px;">Aadhaar Back</div>
-          <div id="kycDocAadhaarBackContainer" style="border-radius:10px;border:1px solid var(--border);background:var(--bg-input);min-height:220px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+          <div id="kycDocAadhaarBackContainer" style="border-radius:10px;border:1px solid var(--border);background:var(--bg-input);min-height:180px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
         </div>
         <div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:8px;">Selfie with Document</div>
-          <div id="kycDocSelfieContainer" style="border-radius:10px;border:1px solid var(--border);background:var(--bg-input);min-height:220px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-2);margin-bottom:8px;">Selfie</div>
+          <div id="kycDocSelfieContainer" style="border-radius:10px;border:1px solid var(--border);background:var(--bg-input);min-height:180px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
         </div>
       </div>
-      <div style="margin-top:14px;padding:12px;background:var(--bg-card2);border-radius:8px;display:flex;gap:20px;flex-wrap:wrap;">
-        <span style="font-size:12px;color:var(--text-2);">Status: <strong id="kycDocStatus" style="color:var(--text-1);">-</strong></span>
-        <span style="font-size:12px;color:var(--text-2);">Aadhaar: <strong id="kycDocAadhaar" style="color:var(--text-1);font-family:monospace;">-</strong></span>
+      <!-- Remarks + Actions -->
+      <div style="margin-top:14px;">
+        <label class="input-label">Remarks (required for rejection)</label>
+        <textarea id="kycReviewRemarks" class="input-dark" style="width:100%;min-height:64px;margin-top:6px;box-sizing:border-box;" placeholder="Enter remarks for rejection or notes..."></textarea>
       </div>
-      <div id="kycDocActions" style="display:flex;gap:8px;margin-top:14px;"></div>
+      <div id="kycDocActions" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── COMPLIANCE FLAG REVIEW MODAL ── -->
+<div id="complianceFlagModal" style="display:none;position:fixed;inset:0;z-index:10500;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;padding:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,0.07);">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">Compliance Flag Review</div>
+        <div id="compFlagModalMeta" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px;"></div>
+      </div>
+      <button onclick="document.getElementById('complianceFlagModal').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <!-- Flag details -->
+      <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.35);margin-bottom:3px;">Flag Type</div><div id="compFlagType" style="font-size:13px;font-weight:600;color:#fff;">—</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.35);margin-bottom:3px;">Severity</div><div id="compFlagSeverity" style="font-size:13px;font-weight:600;color:#fff;">—</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.35);margin-bottom:3px;">User ID</div><div id="compFlagUserId" style="font-size:12px;color:rgba(255,255,255,0.7);font-family:monospace;">—</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.35);margin-bottom:3px;">Status</div><div id="compFlagStatus" style="font-size:13px;font-weight:600;color:#fff;">—</div></div>
+        <div style="grid-column:1/-1;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.35);margin-bottom:3px;">Reason</div><div id="compFlagReason" style="font-size:13px;color:rgba(255,255,255,0.8);">—</div></div>
+      </div>
+      <!-- Notes -->
+      <div>
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.4);display:block;margin-bottom:6px;">Admin Notes</label>
+        <textarea id="compFlagNotes" class="input-dark" style="width:100%;min-height:72px;box-sizing:border-box;" placeholder="Add notes about this flag..."></textarea>
+      </div>
+      <!-- Action buttons -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="resolveComplianceFlag('REVIEWED')" style="flex:1;padding:10px;border-radius:10px;background:rgba(246,143,21,0.15);color:#F68F15;border:1px solid rgba(246,143,21,0.4);font-size:13px;font-weight:700;cursor:pointer;">✓ Mark Reviewed</button>
+        <button onclick="resolveComplianceFlag('ESCALATED')" style="flex:1;padding:10px;border-radius:10px;background:rgba(246,70,93,0.15);color:#f6465d;border:1px solid rgba(246,70,93,0.4);font-size:13px;font-weight:700;cursor:pointer;">↑ Escalate</button>
+        <button onclick="resolveComplianceFlag('CLEARED')" style="flex:1;padding:10px;border-radius:10px;background:rgba(2,192,118,0.15);color:#02c076;border:1px solid rgba(2,192,118,0.4);font-size:13px;font-weight:700;cursor:pointer;">✕ Clear Flag</button>
+      </div>
     </div>
   </div>
 </div>
