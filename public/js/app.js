@@ -353,8 +353,9 @@
 
       const panel = document.createElement('div');
       panel.id = 'cvx-mobile-nav';
-      panel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;font-family:-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;';
+      panel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;font-family:-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94);will-change:transform;';
 
+      const closePanel = () => { panel.style.transform = 'translateX(100%)'; setTimeout(() => panel.remove(), 380); };
       // ── Top bar: logo + X ──
       const topBar = document.createElement('div');
       topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 16px;flex-shrink:0;';
@@ -365,7 +366,7 @@
         <line x1="5" y1="5" x2="17" y2="17"/><line x1="17" y1="5" x2="5" y2="17"/>
       </svg>`;
       closeBtn.style.cssText = 'background:none;border:none;color:rgba(255,255,255,0.7);cursor:pointer;padding:2px;display:flex;align-items:center;';
-      closeBtn.addEventListener('click', () => panel.remove());
+      closeBtn.addEventListener('click', () => closePanel());
       topBar.appendChild(logoEl);
       topBar.appendChild(closeBtn);
       panel.appendChild(topBar);
@@ -397,7 +398,7 @@
         labelSpan.textContent = label;
         row.appendChild(labelSpan);
         if (arrow) row.insertAdjacentHTML('beforeend', CHEVRON);
-        row.addEventListener('click', () => panel.remove());
+        row.addEventListener('click', () => closePanel());
         navScroll.appendChild(row);
       });
       panel.appendChild(navScroll);
@@ -407,10 +408,11 @@
       appBtn.href = '#';
       appBtn.textContent = 'APP Download';
       appBtn.style.cssText = 'display:block;margin:16px;padding:14px 0;text-align:center;border-radius:8px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;flex-shrink:0;';
-      appBtn.addEventListener('click', () => panel.remove());
+      appBtn.addEventListener('click', () => closePanel());
       panel.appendChild(appBtn);
 
       document.body.appendChild(panel);
+      requestAnimationFrame(() => requestAnimationFrame(() => { panel.style.transform = 'translateX(0)'; }));
     });
 
     rightBox.appendChild(btn);
