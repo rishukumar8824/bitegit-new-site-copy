@@ -42,7 +42,7 @@ const _P2P_BENEFITS_HTML = (function() {
     +       '<div class="p2p-why-item"><strong>Trade your way:</strong> Pick offers, payment methods, and prices that suit you — you\'re in control.</div>'
     +     '</div>'
     +   '</div>'
-    +   '<div class="p2p-benefit-img"><div class="bft-img-wrap"><img src="/img/p2p-people.png" alt="BITCOVEX P2P" loading="lazy"/><span class="bft-brand-cover">BITCOVEX</span><span class="bft-badge">BITCOVEX P2P</span></div></div>'
+    +   '<div class="p2p-benefit-img"><div class="bft-img-wrap"><img src="/img/p2p-people.png" alt="BITCOVEX P2P" loading="lazy"/><span class="bft-bubble-cover">BITCOVEX P2P</span><span class="bft-badge">BITCOVEX P2P</span></div></div>'
     + '</div>'
 
     /* ── Section 4: Block Trading (text left + image right) ── */
@@ -9669,18 +9669,24 @@ window.deleteMobAd = async function(offerId) {
 (function() {
   var _pCards = document.getElementById('p2pCards');
   if (!_pCards) return;
-  var _lastY = 0, _ticking = false;
+  var _lastY = 0, _scrollUpAcc = 0, _ticking = false;
   _pCards.addEventListener('scroll', function() {
     if (_ticking) return;
     _ticking = true;
     requestAnimationFrame(function() {
       var y = _pCards.scrollTop;
-      if (y <= 8) {
+      if (y <= 30) {
+        _scrollUpAcc = 0;
         document.body.classList.remove('p2p-scroll-down');
       } else if (y > _lastY + 2) {
+        _scrollUpAcc = 0;
         document.body.classList.add('p2p-scroll-down');
       } else if (y < _lastY) {
-        document.body.classList.remove('p2p-scroll-down');
+        _scrollUpAcc += (_lastY - y);
+        if (_scrollUpAcc >= 40) {
+          _scrollUpAcc = 0;
+          document.body.classList.remove('p2p-scroll-down');
+        }
       }
       _lastY = y;
       _ticking = false;
