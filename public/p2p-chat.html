@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Bitcovex P2P Order Chat</title>
+    <title>Bitegit P2P Order Chat</title>
     <link rel="stylesheet" href="/p2p-chat.css?v=20260227" />
-    <script src="/bitcovex-config.js"></script>
+    <script src="/bitegit-config.js"></script>
   </head>
   <body class="p2p-chat-page">
     <main class="order-chat-layout">
@@ -101,5 +101,67 @@
     </section>
 
     <script src="/p2p-chat.js?v=20260227"></script>
-  <script src="js/app.js"></script></body>
+  <!-- Cookie Consent Popup -->
+<style>
+#cookieConsent {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999999;
+  background: #18181f;
+  border: 1px solid #2a2a3a;
+  border-radius: 16px;
+  padding: 22px 22px 18px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  width: 320px;
+  transform: translateY(140%);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s ease;
+  pointer-events: none;
+}
+#cookieConsent.cc-show {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+#cookieConsent p { margin: 0; }
+.cc-title { color: #fff; font-size: 14px; font-weight: 600; margin-bottom: 8px !important; }
+.cc-text  { color: #999; font-size: 12px; line-height: 1.6; margin-bottom: 16px !important; }
+.cc-btn {
+  display: block; width: 100%; padding: 11px;
+  border-radius: 10px; font-size: 13px; font-weight: 600;
+  cursor: pointer; text-align: center; margin-bottom: 10px;
+  border: none; transition: opacity 0.2s;
+}
+.cc-btn:hover { opacity: 0.85; }
+.cc-accept { background: #fff; color: #000; }
+.cc-decline { background: #252530; color: #ccc; border: 1px solid #333 !important; }
+</style>
+<div id="cookieConsent">
+  <p class="cc-title">Cookies are used to optimize and personalize your website experience.</p>
+  <p class="cc-text">You can manage your cookie preferences and view the <a href="#" style="color:#00b8d4;text-decoration:none;">Cookies Policy</a>.</p>
+  <button class="cc-btn cc-accept" onclick="cookieAccept()">Accept all cookies</button>
+  <button class="cc-btn cc-decline" onclick="cookieDecline()">Reject all</button>
+</div>
+<script>
+(function() {
+  if (!localStorage.getItem('cookieConsent')) {
+    setTimeout(function() {
+      var el = document.getElementById('cookieConsent');
+      if (el) el.classList.add('cc-show');
+    }, 1200);
+  }
+})();
+function cookieAccept() {
+  localStorage.setItem('cookieConsent', 'accepted');
+  var el = document.getElementById('cookieConsent');
+  if (el) { el.style.transform='translateY(140%)'; el.style.opacity='0'; }
+}
+function cookieDecline() {
+  localStorage.setItem('cookieConsent', 'declined');
+  var el = document.getElementById('cookieConsent');
+  if (el) { el.style.transform='translateY(140%)'; el.style.opacity='0'; }
+}
+</script>
+</body>
 </html>
