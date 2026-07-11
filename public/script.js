@@ -593,7 +593,7 @@ function openTradePage(symbol, marketType = 'spot') {
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '');
   const finalSymbol = safeSymbol.endsWith('USDTP') ? safeSymbol.replace(/USDTP$/, 'USDT') : safeSymbol;
-  window.location.href = `/chart.html?symbol=${encodeURIComponent(finalSymbol || 'BTCUSDT')}`;
+  window.location.href = `/chart?symbol=${encodeURIComponent(finalSymbol || 'BTCUSDT')}`;
 }
 
 function openCopyTradingChart(symbol) {
@@ -645,7 +645,7 @@ function renderMiniMarketRows(ticker) {
         : volume >= 1e3
           ? (volume / 1e3).toFixed(2) + 'K'
           : formatLarge(volume, 2);
-      const tradeHref = `/chart.html?symbol=${encodeURIComponent(symbol)}`;
+      const tradeHref = `/chart?symbol=${encodeURIComponent(symbol)}`;
       const priceFmt = Number(item.lastPrice) >= 1
         ? '$' + formatLarge(item.lastPrice, 2)
         : '$' + formatLarge(item.lastPrice, 4);
@@ -691,7 +691,7 @@ function renderExchangeTicker(ticker) {
       const sign = hasNumericChange && change >= 0 ? '+' : '';
       const priceText = hasNumericPrice ? `$${formatLarge(item.lastPrice, Number(item.lastPrice) >= 100 ? 2 : 4)}` : '$--';
       const changeText = hasNumericChange ? `${sign}${change.toFixed(2)}%` : '--%';
-      return `<a class="cf-exchange-ticker-item ${cls}" href="/chart.html?symbol=${encodeURIComponent(symbol)}" style="text-decoration:none">${pair}<strong>${priceText}</strong><em>${changeText}</em></a>`;
+      return `<a class="cf-exchange-ticker-item ${cls}" href="/chart?symbol=${encodeURIComponent(symbol)}" style="text-decoration:none">${pair}<strong>${priceText}</strong><em>${changeText}</em></a>`;
     })
     .join('');
 
@@ -717,7 +717,7 @@ function renderOpportunities(ticker) {
           const sign = change >= 0 ? '+' : '';
 
           return `
-            <a class="cf-pair-row" href="/chart.html?symbol=${encodeURIComponent(item.symbol)}" data-market="spot" data-symbol="${item.symbol}">
+            <a class="cf-pair-row" href="/chart?symbol=${encodeURIComponent(item.symbol)}" data-market="spot" data-symbol="${item.symbol}">
               <div class="cf-pair-main">
                 ${getCoinIconMarkup(base, 64, 'cf-pair-icon')}
                 <p>${base}/USDT</p>
@@ -743,7 +743,7 @@ function renderOpportunities(ticker) {
           const sign = change >= 0 ? '+' : '';
 
           return `
-            <a class="cf-pair-row" href="/chart.html?symbol=${encodeURIComponent(item.symbol)}" data-market="perp" data-symbol="${item.symbol}">
+            <a class="cf-pair-row" href="/chart?symbol=${encodeURIComponent(item.symbol)}" data-market="perp" data-symbol="${item.symbol}">
               <div class="cf-pair-main">
                 ${getCoinIconMarkup(base, 64, 'cf-pair-icon')}
                 <p>${base}USDT-P</p>
@@ -1544,7 +1544,7 @@ if (openSignupFromQuery) {
       const chg  = Number(item.change24h || 0);
       const sign = chg >= 0 ? '+' : '';
       const cls  = chg >= 0 ? 'up' : 'dn';
-      const href = `/chart.html?symbol=${encodeURIComponent(item.symbol)}`;
+      const href = `/chart?symbol=${encodeURIComponent(item.symbol)}`;
       return `<tr class="cf-fullmkt-row" data-href="${href}" style="cursor:pointer">
         <td>
           <div class="cf-fullmkt-coin-cell">

@@ -135,7 +135,7 @@ function renderHotCoins(rows) {
   // Click to go to chart
   mkHotCoins.querySelectorAll('.mk-hot-card[data-sym]').forEach(card => {
     card.onclick = () => {
-      window.location.href = `/chart.html?symbol=${encodeURIComponent(card.dataset.sym)}`;
+      window.location.href = `/chart?symbol=${encodeURIComponent(card.dataset.sym)}`;
     };
   });
 }
@@ -208,7 +208,7 @@ function renderTable() {
     const chg   = Number(item.change24h || 0);
     const sign  = chg >= 0 ? '+' : '';
     const cls   = chg >= 0 ? 'up' : 'dn';
-    const href  = `/chart.html?symbol=${encodeURIComponent(item.symbol)}`;
+    const href  = `/chart?symbol=${encodeURIComponent(item.symbol)}`;
 
     return `<tr class="mk-market-row" onclick="window.location.href='${href}'" style="cursor:pointer">
       <td>

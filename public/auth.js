@@ -61,7 +61,7 @@ function resolveSafeRedirect(rawRedirect) {
   if (value.startsWith('//')) {
     return fallback;
   }
-  if (value === '/' || value === '/index.html' || value === '/auth.html') {
+  if (value === '/' || value === '/index.html' || value === '/auth') {
     return fallback;
   }
   return value;

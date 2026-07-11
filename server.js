@@ -5861,8 +5861,24 @@ app.get('/earn', (req, res) => {
 });
 
 app.get('/rewards', (req, res) => {
-  res.redirect('/p2p#rewards');
+  res.sendFile(path.join(__dirname, 'public', 'rewards.html'));
 });
+app.get('/rewards.html', (req, res) => res.redirect(301, '/rewards'));
+
+app.get('/p2p-appeal', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'p2p-appeal.html'));
+});
+app.get('/p2p-appeal.html', (req, res) => res.redirect(301, '/p2p-appeal'));
+
+app.get('/p2p-ratings', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'p2p-ratings.html'));
+});
+app.get('/p2p-ratings.html', (req, res) => res.redirect(301, '/p2p-ratings'));
+
+app.get('/chart', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chart.html'));
+});
+app.get('/chart.html', (req, res) => res.redirect(301, '/chart'));
 
 app.get('/futures', (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'tradfi.html'));
