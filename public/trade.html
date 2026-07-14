@@ -544,4 +544,19 @@
         <span class="nav-label">Assets</span>
       </a>
     </nav>
+<script>
+(function(){
+  function getBp(w){
+    if(w<576) return 'xs';
+    if(w<768) return 'sm';
+    if(w<1200) return 'md';
+    return 'lg';
+  }
+  function setBp(){
+    document.body.setAttribute('data-breakpoint', getBp(window.innerWidth));
+  }
+  setBp();
+  window.addEventListener('resize', setBp);
+})();
+</script>
 </body></html>
