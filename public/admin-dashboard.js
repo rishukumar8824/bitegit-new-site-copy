@@ -2781,6 +2781,8 @@ async function loadUpOverview() {
       <div class="up-info-row"><span class="up-info-label">Account Status</span><span class="up-info-value">${statusBadge(user.status||'ACTIVE')}</span></div>
       <div class="up-info-row"><span class="up-info-label">KYC Status</span><span class="up-info-value">${statusBadge(user.kycStatus||'NOT_SUBMITTED')}</span></div>
       <div class="up-info-row"><span class="up-info-label">KYC Remarks</span><span class="up-info-value" style="color:var(--text-2);font-size:12px;">${user.kycRemarks||'-'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Registered At</span><span class="up-info-value" style="font-size:12px;">${user.createdAt ? formatDate(user.createdAt) : '<span style="color:var(--text-2);">—</span>'}</span></div>
+      <div class="up-info-row"><span class="up-info-label">Last Active</span><span class="up-info-value" style="font-size:12px;">${user.lastActiveAt ? `<span style="color:${isUserOnline(user.lastActiveAt)?'#22c55e':'var(--text-1)'};">${isUserOnline(user.lastActiveAt)?'🟢 Online now':'🕐 '+Math.round((Date.now()-new Date(user.lastActiveAt).getTime())/60000)+' min ago'}</span><span style="color:var(--text-2);font-size:10px;"> (${formatDate(user.lastActiveAt)})</span>` : '<span style="color:var(--text-2);">Never seen</span>'}</span></div>
       <div class="up-info-row"><span class="up-info-label">Flags</span><span class="up-info-value">${(user.flags||[]).length ? user.flags.map(f=>`<span class="badge badge-red" style="font-size:10px;">${f}</span>`).join(' ') : '<span style="color:var(--text-2);">None</span>'}</span></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
