@@ -6,7 +6,7 @@
 <title>BTC/USDT Trade | Bitcovex</title>
 <link rel="icon" href="/images/favicon.png">
 <link rel="stylesheet" href="/mobile-nav.css">
-<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#070808;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;font-size:13px;min-height:100vh}
@@ -85,6 +85,25 @@ body.has-mobile-nav{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 /* NAV */
 .mobile-app-nav{display:none}
 @media(max-width:768px){.mobile-app-nav{display:grid}}
+
+/* PAIRS MODAL */
+.pairs-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200}
+.pairs-overlay.open{display:flex;align-items:flex-end}
+.pairs-sheet{background:#0d1421;width:100%;max-height:85vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden}
+.pairs-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(203,221,255,.08)}
+.pairs-head span{font-size:15px;font-weight:700}
+.pairs-head button{background:none;border:none;color:#8fa0bb;font-size:20px;cursor:pointer;line-height:1}
+.pairs-search{margin:10px 12px;background:#111b2d;border:1px solid rgba(203,221,255,.12);border-radius:8px;display:flex;align-items:center;gap:8px;padding:8px 12px}
+.pairs-search input{background:none;border:none;color:#e2e8f0;font-size:13px;outline:none;flex:1}
+.pairs-search svg{width:16px;height:16px;fill:#8fa0bb;flex-shrink:0}
+.pairs-list{overflow-y:auto;flex:1}
+.pair-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(203,221,255,.04);cursor:pointer}
+.pair-item:active{background:rgba(203,221,255,.05)}
+.pair-name{font-size:14px;font-weight:600}
+.pair-vol{font-size:11px;color:#8fa0bb;margin-top:2px}
+.pair-right{text-align:right}
+.pair-price{font-size:13px;font-weight:600}
+.pair-chg{font-size:11px;margin-top:2px}
 </style>
 </head>
 <body class="has-mobile-nav">
@@ -92,7 +111,7 @@ body.has-mobile-nav{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 <!-- HEADER -->
 <div class="hdr">
   <img src="/images/bitbase-logo.png" class="hdr-logo" alt="Bitcovex" onerror="this.style.display='none'">
-  <button class="pair-btn" onclick="location.href='/market'">
+  <button class="pair-btn" onclick="openPairs()">
     BTC/USDT
     <svg viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z"/></svg>
   </button>
@@ -196,6 +215,15 @@ body.has-mobile-nav{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   <div class="trades-list" id="tradesList"></div>
 </div>
 
+<!-- PAIRS MODAL -->
+<div class="pairs-overlay" id="pairsOverlay" onclick="if(event.target===this)closePairs()">
+  <div class="pairs-sheet">
+    <div class="pairs-head"><span>Select Market</span><button onclick="closePairs()">✕</button></div>
+    <div class="pairs-search"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input id="pairSearch" placeholder="Search pair..." oninput="filterPairs(this.value)"></div>
+    <div class="pairs-list" id="pairsList"></div>
+  </div>
+</div>
+
 <!-- BUY/SELL BAR -->
 <div class="bs-bar">
   <button class="btn-buy" onclick="location.href='/auth'">Buy BTC</button>
@@ -296,10 +324,11 @@ async function loadChart(iv, btn) {
 
 function initChart() {
   const el = g('chartContainer');
-  if(chart||!el) return;
-  el.style.height = '55vh';
+  if(chart||!el||typeof LightweightCharts==='undefined') return;
+  const h = Math.floor(window.innerHeight * 0.52);
+  el.style.height = h+'px';
   chart = LightweightCharts.createChart(el, {
-    width: el.clientWidth, height: el.clientHeight||320,
+    width: el.clientWidth||window.innerWidth, height: h,
     layout:{background:{color:'#070808'},textColor:'#8fa0bb'},
     grid:{vertLines:{color:'rgba(203,221,255,.05)'},horzLines:{color:'rgba(203,221,255,.05)'}},
     crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
@@ -311,8 +340,41 @@ function initChart() {
     borderUpColor:'#1db26e',borderDownColor:'#e84d4d',
     wickUpColor:'#1db26e',wickDownColor:'#e84d4d'
   });
-  window.addEventListener('resize', () => chart.applyOptions({width:el.clientWidth}));
+  window.addEventListener('resize', () => { const w=el.clientWidth||window.innerWidth; chart.applyOptions({width:w}); });
   loadChart(currentInterval, document.querySelector('.iv.active'));
+}
+
+// --- Pairs ---
+let allPairs=[];
+async function openPairs(){
+  g('pairsOverlay').classList.add('open');
+  if(!allPairs.length) await loadPairs();
+}
+function closePairs(){ g('pairsOverlay').classList.remove('open'); }
+async function loadPairs(){
+  const res = await fetch('/api/v1/market/tickers').then(r=>r.json()).catch(()=>({}));
+  allPairs = res.tickers||res.data||res||[];
+  renderPairs(allPairs);
+}
+function renderPairs(list){
+  g('pairsList').innerHTML = list.slice(0,50).map(p=>{
+    const sym = (p.symbol||'').replace('USDT','/USDT');
+    const px = parseFloat(p.lastPrice||p.price||0);
+    const chg = parseFloat(p.change24h||p.priceChangePercent||0);
+    const isUp = chg>=0;
+    return `<div class="pair-item" onclick="selectPair('${p.symbol||''}','${sym}')">
+      <div><div class="pair-name">${sym}</div><div class="pair-vol">Vol: ${fmt(p.quoteVolume||0,0)}</div></div>
+      <div class="pair-right"><div class="pair-price">${fmt(px,2)}</div><div class="pair-chg ${isUp?'up':'down'}">${isUp?'+':''}${chg.toFixed(2)}%</div></div>
+    </div>`;
+  }).join('');
+}
+function filterPairs(q){
+  const f = allPairs.filter(p=>(p.symbol||'').toLowerCase().includes(q.toLowerCase()));
+  renderPairs(f);
+}
+function selectPair(rawSym, displaySym){
+  closePairs();
+  location.href = '/trade/spot/'+rawSym;
 }
 
 // --- WebSocket ---
