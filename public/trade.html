@@ -212,7 +212,7 @@ body.has-mobile-nav{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 </nav>
 
 <script>
-const SYM = 'BTC_USDT';
+const SYM = 'BTCUSDT';
 let asks = [], bids = [], trades = [];
 let chart, candleSeries, currentInterval = '15m', obView = 'both';
 
@@ -257,10 +257,11 @@ function setObView(v, btn) {
 function renderOB() {
   const N = 8;
   const ar = asks.slice(0, N), br = bids.slice(0, N);
-  const maxA = ar.reduce((m,r)=>Math.max(m, parseFloat(r[1]||0)), 0);
-  const maxB = br.reduce((m,r)=>Math.max(m, parseFloat(r[1]||0)), 0);
+  const getQ = r => parseFloat(r.quantity||r[1]||0);
+  const maxA = ar.reduce((m,r)=>Math.max(m, getQ(r)), 0);
+  const maxB = br.reduce((m,r)=>Math.max(m, getQ(r)), 0);
   function row(r, side, max) {
-    const p=parseFloat(r[0]||0), q=parseFloat(r[1]||0), t=p*q;
+    const p=parseFloat(r.price||r[0]||0), q=getQ(r), t=parseFloat(r.total||p*q);
     const w = max>0 ? (q/max*100).toFixed(1) : 0;
     return `<div class="ob-row"><span class="${side==='ask'?'down':'up'}">${fmt(p,2)}</span><span>${q.toFixed(6)}</span><span>${t.toFixed(4)}</span><div class="ob-bg ${side==='ask'?'ask-bg':'bid-bg'}" style="width:${w}%"></div></div>`;
   }
@@ -274,8 +275,8 @@ function renderOB() {
 function renderTrades() {
   g('tradesList').innerHTML = trades.slice(0,40).map(t => {
     const side = (t.side||'').toLowerCase()==='sell'?'down':'up';
-    const ts = t.time ? new Date(t.time).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '--';
-    return `<div class="trade-row"><span>${ts}</span><span class="${side}">${fmt(t.price,2)}</span><span>${parseFloat(t.qty||t.amount||0).toFixed(6)}</span></div>`;
+    const ts = t.time ? new Date(Number(t.time)).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '--';
+    return `<div class="trade-row"><span>${ts}</span><span class="${side}">${fmt(t.price,2)}</span><span>${parseFloat(t.quantity||t.qty||t.amount||0).toFixed(6)}</span></div>`;
   }).join('');
 }
 
@@ -283,11 +284,12 @@ function renderTrades() {
 async function loadChart(iv, btn) {
   currentInterval = iv;
   document.querySelectorAll('.iv').forEach(b => b.classList.toggle('active', b===btn));
-  const res = await fetch(`/api/market/klines?symbol=${SYM}&interval=${iv}&limit=200`).then(r=>r.json()).catch(()=>[]);
-  const raw = Array.isArray(res) ? res : (res.data||[]);
+  const res = await fetch(`/api/p2p/klines?symbol=${SYM}&interval=${iv}&limit=200`).then(r=>r.json()).catch(()=>({}));
+  const raw = res.klines || (Array.isArray(res) ? res : []);
   const data = raw.map(k => ({
-    time: Math.floor((typeof k[0]==='string' ? new Date(k[0]).getTime() : k[0]) / 1000),
-    open:+k[1], high:+k[2], low:+k[3], close:+k[4]
+    time: Math.floor((k.openTime||k[0]||0) / 1000),
+    open: +(k.open||k[1]||0), high: +(k.high||k[2]||0),
+    low: +(k.low||k[3]||0), close: +(k.close||k[4]||0)
   })).filter(c=>c.time>0).sort((a,b)=>a.time-b.time);
   if(candleSeries && data.length) candleSeries.setData(data);
 }
@@ -351,18 +353,16 @@ function connectWS() {
 
 // --- REST bootstrap ---
 async function fetchREST() {
-  const [tick, ob, tr] = await Promise.allSettled([
-    fetch(`/api/market/ticker?symbol=${SYM}`).then(r=>r.json()),
-    fetch(`/api/market/orderbook?symbol=${SYM}&limit=12`).then(r=>r.json()),
-    fetch(`/api/market/trades?symbol=${SYM}&limit=30`).then(r=>r.json())
-  ]);
-  if(tick.status==='fulfilled' && tick.value) updateTicker(tick.value.data||tick.value);
-  if(ob.status==='fulfilled' && ob.value) {
-    const d = ob.value.data||ob.value;
-    if(d.asks) asks=d.asks; if(d.bids) bids=d.bids; renderOB();
+  const res = await fetch(`/api/p2p/market-depth?symbol=${SYM}`).then(r=>r.json()).catch(()=>({}));
+  if(res.ticker) {
+    const t = res.ticker;
+    updateTicker({price: t.lastPrice, change24h: t.change24h, high24h: t.high24h, low24h: t.low24h, vol24h: t.volume24h, volUsdt24h: t.volume24h * t.lastPrice});
   }
-  if(tr.status==='fulfilled' && tr.value) {
-    trades = tr.value.data||tr.value||[]; renderTrades();
+  if(res.orderBook) {
+    asks = res.orderBook.asks || []; bids = res.orderBook.bids || []; renderOB();
+  }
+  if(res.trades) {
+    trades = res.trades; renderTrades();
   }
 }
 
