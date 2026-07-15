@@ -2991,6 +2991,15 @@ app.get('/api/v1/market/tickers', async (req, res) => {
   }
 });
 
+app.get('/api/proxy/futures-tickers', async (req, res) => {
+  try {
+    const data = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr').then(r => r.json());
+    res.json(Array.isArray(data) ? data : []);
+  } catch(e) {
+    res.json([]);
+  }
+});
+
 app.get('/api/p2p/market-depth', async (req, res) => {
   const symbol = normalizeMarketSymbol(req.query.symbol);
 
