@@ -61,8 +61,8 @@ body{display:flex;flex-direction:column;height:100svh}
 .iv-sep{width:1px;height:16px;background:#1a1f2e;flex-shrink:0;margin:0 4px}
 .iv-extra{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0;cursor:pointer}
 
-#tv_chart_container{flex:1;min-height:0;overflow:hidden}
-#tv_chart_container iframe{border:none!important}
+#tv_chart_container{height:calc(100svh - 420px);min-height:200px;overflow:hidden;flex-shrink:0}
+#tv_chart_container iframe{border:none!important;width:100%!important;height:100%!important}
 
 .sub-tabs-row{display:flex;border-bottom:1px solid #1a1f2e;background:#000;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
 .sub-tabs-row::-webkit-scrollbar{display:none}
@@ -649,11 +649,14 @@ function initTV(iv){
   currentIv=iv||currentIv;
   const c=g('tv_chart_container');
   c.innerHTML='';
-  const h=Math.max(180,c.parentElement.offsetHeight-50);
-  c.style.height=h+'px';
   if(typeof TradingView==='undefined')return;
+  const w=window.innerWidth||375;
+  const h=Math.max(220,window.innerHeight-420);
+  c.style.width=w+'px';
+  c.style.height=h+'px';
   tvWidget=new TradingView.widget({
-    autosize:true,
+    width:w,
+    height:h,
     symbol:'BINANCE:BTCUSDT',
     interval:currentIv,
     timezone:'Etc/UTC',
@@ -663,7 +666,7 @@ function initTV(iv){
     toolbar_bg:'#060c14',
     enable_publishing:false,
     withdateranges:false,
-    hide_top_toolbar:true,
+    hide_top_toolbar:false,
     hide_side_toolbar:false,
     allow_symbol_change:false,
     save_image:false,
