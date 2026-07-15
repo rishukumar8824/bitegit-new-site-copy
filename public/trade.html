@@ -48,8 +48,8 @@ body{display:flex;flex-direction:column;height:100svh}
 .main-tab.active{color:#e8eaf0;border-bottom-color:#e8eaf0}
 
 /* PANELS */
-.panels{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-.panel{display:none;flex:1;overflow:hidden;flex-direction:column;min-height:0}
+.panels{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-height:0;-webkit-overflow-scrolling:touch}
+.panel{display:none;flex-direction:column}
 .panel.active{display:flex}
 
 /* ---- CHART PANEL ---- */
@@ -61,7 +61,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .iv-sep{width:1px;height:16px;background:#1a1f2e;flex-shrink:0;margin:0 4px}
 .iv-extra{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0;cursor:pointer}
 
-#tv_chart_container{height:calc(100svh - 420px);min-height:200px;overflow:hidden;flex-shrink:0}
+#tv_chart_container{height:320px;overflow:hidden;flex-shrink:0}
 #tv_chart_container iframe{border:none!important;width:100%!important;height:100%!important}
 
 .sub-tabs-row{display:flex;border-bottom:1px solid #1a1f2e;background:#000;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
@@ -117,7 +117,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .tr-qty{font-size:12px;color:#e8eaf0;flex:1;text-align:right}
 
 /* BUY / SELL BAR */
-.buysell{display:flex;padding:8px 10px;gap:8px;background:#000;border-top:1px solid #1a1f2e;flex-shrink:0}
+.buysell{display:flex;padding:8px 10px;gap:8px;background:#000;border-top:1px solid #1a1f2e;flex-shrink:0;position:sticky;bottom:0;z-index:10}
 .btn-buy{flex:1;background:#1db26e;color:#fff;border:none;height:48px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
 .btn-sell{flex:1;background:#e84d4d;color:#fff;border:none;height:48px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
 
@@ -642,7 +642,7 @@ function initTV(iv){
   c.innerHTML='';
   if(typeof TradingView==='undefined')return;
   const w=window.innerWidth||375;
-  const h=Math.max(220,window.innerHeight-420);
+  const h=320;
   c.style.width=w+'px';
   c.style.height=h+'px';
   tvWidget=new TradingView.widget({
@@ -654,7 +654,7 @@ function initTV(iv){
     theme:'dark',
     style:'1',
     locale:'en',
-    toolbar_bg:'#131722',
+    toolbar_bg:'#000',
     enable_publishing:false,
     hide_top_toolbar:false,
     hide_side_toolbar:false,
@@ -663,7 +663,7 @@ function initTV(iv){
     container_id:'tv_chart_container',
     studies:['MAExp@tv-basicstudies'],
     overrides:{
-      'paneProperties.background':'#131722',
+      'paneProperties.background':'#000',
       'paneProperties.backgroundType':'solid',
       'scalesProperties.textColor':'#848e9c',
       'gridProperties.color':'rgba(255,255,255,0.04)',
@@ -791,8 +791,9 @@ async function loadPairs(){
 function getPairList(){
   if(pairTab==='futures')return allFutures;
   if(pairTab==='tradfi'){
-    const TRADFI=['SPCXUSDT','PAXGUSDT','XAUTUSDT','WALUSDT','AAPLUSDT','AMZNUSDT','BABAUSDT','TSLAUSDT','COINUSDT','MSFUSDT','GOOGLUSDT','NFLXUSDT'];
-    return allPairs.filter(p=>TRADFI.includes(p.symbol));
+    const TRADFI=['PAXGUSDT','XAUTUSDT','WALUSDT','AAXUSDT','ACMUSDT','BALUSDT'];
+    const filtered=allPairs.filter(p=>TRADFI.includes(p.symbol));
+    return filtered.length?filtered:allPairs.filter(p=>['PAXGUSDT','XAUTUSDT'].includes(p.symbol));
   }
   return allPairs;
 }

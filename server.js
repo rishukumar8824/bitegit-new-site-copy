@@ -5897,6 +5897,14 @@ app.get('/trade', (req, res) => {
   return res.redirect('/trade/spot/BTCUSDT');
 });
 
+app.get('/trade/:symbol', (req, res) => {
+  const sym = String(req.params.symbol || 'BTCUSDT').trim().toUpperCase();
+  if (['SPOT', 'PERP', 'FUTURES'].includes(sym)) {
+    return res.redirect('/trade/spot/BTCUSDT');
+  }
+  return res.redirect('/trade/spot/' + sym);
+});
+
 app.get('/trade/:market/:symbol', (req, res) => {
   const market = String(req.params.market || '')
     .trim()
