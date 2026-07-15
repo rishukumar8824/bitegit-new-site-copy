@@ -6,11 +6,11 @@
 <title>BTC/USDT — Bitcovex</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:#000;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:100%;overflow:hidden}
-body{display:flex;flex-direction:column;height:100svh}
+html,body{background:#000;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
 
 /* HEADER */
-.hdr{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#000;flex-shrink:0;border-bottom:1px solid #1a1f2e}
+.hdr{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#000;border-bottom:1px solid #1a1f2e;position:sticky;top:0;z-index:50}
 .hdr-logo img{width:32px;height:32px;object-fit:contain;border-radius:8px;display:block}
 .hdr-spacer{flex:1}
 .hdr-search{background:none;border:none;cursor:pointer;padding:4px;color:#8fa0bb}
@@ -42,15 +42,13 @@ body{display:flex;flex-direction:column;height:100svh}
 .stat-val.dn{color:#e84d4d}
 .stat-val.up{color:#1db26e}
 
-/* MAIN TABS */
-.main-tabs{display:flex;background:#000;border-bottom:1px solid #1a1f2e;flex-shrink:0}
-.main-tab{flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:500;color:#8fa0bb;cursor:pointer;border-bottom:2px solid transparent}
+/* MAIN TABS - repurposed as Book/Trades switcher */
+.main-tabs{display:flex;background:#000;border-bottom:1px solid #1a1f2e}
+.main-tab{flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:500;color:#8fa0bb;cursor:pointer;border-bottom:2px solid transparent}
 .main-tab.active{color:#e8eaf0;border-bottom-color:#e8eaf0}
 
-/* PANELS */
-.panels{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-height:0;-webkit-overflow-scrolling:touch}
-.panel{display:none;flex-direction:column}
-.panel.active{display:flex}
+/* PANELS - now one scrollable column */
+.trade-content{display:flex;flex-direction:column;flex:1}
 
 /* ---- CHART PANEL ---- */
 .iv-row{display:flex;align-items:center;padding:0 8px;background:#000;border-bottom:1px solid #1a1f2e;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
@@ -82,11 +80,14 @@ body{display:flex;flex-direction:column;height:100svh}
 .ob-h{font-size:11px;color:#8fa0bb;flex:1}
 .ob-h.c{text-align:center}
 .ob-h.r{text-align:right}
-.ob-body{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.ob-asks{flex:1;display:flex;flex-direction:column;justify-content:flex-end;overflow-y:auto;scrollbar-width:none}
+.ob-body{display:flex;flex-direction:column}
+.ob-asks{display:flex;flex-direction:column;justify-content:flex-end;max-height:150px;overflow-y:auto;scrollbar-width:none}
 .ob-asks::-webkit-scrollbar{display:none}
-.ob-bids{flex:1;overflow-y:auto;scrollbar-width:none}
+.ob-bids{max-height:150px;overflow-y:auto;scrollbar-width:none}
 .ob-bids::-webkit-scrollbar{display:none}
+/* section toggle */
+.ob-section{display:block}
+.ob-section.hidden{display:none}
 .ob-mid{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#000;flex-shrink:0;border-top:1px solid #1a1f2e;border-bottom:1px solid #1a1f2e}
 .ob-mid-px{font-size:16px;font-weight:700;color:#e84d4d}
 .ob-mid-px.up{color:#1db26e}
@@ -109,7 +110,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .tr-h:first-child{flex:1.2}
 .tr-h:nth-child(2){flex:1;text-align:center}
 .tr-h:last-child{flex:1;text-align:right}
-.tr-body{flex:1;overflow-y:auto;scrollbar-width:none}
+.tr-body{max-height:300px;overflow-y:auto;scrollbar-width:none}
 .tr-body::-webkit-scrollbar{display:none}
 .tr-row{display:flex;padding:5px 10px}
 .tr-time{font-size:12px;color:#8fa0bb;flex:1.2}
@@ -333,43 +334,36 @@ body{display:flex;flex-direction:column;height:100svh}
   </div>
 </div>
 
-<!-- MAIN TABS -->
-<div class="main-tabs">
-  <div class="main-tab active" onclick="switchTab(0,this)">Chart</div>
-  <div class="main-tab" onclick="switchTab(1,this)">Orders</div>
-  <div class="main-tab" onclick="switchTab(2,this)">Trades</div>
-</div>
+<!-- TRADE CONTENT - one scrollable column -->
+<div class="trade-content">
 
-<!-- PANELS -->
-<div class="panels">
-
-  <!-- CHART PANEL -->
-  <div class="panel active" id="panel0">
-    <div class="iv-row">
-      <span class="iv-lbl">Time</span>
-      <span class="iv active" onclick="setIv('1',this)">1m</span>
-      <span class="iv" onclick="setIv('5',this)">5m</span>
-      <span class="iv" onclick="setIv('15',this)">15m</span>
-      <span class="iv" onclick="setIv('30',this)">30m</span>
-      <span class="iv" onclick="setIv('60',this)">1H</span>
-      <span class="iv" onclick="setIv('240',this)">4H</span>
-      <span class="iv" onclick="setIv('D',this)">1D</span>
-      <div class="iv-sep"></div>
-      <span class="iv-extra">Basic version</span>
-      <div class="iv-sep"></div>
-      <span class="iv-extra">Depth chart</span>
-    </div>
-    <div id="tv_chart_container"></div>
-    <div class="sub-tabs-row">
-      <div class="sub-tab active" onclick="switchSubTab(this)">Open Orders</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Order History</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
-    </div>
+  <!-- INTERVAL ROW -->
+  <div class="iv-row">
+    <span class="iv-lbl">Time</span>
+    <span class="iv active" onclick="setIv('1',this)">1m</span>
+    <span class="iv" onclick="setIv('5',this)">5m</span>
+    <span class="iv" onclick="setIv('15',this)">15m</span>
+    <span class="iv" onclick="setIv('30',this)">30m</span>
+    <span class="iv" onclick="setIv('60',this)">1H</span>
+    <span class="iv" onclick="setIv('240',this)">4H</span>
+    <span class="iv" onclick="setIv('D',this)">1D</span>
+    <div class="iv-sep"></div>
+    <span class="iv-extra">Basic</span>
+    <div class="iv-sep"></div>
+    <span class="iv-extra">Depth</span>
   </div>
 
-  <!-- ORDERS PANEL -->
-  <div class="panel" id="panel1">
+  <!-- CHART -->
+  <div id="tv_chart_container"></div>
+
+  <!-- BOOK / TRADES SWITCHER -->
+  <div class="main-tabs">
+    <div class="main-tab active" onclick="switchSection('book',this)">Order Book</div>
+    <div class="main-tab" onclick="switchSection('trades',this)">Trades</div>
+  </div>
+
+  <!-- ORDER BOOK SECTION -->
+  <div class="ob-section" id="secBook">
     <div class="ob-top">
       <div class="ob-icons">
         <button class="ob-icon active" onclick="setObView('both',this)">
@@ -399,8 +393,8 @@ body{display:flex;flex-direction:column;height:100svh}
     </div>
     <div class="ob-headers">
       <span class="ob-h">Price(USDT)</span>
-      <span class="ob-h c">Amount(BTC)</span>
-      <span class="ob-h r">Total(BTC) ▼</span>
+      <span class="ob-h c">Amount</span>
+      <span class="ob-h r">Total ▼</span>
     </div>
     <div class="ob-body">
       <div class="ob-asks" id="obAsks"></div>
@@ -411,25 +405,28 @@ body{display:flex;flex-direction:column;height:100svh}
       </div>
       <div class="ob-bids" id="obBids"></div>
     </div>
-    <div class="sub-tabs-row">
-      <div class="sub-tab active" onclick="switchSubTab(this)">Open Orders</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Order History</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
-    </div>
   </div>
 
-  <!-- TRADES PANEL -->
-  <div class="panel" id="panel2">
+  <!-- TRADES SECTION -->
+  <div class="ob-section hidden" id="secTrades">
     <div class="tr-headers">
       <span class="tr-h">Time</span>
       <span class="tr-h" style="flex:1;text-align:center">Price(USDT)</span>
-      <span class="tr-h" style="flex:1;text-align:right">Amount(BTC)</span>
+      <span class="tr-h" style="flex:1;text-align:right">Amount</span>
     </div>
     <div class="tr-body" id="trBody"></div>
   </div>
 
-</div><!-- /panels -->
+  <!-- USER ORDER TABS -->
+  <div class="sub-tabs-row">
+    <div class="sub-tab active" onclick="switchSubTab(this)">Open Orders</div>
+    <div class="sub-tab" onclick="switchSubTab(this)">Order History</div>
+    <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
+    <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
+  </div>
+  <div style="height:70px"></div><!-- spacer above sticky buy/sell -->
+
+</div><!-- /trade-content -->
 
 <!-- BUY / SELL BAR -->
 <div class="buysell">
@@ -437,18 +434,6 @@ body{display:flex;flex-direction:column;height:100svh}
   <button class="btn-sell" id="btnSell" onclick="openTradeSheet('sell')">Sell BTC</button>
 </div>
 
-<!-- STATUS BAR -->
-<div class="status-bar">
-  <div class="sb-net">
-    <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
-    Stable network connection
-  </div>
-  <span class="sb-mid">⇄</span>
-  <div class="sb-ann">
-    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-    Announcements
-  </div>
-</div>
 
 <!-- ====== TRADE BOTTOM SHEET ====== -->
 <div class="ts-overlay" id="tsOverlay" onclick="closeTradeSheet()"></div>
@@ -612,10 +597,12 @@ function fmtTime(ts){
   return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');
 }
 
-/* TABS */
-function switchTab(i,el){
-  document.querySelectorAll('.main-tab').forEach((t,j)=>t.classList.toggle('active',j===i));
-  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',j===i));
+/* SECTION TOGGLE (Order Book / Trades) */
+function switchSection(sec,el){
+  document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  g('secBook').classList.toggle('hidden',sec!=='book');
+  g('secTrades').classList.toggle('hidden',sec!=='trades');
 }
 function switchSubTab(el){
   el.parentElement.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
