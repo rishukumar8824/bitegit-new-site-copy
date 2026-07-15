@@ -827,12 +827,20 @@ function setPairCat(el){document.querySelectorAll('.pct').forEach(t=>t.classList
 function setPairFilter(el){document.querySelectorAll('.pf').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderPairs(allPairs);}
 function selectPair(sym){closePairs();location.href='/trade/spot/'+sym;}
 
+/* LIVE PRICE from Binance public API */
+async function fetchBinanceTicker(){
+  try{
+    const t=await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT').then(r=>r.json());
+    updateTicker({price:t.lastPrice,change24h:parseFloat(t.priceChangePercent),high24h:t.highPrice,low24h:t.lowPrice,vol24h:t.volume});
+  }catch(e){fetchREST();}
+}
+
 /* ====== INIT ====== */
 document.addEventListener('DOMContentLoaded',()=>{
   updateHeaderForAuth();
-  fetchREST();
+  fetchBinanceTicker();
   connectWS();
-  setInterval(fetchREST,10000);
+  setInterval(fetchBinanceTicker,5000);
   // calc total on input
   ['tsPrice','tsAmt'].forEach(id=>{const el=g(id);if(el)el.addEventListener('input',calcTotal);});
 });
