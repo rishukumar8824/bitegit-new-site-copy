@@ -644,8 +644,20 @@ function selectPair(sym){
 document.addEventListener('DOMContentLoaded',()=>{
   fetchREST();
   connectWS();
-  setTimeout(initChart,300);
   setInterval(fetchREST,10000);
+  // Use ResizeObserver to init chart only when container has real dimensions
+  const chartEl = g('chartContainer');
+  const ro = new ResizeObserver(entries => {
+    for(const e of entries){
+      if(e.contentRect.width > 0 && !chart){
+        ro.disconnect();
+        initChart();
+      }
+    }
+  });
+  ro.observe(chartEl);
+  // Fallback
+  setTimeout(()=>{ if(!chart) initChart(); }, 800);
 });
 </script>
 </body>
