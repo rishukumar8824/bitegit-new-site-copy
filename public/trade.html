@@ -856,14 +856,25 @@ async function fetchBinanceTrades(){
   }catch(e){}
 }
 
+async function fetchBinanceOrderbook(){
+  try{
+    const data=await fetch('https://api.binance.com/api/v3/depth?symbol='+SYM+'&limit=20').then(r=>r.json());
+    asks=(data.asks||[]).map(([p,q])=>({price:parseFloat(p),quantity:parseFloat(q),total:parseFloat(p)*parseFloat(q)}));
+    bids=(data.bids||[]).map(([p,q])=>({price:parseFloat(p),quantity:parseFloat(q),total:parseFloat(p)*parseFloat(q)}));
+    renderOB();
+  }catch(e){}
+}
+
 /* ====== INIT ====== */
 document.addEventListener('DOMContentLoaded',()=>{
   updateHeaderForAuth();
   fetchBinanceTicker();
   fetchBinanceTrades();
+  fetchBinanceOrderbook();
   connectWS();
   setInterval(fetchBinanceTicker,5000);
   setInterval(fetchBinanceTrades,5000);
+  setInterval(fetchBinanceOrderbook,3000);
   // calc total on input
   ['tsPrice','tsAmt'].forEach(id=>{const el=g(id);if(el)el.addEventListener('input',calcTotal);});
 });
