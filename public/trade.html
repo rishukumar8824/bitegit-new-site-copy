@@ -772,7 +772,7 @@ function closePairs(){g('pairsPage').classList.remove('open');}
 async function loadPairs(){
   pairsLoaded=true;
   const res=await fetch('/api/v1/market/tickers').then(r=>r.json()).catch(()=>({}));
-  allPairs=res.tickers||res.data||(Array.isArray(res)?res:[]);
+  allPairs=res.ticker||res.tickers||res.data||(Array.isArray(res)?res:[]);
   renderPairs(allPairs);
 }
 function coinIconUrl(base){
