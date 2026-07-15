@@ -527,8 +527,8 @@ body{display:flex;flex-direction:column;height:100svh}
 
 <script>
 const g = id => document.getElementById(id);
-let SYM = (location.pathname.split('/').pop()||'BTCUSDT').toUpperCase()||'BTCUSDT';
-if(!SYM||SYM==='SPOT')SYM='BTCUSDT';
+let _rawSym=(location.pathname.split('/').pop()||'').replace(/\.[^.]+$/,'').toUpperCase();
+let SYM=(/^[A-Z0-9]{3,20}$/.test(_rawSym)&&!/^(SPOT|PERP|TRADE|INDEX|HTML|PHP)$/.test(_rawSym))?_rawSym:'BTCUSDT';
 let asks=[], bids=[], trades=[];
 let obView='both', obDecimals=2;
 let allPairs=[], allFutures=[], pairsLoaded=false, pairTab='spot';
@@ -595,7 +595,7 @@ function updateTicker(d){
   const maEl=g('obMidArr');if(maEl){maEl.textContent=isUp?'▲':'▼';maEl.className='ob-mid-arr '+cls;}
   const muEl=g('obMidUsd');if(muEl)muEl.textContent=fmt(px,2)+' USD';
   // update price field in sheet if open
-  if(g('tsPrice')&&!g('tsPrice').value)g('tsPrice').value=fmt(px,2);
+  if(g('tsPrice')&&!g('tsPrice').value)g('tsPrice').value=parseFloat(px||0).toFixed(2);
 }
 
 /* ORDERBOOK */
@@ -716,7 +716,7 @@ function openTradeSheet(side){
   tradeTab=side||'buy';
   setTradeTab(tradeTab,true);
   // prefill price
-  if(lastPx>0){g('tsPrice').value=fmt(lastPx,2);}
+  if(lastPx>0){g('tsPrice').value=parseFloat(lastPx).toFixed(2);}
   // show/hide auth sections
   const li=isLoggedIn();
   g('tsLoggedOut').style.display=li?'none':'block';
