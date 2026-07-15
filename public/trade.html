@@ -260,8 +260,8 @@ body{display:flex;flex-direction:column;height:100svh}
   <div class="price-row">
     <div class="price-left">
       <button class="pair-btn" onclick="openPairs()">
-        <div class="pair-coin">₿</div>
-        <span class="pair-name">BTC/USDT</span>
+        <img id="hdrCoinIcon" src="https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/btc.svg" width="28" height="28" style="border-radius:50%" onerror="this.style.display='none'">
+        <span class="pair-name" id="hdrPairLbl">BTC/USDT</span>
         <span class="pair-arrow">▼</span>
       </button>
       <div id="px" class="px-big dn">—</div>
@@ -315,9 +315,6 @@ body{display:flex;flex-direction:column;height:100svh}
       <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
       <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
     </div>
-    <div class="login-msg-box" id="chartLoginMsg">
-      <span>Please <a href="/login">log in</a> or <a href="/register" class="reg">register</a> first</span>
-    </div>
   </div>
 
   <!-- ORDERS PANEL -->
@@ -369,9 +366,6 @@ body{display:flex;flex-direction:column;height:100svh}
       <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
       <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
     </div>
-    <div class="login-msg-box" id="obLoginMsg">
-      <span>Please <a href="/login">log in</a> or <a href="/register" class="reg">register</a> first</span>
-    </div>
   </div>
 
   <!-- TRADES PANEL -->
@@ -388,8 +382,8 @@ body{display:flex;flex-direction:column;height:100svh}
 
 <!-- BUY / SELL BAR -->
 <div class="buysell">
-  <button class="btn-buy" onclick="openTradeSheet('buy')">Buy BTC</button>
-  <button class="btn-sell" onclick="openTradeSheet('sell')">Sell BTC</button>
+  <button class="btn-buy" id="btnBuy" onclick="openTradeSheet('buy')">Buy BTC</button>
+  <button class="btn-sell" id="btnSell" onclick="openTradeSheet('sell')">Sell BTC</button>
 </div>
 
 <!-- STATUS BAR -->
@@ -533,7 +527,8 @@ body{display:flex;flex-direction:column;height:100svh}
 
 <script>
 const g = id => document.getElementById(id);
-const SYM = 'BTCUSDT';
+let SYM = (location.pathname.split('/').pop()||'BTCUSDT').toUpperCase()||'BTCUSDT';
+if(!SYM||SYM==='SPOT')SYM='BTCUSDT';
 let asks=[], bids=[], trades=[];
 let obView='both', obDecimals=2;
 let allPairs=[], pairsLoaded=false;
@@ -550,10 +545,6 @@ function updateHeaderForAuth(){
   g('hdrSignup').style.display=loggedIn?'none':'';
   g('hdrDeposit').style.display=loggedIn?'':'none';
   g('hdrProfile').style.display=loggedIn?'':'none';
-  // sub-tabs login messages
-  ['chartLoginMsg','obLoginMsg'].forEach(id=>{
-    const el=g(id);if(el)el.style.display=loggedIn?'none':'flex';
-  });
 }
 
 /* FORMAT */
@@ -657,7 +648,7 @@ function initTV(iv){
   tvWidget=new TradingView.widget({
     width:w,
     height:h,
-    symbol:'BINANCE:BTCUSDT',
+    symbol:'BINANCE:'+SYM,
     interval:currentIv,
     timezone:'Etc/UTC',
     theme:'dark',
@@ -669,7 +660,18 @@ function initTV(iv){
     hide_side_toolbar:false,
     allow_symbol_change:false,
     save_image:false,
-    container_id:'tv_chart_container'
+    container_id:'tv_chart_container',
+    studies:['MAExp@tv-basicstudies'],
+    overrides:{
+      'paneProperties.background':'#060c14',
+      'paneProperties.backgroundType':'solid',
+      'mainSeriesProperties.candleStyle.upColor':'#1db26e',
+      'mainSeriesProperties.candleStyle.downColor':'#e84d4d',
+      'mainSeriesProperties.candleStyle.borderUpColor':'#1db26e',
+      'mainSeriesProperties.candleStyle.borderDownColor':'#e84d4d',
+      'mainSeriesProperties.candleStyle.wickUpColor':'#1db26e',
+      'mainSeriesProperties.candleStyle.wickDownColor':'#e84d4d',
+    }
   });
 }
 
@@ -771,8 +773,13 @@ function openPairs(){g('pairsPage').classList.add('open');if(!pairsLoaded)loadPa
 function closePairs(){g('pairsPage').classList.remove('open');}
 async function loadPairs(){
   pairsLoaded=true;
-  const res=await fetch('/api/v1/market/tickers').then(r=>r.json()).catch(()=>({}));
-  allPairs=res.ticker||res.tickers||res.data||(Array.isArray(res)?res:[]);
+  try{
+    const data=await fetch('https://api.binance.com/api/v3/ticker/24hr').then(r=>r.json());
+    allPairs=(Array.isArray(data)?data:[]).filter(p=>(p.symbol||'').endsWith('USDT')).sort((a,b)=>parseFloat(b.quoteVolume||0)-parseFloat(a.quoteVolume||0));
+  }catch(e){
+    const res=await fetch('/api/v1/market/tickers').then(r=>r.json()).catch(()=>({}));
+    allPairs=res.ticker||res.tickers||res.data||(Array.isArray(res)?res:[]);
+  }
   renderPairs(allPairs);
 }
 function coinIconUrl(base){
@@ -811,22 +818,52 @@ function renderPairs(list){
 function filterPairs(q){renderPairs(allPairs.filter(p=>(p.symbol||'').toLowerCase().includes(q.toLowerCase())));}
 function setPairCat(el){document.querySelectorAll('.pct').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderPairs(allPairs);}
 function setPairFilter(el){document.querySelectorAll('.pf').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderPairs(allPairs);}
-function selectPair(sym){closePairs();location.href='/trade/spot/'+sym;}
+function selectPair(sym){
+  closePairs();
+  SYM=sym;
+  const base=sym.replace(/USDT$|BUSD$/,'');
+  // update header icon + label
+  const iconEl=g('hdrCoinIcon');
+  if(iconEl){iconEl.src=coinIconUrl(base);iconEl.onerror=function(){this.style.display='none';};}
+  const lblEl=g('hdrPairLbl');if(lblEl)lblEl.textContent=base+'/USDT';
+  // update buy/sell buttons
+  const bb=g('btnBuy'),bs=g('btnSell');
+  if(bb)bb.textContent='Buy '+base;
+  if(bs)bs.textContent='Sell '+base;
+  // reload chart and ticker
+  fetchBinanceTicker();
+  initTV(currentIv);
+  // reload orderbook
+  fetchREST();
+  history.replaceState(null,'','/trade/spot/'+sym);
+}
 
 /* LIVE PRICE from Binance public API */
 async function fetchBinanceTicker(){
   try{
-    const t=await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT').then(r=>r.json());
+    const t=await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol='+SYM).then(r=>r.json());
     updateTicker({price:t.lastPrice,change24h:parseFloat(t.priceChangePercent),high24h:t.highPrice,low24h:t.lowPrice,vol24h:t.volume});
   }catch(e){fetchREST();}
+}
+
+async function fetchBinanceTrades(){
+  try{
+    const data=await fetch('https://api.binance.com/api/v3/trades?symbol='+SYM+'&limit=50').then(r=>r.json());
+    if(Array.isArray(data)){
+      trades=data.reverse().map(t=>({price:t.price,quantity:t.qty,side:t.isBuyerMaker?'sell':'buy',time:t.time}));
+      renderTrades();
+    }
+  }catch(e){}
 }
 
 /* ====== INIT ====== */
 document.addEventListener('DOMContentLoaded',()=>{
   updateHeaderForAuth();
   fetchBinanceTicker();
+  fetchBinanceTrades();
   connectWS();
   setInterval(fetchBinanceTicker,5000);
+  setInterval(fetchBinanceTrades,5000);
   // calc total on input
   ['tsPrice','tsAmt'].forEach(id=>{const el=g(id);if(el)el.addEventListener('input',calcTotal);});
 });
