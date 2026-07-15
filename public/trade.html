@@ -189,11 +189,11 @@ body{display:flex;flex-direction:column;height:100svh}
 .ts-action-btn.sell{background:#e84d4d}
 
 /* ====== PAIRS PAGE ====== */
-.pairs-page{position:fixed;inset:0;background:#000;z-index:300;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
-.pairs-page.open{transform:translateX(0)}
-.pairs-hdr{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid #1a1f2e;gap:10px;flex-shrink:0}
-.pairs-back{background:none;border:none;color:#8fa0bb;cursor:pointer;padding:4px}
-.pairs-back svg{width:22px;height:22px;fill:currentColor;display:block}
+.pairs-page{position:fixed;inset:0;background:#0d1117;z-index:300;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.pairs-page.open{transform:translateY(0)}
+.pairs-page-hdr-bar{height:4px;width:40px;background:#2a3040;border-radius:2px;margin:10px auto 0;flex-shrink:0}
+.pairs-hdr{display:flex;align-items:center;padding:10px 14px 10px;border-bottom:1px solid #1a1f2e;gap:10px;flex-shrink:0}
+.pairs-back{background:none;border:none;color:#8fa0bb;cursor:pointer;padding:4px;font-size:20px;line-height:1}
 .pairs-title{font-size:16px;font-weight:600;flex:1}
 .pairs-search-wrap{padding:10px 12px;flex-shrink:0}
 .pairs-search-box{display:flex;align-items:center;gap:8px;background:#0d1421;border-radius:8px;padding:8px 12px}
@@ -496,11 +496,10 @@ body{display:flex;flex-direction:column;height:100svh}
 
 <!-- ====== PAIRS PAGE ====== -->
 <div class="pairs-page" id="pairsPage">
+  <div class="pairs-page-hdr-bar"></div>
   <div class="pairs-hdr">
-    <button class="pairs-back" onclick="closePairs()">
-      <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-    </button>
     <span class="pairs-title">Select Market</span>
+    <button class="pairs-back" onclick="closePairs()">✕</button>
   </div>
   <div class="pairs-search-wrap">
     <div class="pairs-search-box">
@@ -787,23 +786,30 @@ async function loadPairs(){
   allPairs=res.tickers||res.data||(Array.isArray(res)?res:[]);
   renderPairs(allPairs);
 }
+function coinIconUrl(base){
+  const lower=(base||'').toLowerCase();
+  return `https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/${lower}.svg`;
+}
 function renderPairs(list){
   const el=g('pairsList');if(!el)return;
   if(!list||!list.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#8fa0bb">No pairs found</div>';return;}
+  const COIN_BG={BTC:'#f7931a',ETH:'#627eea',BNB:'#f3ba2f',SOL:'#9945ff',USDC:'#2775ca',ADA:'#0033ad',XLM:'#7ac1e4',LINK:'#2a5ada',DOGE:'#c2a633',XRP:'#00aae4'};
   el.innerHTML=list.slice(0,60).map(p=>{
     const sym=p.symbol||'';
     const base=sym.replace(/USDT$|BUSD$/,'');
-    const clr=COIN_CLR[base]||'coin-default';
-    const ltr=COIN_LTR[base]||(base.charAt(0)||'?');
+    const bg=COIN_BG[base]||'#2a3040';
     const px=parseFloat(p.lastPrice||p.price||0);
     const chg=parseFloat(p.change24h||p.priceChangePercent||0);
     const vol=parseFloat(p.quoteVolume||p.volume24h||0);
     const isUp=chg>=0;
     return `<div class="pair-item" onclick="selectPair('${sym}')">
       <button class="pair-fav" onclick="event.stopPropagation()">
-        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg viewBox="0 0 24 24" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="#8fa0bb" stroke-width="1.5"/></svg>
       </button>
-      <div class="pair-icon ${clr}">${ltr}</div>
+      <div class="pair-icon" style="background:${bg};overflow:hidden;padding:0">
+        <img src="${coinIconUrl(base)}" width="32" height="32" style="display:block;object-fit:cover"
+          onerror="this.parentElement.innerHTML='<span style=font-size:13px;font-weight:700;color:#fff>${base.charAt(0)}</span>'">
+      </div>
       <div class="pair-info">
         <div class="pair-sym">${base}<span>/USDT</span></div>
         <div class="pair-vol-lbl">${fmtVol(vol)}</div>
