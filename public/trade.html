@@ -6,16 +6,16 @@
 <title>BTC/USDT — Bitcovex</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:#000;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
+html,body{background:#000;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:100%;overflow:hidden}
+body{display:flex;flex-direction:column;height:100svh}
 
 /* HEADER */
-.hdr{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#000;border-bottom:1px solid #1a1f2e;position:sticky;top:0;z-index:50}
+.hdr{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#000;border-bottom:1px solid #1a1f2e;flex-shrink:0}
 .hdr-logo img{width:32px;height:32px;object-fit:contain;border-radius:8px;display:block}
 .hdr-spacer{flex:1}
 .hdr-search{background:none;border:none;cursor:pointer;padding:4px;color:#8fa0bb}
 .hdr-search svg{width:20px;height:20px;fill:currentColor;display:block}
-.btn-signup{background:#f68f15;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-signup{background:#f68f15;color:#fff;border:none;border-radius:20px;padding:7px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
 .hdr-divider{width:1px;height:20px;background:#2a3040;flex-shrink:0}
 .hdr-menu{background:none;border:none;cursor:pointer;color:#8fa0bb;padding:4px}
 .hdr-menu svg{width:22px;height:22px;fill:currentColor;display:block}
@@ -42,13 +42,15 @@ body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
 .stat-val.dn{color:#e84d4d}
 .stat-val.up{color:#1db26e}
 
-/* MAIN TABS - repurposed as Book/Trades switcher */
-.main-tabs{display:flex;background:#000;border-bottom:1px solid #1a1f2e}
-.main-tab{flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:500;color:#8fa0bb;cursor:pointer;border-bottom:2px solid transparent}
+/* MAIN TABS */
+.main-tabs{display:flex;background:#000;border-bottom:1px solid #1a1f2e;flex-shrink:0}
+.main-tab{flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:500;color:#8fa0bb;cursor:pointer;border-bottom:2px solid transparent}
 .main-tab.active{color:#e8eaf0;border-bottom-color:#e8eaf0}
 
-/* PANELS - now one scrollable column */
-.trade-content{display:flex;flex-direction:column;flex:1}
+/* PANELS */
+.panels{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.panel{display:none;flex:1;overflow:hidden;flex-direction:column;min-height:0}
+.panel.active{display:flex}
 
 /* ---- CHART PANEL ---- */
 .iv-row{display:flex;align-items:center;padding:0 8px;background:#000;border-bottom:1px solid #1a1f2e;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
@@ -59,7 +61,7 @@ body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
 .iv-sep{width:1px;height:16px;background:#1a1f2e;flex-shrink:0;margin:0 4px}
 .iv-extra{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0;cursor:pointer}
 
-#tv_chart_container{height:320px;overflow:hidden;flex-shrink:0}
+#tv_chart_container{flex:1;overflow:hidden;min-height:0}
 #tv_chart_container iframe{border:none!important;width:100%!important;height:100%!important}
 
 .sub-tabs-row{display:flex;border-bottom:1px solid #1a1f2e;background:#000;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
@@ -80,14 +82,11 @@ body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
 .ob-h{font-size:11px;color:#8fa0bb;flex:1}
 .ob-h.c{text-align:center}
 .ob-h.r{text-align:right}
-.ob-body{display:flex;flex-direction:column}
-.ob-asks{display:flex;flex-direction:column;justify-content:flex-end;max-height:150px;overflow-y:auto;scrollbar-width:none}
+.ob-body{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ob-asks{flex:1;display:flex;flex-direction:column;justify-content:flex-end;overflow-y:auto;scrollbar-width:none}
 .ob-asks::-webkit-scrollbar{display:none}
-.ob-bids{max-height:150px;overflow-y:auto;scrollbar-width:none}
+.ob-bids{flex:1;overflow-y:auto;scrollbar-width:none}
 .ob-bids::-webkit-scrollbar{display:none}
-/* section toggle */
-.ob-section{display:block}
-.ob-section.hidden{display:none}
 .ob-mid{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#000;flex-shrink:0;border-top:1px solid #1a1f2e;border-bottom:1px solid #1a1f2e}
 .ob-mid-px{font-size:16px;font-weight:700;color:#e84d4d}
 .ob-mid-px.up{color:#1db26e}
@@ -110,7 +109,7 @@ body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
 .tr-h:first-child{flex:1.2}
 .tr-h:nth-child(2){flex:1;text-align:center}
 .tr-h:last-child{flex:1;text-align:right}
-.tr-body{max-height:300px;overflow-y:auto;scrollbar-width:none}
+.tr-body{flex:1;overflow-y:auto;scrollbar-width:none}
 .tr-body::-webkit-scrollbar{display:none}
 .tr-row{display:flex;padding:5px 10px}
 .tr-time{font-size:12px;color:#8fa0bb;flex:1.2}
@@ -120,7 +119,7 @@ body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
 .tr-qty{font-size:12px;color:#e8eaf0;flex:1;text-align:right}
 
 /* BUY / SELL BAR */
-.buysell{display:flex;padding:8px 10px;gap:8px;background:#000;border-top:1px solid #1a1f2e;flex-shrink:0;position:sticky;bottom:0;z-index:10}
+.buysell{display:flex;padding:8px 10px;gap:8px;background:#000;border-top:1px solid #1a1f2e;flex-shrink:0}
 .btn-buy{flex:1;background:#1db26e;color:#fff;border:none;height:48px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
 .btn-sell{flex:1;background:#e84d4d;color:#fff;border:none;height:48px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
 
@@ -334,36 +333,43 @@ body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
   </div>
 </div>
 
-<!-- TRADE CONTENT - one scrollable column -->
-<div class="trade-content">
+<!-- MAIN TABS -->
+<div class="main-tabs">
+  <div class="main-tab active" onclick="switchTab(0,this)">Chart</div>
+  <div class="main-tab" onclick="switchTab(1,this)">Orders</div>
+  <div class="main-tab" onclick="switchTab(2,this)">Trades</div>
+</div>
 
-  <!-- INTERVAL ROW -->
-  <div class="iv-row">
-    <span class="iv-lbl">Time</span>
-    <span class="iv active" onclick="setIv('1',this)">1m</span>
-    <span class="iv" onclick="setIv('5',this)">5m</span>
-    <span class="iv" onclick="setIv('15',this)">15m</span>
-    <span class="iv" onclick="setIv('30',this)">30m</span>
-    <span class="iv" onclick="setIv('60',this)">1H</span>
-    <span class="iv" onclick="setIv('240',this)">4H</span>
-    <span class="iv" onclick="setIv('D',this)">1D</span>
-    <div class="iv-sep"></div>
-    <span class="iv-extra">Basic</span>
-    <div class="iv-sep"></div>
-    <span class="iv-extra">Depth</span>
+<!-- PANELS -->
+<div class="panels">
+
+  <!-- CHART PANEL -->
+  <div class="panel active" id="panel0">
+    <div class="iv-row">
+      <span class="iv-lbl">Time</span>
+      <span class="iv active" onclick="setIv('1',this)">1m</span>
+      <span class="iv" onclick="setIv('5',this)">5m</span>
+      <span class="iv" onclick="setIv('15',this)">15m</span>
+      <span class="iv" onclick="setIv('30',this)">30m</span>
+      <span class="iv" onclick="setIv('60',this)">1H</span>
+      <span class="iv" onclick="setIv('240',this)">4H</span>
+      <span class="iv" onclick="setIv('D',this)">1D</span>
+      <div class="iv-sep"></div>
+      <span class="iv-extra">Basic</span>
+      <div class="iv-sep"></div>
+      <span class="iv-extra">Depth</span>
+    </div>
+    <div id="tv_chart_container"></div>
+    <div class="sub-tabs-row">
+      <div class="sub-tab active" onclick="switchSubTab(this)">Open Orders</div>
+      <div class="sub-tab" onclick="switchSubTab(this)">Order History</div>
+      <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
+      <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
+    </div>
   </div>
 
-  <!-- CHART -->
-  <div id="tv_chart_container"></div>
-
-  <!-- BOOK / TRADES SWITCHER -->
-  <div class="main-tabs">
-    <div class="main-tab active" onclick="switchSection('book',this)">Order Book</div>
-    <div class="main-tab" onclick="switchSection('trades',this)">Trades</div>
-  </div>
-
-  <!-- ORDER BOOK SECTION -->
-  <div class="ob-section" id="secBook">
+  <!-- ORDERS PANEL -->
+  <div class="panel" id="panel1">
     <div class="ob-top">
       <div class="ob-icons">
         <button class="ob-icon active" onclick="setObView('both',this)">
@@ -405,10 +411,16 @@ body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
       </div>
       <div class="ob-bids" id="obBids"></div>
     </div>
+    <div class="sub-tabs-row">
+      <div class="sub-tab active" onclick="switchSubTab(this)">Open Orders</div>
+      <div class="sub-tab" onclick="switchSubTab(this)">Order History</div>
+      <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
+      <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
+    </div>
   </div>
 
-  <!-- TRADES SECTION -->
-  <div class="ob-section hidden" id="secTrades">
+  <!-- TRADES PANEL -->
+  <div class="panel" id="panel2">
     <div class="tr-headers">
       <span class="tr-h">Time</span>
       <span class="tr-h" style="flex:1;text-align:center">Price(USDT)</span>
@@ -417,16 +429,7 @@ body{display:flex;flex-direction:column;min-height:100svh;overflow-x:hidden}
     <div class="tr-body" id="trBody"></div>
   </div>
 
-  <!-- USER ORDER TABS -->
-  <div class="sub-tabs-row">
-    <div class="sub-tab active" onclick="switchSubTab(this)">Open Orders</div>
-    <div class="sub-tab" onclick="switchSubTab(this)">Order History</div>
-    <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
-    <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
-  </div>
-  <div style="height:70px"></div><!-- spacer above sticky buy/sell -->
-
-</div><!-- /trade-content -->
+</div><!-- /panels -->
 
 <!-- BUY / SELL BAR -->
 <div class="buysell">
@@ -597,12 +600,11 @@ function fmtTime(ts){
   return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');
 }
 
-/* SECTION TOGGLE (Order Book / Trades) */
-function switchSection(sec,el){
-  document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  g('secBook').classList.toggle('hidden',sec!=='book');
-  g('secTrades').classList.toggle('hidden',sec!=='trades');
+/* TABS */
+function switchTab(i,el){
+  document.querySelectorAll('.main-tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',j===i));
+  if(i===0)initTV(currentIv);
 }
 function switchSubTab(el){
   el.parentElement.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
@@ -680,7 +682,7 @@ function initTV(iv){
   c.innerHTML='';
   if(typeof TradingView==='undefined')return;
   const w=window.innerWidth||375;
-  const h=320;
+  const h=Math.max(200,c.parentElement?c.parentElement.clientHeight-35:window.innerHeight-305);
   c.style.width=w+'px';
   c.style.height=h+'px';
   tvWidget=new TradingView.widget({
@@ -700,6 +702,10 @@ function initTV(iv){
     save_image:false,
     container_id:'tv_chart_container',
     studies:['MAExp@tv-basicstudies'],
+    studies_overrides:{
+      'volume.volume.transparency':100,
+      'volume.volume ma.transparency':100,
+    },
     overrides:{
       'paneProperties.background':'#000',
       'paneProperties.backgroundType':'solid',
