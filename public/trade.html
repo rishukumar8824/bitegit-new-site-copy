@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>BTC/USDT — Bitcovex</title>
-<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:#000;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:100%;overflow:hidden}
@@ -21,6 +20,11 @@ body{display:flex;flex-direction:column;height:100svh}
 .hdr-menu{background:none;border:none;cursor:pointer;color:#8fa0bb;padding:4px}
 .hdr-menu svg{width:22px;height:22px;fill:currentColor;display:block}
 
+/* HEADER when logged in */
+.btn-deposit{background:#f68f15;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;display:none}
+.btn-profile{background:none;border:none;cursor:pointer;color:#e8eaf0;padding:4px;display:none}
+.btn-profile svg{width:22px;height:22px;fill:currentColor;display:block}
+
 /* PRICE SECTION */
 .price-sec{padding:10px 12px 8px;background:#000;flex-shrink:0}
 .price-row{display:flex;align-items:flex-start;gap:8px}
@@ -35,7 +39,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .price-right{display:grid;grid-template-columns:auto auto;gap:2px 12px;margin-left:auto;text-align:right}
 .stat-label{font-size:10px;color:#8fa0bb;white-space:nowrap}
 .stat-val{font-size:12px;font-weight:500;color:#e8eaf0;text-align:right}
-.stat-val.down{color:#e84d4d}
+.stat-val.dn{color:#e84d4d}
 .stat-val.up{color:#1db26e}
 
 /* MAIN TABS */
@@ -44,7 +48,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .main-tab.active{color:#e8eaf0;border-bottom-color:#e8eaf0}
 
 /* PANELS */
-.panels{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column;min-height:0}
+.panels{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
 .panel{display:none;flex:1;overflow:hidden;flex-direction:column;min-height:0}
 .panel.active{display:flex}
 
@@ -52,19 +56,13 @@ body{display:flex;flex-direction:column;height:100svh}
 .iv-row{display:flex;align-items:center;padding:0 8px;background:#000;border-bottom:1px solid #1a1f2e;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
 .iv-row::-webkit-scrollbar{display:none}
 .iv-lbl{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0}
-.iv{font-size:11px;color:#8fa0bb;padding:8px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:4px}
+.iv{font-size:11px;color:#8fa0bb;padding:8px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:4px;transition:all .15s}
 .iv.active{color:#e8eaf0;font-weight:600;background:#1a1f2e}
 .iv-sep{width:1px;height:16px;background:#1a1f2e;flex-shrink:0;margin:0 4px}
 .iv-extra{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0;cursor:pointer}
 
-.chart-wrap{display:flex;flex:1;overflow:hidden;min-height:0}
-.chart-tools{width:36px;background:#060c14;display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:12px;flex-shrink:0;border-right:1px solid #1a1f2e;overflow-y:auto;scrollbar-width:none}
-.chart-tools::-webkit-scrollbar{display:none}
-.chart-tools svg{width:18px;height:18px;fill:#8fa0bb;cursor:pointer;flex-shrink:0}
-#chartContainer{flex:1;min-width:0;overflow:hidden}
-
-.chart-btm-bar{display:flex;align-items:center;gap:10px;padding:4px 10px;background:#060c14;border-top:1px solid #1a1f2e;font-size:10px;color:#8fa0bb;flex-shrink:0}
-.chart-btm-bar .btm-time{flex:1;font-size:10px}
+#tv_chart_container{flex:1;min-height:0;overflow:hidden}
+#tv_chart_container iframe{border:none!important}
 
 .sub-tabs-row{display:flex;border-bottom:1px solid #1a1f2e;background:#000;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
 .sub-tabs-row::-webkit-scrollbar{display:none}
@@ -79,7 +77,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .ob-icons{display:flex;gap:4px}
 .ob-icon{background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;display:flex;align-items:center}
 .ob-icon.active{background:#1a1f2e}
-.ob-dec-sel{margin-left:auto;background:#1a1f2e;border:none;color:#e8eaf0;font-size:11px;padding:4px 8px;border-radius:4px;cursor:pointer;appearance:none;-webkit-appearance:none}
+.ob-dec-sel{margin-left:auto;background:#1a1f2e;border:none;color:#e8eaf0;font-size:11px;padding:4px 8px;border-radius:4px;cursor:pointer}
 .ob-headers{display:flex;padding:4px 10px;background:#000;flex-shrink:0}
 .ob-h{font-size:11px;color:#8fa0bb;flex:1}
 .ob-h.c{text-align:center}
@@ -94,7 +92,6 @@ body{display:flex;flex-direction:column;height:100svh}
 .ob-mid-arr.up{color:#1db26e}
 .ob-mid-usd{font-size:11px;color:#8fa0bb;margin-left:auto}
 .ob-row{display:flex;align-items:center;padding:3px 10px;position:relative;cursor:pointer}
-.ob-row:hover{background:rgba(255,255,255,.03)}
 .ob-depth{position:absolute;top:0;right:0;bottom:0;opacity:.18}
 .ob-ask .ob-depth{background:#e84d4d}
 .ob-bid .ob-depth{background:#1db26e}
@@ -112,8 +109,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .tr-h:last-child{flex:1;text-align:right}
 .tr-body{flex:1;overflow-y:auto;scrollbar-width:none}
 .tr-body::-webkit-scrollbar{display:none}
-.tr-row{display:flex;padding:5px 10px;cursor:pointer}
-.tr-row:hover{background:#0d1421}
+.tr-row{display:flex;padding:5px 10px}
 .tr-time{font-size:12px;color:#8fa0bb;flex:1.2}
 .tr-px{font-size:12px;font-weight:500;flex:1;text-align:center}
 .tr-px.up{color:#1db26e}
@@ -133,7 +129,66 @@ body{display:flex;flex-direction:column;height:100svh}
 .sb-ann{display:flex;align-items:center;gap:4px;color:#8fa0bb;cursor:pointer}
 .sb-ann svg{width:14px;height:14px;fill:currentColor}
 
-/* ---- PAIRS PAGE ---- */
+/* ====== TRADE BOTTOM SHEET ====== */
+.ts-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:none}
+.ts-overlay.open{display:block}
+.ts-sheet{position:fixed;bottom:0;left:0;right:0;background:#131923;border-radius:16px 16px 0 0;z-index:401;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);max-height:92vh;overflow-y:auto;scrollbar-width:none}
+.ts-sheet::-webkit-scrollbar{display:none}
+.ts-sheet.open{transform:translateY(0)}
+.ts-handle{width:40px;height:4px;background:#2a3040;border-radius:2px;margin:10px auto 0}
+.ts-hdr{display:flex;align-items:center;padding:12px 16px 8px;border-bottom:1px solid #1a1f2e}
+.ts-hdr-title{font-size:15px;font-weight:600;flex:1}
+.ts-close{background:none;border:none;color:#8fa0bb;cursor:pointer;font-size:18px;padding:4px;line-height:1}
+
+/* Buy/Sell toggle */
+.ts-bs-tabs{display:flex;margin:12px 16px 0;border-radius:8px;overflow:hidden;background:#0d1421}
+.ts-bs-tab{flex:1;padding:10px;text-align:center;font-size:14px;font-weight:600;cursor:pointer;color:#8fa0bb;transition:all .2s}
+.ts-bs-tab.buy.active{background:#1db26e;color:#fff}
+.ts-bs-tab.sell.active{background:#e84d4d;color:#fff}
+
+/* Order type tabs */
+.ts-ot-row{display:flex;gap:0;margin:10px 16px 0;border-bottom:1px solid #1a1f2e}
+.ts-ot{padding:8px 12px;font-size:12px;color:#8fa0bb;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.ts-ot.active{color:#e8eaf0;border-bottom-color:#e8eaf0}
+
+/* Available */
+.ts-avail{margin:10px 16px 0;font-size:12px;color:#8fa0bb;display:flex;align-items:center;gap:4px}
+.ts-avail span{color:#e8eaf0}
+
+/* Input fields */
+.ts-field{margin:10px 16px 0}
+.ts-field-inner{display:flex;align-items:center;background:#0d1421;border:1px solid #1a1f2e;border-radius:6px;padding:0 10px;height:44px}
+.ts-field-label{font-size:11px;color:#8fa0bb;margin-bottom:4px}
+.ts-field input{flex:1;background:none;border:none;outline:none;color:#e8eaf0;font-size:14px;min-width:0}
+.ts-field input::placeholder{color:#3a4560}
+.ts-field-unit{font-size:13px;color:#8fa0bb;flex-shrink:0}
+.ts-field-steps{display:flex;flex-direction:column;margin-left:6px;gap:1px}
+.ts-field-steps button{background:none;border:none;color:#8fa0bb;cursor:pointer;font-size:9px;line-height:1;padding:2px}
+
+/* Slider */
+.ts-slider-wrap{margin:12px 16px 0}
+.ts-range{width:100%;-webkit-appearance:none;appearance:none;height:3px;border-radius:2px;background:#1a1f2e;outline:none;cursor:pointer}
+.ts-range::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#f68f15;cursor:pointer}
+.ts-pct-row{display:flex;justify-content:space-between;margin-top:4px}
+.ts-pct{font-size:10px;color:#8fa0bb;cursor:pointer;padding:2px 0}
+.ts-pct:hover{color:#e8eaf0}
+
+/* Max buy, Est fee */
+.ts-maxbuy{margin:8px 16px 0;font-size:12px;color:#8fa0bb;display:flex;justify-content:space-between}
+.ts-maxbuy span{color:#e8eaf0}
+.ts-estfee{margin:6px 16px 0;font-size:12px;color:#8fa0bb;display:flex;justify-content:space-between}
+.ts-estfee span{color:#e8eaf0}
+
+/* Action buttons (logged out) */
+.ts-register-btn{display:block;width:calc(100% - 32px);margin:14px 16px 0;padding:14px;background:#fff;color:#131923;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;text-align:center}
+.ts-login-link{display:block;width:calc(100% - 32px);margin:10px 16px 14px;padding:10px;background:none;color:#e8eaf0;border:none;font-size:14px;cursor:pointer;text-align:center}
+
+/* Action button (logged in) */
+.ts-action-btn{display:block;width:calc(100% - 32px);margin:14px 16px 14px;padding:14px;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;color:#fff}
+.ts-action-btn.buy{background:#1db26e}
+.ts-action-btn.sell{background:#e84d4d}
+
+/* ====== PAIRS PAGE ====== */
 .pairs-page{position:fixed;inset:0;background:#000;z-index:300;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
 .pairs-page.open{transform:translateX(0)}
 .pairs-hdr{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid #1a1f2e;gap:10px;flex-shrink:0}
@@ -155,9 +210,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .pf.active{background:#1a2540;color:#e8eaf0}
 .pairs-col-hdr{display:flex;align-items:center;padding:6px 12px;border-bottom:1px solid #1a1f2e;flex-shrink:0}
 .pch{font-size:11px;color:#8fa0bb;display:flex;align-items:center;gap:2px;cursor:pointer}
-.pch:first-child{flex:2}
-.pch:nth-child(2){flex:1;justify-content:center}
-.pch:last-child{flex:1;justify-content:flex-end}
+.pch:first-child{flex:2}.pch:nth-child(2){flex:1;justify-content:center}.pch:last-child{flex:1;justify-content:flex-end}
 .pairs-list{flex:1;overflow-y:auto;scrollbar-width:none}
 .pairs-list::-webkit-scrollbar{display:none}
 .pair-item{display:flex;align-items:center;padding:10px 12px;cursor:pointer;border-bottom:1px solid #080e1a}
@@ -169,7 +222,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .pair-sym{font-size:14px;font-weight:700;color:#e8eaf0}
 .pair-sym span{font-weight:400;color:#8fa0bb;font-size:13px}
 .pair-vol-lbl{font-size:11px;color:#8fa0bb;margin-top:2px}
-.pair-px{flex:1;text-align:center;font-size:13px;font-weight:500;color:#e8eaf0}
+.pair-px-col{flex:1;text-align:center;font-size:13px;font-weight:500;color:#e8eaf0}
 .pair-chg{flex:1;display:flex;justify-content:flex-end}
 .pair-chg-badge{font-size:12px;font-weight:600;padding:5px 10px;border-radius:6px;min-width:64px;text-align:center}
 .pair-chg-badge.up{background:#1db26e;color:#fff}
@@ -189,7 +242,13 @@ body{display:flex;flex-direction:column;height:100svh}
   <button class="hdr-search">
     <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
   </button>
-  <button class="btn-signup" onclick="location.href='/register'">Sign up</button>
+  <!-- logged out -->
+  <button class="btn-signup" id="hdrSignup" onclick="location.href='/register'">Sign up</button>
+  <!-- logged in -->
+  <button class="btn-deposit" id="hdrDeposit" onclick="location.href='/wallet'">Deposit</button>
+  <button class="btn-profile" id="hdrProfile" onclick="location.href='/settings'">
+    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+  </button>
   <div class="hdr-divider"></div>
   <button class="hdr-menu">
     <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
@@ -237,42 +296,26 @@ body{display:flex;flex-direction:column;height:100svh}
   <div class="panel active" id="panel0">
     <div class="iv-row">
       <span class="iv-lbl">Time</span>
-      <span class="iv active" onclick="loadChart('1m',this)">1m</span>
-      <span class="iv" onclick="loadChart('5m',this)">5m</span>
-      <span class="iv" onclick="loadChart('15m',this)">15m</span>
-      <span class="iv" onclick="loadChart('30m',this)">30m</span>
-      <span class="iv" onclick="loadChart('1h',this)">1H</span>
-      <span class="iv" onclick="loadChart('4h',this)">4H</span>
-      <span class="iv" onclick="loadChart('1d',this)">1D</span>
+      <span class="iv active" onclick="setIv('1',this)">1m</span>
+      <span class="iv" onclick="setIv('5',this)">5m</span>
+      <span class="iv" onclick="setIv('15',this)">15m</span>
+      <span class="iv" onclick="setIv('30',this)">30m</span>
+      <span class="iv" onclick="setIv('60',this)">1H</span>
+      <span class="iv" onclick="setIv('240',this)">4H</span>
+      <span class="iv" onclick="setIv('D',this)">1D</span>
       <div class="iv-sep"></div>
       <span class="iv-extra">Basic version</span>
       <div class="iv-sep"></div>
       <span class="iv-extra">Depth chart</span>
     </div>
-    <div class="chart-wrap">
-      <div class="chart-tools">
-        <svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm0 8h18v2H3zm0 8h18v2H3z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12.45 16H10v-2.45l6.85-6.85 2.45 2.45L12.45 16zM21.41 7.41l-2.83-2.83a1 1 0 00-1.41 0L15.7 6.05l2.83 2.83 1.88-1.88a1 1 0 000-1.59zM3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M21 6.5C21 4.57 19.43 3 17.5 3S14 4.57 14 6.5c0 1.7 1.15 3.13 2.71 3.42L14 17.5C14 19.43 15.57 21 17.5 21S21 19.43 21 17.5c0-1.7-1.15-3.13-2.71-3.42L21 6.5z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-      </div>
-      <div id="chartContainer"></div>
-    </div>
-    <div class="chart-btm-bar">
-      <span class="btm-time" id="chartTime">—</span>
-      <span>%</span><span>log</span><span>auto</span>
-    </div>
+    <div id="tv_chart_container"></div>
     <div class="sub-tabs-row">
       <div class="sub-tab active" onclick="switchSubTab(this)">Open Orders</div>
       <div class="sub-tab" onclick="switchSubTab(this)">Order History</div>
       <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
       <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
     </div>
-    <div class="login-msg-box">
+    <div class="login-msg-box" id="chartLoginMsg">
       <span>Please <a href="/login">log in</a> or <a href="/register" class="reg">register</a> first</span>
     </div>
   </div>
@@ -302,8 +345,8 @@ body{display:flex;flex-direction:column;height:100svh}
       </div>
       <select class="ob-dec-sel" onchange="obDecimals=parseInt(this.value);renderOB()">
         <option value="2">0.01</option>
-        <option value="1">0.1 ▾</option>
-        <option value="0">1 ▾</option>
+        <option value="1">0.1</option>
+        <option value="0">1</option>
       </select>
     </div>
     <div class="ob-headers">
@@ -326,7 +369,7 @@ body{display:flex;flex-direction:column;height:100svh}
       <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
       <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
     </div>
-    <div class="login-msg-box">
+    <div class="login-msg-box" id="obLoginMsg">
       <span>Please <a href="/login">log in</a> or <a href="/register" class="reg">register</a> first</span>
     </div>
   </div>
@@ -341,12 +384,12 @@ body{display:flex;flex-direction:column;height:100svh}
     <div class="tr-body" id="trBody"></div>
   </div>
 
-</div>
+</div><!-- /panels -->
 
 <!-- BUY / SELL BAR -->
 <div class="buysell">
-  <button class="btn-buy" onclick="location.href='/login'">Buy BTC</button>
-  <button class="btn-sell" onclick="location.href='/login'">Sell BTC</button>
+  <button class="btn-buy" onclick="openTradeSheet('buy')">Buy BTC</button>
+  <button class="btn-sell" onclick="openTradeSheet('sell')">Sell BTC</button>
 </div>
 
 <!-- STATUS BAR -->
@@ -362,7 +405,96 @@ body{display:flex;flex-direction:column;height:100svh}
   </div>
 </div>
 
-<!-- PAIRS PAGE (full screen slide-in) -->
+<!-- ====== TRADE BOTTOM SHEET ====== -->
+<div class="ts-overlay" id="tsOverlay" onclick="closeTradeSheet()"></div>
+<div class="ts-sheet" id="tsSheet">
+  <div class="ts-handle"></div>
+  <div class="ts-hdr">
+    <span class="ts-hdr-title">Spot</span>
+    <button class="ts-close" onclick="closeTradeSheet()">✕</button>
+  </div>
+
+  <!-- Buy / Sell tabs -->
+  <div class="ts-bs-tabs">
+    <div class="ts-bs-tab buy active" id="tsBuyTab" onclick="setTradeTab('buy')">Buy</div>
+    <div class="ts-bs-tab sell" id="tsSellTab" onclick="setTradeTab('sell')">Sell</div>
+  </div>
+
+  <!-- Order type -->
+  <div class="ts-ot-row">
+    <div class="ts-ot active" onclick="setOT(this)">Limit</div>
+    <div class="ts-ot" onclick="setOT(this)">Market</div>
+    <div class="ts-ot" onclick="setOT(this)">Conditional ▾ ⓘ</div>
+  </div>
+
+  <!-- Available -->
+  <div class="ts-avail">Available: <span id="tsAvail">0.00000000</span> <span id="tsAvailUnit">USDT</span></div>
+
+  <!-- Price -->
+  <div class="ts-field">
+    <div class="ts-field-label">Price</div>
+    <div class="ts-field-inner">
+      <input type="number" id="tsPrice" placeholder="0.00">
+      <span class="ts-field-unit" id="tsPriceUnit">USDT</span>
+      <div class="ts-field-steps">
+        <button onclick="stepField('tsPrice',1)">▲</button>
+        <button onclick="stepField('tsPrice',-1)">▼</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Amount -->
+  <div class="ts-field">
+    <div class="ts-field-label">Amount</div>
+    <div class="ts-field-inner">
+      <input type="number" id="tsAmt" placeholder="0.00000000">
+      <span class="ts-field-unit">BTC</span>
+      <div class="ts-field-steps">
+        <button onclick="stepField('tsAmt',.00001)">▲</button>
+        <button onclick="stepField('tsAmt',-.00001)">▼</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slider -->
+  <div class="ts-slider-wrap">
+    <input type="range" class="ts-range" id="tsRange" min="0" max="100" value="0" oninput="onSlider(this.value)">
+    <div class="ts-pct-row">
+      <span class="ts-pct" onclick="onSlider(0)">0%</span>
+      <span class="ts-pct" onclick="onSlider(25)">25%</span>
+      <span class="ts-pct" onclick="onSlider(50)">50%</span>
+      <span class="ts-pct" onclick="onSlider(75)">75%</span>
+      <span class="ts-pct" onclick="onSlider(100)">100%</span>
+      <span class="ts-pct" onclick="onSlider(100)">All</span>
+    </div>
+  </div>
+
+  <!-- Total -->
+  <div class="ts-field">
+    <div class="ts-field-label">Total</div>
+    <div class="ts-field-inner">
+      <input type="number" id="tsTotal" placeholder="0.00">
+      <span class="ts-field-unit">USDT</span>
+    </div>
+  </div>
+
+  <!-- Max buy -->
+  <div class="ts-maxbuy" id="tsMaxRow">Max Buy <span id="tsMaxVal">0.000000 BTC</span></div>
+
+  <!-- LOGGED OUT state -->
+  <div id="tsLoggedOut">
+    <button class="ts-register-btn" onclick="location.href='/register'">Register Now</button>
+    <button class="ts-login-link" onclick="location.href='/login'">Login</button>
+  </div>
+
+  <!-- LOGGED IN state -->
+  <div id="tsLoggedIn" style="display:none">
+    <div class="ts-estfee">Est. Fee <span>-- BTC</span></div>
+    <button class="ts-action-btn buy" id="tsActionBtn" onclick="submitOrder()">Buy BTC</button>
+  </div>
+</div>
+
+<!-- ====== PAIRS PAGE ====== -->
 <div class="pairs-page" id="pairsPage">
   <div class="pairs-hdr">
     <button class="pairs-back" onclick="closePairs()">
@@ -389,7 +521,6 @@ body{display:flex;flex-direction:column;height:100svh}
     <div class="pf" onclick="setPairFilter(this)">RWA</div>
     <div class="pf" onclick="setPairFilter(this)">LAYER 1 / L2</div>
     <div class="pf" onclick="setPairFilter(this)">More ▼</div>
-    <div class="pf" style="font-size:14px">⊟</div>
   </div>
   <div class="pairs-col-hdr">
     <span class="pch" style="flex:2">Trading Pair/24h Volume ↕</span>
@@ -402,13 +533,29 @@ body{display:flex;flex-direction:column;height:100svh}
 </div>
 
 <script>
-const g=id=>document.getElementById(id);
-const SYM='BTCUSDT';
-let chart=null,candleSeries=null;
-let asks=[],bids=[],trades=[];
-let obView='both',obDecimals=2;
-let currentInterval='1m';
-let allPairs=[],pairsLoaded=false;
+const g = id => document.getElementById(id);
+const SYM = 'BTCUSDT';
+let asks=[], bids=[], trades=[];
+let obView='both', obDecimals=2;
+let allPairs=[], pairsLoaded=false;
+let tradeTab='buy';
+let currentIv='1';
+let tvWidget=null;
+let lastPx=0;
+
+/* AUTH */
+function isLoggedIn(){return !!(localStorage.getItem('bitcovex_token'));}
+
+function updateHeaderForAuth(){
+  const loggedIn=isLoggedIn();
+  g('hdrSignup').style.display=loggedIn?'none':'';
+  g('hdrDeposit').style.display=loggedIn?'':'none';
+  g('hdrProfile').style.display=loggedIn?'':'none';
+  // sub-tabs login messages
+  ['chartLoginMsg','obLoginMsg'].forEach(id=>{
+    const el=g(id);if(el)el.style.display=loggedIn?'none':'flex';
+  });
+}
 
 /* FORMAT */
 function fmt(n,dec){return parseFloat(n||0).toLocaleString('en',{minimumFractionDigits:dec,maximumFractionDigits:dec});}
@@ -428,7 +575,6 @@ function fmtTime(ts){
 function switchTab(i,el){
   document.querySelectorAll('.main-tab').forEach((t,j)=>t.classList.toggle('active',j===i));
   document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',j===i));
-  if(i===0&&!chart)setTimeout(initChart,100);
 }
 function switchSubTab(el){
   el.parentElement.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
@@ -437,13 +583,13 @@ function switchSubTab(el){
 function setObView(v,el){
   obView=v;
   document.querySelectorAll('.ob-icon').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  renderOB();
+  el.classList.add('active');renderOB();
 }
 
 /* TICKER */
 function updateTicker(d){
   const px=parseFloat(d.price||d.lastPrice||d.last||0);
+  if(px>0)lastPx=px;
   const chg=parseFloat(d.change24h||d.priceChangePercent||d.change||0);
   const hi=parseFloat(d.high24h||d.highPrice||0);
   const lo=parseFloat(d.low24h||d.lowPrice||0);
@@ -453,19 +599,18 @@ function updateTicker(d){
   const pxEl=g('px');if(pxEl){pxEl.textContent=fmt(px,2);pxEl.className='px-big '+cls;}
   const uEl=g('pxUsd');if(uEl)uEl.textContent='≈ '+fmt(px,2)+' USD';
   const cEl=g('chg');if(cEl){cEl.textContent=(isUp?'+':'')+chg.toFixed(2)+'% '+(isUp?'+':'')+fmt(Math.abs((chg/100)*px),2);cEl.className='stat-val '+cls;}
-  const hEl=g('hi');if(hEl)hEl.textContent=fmt(hi,2);
-  const lEl=g('lo');if(lEl)lEl.textContent=fmt(lo,2);
-  const vEl=g('vol');if(vEl)vEl.textContent=fmtVol(vol);
-  const vuEl=g('volU');if(vuEl)vuEl.textContent=fmtVol(vol*px);
+  g('hi').textContent=fmt(hi,2);g('lo').textContent=fmt(lo,2);
+  g('vol').textContent=fmtVol(vol);g('volU').textContent=fmtVol(vol*px);
   const mEl=g('obMidPx');if(mEl){mEl.textContent=fmt(px,2);mEl.className='ob-mid-px '+cls;}
   const maEl=g('obMidArr');if(maEl){maEl.textContent=isUp?'▲':'▼';maEl.className='ob-mid-arr '+cls;}
   const muEl=g('obMidUsd');if(muEl)muEl.textContent=fmt(px,2)+' USD';
+  // update price field in sheet if open
+  if(g('tsPrice')&&!g('tsPrice').value)g('tsPrice').value=fmt(px,2);
 }
 
 /* ORDERBOOK */
 function renderOB(){
-  const askEl=g('obAsks'),bidEl=g('obBids');
-  if(!askEl||!bidEl)return;
+  const askEl=g('obAsks'),bidEl=g('obBids');if(!askEl||!bidEl)return;
   const ROWS=8;
   const getP=r=>parseFloat(r.price||r[0]||0);
   const getQ=r=>parseFloat(r.quantity||r.qty||r[1]||0);
@@ -481,14 +626,10 @@ function renderOB(){
       <span class="ob-tot">${t.toFixed(6)}</span>
     </div>`;
   }
-  if(obView!=='buy'){
-    const a=asks.slice(0,ROWS),mT=maxT(a);
-    askEl.innerHTML=[...a].reverse().map(r=>row(r,'ask',mT)).join('');
-  } else askEl.innerHTML='';
-  if(obView!=='sell'){
-    const b=bids.slice(0,ROWS),mT=maxT(b);
-    bidEl.innerHTML=b.map(r=>row(r,'bid',mT)).join('');
-  } else bidEl.innerHTML='';
+  if(obView!=='buy'){const a=asks.slice(0,ROWS),mT=maxT(a);askEl.innerHTML=[...a].reverse().map(r=>row(r,'ask',mT)).join('');}
+  else askEl.innerHTML='';
+  if(obView!=='sell'){const b=bids.slice(0,ROWS),mT=maxT(b);bidEl.innerHTML=b.map(r=>row(r,'bid',mT)).join('');}
+  else bidEl.innerHTML='';
 }
 
 /* TRADES */
@@ -504,49 +645,50 @@ function renderTrades(){
   }).join('');
 }
 
-/* CHART */
-async function loadChart(iv,btn){
-  currentInterval=iv;
-  document.querySelectorAll('.iv').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  const res=await fetch(`/api/p2p/klines?symbol=${SYM}&interval=${iv}&limit=300`).then(r=>r.json()).catch(()=>({}));
-  const raw=res.klines||(Array.isArray(res)?res:[]);
-  const data=raw.map(k=>({
-    time:Math.floor((k.openTime||k[0]||0)/1000),
-    open:+(k.open||k[1]||0),high:+(k.high||k[2]||0),
-    low:+(k.low||k[3]||0),close:+(k.close||k[4]||0)
-  })).filter(c=>c.time>0).sort((a,b)=>a.time-b.time);
-  if(candleSeries&&data.length)candleSeries.setData(data);
-  const last=data[data.length-1];
-  if(last){
-    const d=new Date(last.time*1000);
-    const off=-d.getTimezoneOffset()/60;
-    g('chartTime').textContent=d.toLocaleTimeString('en-GB')+' (UTC'+(off>=0?'+':'')+off+')';
-  }
+/* ====== TRADINGVIEW CHART ====== */
+function initTV(iv){
+  currentIv=iv||currentIv;
+  const c=g('tv_chart_container');
+  c.innerHTML='';
+  const h=Math.max(180,c.parentElement.offsetHeight-50);
+  c.style.height=h+'px';
+  if(typeof TradingView==='undefined')return;
+  tvWidget=new TradingView.widget({
+    autosize:true,
+    symbol:'BINANCE:BTCUSDT',
+    interval:currentIv,
+    timezone:'Etc/UTC',
+    theme:'dark',
+    style:'1',
+    locale:'en',
+    toolbar_bg:'#060c14',
+    enable_publishing:false,
+    withdateranges:false,
+    hide_top_toolbar:true,
+    hide_side_toolbar:false,
+    allow_symbol_change:false,
+    save_image:false,
+    container_id:'tv_chart_container',
+    studies:['MASimple@tv-scriptstd','MASimple@tv-scriptstd','Volume@tv-scriptstd'],
+    overrides:{
+      'paneProperties.background':'#060c14',
+      'paneProperties.backgroundType':'solid',
+      'scalesProperties.textColor':'#8fa0bb',
+      'gridProperties.color':'rgba(255,255,255,0.04)',
+      'mainSeriesProperties.candleStyle.upColor':'#1db26e',
+      'mainSeriesProperties.candleStyle.downColor':'#e84d4d',
+      'mainSeriesProperties.candleStyle.borderUpColor':'#1db26e',
+      'mainSeriesProperties.candleStyle.borderDownColor':'#e84d4d',
+      'mainSeriesProperties.candleStyle.wickUpColor':'#1db26e',
+      'mainSeriesProperties.candleStyle.wickDownColor':'#e84d4d',
+    }
+  });
 }
 
-function initChart(){
-  const el=g('chartContainer');
-  if(chart||!el||typeof LightweightCharts==='undefined')return;
-  const h=Math.max(180,Math.floor((window.innerHeight-330)*0.78));
-  el.style.height=h+'px';
-  chart=LightweightCharts.createChart(el,{
-    width:el.clientWidth||(window.innerWidth-36),height:h,
-    layout:{background:{color:'#060c14'},textColor:'#8fa0bb'},
-    grid:{vertLines:{color:'rgba(255,255,255,.04)'},horzLines:{color:'rgba(255,255,255,.04)'}},
-    crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
-    rightPriceScale:{borderColor:'rgba(255,255,255,.08)'},
-    timeScale:{borderColor:'rgba(255,255,255,.08)',timeVisible:true,secondsVisible:false}
-  });
-  candleSeries=chart.addCandlestickSeries({
-    upColor:'#1db26e',downColor:'#e84d4d',
-    borderUpColor:'#1db26e',borderDownColor:'#e84d4d',
-    wickUpColor:'#1db26e',wickDownColor:'#e84d4d'
-  });
-  window.addEventListener('resize',()=>{
-    chart.applyOptions({width:el.clientWidth||(window.innerWidth-36)});
-  });
-  loadChart(currentInterval,document.querySelector('.iv.active'));
+function setIv(iv,btn){
+  document.querySelectorAll('.iv').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  initTV(iv);
 }
 
 /* REST */
@@ -563,7 +705,7 @@ async function fetchREST(){
 /* WEBSOCKET */
 function connectWS(){
   try{
-    const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws://')+location.host);
+    const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);
     ws.onopen=()=>ws.send(JSON.stringify({type:'subscribe',channel:'ticker',symbol:SYM}));
     ws.onmessage=e=>{
       try{
@@ -577,23 +719,74 @@ function connectWS(){
   }catch(ex){}
 }
 
-/* PAIRS */
+/* ====== TRADE SHEET ====== */
+function openTradeSheet(side){
+  tradeTab=side||'buy';
+  setTradeTab(tradeTab,true);
+  // prefill price
+  if(lastPx>0){g('tsPrice').value=fmt(lastPx,2);}
+  // show/hide auth sections
+  const li=isLoggedIn();
+  g('tsLoggedOut').style.display=li?'none':'block';
+  g('tsLoggedIn').style.display=li?'block':'none';
+  g('tsOverlay').classList.add('open');
+  g('tsSheet').classList.add('open');
+}
+function closeTradeSheet(){
+  g('tsOverlay').classList.remove('open');
+  g('tsSheet').classList.remove('open');
+}
+function setTradeTab(side,noRender){
+  tradeTab=side;
+  const buyActive=side==='buy';
+  g('tsBuyTab').classList.toggle('active',buyActive);
+  g('tsSellTab').classList.toggle('active',!buyActive);
+  // update action button
+  const btn=g('tsActionBtn');
+  if(btn){
+    btn.className='ts-action-btn '+(buyActive?'buy':'sell');
+    btn.textContent=(buyActive?'Buy':'Sell')+' BTC';
+  }
+  // update avail unit label
+  const uEl=g('tsAvailUnit');if(uEl)uEl.textContent=buyActive?'USDT':'BTC';
+  const maxEl=g('tsMaxRow');if(maxEl){
+    maxEl.innerHTML=(buyActive?'Max Buy <span id="tsMaxVal">0.000000 BTC</span>':'Max Sell <span id="tsMaxVal">0.000000 BTC</span>');
+  }
+}
+function setOT(el){
+  el.parentElement.querySelectorAll('.ts-ot').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+function stepField(id,step){
+  const el=g(id);if(!el)return;
+  el.value=(parseFloat(el.value||0)+step).toFixed(id==='tsAmt'?6:2);
+  calcTotal();
+}
+function onSlider(v){
+  g('tsRange').value=v;
+  // if logged in, calc amount from balance
+}
+function calcTotal(){
+  const px=parseFloat(g('tsPrice').value||0);
+  const amt=parseFloat(g('tsAmt').value||0);
+  if(px&&amt)g('tsTotal').value=(px*amt).toFixed(2);
+}
+function submitOrder(){
+  if(!isLoggedIn()){location.href='/login';return;}
+  alert('Trading coming soon!');
+}
+
+/* ====== PAIRS ====== */
 const COIN_CLR={BTC:'coin-btc',ETH:'coin-eth',BNB:'coin-bnb',SOL:'coin-sol',USDC:'coin-usdc',ADA:'coin-ada',XLM:'coin-xlm',LINK:'coin-link',DOGE:'coin-doge',XRP:'coin-xrp'};
 const COIN_LTR={BTC:'₿',ETH:'Ξ',BNB:'B',SOL:'◎',USDC:'$',ADA:'₳',XLM:'✦',LINK:'⬡',DOGE:'Ð',XRP:'✕'};
-
-function openPairs(){
-  g('pairsPage').classList.add('open');
-  if(!pairsLoaded)loadPairs();
-}
+function openPairs(){g('pairsPage').classList.add('open');if(!pairsLoaded)loadPairs();}
 function closePairs(){g('pairsPage').classList.remove('open');}
-
 async function loadPairs(){
   pairsLoaded=true;
   const res=await fetch('/api/v1/market/tickers').then(r=>r.json()).catch(()=>({}));
   allPairs=res.tickers||res.data||(Array.isArray(res)?res:[]);
   renderPairs(allPairs);
 }
-
 function renderPairs(list){
   const el=g('pairsList');if(!el)return;
   if(!list||!list.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#8fa0bb">No pairs found</div>';return;}
@@ -615,50 +808,28 @@ function renderPairs(list){
         <div class="pair-sym">${base}<span>/USDT</span></div>
         <div class="pair-vol-lbl">${fmtVol(vol)}</div>
       </div>
-      <div class="pair-px">${fmt(px,px<1?4:px<100?2:2)}</div>
+      <div class="pair-px-col">${fmt(px,px<1?4:2)}</div>
       <div class="pair-chg"><span class="pair-chg-badge ${isUp?'up':'dn'}">${isUp?'+':''}${chg.toFixed(2)}%</span></div>
     </div>`;
   }).join('');
 }
+function filterPairs(q){renderPairs(allPairs.filter(p=>(p.symbol||'').toLowerCase().includes(q.toLowerCase())));}
+function setPairCat(el){document.querySelectorAll('.pct').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderPairs(allPairs);}
+function setPairFilter(el){document.querySelectorAll('.pf').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderPairs(allPairs);}
+function selectPair(sym){closePairs();location.href='/trade/spot/'+sym;}
 
-function filterPairs(q){
-  const f=allPairs.filter(p=>(p.symbol||'').toLowerCase().includes(q.toLowerCase()));
-  renderPairs(f);
-}
-function setPairCat(el){
-  document.querySelectorAll('.pct').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  renderPairs(allPairs);
-}
-function setPairFilter(el){
-  document.querySelectorAll('.pf').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  renderPairs(allPairs);
-}
-function selectPair(sym){
-  closePairs();
-  location.href='/trade/spot/'+sym;
-}
-
-/* INIT */
+/* ====== INIT ====== */
 document.addEventListener('DOMContentLoaded',()=>{
+  updateHeaderForAuth();
   fetchREST();
   connectWS();
   setInterval(fetchREST,10000);
-  // Use ResizeObserver to init chart only when container has real dimensions
-  const chartEl = g('chartContainer');
-  const ro = new ResizeObserver(entries => {
-    for(const e of entries){
-      if(e.contentRect.width > 0 && !chart){
-        ro.disconnect();
-        initChart();
-      }
-    }
-  });
-  ro.observe(chartEl);
-  // Fallback
-  setTimeout(()=>{ if(!chart) initChart(); }, 800);
+  // calc total on input
+  ['tsPrice','tsAmt'].forEach(id=>{const el=g(id);if(el)el.addEventListener('input',calcTotal);});
 });
 </script>
+
+<!-- Load TradingView AFTER body so #tv_chart_container exists -->
+<script src="https://s3.tradingview.com/tv.js" onload="initTV('1')"></script>
 </body>
 </html>
