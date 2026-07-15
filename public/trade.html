@@ -531,7 +531,7 @@ let SYM = (location.pathname.split('/').pop()||'BTCUSDT').toUpperCase()||'BTCUSD
 if(!SYM||SYM==='SPOT')SYM='BTCUSDT';
 let asks=[], bids=[], trades=[];
 let obView='both', obDecimals=2;
-let allPairs=[], pairsLoaded=false;
+let allPairs=[], allFutures=[], pairsLoaded=false, pairTab='spot';
 let tradeTab='buy';
 let currentIv='1';
 let tvWidget=null;
@@ -654,7 +654,7 @@ function initTV(iv){
     theme:'dark',
     style:'1',
     locale:'en',
-    toolbar_bg:'#060c14',
+    toolbar_bg:'#131722',
     enable_publishing:false,
     hide_top_toolbar:false,
     hide_side_toolbar:false,
@@ -663,14 +663,16 @@ function initTV(iv){
     container_id:'tv_chart_container',
     studies:['MAExp@tv-basicstudies'],
     overrides:{
-      'paneProperties.background':'#060c14',
+      'paneProperties.background':'#131722',
       'paneProperties.backgroundType':'solid',
-      'mainSeriesProperties.candleStyle.upColor':'#1db26e',
-      'mainSeriesProperties.candleStyle.downColor':'#e84d4d',
-      'mainSeriesProperties.candleStyle.borderUpColor':'#1db26e',
-      'mainSeriesProperties.candleStyle.borderDownColor':'#e84d4d',
-      'mainSeriesProperties.candleStyle.wickUpColor':'#1db26e',
-      'mainSeriesProperties.candleStyle.wickDownColor':'#e84d4d',
+      'scalesProperties.textColor':'#848e9c',
+      'gridProperties.color':'rgba(255,255,255,0.04)',
+      'mainSeriesProperties.candleStyle.upColor':'#0ecb81',
+      'mainSeriesProperties.candleStyle.downColor':'#f6465d',
+      'mainSeriesProperties.candleStyle.borderUpColor':'#0ecb81',
+      'mainSeriesProperties.candleStyle.borderDownColor':'#f6465d',
+      'mainSeriesProperties.candleStyle.wickUpColor':'#0ecb81',
+      'mainSeriesProperties.candleStyle.wickDownColor':'#f6465d',
     }
   });
 }
@@ -774,13 +776,25 @@ function closePairs(){g('pairsPage').classList.remove('open');}
 async function loadPairs(){
   pairsLoaded=true;
   try{
-    const data=await fetch('https://api.binance.com/api/v3/ticker/24hr').then(r=>r.json());
-    allPairs=(Array.isArray(data)?data:[]).filter(p=>(p.symbol||'').endsWith('USDT')).sort((a,b)=>parseFloat(b.quoteVolume||0)-parseFloat(a.quoteVolume||0));
+    const [spot,fut]=await Promise.all([
+      fetch('https://api.binance.com/api/v3/ticker/24hr').then(r=>r.json()),
+      fetch('https://fapi.binance.com/fapi/v1/ticker/24hr').then(r=>r.json()).catch(()=>[])
+    ]);
+    allPairs=(Array.isArray(spot)?spot:[]).filter(p=>(p.symbol||'').endsWith('USDT')).sort((a,b)=>parseFloat(b.quoteVolume||0)-parseFloat(a.quoteVolume||0));
+    allFutures=(Array.isArray(fut)?fut:[]).filter(p=>(p.symbol||'').endsWith('USDT')).sort((a,b)=>parseFloat(b.quoteVolume||0)-parseFloat(a.quoteVolume||0));
   }catch(e){
     const res=await fetch('/api/v1/market/tickers').then(r=>r.json()).catch(()=>({}));
     allPairs=res.ticker||res.tickers||res.data||(Array.isArray(res)?res:[]);
   }
-  renderPairs(allPairs);
+  renderPairs(getPairList());
+}
+function getPairList(){
+  if(pairTab==='futures')return allFutures;
+  if(pairTab==='tradfi'){
+    const TRADFI=['SPCXUSDT','PAXGUSDT','XAUTUSDT','WALUSDT','AAPLUSDT','AMZNUSDT','BABAUSDT','TSLAUSDT','COINUSDT','MSFUSDT','GOOGLUSDT','NFLXUSDT'];
+    return allPairs.filter(p=>TRADFI.includes(p.symbol));
+  }
+  return allPairs;
 }
 function coinIconUrl(base){
   const lower=(base||'').toLowerCase();
@@ -790,7 +804,8 @@ function renderPairs(list){
   const el=g('pairsList');if(!el)return;
   if(!list||!list.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#8fa0bb">No pairs found</div>';return;}
   const COIN_BG={BTC:'#f7931a',ETH:'#627eea',BNB:'#f3ba2f',SOL:'#9945ff',USDC:'#2775ca',ADA:'#0033ad',XLM:'#7ac1e4',LINK:'#2a5ada',DOGE:'#c2a633',XRP:'#00aae4'};
-  el.innerHTML=list.slice(0,60).map(p=>{
+  const isFut=pairTab==='futures';
+  el.innerHTML=list.slice(0,80).map(p=>{
     const sym=p.symbol||'';
     const base=sym.replace(/USDT$|BUSD$/,'');
     const bg=COIN_BG[base]||'#2a3040';
@@ -798,16 +813,17 @@ function renderPairs(list){
     const chg=parseFloat(p.change24h||p.priceChangePercent||0);
     const vol=parseFloat(p.quoteVolume||p.volume24h||0);
     const isUp=chg>=0;
+    const fBadge=isFut?'<span style="font-size:9px;background:#f0b90b;color:#000;border-radius:2px;padding:1px 3px;margin-left:3px;font-weight:700">F</span>':'';
     return `<div class="pair-item" onclick="selectPair('${sym}')">
       <button class="pair-fav" onclick="event.stopPropagation()">
-        <svg viewBox="0 0 24 24" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="#8fa0bb" stroke-width="1.5"/></svg>
+        <svg viewBox="0 0 24 24" width="14" height="14"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="#8fa0bb" stroke-width="1.5"/></svg>
       </button>
-      <div class="pair-icon" style="background:${bg};overflow:hidden;padding:0">
+      <div class="pair-icon" style="background:${bg};overflow:hidden;padding:0;width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center">
         <img src="${coinIconUrl(base)}" width="32" height="32" style="display:block;object-fit:cover"
-          onerror="this.parentElement.innerHTML='<span style=font-size:13px;font-weight:700;color:#fff>${base.charAt(0)}</span>'">
+          onerror="this.style.display='none';this.parentElement.innerHTML='<span style=font-size:13px;font-weight:700;color:#fff>${base.charAt(0)}</span>'">
       </div>
       <div class="pair-info">
-        <div class="pair-sym">${base}<span>/USDT</span></div>
+        <div class="pair-sym">${base}${fBadge}<span style="color:#848e9c;font-weight:400">/USDT</span></div>
         <div class="pair-vol-lbl">${fmtVol(vol)}</div>
       </div>
       <div class="pair-px-col">${fmt(px,px<1?4:2)}</div>
@@ -815,9 +831,14 @@ function renderPairs(list){
     </div>`;
   }).join('');
 }
-function filterPairs(q){renderPairs(allPairs.filter(p=>(p.symbol||'').toLowerCase().includes(q.toLowerCase())));}
-function setPairCat(el){document.querySelectorAll('.pct').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderPairs(allPairs);}
-function setPairFilter(el){document.querySelectorAll('.pf').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderPairs(allPairs);}
+function filterPairs(q){renderPairs(getPairList().filter(p=>(p.symbol||'').toLowerCase().includes(q.toLowerCase())));}
+function setPairCat(el){
+  document.querySelectorAll('.pct').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  pairTab=(el.textContent.trim().toLowerCase());
+  renderPairs(getPairList());
+}
+function setPairFilter(el){document.querySelectorAll('.pf').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderPairs(getPairList());}
 function selectPair(sym){
   closePairs();
   SYM=sym;
