@@ -593,7 +593,7 @@ function openTradePage(symbol, marketType = 'spot') {
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '');
   const finalSymbol = safeSymbol.endsWith('USDTP') ? safeSymbol.replace(/USDTP$/, 'USDT') : safeSymbol;
-  window.location.href = `/chart?symbol=${encodeURIComponent(finalSymbol || 'BTCUSDT')}`;
+  window.location.href = `/trade/${market}/${encodeURIComponent(finalSymbol || 'BTCUSDT')}`;
 }
 
 function openCopyTradingChart(symbol) {
