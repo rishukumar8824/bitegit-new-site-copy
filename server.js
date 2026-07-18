@@ -2334,10 +2334,20 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
   }
 
   let aadhaarDigits = '';
-  // Images are stored client-side only; we only verify aadhaar digits here
-  const aadhaarFrontImage  = { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
-  const aadhaarBackImage   = { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
-  const selfieWithDocumentImage = { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
+  // Parse image data URLs from request body
+  function parseImageField(raw) {
+    const s = String(raw || '').trim();
+    if (!s || !s.startsWith('data:')) return { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
+    const mimeMatch = s.match(/^data:([^;]+);base64,/);
+    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const b64 = s.replace(/^data:[^;]+;base64,/, '');
+    const buf = Buffer.from(b64, 'base64');
+    const sha256 = crypto.createHash('sha256').update(buf).digest('hex');
+    return { dataUrl: s, mimeType, sizeBytes: buf.length, sha256 };
+  }
+  const aadhaarFrontImage       = parseImageField(req.body?.aadhaarFrontImage);
+  const aadhaarBackImage        = parseImageField(req.body?.aadhaarBackImage);
+  const selfieWithDocumentImage = parseImageField(req.body?.selfieImage);
   try {
     aadhaarDigits = normalizeAadhaarNumber(req.body?.aadhaarNumber);
   } catch (error) {
@@ -2382,16 +2392,27 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
       nextStatus = 'PENDING_REVIEW';
     }
 
-    // Store only hashes/metadata — not raw image bytes — to keep MongoDB documents small
-    // and avoid request timeouts on constrained hosting
+    // Encrypt and store images for admin review
+    const encAadhaarFront = aadhaarFrontImage.dataUrl ? encryptText(aadhaarFrontImage.dataUrl) : '';
+    const encAadhaarBack  = aadhaarBackImage.dataUrl  ? encryptText(aadhaarBackImage.dataUrl)  : '';
+    const encSelfie       = selfieWithDocumentImage.dataUrl ? encryptText(selfieWithDocumentImage.dataUrl) : '';
+
+    const firstName = String(req.body?.firstName || '').trim();
+    const lastName  = String(req.body?.lastName  || '').trim();
+    const dob       = String(req.body?.dateOfBirth || '').trim();
+
     await repos.upsertP2PKycRequest(userId, email, {
       requestId,
       status: nextStatus,
+      firstName,
+      lastName,
+      fullName: [firstName, lastName].filter(Boolean).join(' ') || '',
+      dateOfBirth: dob,
       aadhaarMasked: maskAadhaar(aadhaarDigits),
       aadhaarHash: hashSensitive(aadhaarDigits),
-      aadhaarFrontImage: '',
-      aadhaarBackImage: '',
-      selfieWithDocumentImage: '',
+      aadhaarFrontImage: encAadhaarFront,
+      aadhaarBackImage: encAadhaarBack,
+      selfieWithDocumentImage: encSelfie,
       rejectionReason,
       faceMatch: {
         provider: faceMatch.provider,
@@ -5455,9 +5476,21 @@ app.get('/api/admin/users/:userId/kyc', requiresAdminSession, async (req, res) =
 
 app.get('/api/admin/users/:userId/kyc/documents', requiresAdminSession, async (req, res) => {
   try {
-    if (!adminStore) return res.json({ documents: [] });
-    const documents = await adminStore.getKycDocuments(req.params.userId);
-    return res.json({ documents: Array.isArray(documents) ? documents : [] });
+    if (!adminStore) return res.json({});
+    const data = await adminStore.getKycDocuments(req.params.userId);
+    // Return metadata + availability flags (binary images served via /kyc/image/:type)
+    return res.json({
+      userId: data.userId,
+      status: data.status,
+      fullName: data.fullName,
+      dob: data.dob,
+      aadhaarLast4: data.aadhaarLast4,
+      aadhaarMasked: data.aadhaarMasked,
+      submittedAt: data.submittedAt,
+      hasAadhaarFront: !!data.aadhaarFront,
+      hasAadhaarBack: !!data.aadhaarBack,
+      hasSelfie: !!data.selfie,
+    });
   } catch (e) { return res.status(500).json({ message: 'Failed to get KYC documents', error: e.message }); }
 });
 

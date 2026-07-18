@@ -1088,6 +1088,8 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return {
       userId: normalizedUserId,
       status: String(profile?.kycStatus || kycRequest.status || 'PENDING').toUpperCase(),
+      fullName: kycRequest.fullName || [kycRequest.firstName, kycRequest.lastName].filter(Boolean).join(' ') || '',
+      dob: kycRequest.dateOfBirth || '',
       aadhaarFront,
       aadhaarBack,
       selfie,
