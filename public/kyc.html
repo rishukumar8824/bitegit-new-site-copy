@@ -320,7 +320,7 @@
   <div class="sub-bottom" id="resPrivacyWrap">
     <div id="resPrivacyText" class="privacy-text hidden">By selecting agree and continue I agree that I have read the <a href="#" class="privacy-link" onclick="return false">Privacy Notice</a> and I agree to the processing of my personal data, as described in <a href="#" class="privacy-link" onclick="return false">Consent</a>.</div>
     <button class="sub-continue" id="resContinueBtn" onclick="goToSteps()" disabled>Continue</button>
-    <div class="powered-by">Powered by Bitcovex Verify</div>
+    <div class="powered-by">Powered by Sumsub</div>
   </div>
 </div>
 
@@ -365,7 +365,7 @@
   </div>
   <div class="sub-bottom">
     <button class="sub-continue" onclick="showScreen('screenDocType')">Continue</button>
-    <div class="powered-by">Powered by Bitcovex Verify</div>
+    <div class="powered-by">Powered by Sumsub</div>
   </div>
 </div>
 
@@ -417,7 +417,7 @@
   </div>
   <div class="sub-bottom">
     <button class="sub-continue" id="docTypeContinueBtn" onclick="goToDocUpload()" disabled>Continue</button>
-    <div class="powered-by">Powered by Bitcovex Verify</div>
+    <div class="powered-by">Powered by Sumsub</div>
   </div>
 </div>
 
@@ -578,8 +578,9 @@
   </div>
   <div style="display:flex;flex-direction:column;align-items:center;padding:2.5rem 1.5rem 1.5rem;gap:.8rem;text-align:center">
     <div style="width:84px;height:84px;border-radius:50%;background:rgba(52,152,219,.1);border:2px solid rgba(52,152,219,.2);display:flex;align-items:center;justify-content:center;font-size:2.7rem">⏳</div>
-    <div style="font-size:1.3rem;font-weight:800">Under Review</div>
-    <div style="font-size:.82rem;color:#666;line-height:1.6;max-width:250px">Your documents have been submitted and are being reviewed.</div>
+    <div style="font-size:1.3rem;font-weight:800">Documents Submitted</div>
+    <div style="font-size:.85rem;color:#ddd;line-height:1.6;max-width:270px;font-weight:600">We will review within 24 to 48 hours</div>
+    <div style="font-size:.78rem;color:#555;line-height:1.6;max-width:250px">You'll receive a notification once your identity has been verified.</div>
   </div>
   <div style="margin:0 1rem;background:#111;border:1px solid rgba(52,152,219,.15);border-radius:16px;padding:1.1rem 1rem">
     <div style="font-size:.72rem;font-weight:700;color:#3498db;margin-bottom:.85rem">⏱ Review Timeline</div>
@@ -924,6 +925,7 @@ function submitKyc(){
     btn.disabled=false; btn.textContent='Submit Verification';
     if(d&&d.kyc&&d.kyc.status==='VERIFIED'){showScreen('screenVerified');}
     else if(d&&d.message==='KYC is already verified for this account.'){showScreen('screenVerified');}
+    else if(d&&(d.kyc&&(d.kyc.status==='PENDING'||d.kyc.status==='SUBMITTED'||d.kyc.status==='UNDER_REVIEW'))){showScreen('screenPending');}
     else if(d&&!String(d.message||'').toLowerCase().includes('error')&&!String(d.message||'').toLowerCase().includes('invalid')){showScreen('screenPending');}
     else{showToast(d.message||'Submission failed. Try again.','#f6465d');}
   })
@@ -948,7 +950,9 @@ function submitKyc(){
       setTimeout(function(){showScreen('screenVerified');},300);
     } else if(s==='PENDING'||s==='SUBMITTED'||s==='UNDER_REVIEW'){
       badge.className='pending-badge'; badge.textContent='⏳ Under Review';
-      verifyWrap.innerHTML='<button class="verify-btn" style="background:#2563eb;cursor:default;font-size:.78rem">Under Review</button>';
+      verifyWrap.innerHTML='<button class="verify-btn" style="background:#2563eb;cursor:default;font-size:.78rem" onclick="showScreen(\'screenPending\')">Under Review</button>';
+      // Auto-show pending screen
+      setTimeout(function(){showScreen('screenPending');},300);
     } else if(s==='REJECTED'||s==='FAILED'){
       badge.className='not-verified'; badge.textContent='✕ Rejected';
       verifyWrap.innerHTML='<button class="verify-btn" onclick="showScreen(\'screenDetails\')">Re-submit</button>';
