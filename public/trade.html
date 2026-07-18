@@ -807,9 +807,41 @@ function calcTotal(){
   const amt=parseFloat(g('tsAmt').value||0);
   if(px&&amt)g('tsTotal').value=(px*amt).toFixed(2);
 }
-function submitOrder(){
+function showToast(msg,type){
+  const el=document.createElement('div');
+  const bg=type==='error'?'#e84d4d':type==='success'?'#1db26e':'#1a2540';
+  el.style.cssText=`position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:${bg};color:#fff;padding:10px 22px;border-radius:10px;font-size:14px;font-weight:500;z-index:999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.4);pointer-events:none`;
+  el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+async function submitOrder(){
   if(!isLoggedIn()){location.href='/login';return;}
-  alert('Trading coming soon!');
+  const price=parseFloat(g('tsPrice').value||0);
+  const amt=parseFloat(g('tsAmt').value||0);
+  const total=parseFloat(g('tsTotal').value||0)||(price*amt)||0;
+  if(!total||total<10){showToast('Minimum order is 10 USDT','error');return;}
+  const btn=g('tsActionBtn');
+  const base=SYM.replace(/USDT$/,'');
+  if(btn){btn.disabled=true;btn.textContent='Placing order...';}
+  try{
+    const res=await fetch('/api/trade/orders',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('bitcovex_token')||'')},
+      body:JSON.stringify({symbol:SYM,market:'spot',side:tradeTab,amountUsdt:total})
+    }).then(r=>r.json());
+    if(res.order){
+      closeTradeSheet();
+      showToast(`${tradeTab==='buy'?'Bought':'Sold'} ${res.order.estimatedQty} ${base} @ $${res.order.referencePrice}`,'success');
+    }else{
+      showToast(res.message||'Order failed. Try again.','error');
+    }
+  }catch(e){
+    showToast('Network error. Please try again.','error');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent=(tradeTab==='buy'?'Buy ':'Sell ')+base;}
+  }
 }
 
 /* ====== PAIRS ====== */
@@ -949,7 +981,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   fetchBinanceTicker();
   fetchBinanceTrades();
   fetchBinanceOrderbook();
-  connectWS();
   setInterval(fetchBinanceTicker,5000);
   setInterval(fetchBinanceTrades,5000);
   setInterval(fetchBinanceOrderbook,3000);
