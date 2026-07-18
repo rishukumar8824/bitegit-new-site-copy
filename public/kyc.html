@@ -2,315 +2,364 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1"/>
-  <meta name="theme-color" content="#000"/>
-  <title>Identity Verification — Bitcovex</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>KYC Verification — Bitcovex</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    html,body{width:100%;min-height:100%;background:#060608;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-    .hidden{display:none!important}
-    .screen{min-height:100vh;display:flex;flex-direction:column;background:#060608}
+    html,body{background:#0b0c14;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;min-height:100%;-webkit-font-smoothing:antialiased}
 
-    /* ── Topbar ── */
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem .5rem;position:sticky;top:0;background:#060608;z-index:50}
-    .back-btn{background:rgba(255,255,255,.08);border:none;color:#fff;font-size:1.1rem;cursor:pointer;line-height:1;padding:.45rem .7rem;border-radius:50px;display:flex;align-items:center;justify-content:center;width:36px;height:36px}
-    .biz-btn{background:rgba(246,143,21,.12);border:1px solid rgba(246,143,21,.3);border-radius:50px;color:#F68F15;font-size:.75rem;padding:.4rem .85rem;cursor:pointer;font-weight:700}
+    /* ── Hidden / Screen System ── */
+    .screen{display:block}
+    .screen.hidden{display:none!important}
 
-    /* ── Status Screen ── */
-    .status-banner{margin:.9rem 1rem .4rem;background:linear-gradient(135deg,rgba(246,143,21,.13) 0%,rgba(246,143,21,.03) 100%);border:1px solid rgba(246,143,21,.22);border-radius:18px;padding:1.1rem 1.1rem;position:relative;overflow:hidden}
-    .status-banner::before{content:'';position:absolute;top:-20px;right:-20px;width:90px;height:90px;background:radial-gradient(circle,rgba(246,143,21,.18) 0%,transparent 70%);pointer-events:none}
-    .level-badge{display:inline-flex;align-items:center;gap:.35rem;background:rgba(246,143,21,.15);border:1px solid rgba(246,143,21,.35);border-radius:50px;padding:.22rem .65rem;font-size:.67rem;font-weight:800;color:#F68F15;margin-bottom:.55rem}
-    .kyc-lvl-card{background:rgba(255,255,255,.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:.95rem 1rem;margin-bottom:.55rem;transition:border-color .2s}
-    .kyc-lvl-card:first-child{border-color:rgba(246,143,21,.2);background:rgba(246,143,21,.05)}
-    .lvl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem}
-    .lvl-name{font-size:.76rem;font-weight:700;color:#aaa;display:flex;align-items:center;gap:.35rem}
-    .lvl-name::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5}
-    .lvl-badge-unverified{background:rgba(246,70,93,.12);color:#f6465d;border:1px solid rgba(246,70,93,.2);font-size:.63rem;font-weight:800;padding:.18rem .58rem;border-radius:50px}
-    .lvl-badge-pending{background:rgba(52,152,219,.12);color:#3498db;border:1px solid rgba(52,152,219,.25);font-size:.63rem;font-weight:800;padding:.18rem .58rem;border-radius:50px}
-    .lvl-badge-verified{background:rgba(0,184,151,.12);color:#00b897;border:1px solid rgba(0,184,151,.25);font-size:.63rem;font-weight:800;padding:.18rem .58rem;border-radius:50px}
-    .lvl-badge-locked{background:#111;color:#444;border:1px solid #222;font-size:.63rem;font-weight:800;padding:.18rem .58rem;border-radius:50px}
-    .lvl-desc{font-size:.72rem;color:#555;margin-bottom:.75rem;line-height:1.5}
-    .lvl-stats{display:flex;gap:.4rem}
-    .lvl-stat{flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:9px;padding:.45rem .55rem;text-align:center}
-    .lvl-stat-label{font-size:.57rem;color:#444;margin-bottom:.12rem;text-transform:uppercase;letter-spacing:.03em}
-    .lvl-stat-val{font-size:.74rem;font-weight:700}
+    /* ── Top Bar ── */
+    .topbar{display:flex;align-items:center;padding:.9rem 1rem;gap:.5rem;position:sticky;top:0;z-index:10;background:#0b0c14;border-bottom:1px solid rgba(255,255,255,.05)}
+    .back-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.07);border:none;color:#bbb;font-size:1.3rem;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-weight:300;line-height:1}
+    .back-btn:active{background:rgba(255,255,255,.13)}
+    .topbar-title{font-size:.97rem;font-weight:700;flex:1;text-align:center;letter-spacing:-.01em}
+    .topbar-right{width:38px}
+    .biz-btn{background:rgba(246,143,21,.12);border:1px solid rgba(246,143,21,.25);border-radius:20px;padding:.35rem .8rem;color:#F68F15;font-size:.72rem;font-weight:700;cursor:pointer}
 
-    /* ── Proof of Identity ── */
-    .poi-title{font-size:1.35rem;font-weight:800;padding:.9rem 1rem .1rem;letter-spacing:-.02em}
-    .poi-section-label{font-size:.69rem;color:#555;padding:.75rem 1rem .35rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
-    .country-row{margin:0 1rem;background:rgba(255,255,255,.05);border-radius:16px;padding:.9rem 1.1rem;display:flex;align-items:center;gap:.75rem;cursor:pointer;border:1px solid rgba(255,255,255,.08);transition:border-color .2s,background .15s}
-    .country-row:active{background:rgba(255,255,255,.08)}
-    .country-flag{font-size:1.5rem;line-height:1}
-    .country-name{flex:1;font-size:.97rem;font-weight:700}
-    .location-btn{display:flex;align-items:center;gap:.3rem;color:#555;font-size:.75rem;background:rgba(255,255,255,.05);border-radius:50px;padding:.25rem .65rem;border:1px solid rgba(255,255,255,.08)}
+    /* ── Cards ── */
+    .card{background:#13151f;border:1px solid rgba(255,255,255,.07);border-radius:20px}
+    .card-sm{background:#13151f;border:1px solid rgba(255,255,255,.07);border-radius:16px}
 
-    .quick-section{padding:.4rem 1rem .6rem}
-    .aadhaar-card{position:relative;background:linear-gradient(135deg,rgba(246,143,21,.1) 0%,rgba(246,143,21,.04) 100%);border:1.5px solid rgba(246,143,21,.3);border-radius:16px;padding:1.1rem 1.1rem;display:flex;align-items:center;gap:.9rem;cursor:pointer;overflow:hidden;transition:border-color .2s,background .15s}
-    .aadhaar-card:active{background:rgba(246,143,21,.15)}
-    .aadhaar-card::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(246,143,21,.05),transparent);pointer-events:none}
-    .recommended-badge{position:absolute;top:0;right:0;background:linear-gradient(135deg,#F68F15,#e07a0d);color:#fff;font-size:.62rem;font-weight:800;padding:.25rem .75rem;border-radius:0 14px 0 10px;letter-spacing:.03em}
-    .aadhaar-icon{width:40px;height:40px;flex-shrink:0;background:rgba(246,143,21,.15);border-radius:50%;display:flex;align-items:center;justify-content:center}
-    .aadhaar-label{font-size:.92rem;font-weight:700}
-    .aadhaar-sub{font-size:.68rem;color:#888;margin-top:.1rem}
+    /* ── CTA Buttons ── */
+    .btn-primary{width:100%;background:linear-gradient(135deg,#F68F15,#e07d0d);border:none;border-radius:50px;padding:1rem;font-size:1rem;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 6px 24px rgba(246,143,21,.3);letter-spacing:.01em}
+    .btn-primary:active{filter:brightness(.9)}
+    .btn-primary:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;background:#2a2a2a}
+    .btn-secondary{width:100%;background:#1a1c28;border:1px solid rgba(255,255,255,.1);border-radius:50px;padding:.95rem;font-size:.95rem;font-weight:700;color:#ccc;cursor:pointer}
+    .btn-ghost{background:none;border:none;cursor:pointer}
 
-    .no-aadhaar-toggle{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;cursor:pointer;font-size:.85rem;color:#777;border-top:1px solid rgba(255,255,255,.05);margin:0 1rem}
-    .toggle-arrow{font-size:.75rem;transition:transform .25s;color:#555}
+    /* ── Status Badges ── */
+    .badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .7rem;border-radius:20px;font-size:.7rem;font-weight:700;letter-spacing:.03em}
+    .badge-unverified{background:rgba(246,70,93,.12);color:#f6465d;border:1px solid rgba(246,70,93,.2)}
+    .badge-pending{background:rgba(52,152,219,.12);color:#3498db;border:1px solid rgba(52,152,219,.2)}
+    .badge-verified{background:rgba(1,188,141,.12);color:#01bc8d;border:1px solid rgba(1,188,141,.2)}
+    .badge-locked{background:rgba(255,255,255,.06);color:#555;border:1px solid rgba(255,255,255,.08)}
+
+    /* ── Level Cards ── */
+    .lvl-card{padding:1.1rem 1.1rem .9rem;position:relative;overflow:hidden}
+    .lvl-card-accent{position:absolute;top:0;left:0;width:3px;height:100%;border-radius:2px 0 0 2px}
+    .lvl-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem}
+    .lvl-name{font-size:.92rem;font-weight:800;letter-spacing:-.01em}
+    .lvl-desc{font-size:.75rem;color:#666;line-height:1.55;margin-bottom:.8rem}
+    .lvl-limits{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+    .lvl-limit-item{background:rgba(255,255,255,.04);border-radius:10px;padding:.5rem .4rem;text-align:center}
+    .lvl-limit-label{font-size:.6rem;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem}
+    .lvl-limit-val{font-size:.82rem;font-weight:800}
+
+    /* ── POI screen ── */
+    .section-label{font-size:.7rem;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.1rem 1rem .5rem}
+    .country-row{display:flex;align-items:center;gap:.7rem;margin:0 1rem .3rem;padding:.85rem 1rem;background:#13151f;border:1px solid rgba(255,255,255,.07);border-radius:16px;cursor:pointer}
+    .country-row:active{background:#191b27}
+    .ci-flag-lg{font-size:1.4rem;width:30px;text-align:center}
+    .country-name-lg{flex:1;font-size:.92rem;font-weight:600;color:#ddd}
+    .chevron{color:#444;font-size:.85rem}
+
+    /* ── Featured doc card (Aadhaar) ── */
+    .doc-featured{margin:0 1rem .6rem;padding:1rem 1.1rem;background:linear-gradient(135deg,rgba(246,143,21,.1),rgba(246,143,21,.04));border:1.5px solid rgba(246,143,21,.25);border-radius:18px;cursor:pointer;position:relative;overflow:hidden;display:flex;align-items:center;gap:1rem}
+    .doc-featured:active{filter:brightness(.9)}
+    .doc-featured-badge{position:absolute;top:0;right:0;background:#F68F15;color:#fff;font-size:.58rem;font-weight:800;padding:.25rem .6rem;border-radius:0 18px 0 12px;letter-spacing:.05em}
+    .doc-icon-circle{width:48px;height:48px;border-radius:50%;background:rgba(246,143,21,.15);border:1.5px solid rgba(246,143,21,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .doc-label{font-size:.95rem;font-weight:800;letter-spacing:-.01em}
+    .doc-sub{font-size:.72rem;color:#888;margin-top:.2rem}
+
+    /* ── Other doc cards ── */
+    .other-docs{display:none;flex-direction:column;gap:.45rem;padding:0 1rem .6rem}
+    .other-docs.open{display:flex}
+    .doc-card{display:flex;align-items:center;gap:.85rem;padding:.85rem 1rem;background:#13151f;border:1px solid rgba(255,255,255,.07);border-radius:14px;cursor:pointer}
+    .doc-card:active{background:#191b27}
+    .doc-icon-sm{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
+    .no-aadhaar-row{display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.4rem 1rem 1rem;cursor:pointer}
+    .no-aadhaar-text{font-size:.78rem;color:#444;font-weight:600}
+    .toggle-arrow{color:#444;font-size:.65rem;transition:transform .25s}
     .toggle-arrow.open{transform:rotate(180deg)}
-    .other-docs{padding:0 1rem;display:flex;flex-direction:column;gap:.5rem;overflow:hidden;transition:max-height .3s ease;max-height:0}
-    .other-docs.open{max-height:320px;padding-bottom:.8rem}
-    .doc-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.9rem 1.1rem;display:flex;align-items:center;gap:.85rem;cursor:pointer;transition:border-color .2s,background .15s}
-    .doc-card:active{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.15)}
-    .doc-icon-wrap{width:36px;height:36px;background:rgba(255,255,255,.07);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
-    .doc-label{font-size:.93rem;font-weight:700}
-    .doc-sub{font-size:.72rem;color:#555;margin-top:.08rem}
 
-    .bottom-area{position:sticky;bottom:0;background:#060608;padding:.85rem 1rem calc(1.2rem + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.06);margin-top:auto}
-    .earn-btn{width:100%;background:linear-gradient(135deg,#F68F15,#e07a0d);border:none;border-radius:50px;padding:.9rem;font-size:.97rem;font-weight:800;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;box-shadow:0 4px 18px rgba(246,143,21,.3)}
-    .earn-btn:active{filter:brightness(.9);transform:scale(.99)}
+    /* ── Bottom sticky ── */
+    .bottom-sticky{position:sticky;bottom:0;background:#0b0c14;padding:.9rem 1rem calc(1.5rem + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.05)}
 
-    /* ── Country Picker ── */
-    .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;flex-direction:column;justify-content:flex-end;backdrop-filter:blur(4px)}
-    .sheet-box{background:#0f0f11;border-radius:24px 24px 0 0;max-height:90vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);border-top:1px solid rgba(255,255,255,.08)}
-    .sheet-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.2rem .8rem}
-    .sheet-title{font-size:1.05rem;font-weight:700}
-    .sheet-close{background:rgba(255,255,255,.1);border:none;color:#fff;font-size:1rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-    .search-wrap{padding:0 1rem .8rem}
-    .search-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:50px;padding:.7rem 1rem .7rem 2.5rem;color:#fff;font-size:.9rem;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%23666' stroke-width='2'/%3E%3Cpath d='M20 20l-4-4' stroke='%23666' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:.85rem center;background-size:15px;font-family:inherit}
+    /* ── Country Sheet ── */
+    .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;backdrop-filter:blur(4px)}
+    .sheet-overlay.hidden{display:none}
+    .sheet-box{width:100%;background:#13151f;border-radius:24px 24px 0 0;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+    .sheet-handle{width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:.75rem auto .2rem}
+    .sheet-header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem .7rem}
+    .sheet-title{font-size:.95rem;font-weight:700}
+    .sheet-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:#aaa;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .search-wrap{padding:.3rem 1rem .6rem}
+    .search-input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.7rem 1rem;color:#fff;font-size:.9rem;outline:none}
     .search-input::placeholder{color:#444}
     .country-list{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
-    .country-list-label{font-size:.7rem;color:#444;padding:.5rem 1.2rem .3rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
-    .country-item{display:flex;align-items:center;gap:.8rem;padding:.75rem 1.2rem;cursor:pointer}
+    .country-list-label{font-size:.65rem;color:#444;padding:.5rem 1rem .3rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+    .country-item{display:flex;align-items:center;gap:.8rem;padding:.75rem 1rem;cursor:pointer;border-top:1px solid rgba(255,255,255,.04)}
     .country-item:active{background:rgba(255,255,255,.05)}
-    .ci-flag{font-size:1.3rem;width:28px;text-align:center}
-    .ci-name{flex:1;font-size:.9rem;color:#ddd;font-weight:500}
-    .ci-code{font-size:.78rem;color:#444}
-    .ci-check{color:#F68F15;font-size:1rem}
+    .ci-flag{font-size:1.2rem;width:26px;text-align:center}
+    .ci-name{flex:1;font-size:.88rem;color:#ddd;font-weight:500}
+    .ci-code{font-size:.75rem;color:#444}
+    .ci-check{color:#F68F15;font-size:.9rem}
 
     /* ── Intro Screen ── */
-    .intro-screen{min-height:100vh;background:#0a0a10;display:flex;flex-direction:column}
+    .intro-screen{min-height:100vh;background:#0b0c14;display:flex;flex-direction:column}
     .intro-close-row{display:flex;justify-content:flex-end;padding:1rem 1rem .5rem}
-    .intro-close{width:36px;height:36px;background:rgba(255,255,255,.1);border:none;border-radius:50%;color:#aaa;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
-    .intro-content{flex:1;padding:1rem 1.2rem 0;display:flex;flex-direction:column;gap:1.5rem}
-    .intro-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:.5rem}
-    .intro-shield{width:72px;height:72px;background:linear-gradient(135deg,rgba(246,143,21,.2),rgba(246,143,21,.06));border:1.5px solid rgba(246,143,21,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem}
-    .intro-heading{font-size:1.2rem;font-weight:800;text-align:center;letter-spacing:-.02em}
-    .intro-sub{font-size:.74rem;color:#555;text-align:center;line-height:1.5}
-    .intro-steps{display:flex;flex-direction:column;gap:.6rem}
-    .intro-step{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:1rem 1rem;display:flex;align-items:center;gap:.9rem;transition:border-color .2s}
-    .intro-step-num{width:32px;height:32px;border-radius:50%;background:rgba(246,143,21,.15);border:1px solid rgba(246,143,21,.3);color:#F68F15;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-    .intro-step-title{font-size:.93rem;font-weight:700;color:#eee}
-    .intro-step-sub{font-size:.73rem;color:#555;margin-top:.12rem}
-    .intro-footer{padding:1.2rem 1rem calc(2.5rem + env(safe-area-inset-bottom))}
-    .continue-btn{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;border-radius:14px;padding:1rem;font-size:1rem;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,.35)}
-    .continue-btn:active{filter:brightness(.9)}
-    .powered-by{text-align:center;font-size:.7rem;color:#333;margin-top:.75rem}
+    .intro-close{width:36px;height:36px;background:rgba(255,255,255,.08);border:none;border-radius:50%;color:#aaa;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .intro-content{flex:1;padding:.5rem 1.2rem 0;display:flex;flex-direction:column;gap:1.4rem}
+    .intro-hero{display:flex;flex-direction:column;align-items:center;gap:.7rem;text-align:center}
+    .intro-shield-ring{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,rgba(246,143,21,.18),rgba(246,143,21,.05));border:1.5px solid rgba(246,143,21,.3);display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(246,143,21,.1)}
+    .intro-heading{font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+    .intro-sub{font-size:.75rem;color:#555;line-height:1.6;max-width:260px}
+    .intro-steps-box{background:#13151f;border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:1rem}
+    .intro-step{display:flex;align-items:center;gap:.9rem;padding:.6rem 0}
+    .intro-step+.intro-step{border-top:1px solid rgba(255,255,255,.05)}
+    .intro-step-num{width:34px;height:34px;border-radius:50%;background:rgba(246,143,21,.12);border:1px solid rgba(246,143,21,.25);color:#F68F15;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .intro-step-title{font-size:.9rem;font-weight:700;color:#eee}
+    .intro-step-sub{font-size:.72rem;color:#555;margin-top:.1rem}
+    .intro-footer{padding:1rem 1rem calc(2rem + env(safe-area-inset-bottom))}
+    .powered-by{text-align:center;font-size:.68rem;color:#333;margin-top:.65rem}
 
     /* ── Upload Screens ── */
-    .upload-screen{min-height:100vh;background:#060608;display:flex;flex-direction:column}
+    .upload-screen{min-height:100vh;background:#0b0c14;display:flex;flex-direction:column}
     .upload-topbar{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem}
-    .upload-title-wrap{padding:.2rem 1rem .9rem}
-    .upload-page-title{font-size:1.05rem;font-weight:800;letter-spacing:-.01em}
+    .upload-title-wrap{padding:.2rem 1rem .8rem}
+    .upload-page-title{font-size:1.1rem;font-weight:800;letter-spacing:-.01em}
     .upload-page-sub{font-size:.72rem;color:#555;margin-top:.25rem;line-height:1.5}
     .upload-steps-row{display:flex;align-items:center;padding:0 1rem .8rem;gap:5px}
-    .ustep{height:3px;flex:1;border-radius:3px;background:#1a1a1a;transition:background .3s}
+    .ustep{height:3px;flex:1;border-radius:3px;background:#1c1e2e;transition:background .3s}
     .ustep.active{background:#F68F15}
-    .ustep.done{background:#00b897}
-    .upload-card{margin:0 1rem;background:rgba(255,255,255,.04);border:1.5px dashed rgba(255,255,255,.15);border-radius:20px;min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;padding:2rem 1rem;cursor:pointer;position:relative;transition:border-color .2s,background .15s}
-    .upload-card:active{background:rgba(255,255,255,.07)}
-    .upload-card.has-img{border-style:solid;border-color:#F68F15;background:rgba(246,143,21,.05)}
-    .upload-card input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
-    .upload-card-icon{font-size:3rem;opacity:.35}
-    .upload-card-title{font-size:.97rem;font-weight:700}
-    .upload-card-hint{font-size:.73rem;color:#444;text-align:center;line-height:1.5}
-    .upload-preview-img{width:100%;max-height:195px;object-fit:cover;border-radius:14px;display:none}
-    .tips-row{margin:1rem 1rem 0;background:rgba(246,143,21,.06);border:1px solid rgba(246,143,21,.15);border-radius:14px;padding:.9rem 1.1rem}
-    .tips-title-row{font-size:.76rem;color:#F68F15;font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.35rem}
-    .tip-item{font-size:.72rem;color:#666;margin:.22rem 0;display:flex;gap:.5rem;line-height:1.4}
+    .ustep.done{background:#01bc8d}
+    .upload-zone{margin:0 1rem;background:rgba(255,255,255,.03);border:2px dashed rgba(255,255,255,.1);border-radius:22px;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.9rem;padding:2rem 1.2rem;cursor:pointer;position:relative;transition:border-color .2s,background .15s}
+    .upload-zone:active{background:rgba(255,255,255,.06)}
+    .upload-zone.has-img{border-style:solid;border-color:#F68F15;background:rgba(246,143,21,.04)}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
+    .upload-zone-icon{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:1.7rem}
+    .upload-zone-title{font-size:.97rem;font-weight:700;color:#ccc}
+    .upload-zone-hint{font-size:.72rem;color:#555;text-align:center;line-height:1.5}
+    .upload-preview-img{width:100%;max-height:200px;object-fit:cover;border-radius:16px;display:none}
+    .tips-box{margin:.9rem 1rem 0;background:rgba(246,143,21,.05);border:1px solid rgba(246,143,21,.15);border-radius:14px;padding:.85rem 1rem}
+    .tips-title{font-size:.73rem;color:#F68F15;font-weight:700;margin-bottom:.45rem;display:flex;align-items:center;gap:.35rem}
+    .tip-item{font-size:.71rem;color:#666;margin:.2rem 0;display:flex;gap:.5rem;line-height:1.4}
     .tip-item::before{content:"•";color:#F68F15;flex-shrink:0}
-    .upload-bottom{position:sticky;bottom:0;background:#060608;padding:1rem 1rem calc(1.4rem + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.05);margin-top:auto}
-    .upload-next-btn{width:100%;background:linear-gradient(135deg,#F68F15,#e07a0d);border:none;border-radius:50px;padding:.95rem;font-size:1rem;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 4px 18px rgba(246,143,21,.3)}
-    .upload-next-btn:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;background:#333}
+    .upload-bottom{background:#0b0c14;padding:.9rem 1rem calc(1.5rem + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.05);margin-top:auto}
 
     /* ── Selfie Screen ── */
-    .selfie-guide{margin:0 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:1.8rem 1rem;display:flex;flex-direction:column;align-items:center;gap:.9rem}
-    .selfie-circle{width:140px;height:140px;border-radius:50%;border:2px solid rgba(246,143,21,.3);background:rgba(246,143,21,.05);display:flex;align-items:center;justify-content:center;font-size:4rem;box-shadow:0 0 30px rgba(246,143,21,.1)}
-    .selfie-rules{width:100%;display:flex;flex-direction:column;gap:.55rem;margin-top:.3rem}
-    .selfie-rule{display:flex;align-items:center;gap:.65rem;font-size:.78rem;color:#666}
-    .selfie-rule-icon{font-size:1rem;width:24px;text-align:center;flex-shrink:0}
+    .selfie-guide{margin:0 1rem;background:#13151f;border:1px solid rgba(255,255,255,.07);border-radius:22px;padding:1.8rem 1rem;display:flex;flex-direction:column;align-items:center;gap:1rem}
+    .selfie-circle{width:150px;height:150px;border-radius:50%;border:2px solid rgba(246,143,21,.3);background:rgba(246,143,21,.05);display:flex;align-items:center;justify-content:center;font-size:4rem;box-shadow:0 0 40px rgba(246,143,21,.08);overflow:hidden}
+    .selfie-rules{width:100%;display:flex;flex-direction:column;gap:.5rem;margin-top:.2rem}
+    .selfie-rule{display:flex;align-items:center;gap:.65rem;font-size:.77rem;color:#666}
+    .selfie-rule-icon{font-size:.95rem;width:22px;text-align:center;flex-shrink:0}
+    .selfie-btn{background:linear-gradient(135deg,#F68F15,#e07d0d);border:none;border-radius:50px;padding:.75rem 2.2rem;color:#fff;font-size:.92rem;font-weight:800;cursor:pointer;margin-top:.2rem;box-shadow:0 4px 16px rgba(246,143,21,.25)}
 
-    /* ── Result Screens ── */
-    .result-screen{min-height:100vh;background:#060608;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;gap:1.2rem;text-align:center}
-    .result-icon{font-size:4rem}
-    .result-title{font-size:1.4rem;font-weight:800}
-    .result-sub{font-size:.85rem;color:#555;line-height:1.6;max-width:280px}
+    /* ── Form inputs ── */
+    .form-group{display:flex;flex-direction:column;gap:.35rem}
+    .form-label{font-size:.75rem;color:#666;font-weight:600}
+    .form-input{background:#13151f;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.85rem 1rem;color:#fff;font-size:.93rem;outline:none;width:100%;transition:border-color .2s}
+    .form-input:focus{border-color:rgba(246,143,21,.4)}
+    .form-input::placeholder{color:#333}
+    .consent-row{display:flex;gap:.65rem;align-items:flex-start;cursor:pointer}
+    .consent-check{width:20px;height:20px;margin-top:.1rem;flex-shrink:0;accent-color:#F68F15;cursor:pointer}
+    .consent-text{font-size:.74rem;color:#555;line-height:1.6}
+
+    /* ── Pending screen ── */
+    .timeline-card{margin:0 1rem;background:#13151f;border:1px solid rgba(52,152,219,.15);border-radius:18px;padding:1.2rem 1.1rem}
+    .timeline-row{display:flex;align-items:flex-start;gap:.85rem}
+    .timeline-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+    .timeline-connector{width:1px;height:20px;background:rgba(255,255,255,.08);margin-left:16px}
+
+    /* ── Verified screen ── */
+    .result-screen{min-height:100vh;background:#0b0c14;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;gap:1.2rem;text-align:center}
 
     /* ── Toast ── */
-    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1a1a1e;border:1px solid rgba(255,255,255,.1);color:#fff;padding:.65rem 1.3rem;border-radius:50px;font-size:.82rem;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw;backdrop-filter:blur(10px)}
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1a1c28;border:1px solid rgba(255,255,255,.1);color:#fff;padding:.65rem 1.3rem;border-radius:50px;font-size:.82rem;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:92vw;backdrop-filter:blur(12px)}
     .toast.show{opacity:1}
+
+    /* ── Scrollbar hide ── */
+    .country-list::-webkit-scrollbar{display:none}
   </style>
 </head>
 <body>
 
-<!-- ═══ SCREEN 0: STATUS HOME (default) ═══ -->
+<!-- ═══ SCREEN 0: STATUS HOME ═══ -->
 <div class="screen" id="screenStatus">
   <div class="topbar">
     <button class="back-btn" onclick="history.back()">‹</button>
-    <span style="font-size:1rem;font-weight:700;flex:1;text-align:center">Identity Verification</span>
-    <span style="width:36px"></span>
+    <span class="topbar-title">Identity Verification</span>
+    <span class="topbar-right"></span>
   </div>
 
-  <!-- Hero banner -->
-  <div class="status-banner">
-    <div class="level-badge">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="#F68F15"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
-      KYC Verification
-    </div>
-    <div style="font-size:1.25rem;font-weight:800;margin-bottom:.3rem">Unlock Full Access</div>
-    <div style="font-size:.78rem;color:rgba(255,255,255,.45);line-height:1.5">Complete identity verification to unlock P2P trading, higher limits, and exclusive benefits.</div>
+  <!-- Hero -->
+  <div style="display:flex;flex-direction:column;align-items:center;padding:1.8rem 1rem 1.2rem;text-align:center;gap:.6rem">
+    <div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,rgba(246,143,21,.2),rgba(246,143,21,.05));border:1.5px solid rgba(246,143,21,.35);display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 0 40px rgba(246,143,21,.12)">🛡️</div>
+    <div style="font-size:1.2rem;font-weight:800;letter-spacing:-.02em">Verify Your Identity</div>
+    <div style="font-size:.75rem;color:#555;line-height:1.6;max-width:260px">Complete KYC to unlock full trading access, higher withdrawal limits, and P2P markets.</div>
   </div>
 
-  <!-- KYC Level Cards -->
-  <div style="padding:.5rem 1rem 0">
-    <!-- Lv1 -->
-    <div class="kyc-lvl-card">
-      <div class="lvl-head">
-        <span class="lvl-name">Lv.1 Basic Verification</span>
-        <span id="lv1StatusBadge" class="lvl-badge-unverified">Unverified</span>
-      </div>
-      <div class="lvl-desc">Submit your government-issued ID to unlock P2P trading and increase limits.</div>
-      <div class="lvl-stats">
-        <div class="lvl-stat">
-          <div class="lvl-stat-label">Daily Limit</div>
-          <div class="lvl-stat-val" id="lv1Limit" style="color:#F68F15">—</div>
+  <!-- Level 1 Card -->
+  <div style="margin:0 1rem .65rem" class="card">
+    <div class="lvl-card">
+      <div style="position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,#F68F15,#e07d0d);border-radius:20px 0 0 20px"></div>
+      <div class="lvl-card-head">
+        <div>
+          <div style="font-size:.62rem;color:#F68F15;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Level 1 · Basic</div>
+          <div class="lvl-name">Identity Verification</div>
         </div>
-        <div class="lvl-stat">
-          <div class="lvl-stat-label">Withdrawal</div>
-          <div class="lvl-stat-val" id="lv1Withdraw" style="color:#F68F15">—</div>
+        <span id="lv1StatusBadge" class="badge badge-unverified">Unverified</span>
+      </div>
+      <div class="lvl-desc">Submit a government-issued ID to unlock spot trading, P2P markets, and increased daily limits.</div>
+      <div class="lvl-limits">
+        <div class="lvl-limit-item">
+          <div class="lvl-limit-label">Daily Limit</div>
+          <div class="lvl-limit-val" id="lv1Limit" style="color:#F68F15">—</div>
         </div>
-        <div class="lvl-stat">
-          <div class="lvl-stat-label">P2P</div>
-          <div class="lvl-stat-val" id="lv1P2p" style="color:#f6465d">Locked</div>
+        <div class="lvl-limit-item">
+          <div class="lvl-limit-label">Withdrawal</div>
+          <div class="lvl-limit-val" id="lv1Withdraw" style="color:#F68F15">—</div>
+        </div>
+        <div class="lvl-limit-item">
+          <div class="lvl-limit-label">P2P Access</div>
+          <div class="lvl-limit-val" id="lv1P2p" style="color:#f6465d">Locked</div>
         </div>
       </div>
-    </div>
-
-    <!-- Lv2 -->
-    <div class="kyc-lvl-card" style="opacity:.4">
-      <div class="lvl-head">
-        <span class="lvl-name">Lv.2 Advanced Verification</span>
-        <span class="lvl-badge-locked">Locked</span>
-      </div>
-      <div class="lvl-desc" style="margin-bottom:0">Complete Lv.1 first to unlock advanced limits and priority support.</div>
     </div>
   </div>
 
-  <!-- Verify Now -->
-  <div style="padding:.8rem 1rem calc(2rem + env(safe-area-inset-bottom))" id="verifyNowWrap">
-    <button class="earn-btn" onclick="showScreen('screenPOI')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
-      Verify Now — Earn $20
+  <!-- Level 2 Card (locked) -->
+  <div style="margin:0 1rem 1.2rem;opacity:.35" class="card">
+    <div class="lvl-card">
+      <div style="position:absolute;top:0;left:0;width:3px;height:100%;background:#2a2a2a;border-radius:20px 0 0 20px"></div>
+      <div class="lvl-card-head">
+        <div>
+          <div style="font-size:.62rem;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Level 2 · Advanced</div>
+          <div class="lvl-name">Enhanced Verification</div>
+        </div>
+        <span class="badge badge-locked">🔒 Locked</span>
+      </div>
+      <div class="lvl-desc" style="margin-bottom:0">Complete Level 1 first to unlock advanced trading limits, priority support, and futures access.</div>
+    </div>
+  </div>
+
+  <!-- Feature highlights row -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:0 1rem 1.4rem">
+    <div style="background:#13151f;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:.7rem .5rem;text-align:center">
+      <div style="font-size:1.3rem;margin-bottom:.25rem">💸</div>
+      <div style="font-size:.65rem;color:#888;font-weight:600;line-height:1.3">Higher<br>Limits</div>
+    </div>
+    <div style="background:#13151f;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:.7rem .5rem;text-align:center">
+      <div style="font-size:1.3rem;margin-bottom:.25rem">🤝</div>
+      <div style="font-size:.65rem;color:#888;font-weight:600;line-height:1.3">P2P<br>Trading</div>
+    </div>
+    <div style="background:#13151f;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:.7rem .5rem;text-align:center">
+      <div style="font-size:1.3rem;margin-bottom:.25rem">⭐</div>
+      <div style="font-size:.65rem;color:#888;font-weight:600;line-height:1.3">Priority<br>Support</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div style="padding:0 1rem calc(2.5rem + env(safe-area-inset-bottom))" id="verifyNowWrap">
+    <button class="btn-primary" onclick="showScreen('screenPOI')">
+      Start Verification — Earn $20
     </button>
+    <div style="text-align:center;font-size:.68rem;color:#333;margin-top:.65rem">🔒 End-to-end encrypted · Takes ~2 minutes</div>
   </div>
 </div>
+
 
 <!-- ═══ SCREEN 1: PROOF OF IDENTITY ═══ -->
 <div class="screen hidden" id="screenPOI">
   <div class="topbar">
     <button class="back-btn" onclick="showScreen('screenStatus')">‹</button>
+    <span class="topbar-title">Choose Document</span>
     <button class="biz-btn">Business ⇆</button>
   </div>
 
-  <div class="poi-title">Proof of Identity</div>
-
-  <div class="poi-section-label">Document issuing country</div>
-  <div class="country-row" id="selectedCountryRow" onclick="openCountryPicker()">
-    <span class="country-flag" id="selectedFlag">🇮🇳</span>
-    <span class="country-name" id="selectedName">India</span>
-    <div class="location-btn">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-      Location <span style="font-size:.65rem">▼</span>
+  <div style="padding:1rem 0 .3rem">
+    <div class="section-label">Document issuing country</div>
+    <div class="country-row" id="selectedCountryRow" onclick="openCountryPicker()">
+      <span class="ci-flag-lg" id="selectedFlag">🇮🇳</span>
+      <span class="country-name-lg" id="selectedName">India</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
   </div>
 
-  <div class="poi-section-label">Quick verification</div>
-  <div class="quick-section">
-    <div class="aadhaar-card" onclick="goToIntro('aadhaar')">
-      <div class="recommended-badge">✦ Recommended</div>
-      <div class="aadhaar-icon">
-        <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
-          <circle cx="18" cy="14" r="5" stroke="#F68F15" stroke-width="2" fill="none"/>
-          <path d="M8 28c0-5 4.5-8 10-8s10 3 10 8" stroke="#F68F15" stroke-width="2" stroke-linecap="round" fill="none"/>
-        </svg>
+  <div style="padding:.6rem 0 .4rem">
+    <div class="section-label">Recommended</div>
+    <!-- Aadhaar featured card -->
+    <div class="doc-featured" onclick="goToIntro('aadhaar')">
+      <div class="doc-featured-badge">✦ FASTEST</div>
+      <div class="doc-icon-circle">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F68F15" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
       </div>
-      <div>
-        <div class="aadhaar-label">Aadhaar Card</div>
-        <div class="aadhaar-sub">Front &amp; Back + Selfie</div>
+      <div style="flex:1">
+        <div class="doc-label">Aadhaar Card</div>
+        <div class="doc-sub">Front &amp; Back + Selfie · 2 min</div>
       </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(246,143,21,.5)" stroke-width="2.5" style="margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(246,143,21,.6)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
   </div>
 
-  <div class="no-aadhaar-toggle" id="noAadhaarToggle" onclick="toggleOtherDocs()">
-    <span style="color:#555;font-size:.83rem">No Aadhaar? Use other documents</span>
+  <!-- Toggle other docs -->
+  <div class="no-aadhaar-row" id="noAadhaarToggle" onclick="toggleOtherDocs()">
+    <span class="no-aadhaar-text">No Aadhaar? Use other documents</span>
     <span class="toggle-arrow" id="toggleArrow">▼</span>
   </div>
+
   <div class="other-docs" id="otherDocs">
     <div class="doc-card" onclick="goToIntro('id_card')">
-      <div class="doc-icon-wrap">🪪</div>
-      <div><div class="doc-label">ID Card</div><div class="doc-sub">National Identity Card</div></div>
+      <div class="doc-icon-sm">🪪</div>
+      <div><div class="doc-label" style="font-size:.88rem">ID Card</div><div class="doc-sub">National Identity Card</div></div>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <div class="doc-card" onclick="goToIntro('passport')">
-      <div class="doc-icon-wrap">📘</div>
-      <div><div class="doc-label">Passport</div><div class="doc-sub">International Travel Document</div></div>
+      <div class="doc-icon-sm">📘</div>
+      <div><div class="doc-label" style="font-size:.88rem">Passport</div><div class="doc-sub">International Travel Document</div></div>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <div class="doc-card" onclick="goToIntro('driving')">
-      <div class="doc-icon-wrap">🚗</div>
-      <div><div class="doc-label">Driving Licence</div><div class="doc-sub">Government-issued driving permit</div></div>
+      <div class="doc-icon-sm">🚗</div>
+      <div><div class="doc-label" style="font-size:.88rem">Driving Licence</div><div class="doc-sub">Government-issued driving permit</div></div>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
   </div>
 
-  <div class="bottom-area">
-    <button class="earn-btn" onclick="goToIntro('aadhaar')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
-      Verify to Earn $20
-    </button>
+  <div class="bottom-sticky">
+    <button class="btn-primary" onclick="goToIntro('aadhaar')">Continue with Aadhaar</button>
   </div>
 </div>
+
 
 <!-- ═══ COUNTRY PICKER SHEET ═══ -->
 <div class="sheet-overlay hidden" id="countrySheet" onclick="closeCountryPicker(event)">
   <div class="sheet-box" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
     <div class="sheet-header">
-      <span class="sheet-title">Please select a country or region</span>
+      <span class="sheet-title">Select Country / Region</span>
       <button class="sheet-close" onclick="closeCountryPicker()">✕</button>
     </div>
     <div class="search-wrap">
-      <input class="search-input" id="countrySearch" type="text" placeholder="Type your input" oninput="filterCountries(this.value)"/>
+      <input class="search-input" id="countrySearch" type="text" placeholder="Search country…" oninput="filterCountries(this.value)"/>
     </div>
     <div class="country-list" id="countryList"></div>
   </div>
 </div>
 
-<!-- ═══ SCREEN: INTRO (Sumsub-style) ═══ -->
+
+<!-- ═══ SCREEN: INTRO (steps overview) ═══ -->
 <div class="screen hidden intro-screen" id="screenIntro">
   <div class="intro-close-row">
     <button class="intro-close" onclick="showScreen('screenPOI')">✕</button>
   </div>
   <div class="intro-content">
-    <div class="intro-logo-wrap">
-      <div class="intro-shield">🛡️</div>
-      <div class="intro-heading">Verify your identity</div>
+    <div class="intro-hero">
+      <div class="intro-shield-ring">🛡️</div>
+      <div class="intro-heading">Verify Your Identity</div>
       <div class="intro-sub">Takes only 2 minutes · Your data is encrypted &amp; secure</div>
     </div>
-    <div class="intro-steps">
+
+    <div class="intro-steps-box">
       <div class="intro-step">
         <div class="intro-step-num">1</div>
         <div>
           <div class="intro-step-title">Identity Document</div>
-          <div class="intro-step-sub">Photo of your Aadhaar (front &amp; back)</div>
+          <div class="intro-step-sub" id="introDocSub">Photo of your Aadhaar — front &amp; back</div>
         </div>
       </div>
       <div class="intro-step">
@@ -324,23 +373,31 @@
         <div class="intro-step-num">3</div>
         <div>
           <div class="intro-step-title">Personal Details</div>
-          <div class="intro-step-sub">Confirm your name, date of birth, and ID number</div>
+          <div class="intro-step-sub">Confirm your name, date of birth &amp; ID number</div>
         </div>
       </div>
     </div>
+
+    <!-- Security note -->
+    <div style="background:rgba(1,188,141,.06);border:1px solid rgba(1,188,141,.15);border-radius:14px;padding:.75rem 1rem;display:flex;align-items:flex-start;gap:.7rem">
+      <span style="color:#01bc8d;font-size:1rem;flex-shrink:0">🔒</span>
+      <span style="font-size:.72rem;color:#666;line-height:1.55">Your documents are encrypted and stored securely. We never share your data with third parties without consent.</span>
+    </div>
   </div>
+
   <div class="intro-footer">
-    <button class="continue-btn" onclick="startUpload()">Start Verification</button>
-    <div class="powered-by">🔒 Secured by Bitcovex Verify · End-to-end encrypted</div>
+    <button class="btn-primary" onclick="startUpload()">Start Verification</button>
+    <div class="powered-by">Secured by Bitcovex Verify · End-to-end encrypted</div>
   </div>
 </div>
+
 
 <!-- ═══ SCREEN: UPLOAD FRONT ═══ -->
 <div class="screen hidden upload-screen" id="screenFront">
   <div class="upload-topbar">
     <button class="back-btn" onclick="showScreen('screenIntro')">←</button>
-    <span style="font-size:.85rem;color:#888" id="docTypeLabel">Aadhaar</span>
-    <span style="width:32px"></span>
+    <span style="font-size:.83rem;color:#666" id="docTypeLabel">Aadhaar</span>
+    <span style="width:38px"></span>
   </div>
   <div class="upload-steps-row">
     <div class="ustep active" id="us1"></div>
@@ -349,35 +406,36 @@
   </div>
   <div class="upload-title-wrap">
     <div class="upload-page-title" id="frontTitle">Front of Aadhaar</div>
-    <div class="upload-page-sub">Place card on a flat surface in good lighting</div>
+    <div class="upload-page-sub">Place card flat, good lighting, all 4 corners visible</div>
   </div>
 
-  <div class="upload-card" id="frontCard">
+  <div class="upload-zone" id="frontCard">
     <input type="file" id="frontFile" accept="image/*" onchange="handleUpload(this,'frontPreview','frontCard','frontIcon')"/>
     <img id="frontPreview" class="upload-preview-img"/>
-    <span class="upload-card-icon" id="frontIcon">📄</span>
-    <div class="upload-card-title">Upload Front Side</div>
-    <div class="upload-card-hint">Tap to take photo or upload<br>JPG, PNG — max 10 MB</div>
+    <div class="upload-zone-icon" id="frontIcon">📄</div>
+    <div class="upload-zone-title">Upload Front Side</div>
+    <div class="upload-zone-hint">Tap to take photo or upload<br>JPG, PNG — max 10 MB</div>
   </div>
 
-  <div class="tips-row">
-    <div class="tips-title-row">📋 Tips for a good photo</div>
+  <div class="tips-box">
+    <div class="tips-title">📋 Tips for a good photo</div>
     <div class="tip-item">All 4 corners must be visible</div>
     <div class="tip-item">No glare or shadows on the document</div>
-    <div class="tip-item">Image should be sharp and clear</div>
+    <div class="tip-item">Image should be sharp and in focus</div>
   </div>
 
   <div class="upload-bottom">
-    <button class="upload-next-btn" id="frontNextBtn" onclick="goToBack()" disabled>Continue</button>
+    <button class="btn-primary" id="frontNextBtn" onclick="goToBack()" disabled>Continue</button>
   </div>
 </div>
+
 
 <!-- ═══ SCREEN: UPLOAD BACK ═══ -->
 <div class="screen hidden upload-screen" id="screenBack">
   <div class="upload-topbar">
     <button class="back-btn" onclick="showScreen('screenFront')">←</button>
-    <span style="font-size:.85rem;color:#888" id="docTypeLabelBack">Aadhaar</span>
-    <span style="width:32px"></span>
+    <span style="font-size:.83rem;color:#666" id="docTypeLabelBack">Aadhaar</span>
+    <span style="width:38px"></span>
   </div>
   <div class="upload-steps-row">
     <div class="ustep done"></div>
@@ -386,35 +444,36 @@
   </div>
   <div class="upload-title-wrap">
     <div class="upload-page-title" id="backTitle">Back of Aadhaar</div>
-    <div class="upload-page-sub">Place card on a flat surface in good lighting</div>
+    <div class="upload-page-sub">Place card flat, good lighting, all 4 corners visible</div>
   </div>
 
-  <div class="upload-card" id="backCard">
+  <div class="upload-zone" id="backCard">
     <input type="file" id="backFile" accept="image/*" onchange="handleUpload(this,'backPreview','backCard','backIcon')"/>
     <img id="backPreview" class="upload-preview-img"/>
-    <span class="upload-card-icon" id="backIcon">📄</span>
-    <div class="upload-card-title">Upload Back Side</div>
-    <div class="upload-card-hint">Tap to take photo or upload<br>JPG, PNG — max 10 MB</div>
+    <div class="upload-zone-icon" id="backIcon">📄</div>
+    <div class="upload-zone-title">Upload Back Side</div>
+    <div class="upload-zone-hint">Tap to take photo or upload<br>JPG, PNG — max 10 MB</div>
   </div>
 
-  <div class="tips-row">
-    <div class="tips-title-row">📋 Tips for a good photo</div>
+  <div class="tips-box">
+    <div class="tips-title">📋 Tips for a good photo</div>
     <div class="tip-item">All 4 corners must be visible</div>
     <div class="tip-item">No glare or shadows on the document</div>
-    <div class="tip-item">Image should be sharp and clear</div>
+    <div class="tip-item">Image should be sharp and in focus</div>
   </div>
 
   <div class="upload-bottom">
-    <button class="upload-next-btn" id="backNextBtn" onclick="goToSelfie()" disabled>Continue</button>
+    <button class="btn-primary" id="backNextBtn" onclick="goToSelfie()" disabled>Continue</button>
   </div>
 </div>
+
 
 <!-- ═══ SCREEN: SELFIE ═══ -->
 <div class="screen hidden upload-screen" id="screenSelfie">
   <div class="upload-topbar">
     <button class="back-btn" onclick="showScreen('screenBack')">←</button>
-    <span style="font-size:.85rem;color:#888">Selfie</span>
-    <span style="width:32px"></span>
+    <span style="font-size:.83rem;color:#666">Face Verification</span>
+    <span style="width:38px"></span>
   </div>
   <div class="upload-steps-row">
     <div class="ustep done"></div>
@@ -423,7 +482,7 @@
   </div>
   <div class="upload-title-wrap">
     <div class="upload-page-title">Take a Selfie</div>
-    <div class="upload-page-sub">Hold your document next to your face</div>
+    <div class="upload-page-sub">Hold your document next to your face, clearly visible</div>
   </div>
 
   <div class="selfie-guide" id="selfieGuideBox">
@@ -431,28 +490,27 @@
       <span id="selfieIcon">🤳</span>
     </div>
     <input type="file" id="selfieFile" accept="image/*" capture="user" onchange="handleSelfie(this)" style="display:none"/>
-    <button onclick="document.getElementById('selfieFile').click()" style="background:#F68F15;border:none;border-radius:50px;padding:.7rem 2rem;color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:.3rem">
-      Take Selfie
-    </button>
+    <button class="selfie-btn" onclick="document.getElementById('selfieFile').click()">Take Selfie</button>
     <div class="selfie-rules">
       <div class="selfie-rule"><span class="selfie-rule-icon">💡</span>Good lighting on your face</div>
-      <div class="selfie-rule"><span class="selfie-rule-icon">😐</span>Neutral expression, eyes open</div>
-      <div class="selfie-rule"><span class="selfie-rule-icon">🚫</span>No sunglasses or hat</div>
-      <div class="selfie-rule"><span class="selfie-rule-icon">🪪</span>Hold your ID clearly visible</div>
+      <div class="selfie-rule"><span class="selfie-rule-icon">😐</span>Neutral expression, both eyes open</div>
+      <div class="selfie-rule"><span class="selfie-rule-icon">🚫</span>No glasses, hat, or face covering</div>
+      <div class="selfie-rule"><span class="selfie-rule-icon">🪪</span>Hold your ID document clearly visible</div>
     </div>
   </div>
 
   <div class="upload-bottom">
-    <button class="upload-next-btn" id="selfieNextBtn" onclick="goToSubmit()" disabled>Continue</button>
+    <button class="btn-primary" id="selfieNextBtn" onclick="goToSubmit()" disabled>Continue</button>
   </div>
 </div>
 
-<!-- ═══ SCREEN: SUBMIT (Personal Info + Consent) ═══ -->
+
+<!-- ═══ SCREEN: PERSONAL INFO + CONSENT ═══ -->
 <div class="screen hidden upload-screen" id="screenSubmit">
   <div class="upload-topbar">
     <button class="back-btn" onclick="showScreen('screenSelfie')">←</button>
-    <span style="font-size:.85rem;color:#888">Profile Details</span>
-    <span style="width:32px"></span>
+    <span style="font-size:.83rem;color:#666">Profile Details</span>
+    <span style="width:38px"></span>
   </div>
   <div class="upload-steps-row">
     <div class="ustep done"></div>
@@ -461,108 +519,109 @@
   </div>
   <div class="upload-title-wrap">
     <div class="upload-page-title">Personal Information</div>
-    <div class="upload-page-sub">Verify your details as shown on your ID</div>
+    <div class="upload-page-sub">Verify your details as shown on your document</div>
   </div>
 
   <div style="padding:0 1rem;display:flex;flex-direction:column;gap:.9rem">
-    <div>
-      <div style="font-size:.78rem;color:#666;margin-bottom:.35rem">First Name</div>
-      <input style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.8rem 1rem;color:#fff;font-size:.93rem;outline:none" id="subFirstName" type="text" placeholder="As on document"/>
+    <div class="form-group">
+      <label class="form-label">First Name</label>
+      <input class="form-input" id="subFirstName" type="text" placeholder="As on document"/>
     </div>
-    <div>
-      <div style="font-size:.78rem;color:#666;margin-bottom:.35rem">Last Name</div>
-      <input style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.8rem 1rem;color:#fff;font-size:.93rem;outline:none" id="subLastName" type="text" placeholder="As on document"/>
+    <div class="form-group">
+      <label class="form-label">Last Name</label>
+      <input class="form-input" id="subLastName" type="text" placeholder="As on document"/>
     </div>
-    <div>
-      <div style="font-size:.78rem;color:#666;margin-bottom:.35rem">Date of Birth</div>
-      <input style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.8rem 1rem;color:#fff;font-size:.93rem;outline:none;color-scheme:dark" id="subDob" type="date"/>
+    <div class="form-group">
+      <label class="form-label">Date of Birth</label>
+      <input class="form-input" id="subDob" type="date" style="color-scheme:dark"/>
     </div>
-    <div id="aadhaarNumField">
-      <div style="font-size:.78rem;color:#666;margin-bottom:.35rem">Aadhaar Number</div>
-      <input style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.8rem 1rem;color:#fff;font-size:.93rem;outline:none" id="subAadhaar" type="text" inputmode="numeric" maxlength="14" placeholder="XXXX XXXX XXXX" oninput="fmtAadhaar(this)"/>
+    <div id="aadhaarNumField" class="form-group">
+      <label class="form-label">Aadhaar Number</label>
+      <input class="form-input" id="subAadhaar" type="text" inputmode="numeric" maxlength="14" placeholder="XXXX XXXX XXXX" oninput="fmtAadhaar(this)"/>
     </div>
-    <label style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer">
-      <input type="checkbox" id="consentCheck" style="width:18px;height:18px;margin-top:.1rem;flex-shrink:0;accent-color:#F68F15"/>
-      <span style="font-size:.76rem;color:#666;line-height:1.6">I confirm all information and documents are genuine and belong to me. I consent to Bitcovex processing my data for identity verification.</span>
+    <label class="consent-row">
+      <input type="checkbox" class="consent-check" id="consentCheck"/>
+      <span class="consent-text">I confirm all information and documents are genuine and belong to me. I consent to Bitcovex processing my data for identity verification in accordance with the Privacy Policy.</span>
     </label>
   </div>
 
   <div class="upload-bottom" style="padding-top:.5rem">
-    <button class="upload-next-btn" id="finalSubmitBtn" onclick="submitKyc()">Submit Verification</button>
+    <button class="btn-primary" id="finalSubmitBtn" onclick="submitKyc()">Submit for Verification</button>
   </div>
 </div>
 
-<!-- ═══ SCREEN: PENDING ═══ -->
-<div class="screen hidden" id="screenPending" style="background:#000;min-height:100vh;display:flex;flex-direction:column">
+
+<!-- ═══ SCREEN: PENDING / UNDER REVIEW ═══ -->
+<div class="screen hidden" id="screenPending" style="background:#0b0c14;min-height:100vh;display:flex;flex-direction:column">
   <div class="topbar">
     <button class="back-btn" onclick="history.back()">←</button>
-    <span style="font-size:1rem;font-weight:700;flex:1;text-align:center">Verification Status</span>
-    <span style="width:32px"></span>
+    <span class="topbar-title">Verification Status</span>
+    <span class="topbar-right"></span>
   </div>
 
-  <!-- Icon + Title -->
   <div style="display:flex;flex-direction:column;align-items:center;padding:2.5rem 1.5rem 1.5rem;gap:.8rem;text-align:center">
-    <div style="width:88px;height:88px;border-radius:50%;background:rgba(52,152,219,.12);border:2px solid rgba(52,152,219,.25);display:flex;align-items:center;justify-content:center;font-size:2.8rem">⏳</div>
-    <div style="font-size:1.4rem;font-weight:800">Under Review</div>
-    <div style="font-size:.85rem;color:#666;line-height:1.6;max-width:260px">Your documents have been submitted successfully and are being reviewed by our team.</div>
+    <div style="width:88px;height:88px;border-radius:50%;background:rgba(52,152,219,.1);border:2px solid rgba(52,152,219,.2);display:flex;align-items:center;justify-content:center;font-size:2.8rem;box-shadow:0 0 40px rgba(52,152,219,.1)">⏳</div>
+    <div style="font-size:1.35rem;font-weight:800;letter-spacing:-.02em">Under Review</div>
+    <div style="font-size:.82rem;color:#555;line-height:1.6;max-width:250px">Your documents have been submitted and are being reviewed by our team.</div>
   </div>
 
-  <!-- Timeline card -->
-  <div style="margin:0 1rem;background:#111418;border:1px solid rgba(52,152,219,.2);border-radius:18px;padding:1.2rem 1.1rem;display:flex;flex-direction:column;gap:.9rem">
-    <div style="font-size:.78rem;font-weight:700;color:#3498db;margin-bottom:.1rem">⏱ Review Timeline</div>
-    <div style="display:flex;align-items:flex-start;gap:.8rem">
-      <div style="width:32px;height:32px;border-radius:50%;background:rgba(0,184,151,.15);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0">✓</div>
+  <!-- Timeline -->
+  <div class="timeline-card">
+    <div style="font-size:.73rem;font-weight:700;color:#3498db;margin-bottom:.9rem;display:flex;align-items:center;gap:.35rem">⏱ Review Timeline</div>
+    <div class="timeline-row">
+      <div class="timeline-dot" style="background:rgba(1,188,141,.12);border:1px solid rgba(1,188,141,.2);color:#01bc8d;font-size:.75rem">✓</div>
       <div>
         <div style="font-size:.88rem;font-weight:700">Documents Submitted</div>
-        <div style="font-size:.75rem;color:#555;margin-top:.15rem">Received and queued for review</div>
+        <div style="font-size:.73rem;color:#555;margin-top:.12rem">Received and queued for review</div>
       </div>
     </div>
-    <div style="width:1px;height:18px;background:rgba(255,255,255,.1);margin-left:15px"></div>
-    <div style="display:flex;align-items:flex-start;gap:.8rem">
-      <div style="width:32px;height:32px;border-radius:50%;background:rgba(52,152,219,.15);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0">⏳</div>
+    <div class="timeline-connector"></div>
+    <div class="timeline-row">
+      <div class="timeline-dot" style="background:rgba(52,152,219,.12);border:1px solid rgba(52,152,219,.2);font-size:.85rem">⏳</div>
       <div>
         <div style="font-size:.88rem;font-weight:700;color:#3498db">Identity Verification</div>
-        <div style="font-size:.75rem;color:#3498db;margin-top:.15rem">In progress — 24 to 48 hours</div>
+        <div style="font-size:.73rem;color:#3498db;margin-top:.12rem">In progress — 24 to 48 hours</div>
       </div>
     </div>
-    <div style="width:1px;height:18px;background:rgba(255,255,255,.1);margin-left:15px"></div>
-    <div style="display:flex;align-items:flex-start;gap:.8rem;opacity:.4">
-      <div style="width:32px;height:32px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0">🏆</div>
+    <div class="timeline-connector"></div>
+    <div class="timeline-row" style="opacity:.3">
+      <div class="timeline-dot" style="background:#1a1c28;font-size:.85rem">🏆</div>
       <div>
         <div style="font-size:.88rem;font-weight:700">Verification Complete</div>
-        <div style="font-size:.75rem;color:#555;margin-top:.15rem">Full access unlocked</div>
+        <div style="font-size:.73rem;color:#555;margin-top:.12rem">Full trading access unlocked</div>
       </div>
     </div>
   </div>
 
-  <!-- Info box -->
-  <div style="margin:1rem 1rem 0;background:#111418;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:.9rem 1rem">
-    <div style="font-size:.78rem;font-weight:700;color:#F68F15;margin-bottom:.5rem">📋 What to expect</div>
-    <div style="font-size:.76rem;color:#555;display:flex;flex-direction:column;gap:.35rem">
-      <div style="display:flex;gap:.5rem"><span style="color:#F68F15">•</span>Review takes <strong style="color:#fff">24 to 48 hours</strong> on business days</div>
-      <div style="display:flex;gap:.5rem"><span style="color:#F68F15">•</span>You'll receive an email notification once complete</div>
-      <div style="display:flex;gap:.5rem"><span style="color:#F68F15">•</span>Basic P2P features remain available during review</div>
+  <div style="margin:.9rem 1rem 0;background:#13151f;border:1px solid rgba(246,143,21,.12);border-radius:14px;padding:.85rem 1rem">
+    <div style="font-size:.73rem;font-weight:700;color:#F68F15;margin-bottom:.5rem">📋 What to expect</div>
+    <div style="font-size:.73rem;color:#555;display:flex;flex-direction:column;gap:.35rem">
+      <div style="display:flex;gap:.5rem"><span style="color:#F68F15">•</span>Review takes <strong style="color:#bbb">24–48 hours</strong> on business days</div>
+      <div style="display:flex;gap:.5rem"><span style="color:#F68F15">•</span>Email notification when complete</div>
+      <div style="display:flex;gap:.5rem"><span style="color:#F68F15">•</span>Basic features available during review</div>
       <div style="display:flex;gap:.5rem"><span style="color:#F68F15">•</span>Do not re-submit — it will delay the process</div>
     </div>
   </div>
 
   <div style="flex:1"></div>
-  <div style="padding:1rem 1rem 2.5rem">
-    <button class="earn-btn" onclick="history.back()" style="justify-content:center">Back to Home</button>
+  <div class="bottom-sticky">
+    <button class="btn-primary" onclick="history.back()" style="background:linear-gradient(135deg,#1a1c28,#13151f);box-shadow:none;border:1px solid rgba(255,255,255,.1);color:#ccc">Back to Home</button>
   </div>
 </div>
 
+
 <!-- ═══ SCREEN: VERIFIED ═══ -->
 <div class="screen hidden result-screen" id="screenVerified">
-  <div style="width:90px;height:90px;border-radius:50%;background:rgba(0,184,151,.12);border:2px solid rgba(0,184,151,.3);display:flex;align-items:center;justify-content:center;font-size:3rem;box-shadow:0 0 40px rgba(0,184,151,.15)">✅</div>
+  <div style="width:96px;height:96px;border-radius:50%;background:rgba(1,188,141,.1);border:2px solid rgba(1,188,141,.25);display:flex;align-items:center;justify-content:center;font-size:3.2rem;box-shadow:0 0 50px rgba(1,188,141,.15)">✅</div>
   <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.02em">Identity Verified!</div>
-  <div style="font-size:.85rem;color:#555;line-height:1.6;max-width:270px;text-align:center">Your identity has been successfully verified. You now have full access to all P2P features and higher limits.</div>
-  <div style="background:rgba(0,184,151,.08);border:1px solid rgba(0,184,151,.2);border-radius:14px;padding:.8rem 1.5rem;text-align:center">
-    <div style="font-size:.7rem;color:#00b897;font-weight:700;margin-bottom:.2rem">✦ BENEFITS UNLOCKED</div>
-    <div style="font-size:.8rem;color:#aaa">Unlimited P2P · Higher withdrawals · Priority support</div>
+  <div style="font-size:.83rem;color:#555;line-height:1.65;max-width:260px">Your identity has been verified. You now have full access to P2P trading, higher limits, and all premium features.</div>
+  <div style="background:rgba(1,188,141,.07);border:1px solid rgba(1,188,141,.18);border-radius:16px;padding:.9rem 1.5rem;text-align:center;width:100%;max-width:300px">
+    <div style="font-size:.65rem;color:#01bc8d;font-weight:800;margin-bottom:.35rem;letter-spacing:.07em">✦ BENEFITS UNLOCKED</div>
+    <div style="font-size:.78rem;color:#bbb;line-height:1.6">Unlimited P2P · Higher withdrawals<br>Priority support · Spot &amp; Futures</div>
   </div>
-  <button class="earn-btn" style="margin-top:.5rem;max-width:280px" onclick="history.back()">Go to P2P Trading</button>
+  <button class="btn-primary" style="max-width:280px" onclick="history.back()">Go to Trading</button>
 </div>
+
 
 <div class="toast" id="toast"></div>
 
@@ -610,25 +669,20 @@
     {flag:'🇰🇪',name:'Kenya',code:'+254'},{flag:'🇰🇼',name:'Kuwait',code:'+965'},
     {flag:'🇱🇻',name:'Latvia',code:'+371'},{flag:'🇱🇧',name:'Lebanon',code:'+961'},
     {flag:'🇱🇹',name:'Lithuania',code:'+370'},{flag:'🇱🇺',name:'Luxembourg',code:'+352'},
-    {flag:'🇲🇴',name:'Macao',code:'+853'},{flag:'🇲🇬',name:'Madagascar',code:'+261'},
-    {flag:'🇲🇦',name:'Morocco',code:'+212'},{flag:'🇲🇿',name:'Mozambique',code:'+258'},
-    {flag:'🇲🇲',name:'Myanmar',code:'+95'},{flag:'🇳🇵',name:'Nepal',code:'+977'},
-    {flag:'🇳🇿',name:'New Zealand',code:'+64'},{flag:'🇳🇮',name:'Nicaragua',code:'+505'},
+    {flag:'🇲🇦',name:'Morocco',code:'+212'},{flag:'🇲🇲',name:'Myanmar',code:'+95'},
+    {flag:'🇳🇵',name:'Nepal',code:'+977'},{flag:'🇳🇿',name:'New Zealand',code:'+64'},
     {flag:'🇴🇲',name:'Oman',code:'+968'},{flag:'🇵🇦',name:'Panama',code:'+507'},
-    {flag:'🇵🇬',name:'Papua New Guinea',code:'+675'},{flag:'🇵🇾',name:'Paraguay',code:'+595'},
-    {flag:'🇵🇪',name:'Peru',code:'+51'},{flag:'🇶🇦',name:'Qatar',code:'+974'},
-    {flag:'🇷🇴',name:'Romania',code:'+40'},{flag:'🇷🇼',name:'Rwanda',code:'+250'},
-    {flag:'🇸🇳',name:'Senegal',code:'+221'},{flag:'🇷🇸',name:'Serbia',code:'+381'},
+    {flag:'🇵🇾',name:'Paraguay',code:'+595'},{flag:'🇵🇪',name:'Peru',code:'+51'},
+    {flag:'🇶🇦',name:'Qatar',code:'+974'},{flag:'🇷🇴',name:'Romania',code:'+40'},
+    {flag:'🇷🇼',name:'Rwanda',code:'+250'},{flag:'🇷🇸',name:'Serbia',code:'+381'},
     {flag:'🇸🇰',name:'Slovakia',code:'+421'},{flag:'🇸🇮',name:'Slovenia',code:'+386'},
-    {flag:'🇸🇴',name:'Somalia',code:'+252'},{flag:'🇱🇰',name:'Sri Lanka',code:'+94'},
-    {flag:'🇸🇩',name:'Sudan',code:'+249'},{flag:'🇸🇾',name:'Syria',code:'+963'},
-    {flag:'🇹🇼',name:'Taiwan',code:'+886'},{flag:'🇹🇿',name:'Tanzania',code:'+255'},
-    {flag:'🇺🇬',name:'Uganda',code:'+256'},{flag:'🇺🇿',name:'Uzbekistan',code:'+998'},
-    {flag:'🇻🇪',name:'Venezuela',code:'+58'},{flag:'🇾🇪',name:'Yemen',code:'+967'},
-    {flag:'🇿🇲',name:'Zambia',code:'+260'},{flag:'🇿🇼',name:'Zimbabwe',code:'+263'}
+    {flag:'🇱🇰',name:'Sri Lanka',code:'+94'},{flag:'🇹🇼',name:'Taiwan',code:'+886'},
+    {flag:'🇹🇿',name:'Tanzania',code:'+255'},{flag:'🇺🇬',name:'Uganda',code:'+256'},
+    {flag:'🇺🇿',name:'Uzbekistan',code:'+998'},{flag:'🇻🇪',name:'Venezuela',code:'+58'},
+    {flag:'🇾🇪',name:'Yemen',code:'+967'},{flag:'🇿🇲',name:'Zambia',code:'+260'},
+    {flag:'🇿🇼',name:'Zimbabwe',code:'+263'}
   ];
 
-  // ── Navigation ──
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(function(s){ s.classList.add('hidden'); });
     document.getElementById(id).classList.remove('hidden');
@@ -638,12 +692,11 @@
   function showToast(msg, color) {
     var t = document.getElementById('toast');
     t.textContent = msg;
-    t.style.background = color || '#222';
+    t.style.background = color || '#1a1c28';
     t.classList.add('show');
     setTimeout(function(){ t.classList.remove('show'); }, 2800);
   }
 
-  // ── Toggle other docs ──
   var _otherOpen = false;
   function toggleOtherDocs() {
     _otherOpen = !_otherOpen;
@@ -651,12 +704,11 @@
     document.getElementById('toggleArrow').classList.toggle('open', _otherOpen);
   }
 
-  // ── Country picker ──
   function renderCountries(list) {
-    var html = '<div class="country-list-label">Country/Region of Issue</div>';
+    var html = '<div class="country-list-label">Country / Region of Issue</div>';
     list.forEach(function(c) {
       var checked = c.name === _selectedCountry.name ? '<span class="ci-check">✓</span>' : '';
-      html += '<div class="country-item" onclick="selectCountry(\''+c.name+'\',\''+c.flag+'\',\''+c.code+'\')">'
+      html += '<div class="country-item" onclick="selectCountry(\''+c.name.replace(/'/g,"\\'")+ '\',\''+c.flag+'\',\''+c.code+'\')">'
         +'<span class="ci-flag">'+c.flag+'</span>'
         +'<span class="ci-name">'+c.name+'</span>'
         +'<span class="ci-code">'+c.code+'</span>'
@@ -670,6 +722,7 @@
     document.getElementById('countrySheet').classList.remove('hidden');
     document.getElementById('countrySearch').value = '';
     renderCountries(COUNTRIES);
+    setTimeout(function(){ document.getElementById('countrySearch').focus(); }, 300);
   }
 
   function closeCountryPicker(e) {
@@ -690,16 +743,18 @@
     closeCountryPicker();
   }
 
-  // ── Go to intro ──
   function goToIntro(docType) {
     _selectedDocType = docType;
     var labels = { aadhaar:'Aadhaar', id_card:'ID Card', passport:'Passport', driving:'Driving Licence' };
-    document.getElementById('docTypeLabel').textContent = labels[docType] || docType;
-    document.getElementById('docTypeLabelBack').textContent = labels[docType] || docType;
-    document.getElementById('frontTitle').textContent = 'Front of ' + (labels[docType] || 'Document');
-    document.getElementById('backTitle').textContent = 'Back of ' + (labels[docType] || 'Document');
-    // Show/hide Aadhaar number field
+    var subs = { aadhaar:'Photo of your Aadhaar — front & back', id_card:'Photo of your ID Card — front & back', passport:'Photo of the data page of your Passport', driving:'Photo of your Driving Licence — front & back' };
+    var lbl = labels[docType] || docType;
+    document.getElementById('docTypeLabel').textContent = lbl;
+    document.getElementById('docTypeLabelBack').textContent = lbl;
+    document.getElementById('frontTitle').textContent = 'Front of ' + lbl;
+    document.getElementById('backTitle').textContent = 'Back of ' + lbl;
     document.getElementById('aadhaarNumField').style.display = docType === 'aadhaar' ? '' : 'none';
+    var introSub = document.getElementById('introDocSub');
+    if(introSub) introSub.textContent = subs[docType] || ('Photo of your ' + lbl);
     showScreen('screenIntro');
   }
 
@@ -707,20 +762,21 @@
     showScreen('screenFront');
   }
 
-  // ── File upload handlers ──
   function handleUpload(input, previewId, cardId, iconId) {
     var file = input.files[0];
     if(!file) return;
-    if(file.size > 10*1024*1024) { showToast('File too large (max 10 MB)', '#f6465d'); input.value=''; return; }
+    if(file.size > 10*1024*1024) { showToast('File too large — max 10 MB', '#f6465d'); input.value=''; return; }
     var reader = new FileReader();
     reader.onload = function(e) {
       var img = document.getElementById(previewId);
       img.src = e.target.result; img.style.display = 'block';
-      document.getElementById(cardId).classList.add('has-img');
+      var card = document.getElementById(cardId);
+      card.classList.add('has-img');
       document.getElementById(iconId).style.display = 'none';
-      document.getElementById(cardId).querySelector('.upload-card-title').style.display = 'none';
-      document.getElementById(cardId).querySelector('.upload-card-hint').style.display = 'none';
-      // Enable next button
+      var title = card.querySelector('.upload-zone-title');
+      var hint = card.querySelector('.upload-zone-hint');
+      if(title) title.style.display = 'none';
+      if(hint) hint.style.display = 'none';
       var btnMap = { frontCard:'frontNextBtn', backCard:'backNextBtn' };
       if(btnMap[cardId]) document.getElementById(btnMap[cardId]).disabled = false;
     };
@@ -757,84 +813,77 @@
 
   function fmtAadhaar(el) {
     var v = el.value.replace(/\D/g,'');
-    el.value = v.replace(/(\d{4})(\d{0,4})(\d{0,4})/,'$1 $2 $3').trim();
+    el.value = v.replace(/(\d{4})(\d{0,4})(\d{0,4})/, function(m,a,b,c){ return [a,b,c].filter(Boolean).join(' '); });
   }
 
-  // ── Final submit ──
   function submitKyc() {
     var firstName = document.getElementById('subFirstName').value.trim();
-    var lastName = document.getElementById('subLastName').value.trim();
-    var dob = document.getElementById('subDob').value;
-    var aadhaar = (_selectedDocType === 'aadhaar') ? document.getElementById('subAadhaar').value.replace(/\s/g,'') : '000000000000';
-    var consent = document.getElementById('consentCheck').checked;
+    var lastName  = document.getElementById('subLastName').value.trim();
+    var dob       = document.getElementById('subDob').value;
+    var aadhaar   = (_selectedDocType === 'aadhaar') ? document.getElementById('subAadhaar').value.replace(/\s/g,'') : '000000000000';
+    var consent   = document.getElementById('consentCheck').checked;
 
-    if(!firstName) { showToast('Enter your first name', '#f6465d'); return; }
-    if(!lastName) { showToast('Enter your last name', '#f6465d'); return; }
-    if(!dob) { showToast('Enter your date of birth', '#f6465d'); return; }
+    if(!firstName)  { showToast('Enter your first name', '#f6465d'); return; }
+    if(!lastName)   { showToast('Enter your last name', '#f6465d'); return; }
+    if(!dob)        { showToast('Enter your date of birth', '#f6465d'); return; }
     if(_selectedDocType === 'aadhaar' && aadhaar.length !== 12) { showToast('Enter valid 12-digit Aadhaar number', '#f6465d'); return; }
-    if(!consent) { showToast('Please accept the consent declaration', '#f6465d'); return; }
+    if(!consent)    { showToast('Please accept the consent declaration', '#f6465d'); return; }
 
     var btn = document.getElementById('finalSubmitBtn');
-    btn.disabled = true; btn.textContent = 'Submitting...';
+    btn.disabled = true; btn.textContent = 'Submitting…';
 
     var token = localStorage.getItem('bitcovex_token') || '';
     fetch('/api/p2p/kyc/submit', {
       method:'POST', credentials:'include',
       headers: Object.assign({'Content-Type':'application/json'}, token ? {'Authorization':'Bearer '+token} : {}),
-      body: JSON.stringify({ consent:true, aadhaarNumber: aadhaar, firstName:firstName, lastName:lastName, dateOfBirth:dob, country:_selectedCountry.name, idType:_selectedDocType })
+      body: JSON.stringify({ consent:true, aadhaarNumber:aadhaar, firstName:firstName, lastName:lastName, dateOfBirth:dob, country:_selectedCountry.name, idType:_selectedDocType })
     })
     .then(function(r){ return r.json(); })
     .then(function(d) {
-      btn.disabled = false; btn.textContent = 'Submit Verification';
+      btn.disabled = false; btn.textContent = 'Submit for Verification';
       if(d && d.kyc && d.kyc.status === 'VERIFIED') { showScreen('screenVerified'); }
       else if(d && d.message === 'KYC is already verified for this account.') { showScreen('screenVerified'); }
       else if(d && !String(d.message||'').toLowerCase().includes('error') && !String(d.message||'').toLowerCase().includes('invalid')) {
         showScreen('screenPending');
       } else { showToast(d.message || 'Submission failed. Try again.', '#f6465d'); }
     })
-    .catch(function(){ btn.disabled=false; btn.textContent='Submit Verification'; showToast('Network error. Try again.', '#f6465d'); });
+    .catch(function(){ btn.disabled=false; btn.textContent='Submit for Verification'; showToast('Network error. Try again.', '#f6465d'); });
   }
 
-  // ── Check KYC status on load ──
+  /* ── Check KYC status on load ── */
   (function() {
-    // Always show status screen first (default = unverified)
     showScreen('screenStatus');
-
     var token = localStorage.getItem('bitcovex_token') || '';
     fetch('/api/p2p/kyc/status', { credentials:'include', headers: token ? {'Authorization':'Bearer '+token} : {} })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(data) {
-      var badge = document.getElementById('lv1StatusBadge');
-      var lv1Limit = document.getElementById('lv1Limit');
-      var lv1Withdraw = document.getElementById('lv1Withdraw');
-      var lv1P2p = document.getElementById('lv1P2p');
+      var badge      = document.getElementById('lv1StatusBadge');
+      var lv1Limit   = document.getElementById('lv1Limit');
+      var lv1Withdraw= document.getElementById('lv1Withdraw');
+      var lv1P2p     = document.getElementById('lv1P2p');
       var verifyWrap = document.getElementById('verifyNowWrap');
 
-      if(!data || !data.kyc) {
-        // Not started — show unverified defaults
-        return;
-      }
+      if(!data || !data.kyc) return;
       var s = (data.kyc.status || '').toUpperCase();
 
       if(s === 'VERIFIED') {
-        badge.className = 'lvl-badge-verified'; badge.textContent = 'Verified ✓';
-        lv1Limit.textContent = '₹50,000'; lv1Limit.style.color = '#00b897';
-        lv1Withdraw.textContent = '5 BTC'; lv1Withdraw.style.color = '#00b897';
-        lv1P2p.textContent = 'Active'; lv1P2p.style.color = '#00b897';
-        verifyWrap.innerHTML = '<button class="earn-btn" style="background:linear-gradient(135deg,#00b897,#009e80);box-shadow:0 4px 20px rgba(0,184,151,.35)" onclick="history.back()">✓ Fully Verified — Go Back</button>';
+        badge.className = 'badge badge-verified'; badge.textContent = '✓ Verified';
+        lv1Limit.textContent = '₹50,000'; lv1Limit.style.color = '#01bc8d';
+        lv1Withdraw.textContent = '5 BTC';  lv1Withdraw.style.color = '#01bc8d';
+        lv1P2p.textContent = 'Active';       lv1P2p.style.color = '#01bc8d';
+        verifyWrap.innerHTML = '<button class="btn-primary" style="background:linear-gradient(135deg,#01bc8d,#009e80);box-shadow:0 6px 24px rgba(1,188,141,.3)" onclick="history.back()">✓ Fully Verified — Go Back</button>';
         setTimeout(function(){ showScreen('screenVerified'); }, 300);
       } else if(s === 'PENDING' || s === 'SUBMITTED' || s === 'UNDER_REVIEW') {
-        badge.className = 'lvl-badge-pending'; badge.textContent = '⏳ Under Review';
+        badge.className = 'badge badge-pending'; badge.textContent = '⏳ Under Review';
         lv1Limit.textContent = 'Pending'; lv1Limit.style.color = '#3498db';
         lv1Withdraw.textContent = 'Pending'; lv1Withdraw.style.color = '#3498db';
         lv1P2p.textContent = 'Pending'; lv1P2p.style.color = '#3498db';
-        verifyWrap.innerHTML = '<button class="earn-btn" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);box-shadow:0 4px 20px rgba(37,99,235,.3);cursor:default">⏳ Under Review — 24 to 48 hours</button>';
+        verifyWrap.innerHTML = '<button class="btn-primary" style="background:#13151f;box-shadow:none;border:1px solid rgba(52,152,219,.3);color:#3498db;cursor:default">⏳ Under Review — 24 to 48 hours</button>';
       } else if(s === 'REJECTED' || s === 'FAILED') {
-        badge.className = 'lvl-badge-unverified'; badge.textContent = '✕ Rejected';
-        verifyWrap.innerHTML = '<div style="font-size:.78rem;color:#f6465d;margin-bottom:.7rem;text-align:center;padding:0 .5rem;line-height:1.5">'+(data.kyc.rejectionReason||'Verification rejected. Please re-submit with clear documents.')+'</div>'
-          +'<button class="earn-btn" onclick="showScreen(\'screenPOI\')">🔄 Re-submit Verification</button>';
+        badge.className = 'badge badge-unverified'; badge.textContent = '✕ Rejected';
+        verifyWrap.innerHTML = '<div style="font-size:.76rem;color:#f6465d;margin-bottom:.7rem;text-align:center;padding:0 .5rem;line-height:1.5">'+(data.kyc.rejectionReason||'Verification rejected. Please re-submit with clear, legible documents.')+'</div>'
+          +'<button class="btn-primary" onclick="showScreen(\'screenPOI\')">🔄 Re-submit Verification</button>';
       }
-      // else stays unverified (default)
     }).catch(function(){});
   })();
 </script>
