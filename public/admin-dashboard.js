@@ -3981,8 +3981,12 @@ function connectKycSSE() {
       const info = JSON.parse(ev.data);
       if (info.type === 'kyc_submitted') {
         showKycNotification(info);
-        addNotif('kyc', 'KYC Documents Submitted', `${info.email || info.username || 'User'} — Status: ${info.status || 'PENDING'}`);
-        if (state.currentView === 'users') loadUsers({ silent: true }).catch(() => {});
+        addNotif('kyc', 'KYC Documents Submitted', `${info.email || info.username || 'User'} — awaiting review`);
+        // Update KYC pending badge
+        const badge = document.getElementById('kycPendingBadge');
+        if (badge) { badge.style.display = ''; badge.textContent = (parseInt(badge.textContent || '0') || 0) + 1; }
+        if (state.currentView === 'kyc') loadKyc().catch(() => {});
+        else if (state.currentView === 'users') loadUsers({ silent: true }).catch(() => {});
       }
     } catch(_) {}
   };
@@ -3990,17 +3994,21 @@ function connectKycSSE() {
 }
 function showKycNotification(info) {
   const el = document.createElement('div');
-  el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0f172a;border:1.5px solid #f59e0b;border-radius:12px;padding:14px 18px;z-index:99999;min-width:260px;max-width:340px;box-shadow:0 8px 32px #0008;animation:slideInRight .3s ease;';
+  el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0f172a;border:1.5px solid #f59e0b;border-radius:12px;padding:14px 18px;z-index:99999;min-width:260px;max-width:340px;box-shadow:0 8px 32px #0008;animation:slideInRight .3s ease;cursor:pointer;';
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
       <span style="font-size:20px;">📋</span>
       <span style="font-weight:700;color:#f59e0b;font-size:13px;">KYC Documents Submitted</span>
-      <button onclick="this.parentElement.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;line-height:1;">×</button>
+      <button onclick="event.stopPropagation();this.parentElement.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;line-height:1;">×</button>
     </div>
-    <div style="font-size:12px;color:#e2e8f0;">${info.email || info.username || 'Unknown'}</div>
-    <div style="font-size:11px;color:#64748b;margin-top:3px;">Status: ${info.status || 'PENDING_REVIEW'}</div>`;
+    <div style="font-size:12px;color:#e2e8f0;font-weight:600;">${info.email || info.username || 'Unknown'}</div>
+    <div style="font-size:11px;color:#f59e0b;margin-top:4px;">👆 Click to review documents</div>`;
+  el.addEventListener('click', () => {
+    el.remove();
+    document.querySelector('[data-view="kyc"]')?.click();
+  });
   document.body.appendChild(el);
-  setTimeout(() => { try { el.remove(); } catch(_) {} }, 8000);
+  setTimeout(() => { try { el.remove(); } catch(_) {} }, 10000);
 }
 
 async function refreshWithdrawalNotifications({ silent = false } = {}) {

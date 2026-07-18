@@ -1099,7 +1099,7 @@ function submitKyc(){
       verifyWrap.innerHTML='<button class="verify-btn" style="background:#00b897;cursor:default">✓ Verified</button>';
       document.getElementById('withdrawLimit').textContent='5 BTC / D';
       setTimeout(function(){showScreen('screenVerified');},300);
-    } else if(s==='PENDING'||s==='SUBMITTED'||s==='UNDER_REVIEW'){
+    } else if(s==='PENDING'||s==='SUBMITTED'||s==='UNDER_REVIEW'||s==='PENDING_REVIEW'){
       badge.className='pending-badge'; badge.textContent='⏳ Under Review';
       verifyWrap.innerHTML='<button class="verify-btn" style="background:#2563eb;cursor:default;font-size:.78rem" onclick="showScreen(\'screenPending\')">Under Review</button>';
       // Auto-show pending screen
