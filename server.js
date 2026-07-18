@@ -287,6 +287,21 @@ function broadcastAdminWithdrawalEvent(payload) {
   const msg = `data: ${JSON.stringify(payload)}\n\n`;
   adminWithdrawalSseClients.forEach(res => { try { res.write(msg); } catch(e) {} });
 }
+const adminUserSseClients = new Set();
+function broadcastAdminUserEvent(payload) {
+  const msg = `data: ${JSON.stringify(payload)}\n\n`;
+  adminUserSseClients.forEach(res => { try { res.write(msg); } catch(e) {} });
+}
+const adminDepositSseClients = new Set();
+function broadcastAdminDepositEvent(payload) {
+  const msg = `data: ${JSON.stringify(payload)}\n\n`;
+  adminDepositSseClients.forEach(res => { try { res.write(msg); } catch(e) {} });
+}
+const adminKycSseClients = new Set();
+function broadcastAdminKycEvent(payload) {
+  const msg = `data: ${JSON.stringify(payload)}\n\n`;
+  adminKycSseClients.forEach(res => { try { res.write(msg); } catch(e) {} });
+}
 function getUserStreams(userId) {
   if (!p2pUserStreams.has(userId)) p2pUserStreams.set(userId, new Set());
   return p2pUserStreams.get(userId);
@@ -2124,6 +2139,10 @@ app.post('/api/p2p/register', async (req, res) => {
     }
 
     const kycProfile = await getP2PKycProfileByEmail(user.email);
+
+    // Notify admin via SSE
+    broadcastAdminUserEvent({ type: 'new_user', userId: user.id, username: user.username, email: user.email, createdAt: new Date().toISOString() });
+
     return res.status(201).json({
       message: 'Account created successfully.',
       user: { id: user.id, username: user.username, email: user.email, role: user.role, kyc: kycProfile },
@@ -2416,6 +2435,9 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
       });
     }
 
+    // Notify admin via SSE
+    broadcastAdminKycEvent({ type: 'kyc_submitted', userId, username: req.p2pUser.username, email: req.p2pUser.email, status: nextStatus, requestId, submittedAt: submittedAt.toISOString() });
+
     const statusMessageByState = {
       VERIFIED: 'KYC verified successfully! You can now trade on Bitcovex.',
       REJECTED: rejectionReason || 'KYC verification failed. Please re-submit with clearer photos.',
@@ -2668,6 +2690,9 @@ app.post(
           }
         });
       }
+
+      // Notify admin via SSE
+      broadcastAdminDepositEvent({ type: 'new_deposit', depositId: deposit.id, userId: req.p2pUser.id, username: req.p2pUser.username, email: req.p2pUser.email, amount: deposit.amount, coin: deposit.coin || coin, network: deposit.network || network, createdAt: new Date().toISOString() });
 
       return res.status(201).json({
         message: 'Deposit request created. Awaiting admin confirmation.',
@@ -4966,6 +4991,74 @@ app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
   res.write(': connected\n\n');
   const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
   req.on('close', () => { clearInterval(ping); adminWithdrawalSseClients.delete(res); });
+});
+
+// ── Admin: New user live-notify SSE ───────────────────────────────────────────
+app.get('/api/admin/user/live-notify', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+  adminUserSseClients.add(res);
+  res.write(': connected\n\n');
+  const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
+  req.on('close', () => { clearInterval(ping); adminUserSseClients.delete(res); });
+});
+
+// ── Admin: New deposit live-notify SSE ────────────────────────────────────────
+app.get('/api/admin/deposit/live-notify', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+  adminDepositSseClients.add(res);
+  res.write(': connected\n\n');
+  const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
+  req.on('close', () => { clearInterval(ping); adminDepositSseClients.delete(res); });
+});
+
+// ── Admin: KYC submission live-notify SSE ─────────────────────────────────────
+app.get('/api/admin/kyc/live-notify', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+  adminKycSseClients.add(res);
+  res.write(': connected\n\n');
+  const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch(e) {} }, 20000);
+  req.on('close', () => { clearInterval(ping); adminKycSseClients.delete(res); });
+});
+
+// ── Admin: KYC document image (binary) ────────────────────────────────────────
+app.get('/api/admin/users/:userId/kyc/image/:type', requiresAdminSession, async (req, res) => {
+  const userId = String(req.params.userId || '').trim();
+  const type = String(req.params.type || '').trim();
+  if (!userId || !['aadhaar', 'aadhaar-back', 'selfie'].includes(type)) {
+    return res.status(400).json({ message: 'Invalid request' });
+  }
+  try {
+    if (!adminStore) return res.status(503).json({ message: 'Store not ready' });
+    const data = await adminStore.getKycDocuments(userId);
+    const raw = type === 'aadhaar' ? data.aadhaarFront
+              : type === 'aadhaar-back' ? data.aadhaarBack
+              : data.selfie;
+    if (!raw) return res.status(404).json({ message: 'Image not found' });
+    const match = String(raw).match(/^data:([^;]+);base64,(.+)$/s);
+    if (match) {
+      const mimeType = match[1] || 'image/jpeg';
+      const buffer = Buffer.from(match[2], 'base64');
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader('Cache-Control', 'private, max-age=300');
+      return res.send(buffer);
+    }
+    res.setHeader('Content-Type', 'text/plain');
+    return res.send(raw);
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to load image: ' + (err.message || 'Unknown') });
+  }
 });
 
 // ── Admin: List all withdrawal requests ───────────────────────────────────────

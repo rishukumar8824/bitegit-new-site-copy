@@ -668,9 +668,18 @@ async function loadUsers(options = {}) {
   });
 }
 
-function isUserOnline(lastActiveAt) {
+function isUserOnline(lastActiveAt, isMerchant) {
   if (!lastActiveAt) return false;
-  return (Date.now() - new Date(lastActiveAt).getTime()) < 3600000; // 1 hour
+  const threshold = isMerchant ? 3600000 : 300000; // merchant: 1hr, normal: 5min
+  return (Date.now() - new Date(lastActiveAt).getTime()) < threshold;
+}
+function formatLastSeen(lastActiveAt) {
+  if (!lastActiveAt) return 'Never';
+  const diff = Date.now() - new Date(lastActiveAt).getTime();
+  if (diff < 60000) return 'Just now';
+  if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+  return Math.floor(diff / 86400000) + 'd ago';
 }
 
 function renderUsersTable(users, merchantMap) {
@@ -684,14 +693,16 @@ function renderUsersTable(users, merchantMap) {
     const merchantCell = mb
       ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${BADGE_COLORS[mb]}22;color:${BADGE_COLORS[mb]};border:1px solid ${BADGE_COLORS[mb]}55;white-space:nowrap;">${BADGE_ICONS[mb]}</span>`
       : `<span style="font-size:11px;color:var(--text-2);">—</span>`;
-    const online = isUserOnline(user.lastActiveAt);
+    const online = isUserOnline(user.lastActiveAt, user.isMerchant);
+    const lastSeenTxt = formatLastSeen(user.lastActiveAt);
+    const onlineLabel = online ? 'Online (active <5min)' : `Last seen: ${lastSeenTxt}`;
     const onlineDot = online
-      ? `<span title="Online (active within 1 hr)" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:5px;vertical-align:middle;box-shadow:0 0 4px #22c55e99;"></span>`
-      : `<span title="Offline" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#64748b44;margin-right:5px;vertical-align:middle;"></span>`;
+      ? `<span title="${onlineLabel}" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:5px;vertical-align:middle;box-shadow:0 0 4px #22c55e99;"></span>`
+      : `<span title="${onlineLabel}" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#64748b44;margin-right:5px;vertical-align:middle;"></span>`;
     return `
     <tr class="user-row" data-profile-id="${user.userId}" style="cursor:pointer;transition:background 0.15s;" title="Click to view full profile">
       <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${user.userId}</td>
-      <td class="admin-td" style="font-weight:500;">${onlineDot}${user.email}</td>
+      <td class="admin-td" style="font-weight:500;">${onlineDot}${user.email}<br><span style="font-size:10px;color:var(--text-2);">${onlineLabel}</span></td>
       <td class="admin-td">${statusBadge(user.role)}</td>
       <td class="admin-td">${statusBadge(user.status)}</td>
       <td class="admin-td">${statusBadge(user.kycStatus)}</td>
@@ -3851,6 +3862,9 @@ async function init() {
     // SSE for instant new-ticket alerts
     connectSupportSSE();
     connectWithdrawalSSE();
+    connectNewUserSSE();
+    connectDepositSSE();
+    connectKycSSE();
     // Poll support tickets every 15s for badge count sync
     await pollSupportTickets();
     await refreshWithdrawalNotifications({ silent: true });
@@ -3889,6 +3903,104 @@ function connectWithdrawalSSE() {
     } catch(_) {}
   };
   _wdSSE.onerror = () => setTimeout(connectWithdrawalSSE, 5000);
+}
+
+// ── New User SSE ──────────────────────────────────────────────────────────────
+let _newUserSSE = null;
+function connectNewUserSSE() {
+  if (_newUserSSE) { try { _newUserSSE.close(); } catch(_) {} }
+  _newUserSSE = new EventSource('/api/admin/user/live-notify');
+  _newUserSSE.onmessage = (ev) => {
+    try {
+      const info = JSON.parse(ev.data);
+      if (info.type === 'new_user') {
+        showNewUserNotification(info);
+        addNotif('user', 'New User Registered', info.email || info.username || 'Unknown');
+        const badge = document.getElementById('usersBadge');
+        if (badge) { badge.style.display = ''; badge.textContent = (parseInt(badge.textContent || '0') || 0) + 1; }
+        if (state.currentView === 'users') loadUsers({ silent: true }).catch(() => {});
+      }
+    } catch(_) {}
+  };
+  _newUserSSE.onerror = () => setTimeout(connectNewUserSSE, 5000);
+}
+function showNewUserNotification(info) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0f172a;border:1.5px solid #22c55e;border-radius:12px;padding:14px 18px;z-index:99999;min-width:260px;max-width:340px;box-shadow:0 8px 32px #0008;animation:slideInRight .3s ease;';
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <span style="font-size:20px;">👤</span>
+      <span style="font-weight:700;color:#22c55e;font-size:13px;">New User Registered</span>
+      <button onclick="this.parentElement.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;line-height:1;">×</button>
+    </div>
+    <div style="font-size:12px;color:#e2e8f0;">${info.email || info.username || 'Unknown'}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:3px;">${info.userId ? 'ID: ' + info.userId.slice(0,16) + '...' : ''}</div>`;
+  document.body.appendChild(el);
+  setTimeout(() => { try { el.remove(); } catch(_) {} }, 7000);
+}
+
+// ── New Deposit SSE ───────────────────────────────────────────────────────────
+let _depositSSE = null;
+function connectDepositSSE() {
+  if (_depositSSE) { try { _depositSSE.close(); } catch(_) {} }
+  _depositSSE = new EventSource('/api/admin/deposit/live-notify');
+  _depositSSE.onmessage = (ev) => {
+    try {
+      const info = JSON.parse(ev.data);
+      if (info.type === 'new_deposit') {
+        showDepositNotification(info);
+        addNotif('deposit', 'New Deposit Request', `${info.amount || ''} ${info.coin || 'USDT'} from ${info.username || info.email || 'User'}`);
+        if (state.currentView === 'wallet') loadWallet().catch(() => {});
+      }
+    } catch(_) {}
+  };
+  _depositSSE.onerror = () => setTimeout(connectDepositSSE, 5000);
+}
+function showDepositNotification(info) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0f172a;border:1.5px solid #3b82f6;border-radius:12px;padding:14px 18px;z-index:99999;min-width:260px;max-width:340px;box-shadow:0 8px 32px #0008;animation:slideInRight .3s ease;';
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <span style="font-size:20px;">💰</span>
+      <span style="font-weight:700;color:#3b82f6;font-size:13px;">New Deposit Request</span>
+      <button onclick="this.parentElement.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;line-height:1;">×</button>
+    </div>
+    <div style="font-size:13px;color:#e2e8f0;font-weight:600;">${info.amount || ''} ${info.coin || 'USDT'}</div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:3px;">From: ${info.email || info.username || 'Unknown'}</div>`;
+  document.body.appendChild(el);
+  setTimeout(() => { try { el.remove(); } catch(_) {} }, 8000);
+}
+
+// ── KYC Submission SSE ────────────────────────────────────────────────────────
+let _kycSSE = null;
+function connectKycSSE() {
+  if (_kycSSE) { try { _kycSSE.close(); } catch(_) {} }
+  _kycSSE = new EventSource('/api/admin/kyc/live-notify');
+  _kycSSE.onmessage = (ev) => {
+    try {
+      const info = JSON.parse(ev.data);
+      if (info.type === 'kyc_submitted') {
+        showKycNotification(info);
+        addNotif('kyc', 'KYC Documents Submitted', `${info.email || info.username || 'User'} — Status: ${info.status || 'PENDING'}`);
+        if (state.currentView === 'users') loadUsers({ silent: true }).catch(() => {});
+      }
+    } catch(_) {}
+  };
+  _kycSSE.onerror = () => setTimeout(connectKycSSE, 5000);
+}
+function showKycNotification(info) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0f172a;border:1.5px solid #f59e0b;border-radius:12px;padding:14px 18px;z-index:99999;min-width:260px;max-width:340px;box-shadow:0 8px 32px #0008;animation:slideInRight .3s ease;';
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <span style="font-size:20px;">📋</span>
+      <span style="font-weight:700;color:#f59e0b;font-size:13px;">KYC Documents Submitted</span>
+      <button onclick="this.parentElement.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;line-height:1;">×</button>
+    </div>
+    <div style="font-size:12px;color:#e2e8f0;">${info.email || info.username || 'Unknown'}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:3px;">Status: ${info.status || 'PENDING_REVIEW'}</div>`;
+  document.body.appendChild(el);
+  setTimeout(() => { try { el.remove(); } catch(_) {} }, 8000);
 }
 
 async function refreshWithdrawalNotifications({ silent = false } = {}) {
