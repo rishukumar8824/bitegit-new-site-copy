@@ -5438,8 +5438,8 @@ app.get('/api/admin/dashboard/overview', requiresAdminSession, async (req, res) 
 app.get('/api/admin/users', requiresAdminSession, async (req, res) => {
   try {
     if (!adminStore) return res.json({ users: [], total: 0, page: 1, limit: 20 });
-    const { email, search, page = 1, limit = 20, kyc, status } = req.query;
-    const result = await adminStore.listUsers({ email: email || search, page: Number(page), limit: Number(limit), kyc, status });
+    const { email, search, page = 1, limit = 20, kyc, kycStatus, status } = req.query;
+    const result = await adminStore.listUsers({ email: email || search, page: Number(page), limit: Number(limit), kycStatus: kycStatus || kyc, status });
     return res.json(result);
   } catch (e) { return res.status(500).json({ message: 'Failed to list users', error: e.message }); }
 });

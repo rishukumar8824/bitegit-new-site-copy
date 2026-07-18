@@ -530,23 +530,20 @@ async function loadKyc() {
   if (!body) return;
 
   if (users.length === 0) {
-    body.innerHTML = '<tr><td class="admin-td" colspan="7" style="text-align:center;color:var(--text-2);padding:32px;">No users found.</td></tr>';
+    body.innerHTML = '<tr><td class="admin-td" colspan="5" style="text-align:center;color:var(--text-2);padding:32px;">No users found.</td></tr>';
     return;
   }
 
   body.innerHTML = users.map((user) => {
-    const kyc = user.kyc || {};
-    const name = kyc.fullName || user.fullName || '—';
-    const aadhaarLast4 = kyc.aadhaarLast4 || '••••';
-    return `<tr>
+    const kycStatus = (user.kycStatus || 'PENDING').toUpperCase();
+    const isPending = kycStatus === 'PENDING_REVIEW' || kycStatus === 'PENDING';
+    return `<tr style="${isPending ? 'background:rgba(245,165,36,.04);' : ''}">
       <td class="admin-td" style="font-family:monospace;font-size:11px;">${escH(user.userId)}</td>
-      <td class="admin-td">${escH(name)}</td>
-      <td class="admin-td">${escH(user.email || '—')}</td>
-      <td class="admin-td" style="font-family:monospace;letter-spacing:2px;">••••&nbsp;${escH(aadhaarLast4)}</td>
+      <td class="admin-td" style="font-weight:500;">${escH(user.email || '—')}</td>
       <td class="admin-td">${formatDate(user.updatedAt)}</td>
       <td class="admin-td">${statusBadge(user.kycStatus)}</td>
       <td class="admin-td">
-        <button class="btn-secondary btn-sm" data-kyc-action="view-docs" data-user-id="${escH(user.userId)}">Review</button>
+        <button class="btn-${isPending ? 'primary' : 'secondary'} btn-sm" data-kyc-action="view-docs" data-user-id="${escH(user.userId)}">${isPending ? '📋 Review Docs' : '👁 View'}</button>
       </td>
     </tr>`;
   }).join('');
@@ -3852,7 +3849,7 @@ async function init() {
     startLiveClock();
     await ensureAdminSession();
     wireEventListeners();
-    await changeView('overview');
+    await changeView('users');
 
     // Refresh current view every 30s
     setInterval(async () => {
@@ -3868,6 +3865,8 @@ async function init() {
     // Poll support tickets every 15s for badge count sync
     await pollSupportTickets();
     await refreshWithdrawalNotifications({ silent: true });
+    // Populate KYC pending badge on load
+    loadKyc().catch(() => {});
     setInterval(pollSupportTickets, 15000);
     setInterval(() => refreshWithdrawalNotifications({ silent: true }), 15000);
 
