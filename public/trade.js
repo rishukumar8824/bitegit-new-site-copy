@@ -1411,6 +1411,13 @@ async function loadKlines() {
 }
 
 async function placeTradeOrder() {
+  // Login wall
+  if (!activeTradeUser) {
+    setTradeActionMessage('Please login to trade.', 'error');
+    setTimeout(() => { window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname); }, 1200);
+    return;
+  }
+
   const amountUsdt = Number(tradeAmountUsdt?.value || 0);
   if (!Number.isFinite(amountUsdt) || amountUsdt < 10) {
     setTradeActionMessage('Minimum amount is 10 USDT.', 'error');

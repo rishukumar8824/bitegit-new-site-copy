@@ -412,10 +412,14 @@ body{display:flex;flex-direction:column;height:100svh}
       <div class="ob-bids" id="obBids"></div>
     </div>
     <div class="sub-tabs-row">
-      <div class="sub-tab active" onclick="switchSubTab(this)">Open Orders</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Order History</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
+      <div class="sub-tab active" onclick="switchOrderSubTab('open',this)">Open Orders</div>
+      <div class="sub-tab" onclick="switchOrderSubTab('history',this)">Order History</div>
+      <div class="sub-tab" onclick="switchOrderSubTab('assets',this)">Assets</div>
+    </div>
+    <div id="orderSubPanel" style="flex:1;overflow-y:auto;background:#000;min-height:0">
+      <div id="osp-open" style="display:block"></div>
+      <div id="osp-history" style="display:none"></div>
+      <div id="osp-assets" style="display:none"></div>
     </div>
   </div>
 
@@ -610,6 +614,119 @@ function switchSubTab(el){
   el.parentElement.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
+
+/* ORDER SUB-TABS */
+var _curOrderTab = 'open';
+var _tradeToken = localStorage.getItem('bitcovex_token') || '';
+function tFetch(path){
+  var h = {'Content-Type':'application/json'};
+  if(_tradeToken) h['Authorization'] = 'Bearer ' + _tradeToken;
+  return fetch('/api' + path, {credentials:'include', headers:h});
+}
+
+var COIN_COLORS = {BTC:'#f7931a',ETH:'#627eea',BNB:'#f3ba2f',SOL:'#9945ff',XRP:'#346aa9',ADA:'#0033ad',DOGE:'#c2a633',USDT:'#26a17b',TRX:'#e50915',AVAX:'#e84142',LINK:'#2a5ada',LTC:'#bfbbbb'};
+function coinIcon(sym,size){
+  size=size||28;
+  var c=COIN_COLORS[sym]||'#444';
+  var letter=(sym||'?').charAt(0);
+  return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+c+';display:flex;align-items:center;justify-content:center;font-size:'+(size*0.38)+'px;font-weight:700;color:#fff;flex-shrink:0">'+letter+'</div>';
+}
+
+function switchOrderSubTab(tab, el){
+  _curOrderTab = tab;
+  if(el){
+    el.parentElement.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+  }
+  ['open','history','assets'].forEach(function(t){
+    var p=document.getElementById('osp-'+t);
+    if(p) p.style.display = t===tab ? 'block' : 'none';
+  });
+  if(tab==='open') renderOpenOrders();
+  else if(tab==='history') loadAndRenderOrderHistory();
+  else if(tab==='assets') loadAndRenderAssets();
+}
+
+function renderOpenOrders(){
+  var el=document.getElementById('osp-open');
+  if(!el) return;
+  el.innerHTML='<div style="text-align:center;padding:32px 16px;color:#64748b;font-size:.82rem">No open orders — all market orders fill instantly.</div>';
+}
+
+function loadAndRenderOrderHistory(){
+  var el=document.getElementById('osp-history');
+  if(!el) return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:#64748b;font-size:.82rem">Loading…</div>';
+  tFetch('/trade/orders')
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      if(!data){ el.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Login to see order history.</div>'; return; }
+      var orders = data.orders || [];
+      if(!orders.length){ el.innerHTML='<div style="text-align:center;padding:32px 16px;color:#64748b;font-size:.82rem">No trade history yet.</div>'; return; }
+      el.innerHTML = '<div style="overflow-x:auto">'
+        +'<table style="width:100%;border-collapse:collapse;font-size:.78rem">'
+        +'<thead><tr style="background:#0d1117;color:#64748b;text-transform:uppercase;font-size:.65rem">'
+        +'<th style="padding:6px 8px;text-align:left">Time</th>'
+        +'<th style="padding:6px 8px;text-align:left">Pair</th>'
+        +'<th style="padding:6px 8px;text-align:left">Side</th>'
+        +'<th style="padding:6px 8px;text-align:right">Price</th>'
+        +'<th style="padding:6px 8px;text-align:right">Qty</th>'
+        +'<th style="padding:6px 8px;text-align:right">USDT</th>'
+        +'</tr></thead><tbody>'
+        + orders.map(function(o){
+            var isBuy = (o.side||'').toLowerCase()==='buy';
+            var ts = new Date(o.createdAt||o.timestamp||0);
+            var tStr = (ts.getMonth()+1)+'/'+ts.getDate()+' '+ts.getHours().toString().padStart(2,'0')+':'+ts.getMinutes().toString().padStart(2,'0');
+            return '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'
+              +'<td style="padding:6px 8px;color:#94a3b8">'+tStr+'</td>'
+              +'<td style="padding:6px 8px;color:#fff;font-weight:600">'+(o.symbol||'—')+'</td>'
+              +'<td style="padding:6px 8px;color:'+(isBuy?'#22c55e':'#f6465d')+';font-weight:700">'+(isBuy?'BUY':'SELL')+'</td>'
+              +'<td style="padding:6px 8px;text-align:right;color:#e2e8f0">'+parseFloat(o.referencePrice||0).toFixed(2)+'</td>'
+              +'<td style="padding:6px 8px;text-align:right;color:#e2e8f0">'+parseFloat(o.estimatedQty||0).toFixed(6)+'</td>'
+              +'<td style="padding:6px 8px;text-align:right;color:#fff;font-weight:600">'+parseFloat(o.amountUsdt||0).toFixed(2)+'</td>'
+              +'</tr>';
+          }).join('')
+        +'</tbody></table></div>';
+    })
+    .catch(function(){ el.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Failed to load history.</div>'; });
+}
+
+var COIN_FULL_NAMES = {BTC:'Bitcoin',ETH:'Ethereum',BNB:'BNB',SOL:'Solana',XRP:'Ripple',ADA:'Cardano',DOGE:'Dogecoin',USDT:'Tether',TRX:'TRON',AVAX:'Avalanche',LINK:'Chainlink'};
+
+function loadAndRenderAssets(){
+  var el=document.getElementById('osp-assets');
+  if(!el) return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:#64748b;font-size:.82rem">Loading…</div>';
+  tFetch('/trade/balance')
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      if(!data){ el.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Login to see assets.</div>'; return; }
+      var usdt = parseFloat(data.usdt||0);
+      var holdings = data.holdings || {};
+      var rows = [];
+      // USDT row always first
+      rows.push('<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.05)">'
+        +coinIcon('USDT',30)
+        +'<div style="flex:1"><div style="font-size:.88rem;font-weight:700;color:#fff">USDT</div><div style="font-size:.7rem;color:#64748b">Available</div></div>'
+        +'<div style="text-align:right"><div style="font-size:.88rem;font-weight:700;color:#fff">'+usdt.toFixed(2)+'</div><div style="font-size:.7rem;color:#64748b">≈$'+usdt.toFixed(2)+'</div></div>'
+        +'</div>');
+      Object.keys(holdings).forEach(function(sym){
+        var qty = parseFloat(holdings[sym]||0);
+        if(qty<=0) return;
+        rows.push('<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.05)">'
+          +coinIcon(sym,30)
+          +'<div style="flex:1"><div style="font-size:.88rem;font-weight:700;color:#fff">'+sym+'</div><div style="font-size:.7rem;color:#64748b">'+(COIN_FULL_NAMES[sym]||sym)+'</div></div>'
+          +'<div style="text-align:right"><div style="font-size:.88rem;font-weight:700;color:#fff">'+qty.toFixed(8).replace(/\.?0+$/,'')+'</div><div style="font-size:.7rem;color:#64748b">Spot holding</div></div>'
+          +'</div>');
+      });
+      if(rows.length===1 && usdt<0.01) rows = ['<div style="text-align:center;padding:32px 16px;color:#64748b;font-size:.82rem">No assets yet. Deposit USDT to start trading.</div>'];
+      el.innerHTML = rows.join('');
+    })
+    .catch(function(){ el.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Failed to load assets.</div>'; });
+}
+
+// Init open orders tab on load
+setTimeout(function(){ renderOpenOrders(); }, 200);
 function setObView(v,el){
   obView=v;
   document.querySelectorAll('.ob-icon').forEach(b=>b.classList.remove('active'));

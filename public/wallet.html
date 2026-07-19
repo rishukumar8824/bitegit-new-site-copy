@@ -2153,15 +2153,43 @@
         var acctSpot = document.getElementById('acctSpotBal');
         if(acctSpot) acctSpot.textContent = spotBalance.toFixed(2) + ' USDT';
 
-        // Spot tab coin list
+        // Spot tab coin list — load holdings too
         var spotList = document.getElementById('ovSpotCoinList');
-        if(spotList && spotBalance >= 0) {
-          spotList.innerHTML = '<div style="display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border-bottom:1px solid rgba(255,255,255,.05);background:#000">'
-            +'<svg width="36" height="36" viewBox="0 0 32 32" style="flex-shrink:0"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658s2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658s-2.895 1.485-6.775 1.657zm0-3.59v-2.366h5.414V8H8.664v3.427h5.414v2.365c-4.4.202-7.708 1.074-7.708 2.128s3.308 1.926 7.708 2.129v7.617h3.844v-7.619c4.393-.202 7.694-1.073 7.694-2.127s-3.301-1.926-7.694-2.127z" fill="#fff"/></svg>'
-            +'<div style="flex:1"><div style="font-size:.92rem;font-weight:700;color:#fff">USDT</div><div style="font-size:.75rem;color:#8a9bb5;margin-top:.1rem">Tether USDT</div></div>'
-            +'<div style="text-align:right"><div style="font-size:.92rem;font-weight:700;color:#fff">'+spotBalance.toFixed(2)+'</div>'
-            +'<div style="font-size:.75rem;color:#8a9bb5;margin-top:.1rem">≈$'+spotBalance.toFixed(2)+'</div></div>'
-            +'</div>';
+        if(spotList) {
+          // Fetch spot holdings from trade balance API
+          bcvFetch('/trade/balance')
+            .then(function(r2){ return r2.ok ? r2.json() : { usdt: spotBalance, holdings: {} }; })
+            .catch(function(){ return { usdt: spotBalance, holdings: {} }; })
+            .then(function(balData){
+              var usdtAmt = balData.usdt !== undefined ? Number(balData.usdt) : spotBalance;
+              var holdings = balData.holdings || {};
+              var COIN_COLORS = {BTC:'#f7931a',ETH:'#627eea',BNB:'#f3ba2f',SOL:'#9945ff',XRP:'#346aa9',ADA:'#0033ad',DOGE:'#c2a633',USDT:'#26a17b',TRX:'#e50915',AVAX:'#e84142',LINK:'#2a5ada',LTC:'#bfbbbb'};
+              var COIN_NAMES = {BTC:'Bitcoin',ETH:'Ethereum',BNB:'BNB',SOL:'Solana',XRP:'Ripple',ADA:'Cardano',DOGE:'Dogecoin',TRX:'TRON',AVAX:'Avalanche',LINK:'Chainlink',LTC:'Litecoin'};
+              function mkCoinIcon(sym) {
+                var c = COIN_COLORS[sym] || '#444';
+                return '<div style="width:36px;height:36px;border-radius:50%;background:'+c+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">'+sym.charAt(0)+'</div>';
+              }
+              var rows = [];
+              // USDT row
+              rows.push('<div style="display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border-bottom:1px solid rgba(255,255,255,.05);background:#000">'
+                +'<svg width="36" height="36" viewBox="0 0 32 32" style="flex-shrink:0"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658s2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658s-2.895 1.485-6.775 1.657zm0-3.59v-2.366h5.414V8H8.664v3.427h5.414v2.365c-4.4.202-7.708 1.074-7.708 2.128s3.308 1.926 7.708 2.129v7.617h3.844v-7.619c4.393-.202 7.694-1.073 7.694-2.127s-3.301-1.926-7.694-2.127z" fill="#fff"/></svg>'
+                +'<div style="flex:1"><div style="font-size:.92rem;font-weight:700;color:#fff">USDT</div><div style="font-size:.75rem;color:#8a9bb5;margin-top:.1rem">Tether USDT</div></div>'
+                +'<div style="text-align:right"><div style="font-size:.92rem;font-weight:700;color:#fff">'+usdtAmt.toFixed(2)+'</div>'
+                +'<div style="font-size:.75rem;color:#8a9bb5;margin-top:.1rem">≈$'+usdtAmt.toFixed(2)+'</div></div>'
+                +'</div>');
+              // Coin holding rows
+              Object.keys(holdings).forEach(function(sym){
+                var qty = Number(holdings[sym] || 0);
+                if(qty <= 0) return;
+                rows.push('<div style="display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border-bottom:1px solid rgba(255,255,255,.05);background:#000;cursor:pointer" onclick="location.href=\'/trade/spot/'+sym+'USDT\'">'
+                  +mkCoinIcon(sym)
+                  +'<div style="flex:1"><div style="font-size:.92rem;font-weight:700;color:#fff">'+sym+'</div><div style="font-size:.75rem;color:#8a9bb5;margin-top:.1rem">'+(COIN_NAMES[sym]||sym)+' · Spot</div></div>'
+                  +'<div style="text-align:right"><div style="font-size:.92rem;font-weight:700;color:#fff">'+qty.toFixed(8).replace(/\.?0+$/,'')+'</div>'
+                  +'<div style="font-size:.75rem;color:#8a9bb5;margin-top:.1rem">Spot holding</div></div>'
+                  +'</div>');
+              });
+              spotList.innerHTML = rows.join('');
+            });
         }
       })
       .catch(function() {});
