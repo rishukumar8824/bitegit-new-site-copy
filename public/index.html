@@ -292,7 +292,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     patchLogo();
   }
 
-  fetch('/api/p2p/me',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+  var _tok = localStorage.getItem('bitcovex_token');
+  var _hdrs = _tok ? { Authorization: 'Bearer ' + _tok } : {};
+  fetch('/api/p2p/me',{credentials:'include', headers: _hdrs}).then(function(r){return r.json();}).then(function(d){
     window._cvxLoggedIn = !!(d && d.loggedIn);
     patchAuth(window._cvxLoggedIn);
   }).catch(function(){

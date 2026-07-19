@@ -346,7 +346,9 @@ function setNavOpen(open) {
 // ── Auth UI ──
 async function loadCurrentUser() {
   try {
-    const res  = await fetch('/api/p2p/me', { credentials: 'include' });
+    const _tok = localStorage.getItem('bitcovex_token');
+    const _hdrs = _tok ? { Authorization: 'Bearer ' + _tok } : {};
+    const res  = await fetch('/api/p2p/me', { credentials: 'include', headers: _hdrs });
     const data = await res.json();
     const loggedIn = res.ok && data?.loggedIn;
     if (loggedIn) {
