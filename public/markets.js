@@ -346,7 +346,7 @@ function setNavOpen(open) {
 // ── Auth UI ──
 async function loadCurrentUser() {
   try {
-    const res  = await fetch('/api/p2p/me');
+    const res  = await fetch('/api/p2p/me', { credentials: 'include' });
     const data = await res.json();
     const loggedIn = res.ok && data?.loggedIn;
     if (loggedIn) {
@@ -354,6 +354,18 @@ async function loadCurrentUser() {
       if (marketsSignupBtn) marketsSignupBtn.style.display = 'none';
       const drawerAuth = document.getElementById('marketsDrawerAuthBtns');
       if (drawerAuth) drawerAuth.style.display = 'none';
+      // Show user avatar button
+      const userBtn = document.getElementById('marketsUserBtn');
+      const userAvatar = document.getElementById('marketsUserAvatar');
+      const userName = document.getElementById('marketsUserName');
+      if (userBtn) userBtn.style.display = 'flex';
+      if (userAvatar && data.user) {
+        const initial = (data.user.username || data.user.email || 'U').charAt(0).toUpperCase();
+        userAvatar.textContent = initial;
+      }
+      if (userName && data.user) {
+        userName.textContent = data.user.username || data.user.email?.split('@')[0] || 'Account';
+      }
     }
   } catch (_) {}
 }

@@ -6,8 +6,8 @@
 <title>BTC/USDT — Bitcovex</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:#000;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:100%;overflow:hidden}
-body{display:flex;flex-direction:column;height:100svh}
+html,body{background:#000;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100%}
+body{display:flex;flex-direction:column;min-height:100svh}
 
 /* HEADER */
 .hdr{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#000;border-bottom:1px solid #1a1f2e;flex-shrink:0}
@@ -48,8 +48,8 @@ body{display:flex;flex-direction:column;height:100svh}
 .main-tab.active{color:#e8eaf0;border-bottom-color:#e8eaf0}
 
 /* PANELS */
-.panels{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-.panel{display:none;flex:1;overflow:hidden;flex-direction:column;min-height:0}
+.panels{flex:1;display:flex;flex-direction:column}
+.panel{display:none;flex:1;flex-direction:column}
 .panel.active{display:flex}
 
 /* ---- CHART PANEL ---- */
@@ -61,7 +61,7 @@ body{display:flex;flex-direction:column;height:100svh}
 .iv-sep{width:1px;height:16px;background:#1a1f2e;flex-shrink:0;margin:0 4px}
 .iv-extra{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0;cursor:pointer}
 
-#tv_chart_container{flex:1;overflow:hidden;min-height:0}
+#tv_chart_container{flex:1;min-height:55vh}
 #tv_chart_container iframe{border:none!important;width:100%!important;height:100%!important}
 
 .sub-tabs-row{display:flex;border-bottom:1px solid #1a1f2e;background:#000;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
@@ -82,10 +82,10 @@ body{display:flex;flex-direction:column;height:100svh}
 .ob-h{font-size:11px;color:#8fa0bb;flex:1}
 .ob-h.c{text-align:center}
 .ob-h.r{text-align:right}
-.ob-body{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.ob-asks{flex:1;display:flex;flex-direction:column;justify-content:flex-end;overflow-y:auto;scrollbar-width:none}
+.ob-body{flex:1;display:flex;flex-direction:column;min-height:60vh}
+.ob-asks{flex:1;display:flex;flex-direction:column;justify-content:flex-end;max-height:40vh;overflow-y:auto;scrollbar-width:none}
 .ob-asks::-webkit-scrollbar{display:none}
-.ob-bids{flex:1;overflow-y:auto;scrollbar-width:none}
+.ob-bids{flex:1;max-height:40vh;overflow-y:auto;scrollbar-width:none}
 .ob-bids::-webkit-scrollbar{display:none}
 .ob-mid{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#000;flex-shrink:0;border-top:1px solid #1a1f2e;border-bottom:1px solid #1a1f2e}
 .ob-mid-px{font-size:16px;font-weight:700;color:#e84d4d}

@@ -13,7 +13,8 @@
     <header class="mk-header" id="marketsHeader">
       <div class="mk-header-inner">
         <a class="mk-brand" href="/">
-          <span class="mk-brand-word" style="color:#00f5ff;letter-spacing:0.03em;font-size:0.95rem;font-weight:900;">BITCOVEX</span>
+          <img src="/images/bitbase-logo.png" alt="Bitcovex" width="32" height="32" style="display:block;object-fit:contain;border-radius:8px;flex-shrink:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
+          <span class="mk-brand-word" style="color:#00f5ff;letter-spacing:0.03em;font-size:0.95rem;font-weight:900;display:none;">BITCOVEX</span>
         </a>
         <nav class="mk-nav" aria-label="Primary navigation">
           <a href="/">Buy Crypto</a>
@@ -26,6 +27,10 @@
         <div class="mk-actions">
           <a id="marketsLoginBtn" class="mk-login" href="/auth">Log In</a>
           <a id="marketsSignupBtn" class="mk-signup" href="/auth?mode=signup">Sign Up</a>
+          <a id="marketsUserBtn" href="/wallet" style="display:none;align-items:center;gap:6px;background:#1a2540;border-radius:20px;padding:5px 12px 5px 5px;text-decoration:none;color:#e2e8f0;font-size:13px;font-weight:600;">
+            <span id="marketsUserAvatar" style="width:24px;height:24px;border-radius:50%;background:#00b8d4;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;flex-shrink:0;">U</span>
+            <span id="marketsUserName" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Account</span>
+          </a>
           <button id="marketsMenuToggle" class="mk-hamburger" type="button" aria-label="Open menu" aria-controls="marketsNavDrawer" aria-expanded="false">
             <span></span><span></span><span></span>
           </button>
@@ -37,7 +42,8 @@
     <div id="marketsNavOverlay" class="mk-nav-overlay hidden" aria-hidden="true"></div>
     <aside id="marketsNavDrawer" class="mk-nav-drawer" aria-hidden="true">
       <div class="mk-nav-head">
-        <strong>
+        <strong style="display:flex;align-items:center;gap:8px;">
+          <img src="/images/bitbase-logo.png" alt="Bitcovex" width="28" height="28" style="display:block;object-fit:contain;border-radius:7px;" onerror="this.style.display='none';">
           <span style="color:#00b8d4;font-weight:800;font-size:1.1rem;letter-spacing:0.04em;">BITCOVEX</span>
         </strong>
         <button id="marketsNavClose" type="button" aria-label="Close menu">✕</button>
