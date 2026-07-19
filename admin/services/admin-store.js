@@ -1768,13 +1768,14 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
 
   async function listP2PDisputes(params = {}) {
     const { page, limit, skip } = parsePagination(params);
+    const query = { status: { $in: ['DISPUTED', 'RESOLVED'] } };
     const rows = await p2pOrders
-      .find({ status: 'DISPUTED' })
+      .find(query)
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit)
       .toArray();
-    const total = await p2pOrders.countDocuments({ status: 'DISPUTED' });
+    const total = await p2pOrders.countDocuments(query);
     return {
       page,
       limit,

@@ -107,6 +107,7 @@ const tradeUserAvatar = document.getElementById('tradeUserAvatar');
 
 let depthTimer = null;
 let klineTimer = null;
+let tradeBalance = { usdt: 0, holdings: {} };
 let resizeTimer = null;
 let lightweightChart = null;
 let candleSeries = null;
@@ -425,6 +426,37 @@ async function loadTradeUserSession() {
   setAccountUi();
 }
 
+async function loadTradeBalance() {
+  if (!activeTradeUser) {
+    tradeBalance = { usdt: 0, holdings: {} };
+    renderTradeBalance();
+    return;
+  }
+  try {
+    const res = await tradeFetch('/trade/balance');
+    if (res.ok) {
+      const data = await res.json();
+      tradeBalance = { usdt: Number(data.usdt || 0), holdings: data.holdings || {} };
+    }
+  } catch (_) {}
+  renderTradeBalance();
+}
+
+function renderTradeBalance() {
+  const coinSymbol = state.symbol.replace(/USDT$/, '').replace(/PERP$/, '');
+  const tsAvail = document.getElementById('tsAvail');
+  const tsAvailUnit = document.getElementById('tsAvailUnit');
+  if (!tsAvail || !tsAvailUnit) return;
+  if (state.tradeSide === 'buy') {
+    tsAvail.textContent = tradeBalance.usdt.toFixed(2);
+    tsAvailUnit.textContent = 'USDT';
+  } else {
+    const coinBal = Number(tradeBalance.holdings?.[coinSymbol] || 0);
+    tsAvail.textContent = coinBal.toFixed(8);
+    tsAvailUnit.textContent = coinSymbol;
+  }
+}
+
 async function logoutTradeSession() {
   try {
     await tradeFetch('/auth/logout', { method: 'POST' });
@@ -722,6 +754,7 @@ function syncTradeActionButton() {
 function setTradeSide(side) {
   state.tradeSide = side === 'sell' ? 'sell' : 'buy';
   syncTradeActionButton();
+  renderTradeBalance();
 
   tradeSideSwitch?.querySelectorAll('button[data-side]').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.side === state.tradeSide);
@@ -1408,10 +1441,18 @@ async function placeTradeOrder() {
       throw new Error(data.message || 'Unable to place order right now.');
     }
 
+    const coinSym = state.symbol.replace('USDT', '');
     setTradeActionMessage(
-      `Order ${data.order.id} filled at ${formatPrice(data.order.referencePrice, 6)} (${data.order.estimatedQty} ${state.symbol.replace('USDT', '')}).`,
+      `✅ ${state.tradeSide.toUpperCase()} filled @ ${formatPrice(data.order.referencePrice, 6)} — ${data.order.estimatedQty} ${coinSym} | Balance: ${data.balance?.usdt?.toFixed(2) ?? '—'} USDT`,
       'success'
     );
+
+    // Update local balance from response
+    if (data.balance) {
+      tradeBalance.usdt = Number(data.balance.usdt || 0);
+      Object.assign(tradeBalance.holdings, data.balance);
+      renderTradeBalance();
+    }
   } catch (error) {
     setTradeActionMessage(error.message, 'error');
   } finally {
@@ -1799,8 +1840,12 @@ function setupInteractions() {
 
   tradeRiskSlider?.addEventListener('input', () => {
     const percent = Number(tradeRiskSlider.value || 0);
-    const simulatedWalletUsdt = 1000;
-    const nextAmount = (simulatedWalletUsdt * percent) / 100;
+    const coinSymbol = state.symbol.replace(/USDT$/, '').replace(/PERP$/, '');
+    const availBal = state.tradeSide === 'buy'
+      ? tradeBalance.usdt
+      : (Number(tradeBalance.holdings?.[coinSymbol] || 0) * (state.ticker?.lastPrice || 0));
+    const walletBase = availBal > 0 ? availBal : 1000;
+    const nextAmount = (walletBase * percent) / 100;
     syncAmountInputs(nextAmount <= 0 ? 0 : Number(nextAmount.toFixed(2)));
     renderEstimatedQty();
   });
@@ -1857,6 +1902,7 @@ async function initTradePage() {
   setPairIdentity();
   setupInteractions();
   await loadTradeUserSession();
+  await loadTradeBalance();
   setOrderType(tradeOrderType?.value || 'limit');
   setTradeSide(state.tradeSide);
   syncAmountInputs(Number(tradeAmountUsdt?.value || 100));

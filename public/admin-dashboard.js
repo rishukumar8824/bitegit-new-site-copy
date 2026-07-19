@@ -1008,6 +1008,8 @@ function renderP2PDisputeCard(order = {}) {
   const buyerLabel = order.buyerUsername || order.buyerUserId || '-';
   const sellerLabel = order.sellerUsername || order.sellerUserId || '-';
   const orderId = escapeHtml(order.id || '');
+  const isResolved = String(order.status || '').toUpperCase() === 'RESOLVED';
+  const winner = order.disputeWinner || null;
 
   const attachmentMarkup = attachments.length
     ? '<div class="mt-2 grid grid-cols-3 gap-2">'
@@ -1023,19 +1025,26 @@ function renderP2PDisputeCard(order = {}) {
     ? allMessages.map((msg) => buildDisputeMsgBubble(msg, buyerLabel, sellerLabel)).join('')
     : '<p style="font-size:12px;color:#64748b;padding:6px 0;">No chat messages yet.</p>';
 
+  const winnerBadge = isResolved && winner
+    ? `<span style="background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.4);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:8px;">
+        🏆 ${winner === 'buyer' ? escapeHtml(buyerLabel) + ' Won' : escapeHtml(sellerLabel) + ' Won'}
+       </span>`
+    : '';
+
   return `
-    <article class="list-item" style="border-color:rgba(245,158,11,.35);background:rgba(15,23,42,.72);">
+    <article class="list-item" style="border-color:${isResolved ? 'rgba(34,197,94,.35)' : 'rgba(245,158,11,.35)'};background:rgba(15,23,42,.72);">
       <div class="flex items-start justify-between gap-2">
         <div>
-          <p class="text-sm font-semibold">${escapeHtml(order.reference || order.id || 'P2P order')}</p>
+          <p class="text-sm font-semibold">${escapeHtml(order.reference || order.id || 'P2P order')}${winnerBadge}</p>
           <p class="text-xs text-slate-400">${escapeHtml(order.id || '-')} • ${escapeHtml(order.asset || 'USDT')} • ₹${formatNumber(order.amountInr || 0, 2)}</p>
+          ${isResolved && order.disputeResolution ? '<p class="text-xs" style="color:#94a3b8;margin-top:2px;">Note: ' + escapeHtml(order.disputeResolution) + '</p>' : ''}
         </div>
         ${statusBadge(order.status || 'DISPUTED')}
       </div>
 
       <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
-        <div><span class="text-slate-500">Buyer:</span> <span style="color:#3b82f6;font-weight:600;">${escapeHtml(buyerLabel)}</span></div>
-        <div><span class="text-slate-500">Seller:</span> <span style="color:#22c55e;font-weight:600;">${escapeHtml(sellerLabel)}</span></div>
+        <div><span class="text-slate-500">Buyer:</span> <span style="color:${winner === 'buyer' ? '#4ade80' : '#3b82f6'};font-weight:600;">${escapeHtml(buyerLabel)}${winner === 'buyer' ? ' 🏆' : ''}</span></div>
+        <div><span class="text-slate-500">Seller:</span> <span style="color:${winner === 'seller' ? '#4ade80' : '#22c55e'};font-weight:600;">${escapeHtml(sellerLabel)}${winner === 'seller' ? ' 🏆' : ''}</span></div>
         <div><span class="text-slate-500">Asset Amt:</span> <span class="text-white">${formatNumber(order.assetAmount || order.escrowAmount || 0, 6)}</span></div>
         <div><span class="text-slate-500">Price:</span> <span class="text-white">₹${formatNumber(order.price || 0, 2)}</span></div>
         <div><span class="text-slate-500">Payment:</span> ${escapeHtml(order.paymentMethod || 'UPI')}</div>
@@ -1076,18 +1085,69 @@ function renderP2PDisputeCard(order = {}) {
         </div>
       </div>
 
-      <div class="mt-3 flex flex-wrap gap-2">
-        <button onclick="adminReleaseEscrow('${orderId}',this)"
-          style="background:#22c55e;color:#000;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;">
-          ✅ Release Escrow
-        </button>
-        <button onclick="adminFreezeEscrow('${orderId}',this)"
-          style="background:#ef4444;color:#fff;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;">
-          🔒 Freeze Escrow
-        </button>
-      </div>
+      ${isResolved
+        ? `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:10px;padding:10px;margin-top:12px;font-size:12px;color:#4ade80;font-weight:600;">
+            ✅ Dispute resolved — ${winner === 'buyer' ? escapeHtml(buyerLabel) + ' (Buyer)' : escapeHtml(sellerLabel) + ' (Seller)'} won. Funds transferred.
+           </div>`
+        : `<div class="mt-3" style="background:rgba(15,23,42,.8);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:12px;">
+            <p style="font-size:11px;font-weight:700;color:#fbbf24;letter-spacing:.5px;margin:0 0 8px;">RESOLVE DISPUTE</p>
+            <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+              <input id="resolveNote_${orderId}" type="text" placeholder="Resolution note (optional)…"
+                style="flex:1;min-width:160px;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:6px 10px;color:#e2e8f0;font-size:12px;outline:none;" />
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+              <button onclick="adminResolveDispute('${orderId}','buyer',this)"
+                style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;white-space:nowrap;">
+                🏆 Buyer Wins
+              </button>
+              <button onclick="adminResolveDispute('${orderId}','seller',this)"
+                style="background:linear-gradient(135deg,#22c55e,#15803d);color:#fff;font-size:12px;font-weight:700;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;white-space:nowrap;">
+                🏆 Seller Wins
+              </button>
+              <button onclick="adminFreezeEscrow('${orderId}',this)"
+                style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.4);font-size:12px;font-weight:600;border-radius:8px;padding:8px 14px;cursor:pointer;white-space:nowrap;">
+                🔒 Freeze
+              </button>
+            </div>
+            <div id="resolveDisputeStatus_${orderId}" style="font-size:12px;min-height:16px;margin-top:6px;"></div>
+           </div>`
+      }
     </article>
   `;
+}
+
+async function adminResolveDispute(orderId, winner, btn) {
+  var noteEl = document.getElementById('resolveNote_' + orderId);
+  var statusEl = document.getElementById('resolveDisputeStatus_' + orderId);
+  var resolution = noteEl ? noteEl.value.trim() : '';
+  var winnerLabel = winner === 'buyer' ? 'Buyer' : 'Seller';
+  if (!confirm('Resolve this dispute in favor of ' + winnerLabel + '? This will transfer escrow funds and cannot be undone.')) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Resolving…'; }
+  if (statusEl) { statusEl.style.color = '#94a3b8'; statusEl.textContent = 'Processing…'; }
+  try {
+    var res = await fetch('/api/admin/p2p/orders/' + encodeURIComponent(orderId) + '/resolve-dispute', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ winner: winner, resolution: resolution })
+    });
+    var data = await res.json().catch(function() { return {}; });
+    if (!res.ok) throw new Error(data.message || 'HTTP ' + res.status);
+    if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '✓ ' + (data.message || 'Dispute resolved!'); }
+    showMessage('🏆 ' + (data.message || 'Dispute resolved successfully.'), 'success');
+    var card = btn ? btn.closest('article') : null;
+    if (card) {
+      setTimeout(function() {
+        card.style.transition = 'opacity 0.4s';
+        card.style.opacity = '0';
+        setTimeout(function() { card.remove(); }, 400);
+      }, 800);
+    }
+    setTimeout(function() { loadP2P().catch(function() {}); }, 1200);
+  } catch (err) {
+    if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = '✗ ' + (err.message || 'Failed.'); }
+    showMessage('Resolve failed: ' + (err.message || 'Unknown error'), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = winner === 'buyer' ? '🏆 Buyer Wins' : '🏆 Seller Wins'; }
+  }
 }
 
 async function adminSendDisputeReply(orderId) {

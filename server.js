@@ -3148,81 +3148,143 @@ app.get('/api/p2p/klines', async (req, res) => {
   }
 });
 
-app.post('/api/trade/orders', async (req, res) => {
+app.post('/api/trade/orders', requiresP2PUser, async (req, res) => {
   const symbol = normalizeMarketSymbol(req.body.symbol);
-  const market = String(req.body.market || 'spot')
-    .trim()
-    .toLowerCase();
+  const market = String(req.body.market || 'spot').trim().toLowerCase();
   const side = normalizeTradeSide(req.body.side);
   const amountUsdt = normalizeTradeAmount(req.body.amountUsdt);
 
   if (!['spot', 'perp'].includes(market)) {
     return res.status(400).json({ message: 'Market must be spot or perp.' });
   }
-
   if (!Number.isFinite(amountUsdt) || amountUsdt < 10 || amountUsdt > 1000000) {
     return res.status(400).json({ message: 'Amount must be between 10 and 1,000,000 USDT.' });
   }
 
   let referencePrice = 0;
   let priceSource = 'fallback';
-
   try {
     const tickerRes = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${encodeURIComponent(symbol)}`);
     const tickerRaw = await tickerRes.json();
-
     if (tickerRes.ok && tickerRaw && Number(tickerRaw.lastPrice) > 0) {
       referencePrice = Number(tickerRaw.lastPrice);
       priceSource = 'binance';
     }
-  } catch (error) {
-    // Fall through to generated snapshot price.
-  }
+  } catch (_) {}
 
   if (!referencePrice || !Number.isFinite(referencePrice)) {
     const fallbackTicker = createFallbackTickerSnapshot([symbol])[0];
     referencePrice = Number(fallbackTicker.lastPrice || 0);
   }
-
   if (!referencePrice || !Number.isFinite(referencePrice)) {
     return res.status(503).json({ message: 'Unable to get market price right now.' });
   }
 
   const estimatedQty = Number((amountUsdt / referencePrice).toFixed(8));
-  const now = Date.now();
-  const order = {
-    id: `trd_${now}_${Math.floor(Math.random() * 10000)}`,
-    symbol,
-    market,
-    side,
-    amountUsdt,
-    referencePrice: Number(referencePrice.toFixed(6)),
-    estimatedQty,
-    status: 'FILLED',
-    source: priceSource,
-    createdAt: now
-  };
+  const coinSymbol = symbol.replace(/USDT$/, '').replace(/PERP$/, '').toUpperCase();
+  const userId = req.p2pUser.id;
 
   try {
+    const { wallets } = getCollections();
+    const wallet = await wallets.findOne({ userId });
+    const now = Date.now();
+
+    if (side === 'buy') {
+      // Check USDT balance
+      const usdtBal = Number(wallet?.availableBalance ?? wallet?.balance ?? 0);
+      if (usdtBal < amountUsdt) {
+        return res.status(400).json({ message: `Insufficient USDT balance. Available: ${usdtBal.toFixed(2)} USDT, required: ${amountUsdt.toFixed(2)} USDT.` });
+      }
+      // Deduct USDT, credit coin
+      const result = await wallets.findOneAndUpdate(
+        { userId, $or: [{ availableBalance: { $gte: amountUsdt } }, { balance: { $gte: amountUsdt } }] },
+        {
+          $inc: { availableBalance: -amountUsdt, balance: -amountUsdt, [`spotHoldings.${coinSymbol}`]: estimatedQty },
+          $set: { updatedAt: now }
+        },
+        { returnDocument: 'after', upsert: false }
+      );
+      if (!result?.value && !result) {
+        return res.status(400).json({ message: 'Insufficient balance or concurrent update conflict. Please try again.' });
+      }
+    } else {
+      // SELL: Check coin balance
+      const coinBal = Number(wallet?.spotHoldings?.[coinSymbol] ?? 0);
+      if (coinBal < estimatedQty) {
+        return res.status(400).json({ message: `Insufficient ${coinSymbol} balance. Available: ${coinBal.toFixed(8)} ${coinSymbol}, required: ${estimatedQty.toFixed(8)} ${coinSymbol}.` });
+      }
+      // Deduct coin, credit USDT
+      const result = await wallets.findOneAndUpdate(
+        { userId, [`spotHoldings.${coinSymbol}`]: { $gte: estimatedQty } },
+        {
+          $inc: { availableBalance: amountUsdt, balance: amountUsdt, [`spotHoldings.${coinSymbol}`]: -estimatedQty },
+          $set: { updatedAt: now }
+        },
+        { returnDocument: 'after', upsert: false }
+      );
+      if (!result?.value && !result) {
+        return res.status(400).json({ message: `Insufficient ${coinSymbol} balance. Please try again.` });
+      }
+    }
+
+    // Fetch updated wallet for response
+    const updatedWallet = await wallets.findOne({ userId });
+    const newUsdtBal = Number(updatedWallet?.availableBalance ?? updatedWallet?.balance ?? 0);
+    const newCoinBal = Number(updatedWallet?.spotHoldings?.[coinSymbol] ?? 0);
+
+    const order = {
+      id: `trd_${now}_${Math.floor(Math.random() * 10000)}`,
+      userId,
+      symbol,
+      market,
+      side,
+      amountUsdt,
+      referencePrice: Number(referencePrice.toFixed(6)),
+      estimatedQty,
+      coinSymbol,
+      status: 'FILLED',
+      source: priceSource,
+      createdAt: now
+    };
+
     const savedOrder = await repos.createTradeOrder(order);
     return res.status(201).json({
       message: `${side.toUpperCase()} order executed successfully.`,
-      order: savedOrder
+      order: savedOrder,
+      balance: { usdt: newUsdtBal, [coinSymbol]: newCoinBal }
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Server error while saving trade order.' });
+    console.error('[spot-trade]', error);
+    return res.status(500).json({ message: 'Server error while executing trade.' });
   }
 });
 
-app.get('/api/trade/orders', async (req, res) => {
+app.get('/api/trade/orders', requiresP2PUser, async (req, res) => {
   try {
-    const [orders, total] = await Promise.all([repos.listTradeOrders(30), repos.countTradeOrders()]);
-    return res.json({
-      total,
-      orders
-    });
+    const userId = req.p2pUser.id;
+    const limit = Math.min(Number(req.query.limit) || 30, 100);
+    const { wallets } = getCollections();
+    const [orders, wallet] = await Promise.all([
+      repos.getUserTradeOrders(userId, limit),
+      wallets.findOne({ userId })
+    ]);
+    const holdings = wallet?.spotHoldings || {};
+    return res.json({ total: orders.length, orders, holdings });
   } catch (error) {
     return res.status(500).json({ message: 'Server error while fetching trade orders.' });
+  }
+});
+
+// Spot holdings balance endpoint
+app.get('/api/trade/balance', requiresP2PUser, async (req, res) => {
+  try {
+    const { wallets } = getCollections();
+    const wallet = await wallets.findOne({ userId: req.p2pUser.id });
+    const usdt = Number(wallet?.availableBalance ?? wallet?.balance ?? 0);
+    const holdings = wallet?.spotHoldings || {};
+    return res.json({ usdt, holdings });
+  } catch (e) {
+    return res.status(500).json({ message: 'Server error.' });
   }
 });
 
@@ -5658,6 +5720,86 @@ app.post('/api/admin/p2p/orders/:orderId/freeze', requiresAdminSession, async (r
     await adminStore.freezeEscrow(req.params.orderId, actor);
     return res.json({ ok: true });
   } catch (e) { return res.status(500).json({ message: 'Failed to freeze escrow', error: e.message }); }
+});
+
+// ── Admin: Resolve Dispute (with winner) ─────────────────────────
+app.post('/api/admin/p2p/orders/:orderId/resolve-dispute', requiresAdminSession, async (req, res) => {
+  try {
+    const orderId = String(req.params.orderId || '').trim();
+    const winner = String(req.body.winner || '').trim().toLowerCase(); // 'buyer' or 'seller'
+    const resolution = String(req.body.resolution || '').trim();
+    if (!['buyer', 'seller'].includes(winner)) {
+      return res.status(400).json({ message: 'winner must be "buyer" or "seller".' });
+    }
+    const { p2pOrders, wallets } = getCollections();
+    const order = await p2pOrders.findOne({ id: orderId });
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    if (order.status !== 'DISPUTED') return res.status(400).json({ message: 'Order is not under dispute.' });
+
+    const now = Date.now();
+    const adminLabel = req.adminAuth?.adminEmail || process.env.ADMIN_EMAIL || 'admin';
+    const escrowAmount = Number(order.escrowAmount || order.assetAmount || 0);
+    const asset = String(order.asset || 'USDT');
+
+    if (winner === 'buyer') {
+      // Credit buyer's available balance
+      const buyerId = String(order.buyerUserId || order.buyerId || '');
+      if (buyerId && escrowAmount > 0) {
+        await wallets.updateOne(
+          { userId: buyerId },
+          { $inc: { availableBalance: escrowAmount, balance: escrowAmount }, $set: { updatedAt: now } },
+          { upsert: true }
+        );
+      }
+    } else {
+      // Return escrow to seller's available balance (unlock from p2pLocked)
+      const sellerId = String(order.sellerUserId || order.sellerId || '');
+      if (sellerId && escrowAmount > 0) {
+        await wallets.updateOne(
+          { userId: sellerId },
+          { $inc: { availableBalance: escrowAmount, balance: escrowAmount, p2pLocked: -escrowAmount, lockedBalance: -escrowAmount }, $set: { updatedAt: now } },
+          { upsert: true }
+        );
+      }
+    }
+
+    const winnerLabel = winner === 'buyer'
+      ? (order.buyerUsername || 'Buyer')
+      : (order.sellerUsername || 'Seller');
+    const resolvedMsg = resolution
+      ? `Dispute resolved in favor of ${winnerLabel}. Admin note: ${resolution}`
+      : `Dispute resolved in favor of ${winnerLabel}.`;
+
+    await p2pOrders.updateOne(
+      { id: orderId },
+      {
+        $set: {
+          status: 'RESOLVED',
+          disputeStatus: 'RESOLVED',
+          disputeWinner: winner,
+          disputeResolution: resolution || '',
+          resolvedAt: now,
+          resolvedByAdmin: adminLabel,
+          updatedAt: now
+        },
+        $push: {
+          messages: {
+            id: `msg_${now}_resolve`,
+            sender: 'Support',
+            senderName: 'BX Support',
+            senderRole: 'admin',
+            text: resolvedMsg,
+            createdAt: now
+          }
+        }
+      }
+    );
+
+    return res.json({ ok: true, winner, message: `Dispute resolved. ${winnerLabel} wins.` });
+  } catch (e) {
+    console.error('[resolve-dispute]', e);
+    return res.status(500).json({ message: 'Failed to resolve dispute: ' + (e.message || 'Unknown') });
+  }
 });
 
 // ── Support Tickets ───────────────────────────────────────────────
