@@ -257,50 +257,60 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </nav>
 <script>
 (function(){
-  // Replace wordmark text with logo image
+  var tok = localStorage.getItem('bitcovex_token');
+
+  function getAuthEls(){
+    return {
+      login: document.querySelectorAll('a[href="/auth"]'),
+      signup: document.querySelectorAll('a[href="/auth?mode=signup"]')
+    };
+  }
+
+  function hideAuthBtns(){
+    var els = getAuthEls();
+    els.login.forEach(function(e){ e.style.setProperty('display','none','important'); });
+    els.signup.forEach(function(e){ e.style.setProperty('display','none','important'); });
+  }
+
+  function showAuthBtns(){
+    var els = getAuthEls();
+    els.login.forEach(function(e){ e.style.removeProperty('display'); });
+    els.signup.forEach(function(e){ e.style.removeProperty('display'); });
+  }
+
   function patchLogo(){
     var wm = document.querySelector('.cvx-wordmark');
-    if(wm){
+    if(wm && !wm._patched){
+      wm._patched = true;
       var img = document.createElement('img');
       img.src = '/images/bitbase-logo.png';
       img.alt = 'Bitcovex';
       img.width = 34; img.height = 34;
-      img.style.cssText = 'display:block;object-fit:contain;border-radius:8px;flex-shrink:0;';
-      img.onerror = function(){ this.style.display='none'; wm.style.display='inline'; };
+      img.style.cssText = 'display:block;object-fit:contain;border-radius:8px;flex-shrink:0;margin-right:6px;';
+      img.onerror = function(){ this.style.display='none'; };
       wm.parentNode.insertBefore(img, wm);
-      wm.style.display = 'none';
     }
   }
 
-  // Show/hide auth buttons based on login state
-  function patchAuth(loggedIn){
-    // Find login and signup anchor links
-    var loginLinks = document.querySelectorAll('a[href="/auth"]');
-    var signupLinks = document.querySelectorAll('a[href="/auth?mode=signup"]');
-    if(loggedIn){
-      loginLinks.forEach(function(el){ el.style.display='none'; });
-      signupLinks.forEach(function(el){ el.style.display='none'; });
-    } else {
-      loginLinks.forEach(function(el){ el.style.removeProperty('display'); });
-      signupLinks.forEach(function(el){ el.style.removeProperty('display'); });
-    }
+  function applyAll(){
+    patchLogo();
+    if(tok){ hideAuthBtns(); } else { showAuthBtns(); }
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', patchLogo);
+    document.addEventListener('DOMContentLoaded', applyAll);
   } else {
-    patchLogo();
+    applyAll();
   }
 
-  var _tok = localStorage.getItem('bitcovex_token');
-  var _hdrs = _tok ? { Authorization: 'Bearer ' + _tok } : {};
-  fetch('/api/p2p/me',{credentials:'include', headers: _hdrs}).then(function(r){return r.json();}).then(function(d){
+  // Background verify with server
+  var hdrs = tok ? { Authorization: 'Bearer ' + tok } : {};
+  fetch('/api/p2p/me',{credentials:'include',headers:hdrs}).then(function(r){return r.json();}).then(function(d){
     window._cvxLoggedIn = !!(d && d.loggedIn);
-    patchAuth(window._cvxLoggedIn);
+    if(window._cvxLoggedIn){ hideAuthBtns(); } else { showAuthBtns(); }
   }).catch(function(){
-    window._cvxLoggedIn = false;
-    patchAuth(false);
+    if(!tok) showAuthBtns();
   });
 })();
 </script>
-</body></html>
+<script src="/js/keepalive.js" defer></script></body></html>
