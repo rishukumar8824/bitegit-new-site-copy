@@ -286,9 +286,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       img.src = '/images/bitbase-logo.png';
       img.alt = 'Bitcovex';
       img.width = 34; img.height = 34;
-      img.style.cssText = 'display:block;object-fit:contain;border-radius:8px;flex-shrink:0;margin-right:6px;';
-      img.onerror = function(){ this.style.display='none'; };
+      img.style.cssText = 'display:block;object-fit:contain;border-radius:8px;flex-shrink:0;';
+      img.onerror = function(){ this.style.display='none'; wm.style.display='inline'; };
       wm.parentNode.insertBefore(img, wm);
+      wm.style.display = 'none';
     }
   }
 
