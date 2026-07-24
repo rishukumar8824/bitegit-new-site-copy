@@ -258,54 +258,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <style>
 .cvx-wordmark{font-size:0!important;line-height:0!important;color:transparent!important;}
 .cvx-wordmark::before{content:'';display:inline-block;width:34px;height:34px;background:url(/images/bitbase-logo.png) center/contain no-repeat;border-radius:8px;vertical-align:middle;}
+a[href="/auth"],a[href="/auth?mode=signup"]{display:none!important;}
 </style>
 <script>
 (function(){
   var tok = localStorage.getItem('bitcovex_token');
 
-  function getAuthEls(){
-    return {
-      login: document.querySelectorAll('a[href="/auth"]'),
-      signup: document.querySelectorAll('a[href="/auth?mode=signup"]')
-    };
+  // If no token → inject style to show auth buttons immediately (sync, no flash)
+  if(!tok){
+    document.head.insertAdjacentHTML('beforeend','<style id="_cvx_show_auth">a[href="/auth"],a[href="/auth?mode=signup"]{display:revert!important;}</style>');
   }
 
   function hideAuthBtns(){
-    var els = getAuthEls();
-    els.login.forEach(function(e){ e.style.setProperty('display','none','important'); });
-    els.signup.forEach(function(e){ e.style.setProperty('display','none','important'); });
+    var s = document.getElementById('_cvx_show_auth');
+    if(s) s.remove();
+    document.querySelectorAll('a[href="/auth"],a[href="/auth?mode=signup"]').forEach(function(e){
+      e.style.setProperty('display','none','important');
+    });
   }
 
   function showAuthBtns(){
-    var els = getAuthEls();
-    els.login.forEach(function(e){ e.style.removeProperty('display'); });
-    els.signup.forEach(function(e){ e.style.removeProperty('display'); });
-  }
-
-  function patchLogo(){
-    var wm = document.querySelector('.cvx-wordmark');
-    if(wm && !wm._patched){
-      wm._patched = true;
-      var img = document.createElement('img');
-      img.src = '/images/bitbase-logo.png';
-      img.alt = 'Bitcovex';
-      img.width = 34; img.height = 34;
-      img.style.cssText = 'display:block;object-fit:contain;border-radius:8px;flex-shrink:0;';
-      img.onerror = function(){ this.style.display='none'; wm.style.display='inline'; };
-      wm.parentNode.insertBefore(img, wm);
-      wm.style.display = 'none';
+    if(!document.getElementById('_cvx_show_auth')){
+      document.head.insertAdjacentHTML('beforeend','<style id="_cvx_show_auth">a[href="/auth"],a[href="/auth?mode=signup"]{display:revert!important;}</style>');
     }
-  }
-
-  function applyAll(){
-    patchLogo();
-    if(tok){ hideAuthBtns(); } else { showAuthBtns(); }
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', applyAll);
-  } else {
-    applyAll();
   }
 
   // Background verify with server
