@@ -832,7 +832,7 @@ function initTV(iv){
   c.innerHTML='';
   if(typeof TradingView==='undefined')return;
   const w=window.innerWidth||375;
-  const h=Math.max(200,c.parentElement?c.parentElement.clientHeight-35:window.innerHeight-305);
+  const h=Math.max(200,Math.round((window.innerHeight||600)*0.3));
   c.style.width=w+'px';
   c.style.height=h+'px';
   tvWidget=new TradingView.widget({
