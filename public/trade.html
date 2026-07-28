@@ -116,7 +116,8 @@ body{display:flex;flex-direction:column;min-height:100svh}
 .tr-qty{font-size:12px;color:#e8eaf0;flex:1;text-align:right}
 
 /* BUY / SELL BAR */
-.buysell{display:flex;padding:8px 10px;gap:8px;background:#000;border-top:1px solid #1a1f2e;flex-shrink:0}
+.buysell{display:flex;padding:8px 10px;gap:8px;background:#000;border-top:1px solid #1a1f2e;flex-shrink:0;position:fixed;left:0;right:0;bottom:0;z-index:500}
+body{padding-bottom:64px}
 .btn-buy{flex:1;background:#1db26e;color:#fff;border:none;height:48px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
 .btn-sell{flex:1;background:#e84d4d;color:#fff;border:none;height:48px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
 
@@ -353,20 +354,12 @@ body{display:flex;flex-direction:column;min-height:100svh}
     </div>
     <div id="tv_chart_container"></div>
     <div class="sub-tabs-row">
-      <div class="sub-tab active" onclick="switchChartSubTab('open',this)">Open Orders</div>
-      <div class="sub-tab" onclick="switchChartSubTab('history',this)">Order History</div>
-      <div class="sub-tab" onclick="switchChartSubTab('trades',this)">Trade History</div>
-      <div class="sub-tab" onclick="switchChartSubTab('assets',this)">Assets</div>
-    </div>
-    <div id="cp-panel" style="background:#000">
-      <div id="cp-open" style="display:block"></div>
-      <div id="cp-history" style="display:none"></div>
-      <div id="cp-trades" style="display:none"></div>
-      <div id="cp-assets" style="display:none"></div>
+      <div class="sub-tab active" onclick="switchChartSubTab('orders',this)">Orders</div>
+      <div class="sub-tab" onclick="switchChartSubTab('trades',this)">Trades</div>
     </div>
 
-    <!-- ORDER BOOK (moved below chart + open orders) -->
-    <div id="obSection">
+    <!-- ORDER BOOK -->
+    <div id="cp-orders" style="display:block">
       <div class="ob-top">
         <div class="ob-icons">
           <button class="ob-icon active" onclick="setObView('both',this)">
@@ -410,8 +403,8 @@ body{display:flex;flex-direction:column;min-height:100svh}
       </div>
     </div>
 
-    <!-- RECENT TRADES (moved below order book) -->
-    <div id="trSection">
+    <!-- RECENT TRADES -->
+    <div id="cp-trades" style="display:none">
       <div class="tr-headers">
         <span class="tr-h">Time</span>
         <span class="tr-h" style="flex:1;text-align:center">Price(USDT)</span>
@@ -630,40 +623,16 @@ function switchOrderSubTab(tab, el){
   else if(tab==='assets') loadAndRenderAssets();
 }
 
-/* CHART-PANEL SUB-TABS (Open Orders / Order History / Trade History / Assets under the Chart tab) */
-function renderChartTrades(){
-  var el=document.getElementById('cp-trades');
-  if(!el) return;
-  if(!trades || !trades.length){ el.innerHTML='<div style="text-align:center;padding:32px 16px;color:#64748b;font-size:.82rem">No trade history yet.</div>'; return; }
-  el.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.78rem">'
-    +'<thead><tr style="background:#0d1117;color:#64748b;text-transform:uppercase;font-size:.65rem">'
-    +'<th style="padding:6px 8px;text-align:left">Time</th>'
-    +'<th style="padding:6px 8px;text-align:right">Price</th>'
-    +'<th style="padding:6px 8px;text-align:right">Qty</th></tr></thead><tbody>'
-    + trades.slice(0,40).map(function(t){
-        var side=(t.side||'').toLowerCase();
-        return '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'
-          +'<td style="padding:6px 8px;color:#94a3b8">'+fmtTime(t.time||t.timestamp||Date.now())+'</td>'
-          +'<td style="padding:6px 8px;text-align:right;color:'+(side==='buy'?'#22c55e':'#f6465d')+'">'+fmt(t.price,2)+'</td>'
-          +'<td style="padding:6px 8px;text-align:right;color:#e2e8f0">'+parseFloat(t.quantity||t.qty||t.amount||0).toFixed(6)+'</td>'
-          +'</tr>';
-      }).join('')
-    +'</tbody></table></div>';
-}
-
+/* CHART-PANEL SUB-TABS (Orders / Trades under the Chart tab) */
 function switchChartSubTab(tab, el){
   if(el){
     el.parentElement.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
     el.classList.add('active');
   }
-  ['open','history','trades','assets'].forEach(function(t){
+  ['orders','trades'].forEach(function(t){
     var p=document.getElementById('cp-'+t);
     if(p) p.style.display = t===tab ? 'block' : 'none';
   });
-  if(tab==='open') renderOpenOrders('cp-open');
-  else if(tab==='history') loadAndRenderOrderHistory('cp-history');
-  else if(tab==='trades') renderChartTrades();
-  else if(tab==='assets') loadAndRenderAssets('cp-assets');
 }
 
 function renderOpenOrders(targetId){
@@ -744,8 +713,8 @@ function loadAndRenderAssets(targetId){
     .catch(function(){ el.innerHTML='<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Failed to load assets.</div>'; });
 }
 
-// Init open orders tab on load
-setTimeout(function(){ renderOpenOrders(); renderOpenOrders('cp-open'); }, 200);
+// Init open orders tab on load (legacy order-panel, kept for compatibility)
+setTimeout(function(){ renderOpenOrders(); }, 200);
 function setObView(v,el){
   obView=v;
   document.querySelectorAll('.ob-icon').forEach(b=>b.classList.remove('active'));
