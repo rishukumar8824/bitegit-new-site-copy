@@ -347,8 +347,8 @@ body{display:flex;flex-direction:column;min-height:100svh}
   <div class="panel active" id="panel0">
     <div class="iv-row">
       <span class="iv-lbl">Time</span>
-      <span class="iv active" onclick="setIv('1',this)">1m</span>
-      <span class="iv" onclick="setIv('5',this)">5m</span>
+      <span class="iv" onclick="setIv('1',this)">1m</span>
+      <span class="iv active" onclick="setIv('5',this)">5m</span>
       <span class="iv" onclick="setIv('15',this)">15m</span>
       <span class="iv" onclick="setIv('30',this)">30m</span>
       <span class="iv" onclick="setIv('60',this)">1H</span>
@@ -372,71 +372,61 @@ body{display:flex;flex-direction:column;min-height:100svh}
       <div id="cp-trades" style="display:none"></div>
       <div id="cp-assets" style="display:none"></div>
     </div>
-  </div>
 
-  <!-- ORDERS PANEL -->
-  <div class="panel" id="panel1">
-    <div class="ob-top">
-      <div class="ob-icons">
-        <button class="ob-icon active" onclick="setObView('both',this)">
-          <svg viewBox="0 0 20 20" width="20" height="20">
-            <rect x="1" y="1" width="8" height="18" rx="1" fill="#e84d4d" opacity=".8"/>
-            <rect x="11" y="1" width="8" height="18" rx="1" fill="#1db26e" opacity=".8"/>
-          </svg>
-        </button>
-        <button class="ob-icon" onclick="setObView('sell',this)">
-          <svg viewBox="0 0 20 20" width="20" height="20">
-            <rect x="1" y="1" width="18" height="8" rx="1" fill="#e84d4d" opacity=".8"/>
-            <rect x="1" y="11" width="18" height="8" rx="1" fill="#1a1f2e" opacity=".8"/>
-          </svg>
-        </button>
-        <button class="ob-icon" onclick="setObView('buy',this)">
-          <svg viewBox="0 0 20 20" width="20" height="20">
-            <rect x="1" y="1" width="18" height="8" rx="1" fill="#1a1f2e" opacity=".8"/>
-            <rect x="1" y="11" width="18" height="8" rx="1" fill="#1db26e" opacity=".8"/>
-          </svg>
-        </button>
+    <!-- ORDER BOOK (moved below chart + open orders) -->
+    <div id="obSection">
+      <div class="ob-top">
+        <div class="ob-icons">
+          <button class="ob-icon active" onclick="setObView('both',this)">
+            <svg viewBox="0 0 20 20" width="20" height="20">
+              <rect x="1" y="1" width="8" height="18" rx="1" fill="#e84d4d" opacity=".8"/>
+              <rect x="11" y="1" width="8" height="18" rx="1" fill="#1db26e" opacity=".8"/>
+            </svg>
+          </button>
+          <button class="ob-icon" onclick="setObView('sell',this)">
+            <svg viewBox="0 0 20 20" width="20" height="20">
+              <rect x="1" y="1" width="18" height="8" rx="1" fill="#e84d4d" opacity=".8"/>
+              <rect x="1" y="11" width="18" height="8" rx="1" fill="#1a1f2e" opacity=".8"/>
+            </svg>
+          </button>
+          <button class="ob-icon" onclick="setObView('buy',this)">
+            <svg viewBox="0 0 20 20" width="20" height="20">
+              <rect x="1" y="1" width="18" height="8" rx="1" fill="#1a1f2e" opacity=".8"/>
+              <rect x="1" y="11" width="18" height="8" rx="1" fill="#1db26e" opacity=".8"/>
+            </svg>
+          </button>
+        </div>
+        <select class="ob-dec-sel" onchange="obDecimals=parseInt(this.value);renderOB()">
+          <option value="2">0.01</option>
+          <option value="1">0.1</option>
+          <option value="0">1</option>
+        </select>
       </div>
-      <select class="ob-dec-sel" onchange="obDecimals=parseInt(this.value);renderOB()">
-        <option value="2">0.01</option>
-        <option value="1">0.1</option>
-        <option value="0">1</option>
-      </select>
-    </div>
-    <div class="ob-headers">
-      <span class="ob-h">Price(USDT)</span>
-      <span class="ob-h c">Amount</span>
-      <span class="ob-h r">Total ▼</span>
-    </div>
-    <div class="ob-body">
-      <div class="ob-asks" id="obAsks"></div>
-      <div class="ob-mid">
-        <span class="ob-mid-px dn" id="obMidPx">—</span>
-        <span class="ob-mid-arr dn" id="obMidArr">▼</span>
-        <span class="ob-mid-usd" id="obMidUsd">— USD</span>
+      <div class="ob-headers">
+        <span class="ob-h">Price(USDT)</span>
+        <span class="ob-h c">Amount</span>
+        <span class="ob-h r">Total ▼</span>
       </div>
-      <div class="ob-bids" id="obBids"></div>
+      <div class="ob-body" style="min-height:60vh">
+        <div class="ob-asks" id="obAsks"></div>
+        <div class="ob-mid">
+          <span class="ob-mid-px dn" id="obMidPx">—</span>
+          <span class="ob-mid-arr dn" id="obMidArr">▼</span>
+          <span class="ob-mid-usd" id="obMidUsd">— USD</span>
+        </div>
+        <div class="ob-bids" id="obBids"></div>
+      </div>
     </div>
-    <div class="sub-tabs-row">
-      <div class="sub-tab active" onclick="switchOrderSubTab('open',this)">Open Orders</div>
-      <div class="sub-tab" onclick="switchOrderSubTab('history',this)">Order History</div>
-      <div class="sub-tab" onclick="switchOrderSubTab('assets',this)">Assets</div>
-    </div>
-    <div id="orderSubPanel" style="flex:1;overflow-y:auto;background:#000;min-height:0">
-      <div id="osp-open" style="display:block"></div>
-      <div id="osp-history" style="display:none"></div>
-      <div id="osp-assets" style="display:none"></div>
-    </div>
-  </div>
 
-  <!-- TRADES PANEL -->
-  <div class="panel" id="panel2">
-    <div class="tr-headers">
-      <span class="tr-h">Time</span>
-      <span class="tr-h" style="flex:1;text-align:center">Price(USDT)</span>
-      <span class="tr-h" style="flex:1;text-align:right">Amount</span>
+    <!-- RECENT TRADES (moved below order book) -->
+    <div id="trSection">
+      <div class="tr-headers">
+        <span class="tr-h">Time</span>
+        <span class="tr-h" style="flex:1;text-align:center">Price(USDT)</span>
+        <span class="tr-h" style="flex:1;text-align:right">Amount</span>
+      </div>
+      <div class="tr-body" id="trBody"></div>
     </div>
-    <div class="tr-body" id="trBody"></div>
   </div>
 
 </div><!-- /panels -->
@@ -582,7 +572,7 @@ let asks=[], bids=[], trades=[];
 let obView='both', obDecimals=2;
 let allPairs=[], allFutures=[], pairsLoaded=false, pairTab='spot';
 let tradeTab='buy';
-let currentIv='1';
+let currentIv='5';
 let tvWidget=null;
 let lastPx=0;
 
@@ -613,8 +603,9 @@ function fmtTime(ts){
 /* TABS */
 function switchTab(i,el){
   document.querySelectorAll('.main-tab').forEach((t,j)=>t.classList.toggle('active',j===i));
-  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',j===i));
-  if(i===0)initTV(currentIv);
+  var targets=['tv_chart_container','obSection','trSection'];
+  var t=document.getElementById(targets[i]);
+  if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function switchSubTab(el){
   el.parentElement.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
@@ -856,7 +847,7 @@ function initTV(iv){
     toolbar_bg:'#000',
     enable_publishing:false,
     hide_top_toolbar:false,
-    hide_side_toolbar:false,
+    hide_side_toolbar:true,
     allow_symbol_change:false,
     save_image:false,
     container_id:'tv_chart_container',
@@ -1149,6 +1140,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 <!-- Load TradingView AFTER body so #tv_chart_container exists -->
-<script src="https://s3.tradingview.com/tv.js" onload="initTV('1')"></script>
+<script src="https://s3.tradingview.com/tv.js" onload="initTV('5')"></script>
 </body>
 </html>
