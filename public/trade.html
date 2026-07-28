@@ -61,7 +61,7 @@ body{display:flex;flex-direction:column;min-height:100svh}
 .iv-sep{width:1px;height:16px;background:#1a1f2e;flex-shrink:0;margin:0 4px}
 .iv-extra{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0;cursor:pointer}
 
-#tv_chart_container{flex:1;min-height:55vh}
+#tv_chart_container{flex:1 1 auto;min-height:30vh}
 #tv_chart_container iframe{border:none!important;width:100%!important;height:100%!important}
 
 .sub-tabs-row{display:flex;border-bottom:1px solid #1a1f2e;background:#000;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
@@ -361,10 +361,16 @@ body{display:flex;flex-direction:column;min-height:100svh}
     </div>
     <div id="tv_chart_container"></div>
     <div class="sub-tabs-row">
-      <div class="sub-tab active" onclick="switchSubTab(this)">Open Orders</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Order History</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Trade History</div>
-      <div class="sub-tab" onclick="switchSubTab(this)">Assets</div>
+      <div class="sub-tab active" onclick="switchChartSubTab('open',this)">Open Orders</div>
+      <div class="sub-tab" onclick="switchChartSubTab('history',this)">Order History</div>
+      <div class="sub-tab" onclick="switchChartSubTab('trades',this)">Trade History</div>
+      <div class="sub-tab" onclick="switchChartSubTab('assets',this)">Assets</div>
+    </div>
+    <div id="cp-panel" style="background:#000">
+      <div id="cp-open" style="display:block"></div>
+      <div id="cp-history" style="display:none"></div>
+      <div id="cp-trades" style="display:none"></div>
+      <div id="cp-assets" style="display:none"></div>
     </div>
   </div>
 
@@ -647,14 +653,50 @@ function switchOrderSubTab(tab, el){
   else if(tab==='assets') loadAndRenderAssets();
 }
 
-function renderOpenOrders(){
-  var el=document.getElementById('osp-open');
+/* CHART-PANEL SUB-TABS (Open Orders / Order History / Trade History / Assets under the Chart tab) */
+function renderChartTrades(){
+  var el=document.getElementById('cp-trades');
+  if(!el) return;
+  if(!trades || !trades.length){ el.innerHTML='<div style="text-align:center;padding:32px 16px;color:#64748b;font-size:.82rem">No trade history yet.</div>'; return; }
+  el.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.78rem">'
+    +'<thead><tr style="background:#0d1117;color:#64748b;text-transform:uppercase;font-size:.65rem">'
+    +'<th style="padding:6px 8px;text-align:left">Time</th>'
+    +'<th style="padding:6px 8px;text-align:right">Price</th>'
+    +'<th style="padding:6px 8px;text-align:right">Qty</th></tr></thead><tbody>'
+    + trades.slice(0,40).map(function(t){
+        var side=(t.side||'').toLowerCase();
+        return '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'
+          +'<td style="padding:6px 8px;color:#94a3b8">'+fmtTime(t.time||t.timestamp||Date.now())+'</td>'
+          +'<td style="padding:6px 8px;text-align:right;color:'+(side==='buy'?'#22c55e':'#f6465d')+'">'+fmt(t.price,2)+'</td>'
+          +'<td style="padding:6px 8px;text-align:right;color:#e2e8f0">'+parseFloat(t.quantity||t.qty||t.amount||0).toFixed(6)+'</td>'
+          +'</tr>';
+      }).join('')
+    +'</tbody></table></div>';
+}
+
+function switchChartSubTab(tab, el){
+  if(el){
+    el.parentElement.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+  }
+  ['open','history','trades','assets'].forEach(function(t){
+    var p=document.getElementById('cp-'+t);
+    if(p) p.style.display = t===tab ? 'block' : 'none';
+  });
+  if(tab==='open') renderOpenOrders('cp-open');
+  else if(tab==='history') loadAndRenderOrderHistory('cp-history');
+  else if(tab==='trades') renderChartTrades();
+  else if(tab==='assets') loadAndRenderAssets('cp-assets');
+}
+
+function renderOpenOrders(targetId){
+  var el=document.getElementById(targetId||'osp-open');
   if(!el) return;
   el.innerHTML='<div style="text-align:center;padding:32px 16px;color:#64748b;font-size:.82rem">No open orders — all market orders fill instantly.</div>';
 }
 
-function loadAndRenderOrderHistory(){
-  var el=document.getElementById('osp-history');
+function loadAndRenderOrderHistory(targetId){
+  var el=document.getElementById(targetId||'osp-history');
   if(!el) return;
   el.innerHTML='<div style="text-align:center;padding:20px;color:#64748b;font-size:.82rem">Loading…</div>';
   tFetch('/trade/orders')
@@ -693,8 +735,8 @@ function loadAndRenderOrderHistory(){
 
 var COIN_FULL_NAMES = {BTC:'Bitcoin',ETH:'Ethereum',BNB:'BNB',SOL:'Solana',XRP:'Ripple',ADA:'Cardano',DOGE:'Dogecoin',USDT:'Tether',TRX:'TRON',AVAX:'Avalanche',LINK:'Chainlink'};
 
-function loadAndRenderAssets(){
-  var el=document.getElementById('osp-assets');
+function loadAndRenderAssets(targetId){
+  var el=document.getElementById(targetId||'osp-assets');
   if(!el) return;
   el.innerHTML='<div style="text-align:center;padding:20px;color:#64748b;font-size:.82rem">Loading…</div>';
   tFetch('/trade/balance')
@@ -726,7 +768,7 @@ function loadAndRenderAssets(){
 }
 
 // Init open orders tab on load
-setTimeout(function(){ renderOpenOrders(); }, 200);
+setTimeout(function(){ renderOpenOrders(); renderOpenOrders('cp-open'); }, 200);
 function setObView(v,el){
   obView=v;
   document.querySelectorAll('.ob-icon').forEach(b=>b.classList.remove('active'));
