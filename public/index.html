@@ -119,7 +119,7 @@ div:has(> div > .ss-header-nav-scrollbar-none) {
   overflow: visible !important;
   min-width: 0;
 }
-</style><link rel="stylesheet" href="/mobile-nav.css?v=20260416c" /><style>.cvx-wordmark{display:none!important}.cvx-wordmark+svg{display:inline-block!important;vertical-align:middle}</style></head>
+</style><link rel="stylesheet" href="/mobile-nav.css?v=20260416c" /><style>.cvx-wordmark{display:none!important}.cvx-wordmark+svg{display:none!important}.cvx-logo-icon{display:inline-block!important;height:26px;width:26px;vertical-align:middle;border-radius:6px}</style></head>
       <body theme="dark" lang="en" dir="ltr" class="has-mobile-nav">
         <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KGK7Q4MK"
@@ -255,6 +255,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="nav-label">Assets</span>
       </a>
     </nav>
+<script>
+(function(){
+  function addLogoIcon(){
+    document.querySelectorAll('.cvx-wordmark').forEach(function(span){
+      var a = span.parentElement;
+      if(!a || a.querySelector('.cvx-logo-icon')) return;
+      var img = document.createElement('img');
+      img.className = 'cvx-logo-icon';
+      img.src = '/cdn/brand/logo.png';
+      img.alt = 'Bitcovex';
+      a.insertBefore(img, span);
+    });
+  }
+  addLogoIcon();
+  var logoTries = 0;
+  var logoT = setInterval(function(){
+    addLogoIcon();
+    if(++logoTries >= 15) clearInterval(logoT);
+  }, 300);
+})();
+</script>
 <script>
 (function(){
   var tok = localStorage.getItem('bitcovex_token');
