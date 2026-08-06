@@ -58,7 +58,7 @@ body{display:flex;flex-direction:column;min-height:100svh}
 .iv-sep{width:1px;height:16px;background:#1a1f2e;flex-shrink:0;margin:0 4px}
 .iv-extra{font-size:10px;color:#8fa0bb;padding:6px 4px;white-space:nowrap;flex-shrink:0;cursor:pointer}
 
-#tv_chart_container{flex:1 1 auto;min-height:50vh;width:92%;margin:0 auto;background:#000}
+#tv_chart_container{flex:1 1 auto;min-height:50vh;width:100%;background:#000}
 #tv_chart_container iframe{border:none!important;width:100%!important;height:100%!important}
 
 .sub-tabs-row{display:flex;border-bottom:1px solid #1a1f2e;background:#000;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
@@ -786,7 +786,7 @@ function initTV(iv){
   const c=g('tv_chart_container');
   c.innerHTML='';
   if(typeof TradingView==='undefined')return;
-  const w=Math.round((window.innerWidth||375)*0.92);
+  const w=window.innerWidth||375;
   const h=Math.max(280,Math.round((window.innerHeight||600)*0.5));
   c.style.width=w+'px';
   c.style.height=h+'px';
@@ -806,7 +806,7 @@ function initTV(iv){
     allow_symbol_change:false,
     save_image:false,
     container_id:'tv_chart_container',
-    studies:['MAExp@tv-basicstudies','MASimple@tv-basicstudies'],
+    studies:['MAExp@tv-basicstudies','MASimple@tv-basicstudies','MAWeighted@tv-basicstudies'],
     studies_overrides:{
       'volume.volume.transparency':100,
       'volume.volume ma.transparency':100,
