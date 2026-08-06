@@ -30,8 +30,8 @@ body{display:flex;flex-direction:column;min-height:100svh}
 .price-row{display:flex;align-items:flex-start;gap:8px}
 .price-left{display:flex;flex-direction:column;min-width:0}
 .pair-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:0;margin-bottom:6px}
-.pair-coin{width:28px;height:28px;border-radius:50%;background:#f7931a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
-.pair-name{font-size:16px;font-weight:700;color:#e8eaf0}
+.pair-coin{width:22px;height:22px;border-radius:50%;background:#f7931a;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.pair-name{font-size:13px;font-weight:700;color:#e8eaf0}
 .pair-arrow{color:#8fa0bb;font-size:11px;margin-left:2px}
 .px-big{font-size:26px;font-weight:700;color:#e84d4d;line-height:1}
 .px-big.up{color:#1db26e}
@@ -52,13 +52,13 @@ body{display:flex;flex-direction:column;min-height:100svh}
 /* ---- CHART PANEL ---- */
 .iv-row{display:flex;align-items:center;padding:0 8px;background:#000;border-bottom:1px solid #1a1f2e;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
 .iv-row::-webkit-scrollbar{display:none}
-.iv-lbl{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0}
-.iv{font-size:11px;color:#8fa0bb;padding:8px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:4px;transition:all .15s}
+.iv-lbl{font-size:10px;color:#8fa0bb;padding:6px 4px;white-space:nowrap;flex-shrink:0}
+.iv{font-size:10px;color:#8fa0bb;padding:6px 4px;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:4px;transition:all .15s}
 .iv.active{color:#e8eaf0;font-weight:600;background:#1a1f2e}
 .iv-sep{width:1px;height:16px;background:#1a1f2e;flex-shrink:0;margin:0 4px}
-.iv-extra{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0;cursor:pointer}
+.iv-extra{font-size:10px;color:#8fa0bb;padding:6px 4px;white-space:nowrap;flex-shrink:0;cursor:pointer}
 
-#tv_chart_container{flex:1 1 auto;min-height:46vh}
+#tv_chart_container{flex:1 1 auto;min-height:50vh;width:92%;margin:0 auto;background:#000}
 #tv_chart_container iframe{border:none!important;width:100%!important;height:100%!important}
 
 .sub-tabs-row{display:flex;border-bottom:1px solid #1a1f2e;background:#000;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
@@ -786,8 +786,8 @@ function initTV(iv){
   const c=g('tv_chart_container');
   c.innerHTML='';
   if(typeof TradingView==='undefined')return;
-  const w=window.innerWidth||375;
-  const h=Math.max(260,Math.round((window.innerHeight||600)*0.46));
+  const w=Math.round((window.innerWidth||375)*0.92);
+  const h=Math.max(280,Math.round((window.innerHeight||600)*0.5));
   c.style.width=w+'px';
   c.style.height=h+'px';
   tvWidget=new TradingView.widget({
@@ -816,12 +816,12 @@ function initTV(iv){
       'paneProperties.backgroundType':'solid',
       'paneProperties.backgroundGradientStartColor':'#000000',
       'paneProperties.backgroundGradientEndColor':'#000000',
-      'paneProperties.vertGridProperties.color':'rgba(255,255,255,0.006)',
-      'paneProperties.horzGridProperties.color':'rgba(255,255,255,0.006)',
+      'paneProperties.vertGridProperties.color':'rgba(255,255,255,0.001)',
+      'paneProperties.horzGridProperties.color':'rgba(255,255,255,0.001)',
       'scalesProperties.textColor':'#848e9c',
-      'scalesProperties.lineColor':'rgba(255,255,255,0.06)',
+      'scalesProperties.lineColor':'rgba(255,255,255,0.04)',
       'scalesProperties.backgroundColor':'#000000',
-      'gridProperties.color':'rgba(255,255,255,0.006)',
+      'gridProperties.color':'rgba(255,255,255,0.001)',
       'mainSeriesProperties.style':1,
       'mainSeriesProperties.priceLineColor':'rgba(132,142,156,0.5)',
       'mainSeriesProperties.candleStyle.upColor':'#0ecb81',
