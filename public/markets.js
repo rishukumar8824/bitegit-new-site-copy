@@ -14,6 +14,8 @@ const mkTopTabs          = document.getElementById('mkTopTabs');
 const mkLeaderboardPanel = document.getElementById('mkLeaderboardPanel');
 const mkMarketPanel      = document.getElementById('mkMarketPanel');
 const mkHotCoins         = document.getElementById('mkHotCoins');
+const mkLbHot            = document.getElementById('mkLbHot');
+const mkLbGainers        = document.getElementById('mkLbGainers');
 
 // ── Config ──
 const SYMBOLS = [
@@ -138,6 +140,34 @@ function renderHotCoins(rows) {
       window.location.href = `/chart?symbol=${encodeURIComponent(card.dataset.sym)}`;
     };
   });
+}
+
+// ── Leaderboard rows ──
+function lbRow(item) {
+  const base = item.symbol.replace('USDT', '');
+  const chg  = Number(item.change24h || 0);
+  const sign = chg >= 0 ? '+' : '';
+  const cls  = chg >= 0 ? 'up' : 'dn';
+  return `<div class="mk-lb-row" onclick="window.location.href='/chart?symbol=${encodeURIComponent(item.symbol)}'">
+    ${coinIco(base)}
+    <span class="mk-lb-sym">${base}/USDT</span>
+    <span class="mk-lb-price">${fmtPrice(item.lastPrice)}</span>
+    <span class="mk-lb-chg ${cls}">${sign}${chg.toFixed(2)}%</span>
+  </div>`;
+}
+
+function renderLeaderboard(rows) {
+  if (!rows || !rows.length) return;
+  if (mkLbHot) {
+    const bySymbol = {};
+    rows.forEach(r => { bySymbol[r.symbol] = r; });
+    const hot = HOT_SYMS.map(s => bySymbol[s]).filter(Boolean).slice(0, 5);
+    mkLbHot.innerHTML = hot.map(lbRow).join('');
+  }
+  if (mkLbGainers) {
+    const gainers = [...rows].sort((a, b) => Number(b.change24h || 0) - Number(a.change24h || 0)).slice(0, 5);
+    mkLbGainers.innerHTML = gainers.map(lbRow).join('');
+  }
 }
 
 // ── Top-tab switching (Market | Leaderboard) ──
@@ -287,6 +317,7 @@ async function loadMarkets() {
     renderTable();
     renderTicker(rows);
     renderHotCoins(rows);
+    renderLeaderboard(rows);
   }
 }
 

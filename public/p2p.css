@@ -177,12 +177,12 @@ body.p2p-kyc-open { overflow: hidden; }
 
 .p2p-signup-btn {
   background: var(--p2p-brand);
-  color: #050808;
+  color: #fff;
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 700;
   padding: 0.42rem 1.1rem;
-  border-radius: 8px;
+  border-radius: 999px;
   transition: opacity 0.2s;
   white-space: nowrap;
   border: none;

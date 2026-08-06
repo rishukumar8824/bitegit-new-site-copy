@@ -3519,7 +3519,9 @@ async function loadOffers(append) {
   if (!append && metaEl && !cachedResponse) metaEl.textContent = '';
   if (!append) _offersFetching = true;
 
-  if (!append && !cachedResponse) {
+  // Only show the dummy placeholder on the very first load — never flash it
+  // over already-rendered real offers on periodic background refreshes.
+  if (!append && !cachedResponse && !_lastOffersData) {
     renderOffers(getDummyOffers(currentSide), false);
   }
 
