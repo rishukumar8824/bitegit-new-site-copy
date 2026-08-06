@@ -58,7 +58,7 @@ body{display:flex;flex-direction:column;min-height:100svh}
 .iv-sep{width:1px;height:16px;background:#1a1f2e;flex-shrink:0;margin:0 4px}
 .iv-extra{font-size:11px;color:#8fa0bb;padding:8px 6px;white-space:nowrap;flex-shrink:0;cursor:pointer}
 
-#tv_chart_container{flex:1 1 auto;min-height:52vh}
+#tv_chart_container{flex:1 1 auto;min-height:46vh}
 #tv_chart_container iframe{border:none!important;width:100%!important;height:100%!important}
 
 .sub-tabs-row{display:flex;border-bottom:1px solid #1a1f2e;background:#000;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
@@ -787,7 +787,7 @@ function initTV(iv){
   c.innerHTML='';
   if(typeof TradingView==='undefined')return;
   const w=window.innerWidth||375;
-  const h=Math.max(280,Math.round((window.innerHeight||600)*0.52));
+  const h=Math.max(260,Math.round((window.innerHeight||600)*0.46));
   c.style.width=w+'px';
   c.style.height=h+'px';
   tvWidget=new TradingView.widget({
@@ -816,16 +816,13 @@ function initTV(iv){
       'paneProperties.backgroundType':'solid',
       'paneProperties.backgroundGradientStartColor':'#000000',
       'paneProperties.backgroundGradientEndColor':'#000000',
-      'paneProperties.vertGridProperties.color':'rgba(255,255,255,0.015)',
-      'paneProperties.horzGridProperties.color':'rgba(255,255,255,0.015)',
+      'paneProperties.vertGridProperties.color':'rgba(255,255,255,0.006)',
+      'paneProperties.horzGridProperties.color':'rgba(255,255,255,0.006)',
       'scalesProperties.textColor':'#848e9c',
       'scalesProperties.lineColor':'rgba(255,255,255,0.06)',
-      'gridProperties.color':'rgba(255,255,255,0.015)',
-      'mainSeriesProperties.style':3,
-      'mainSeriesProperties.areaStyle.color1':'rgba(14,203,129,0.35)',
-      'mainSeriesProperties.areaStyle.color2':'rgba(14,203,129,0.02)',
-      'mainSeriesProperties.areaStyle.linecolor':'#0ecb81',
-      'mainSeriesProperties.areaStyle.linewidth':2,
+      'scalesProperties.backgroundColor':'#000000',
+      'gridProperties.color':'rgba(255,255,255,0.006)',
+      'mainSeriesProperties.style':1,
       'mainSeriesProperties.priceLineColor':'rgba(132,142,156,0.5)',
       'mainSeriesProperties.candleStyle.upColor':'#0ecb81',
       'mainSeriesProperties.candleStyle.downColor':'#f6465d',
@@ -833,6 +830,9 @@ function initTV(iv){
       'mainSeriesProperties.candleStyle.borderDownColor':'#f6465d',
       'mainSeriesProperties.candleStyle.wickUpColor':'#0ecb81',
       'mainSeriesProperties.candleStyle.wickDownColor':'#f6465d',
+      'mainSeriesProperties.candleStyle.drawWick':true,
+      'mainSeriesProperties.candleStyle.drawBorder':true,
+      'mainSeriesProperties.candleStyle.barColorsOnPrevClose':false,
     }
   });
 }
