@@ -154,7 +154,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     fetch("/api/v1/market/tickers?symbols=BTCUSDT,ETHUSDT,XAUTUSDT").then(function(r){return r.json();}).then(function(d){
       if(!d || !Array.isArray(d.ticker)) return;
       d.ticker.forEach(function(t){
-        var el = document.querySelector("[data-tk=""+t.symbol+""]");
+        var el = document.querySelector('[data-tk="' + t.symbol + '"]');
         if(!el) return;
         var dec = t.lastPrice > 100 ? 2 : 4;
         el.querySelector(".tk-price").textContent = fmt(t.lastPrice, dec);
