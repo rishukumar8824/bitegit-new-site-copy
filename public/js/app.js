@@ -6,6 +6,9 @@
   const fmt = (n, d = 2) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   const UP = '#2ebd85', DOWN = '#f6465d';
 
+  // Logged-in state: same token key set by /login and /signup
+  window._cvxLoggedIn = !!localStorage.getItem('bitcovex_token');
+
   const NAV = [
     { label: 'Buy Crypto', href: '/markets', arrow: true },
     { label: 'Markets',    href: '/markets', arrow: false },
@@ -416,6 +419,100 @@
     });
 
     rightBox.appendChild(btn);
+  }
+
+  // ── 7b. LOGGED-IN HOMEPAGE HEADER/DASHBOARD ───────────────────────────────
+  function applyLoggedInHomeUI() {
+    if (!window._cvxLoggedIn) return;
+    if (document.getElementById('cvx-loggedin-done')) return;
+    if (!/^\/(index\.html)?$/.test(location.pathname)) return;
+
+    const heroImg = document.querySelector('img[src*="hero-mockup"]');
+    if (!heroImg) return; // hero not rendered yet — start() polling will retry
+    const heroWrap = heroImg.closest('div.md\\:hidden') || heroImg.parentElement.parentElement;
+    if (!heroWrap) return;
+
+    const marker = document.createElement('span');
+    marker.id = 'cvx-loggedin-done';
+    marker.style.display = 'none';
+    document.body.appendChild(marker);
+
+    heroWrap.style.display = 'none';
+
+    // Header: logo → avatar, Sign up → Deposit
+    const logoLink = document.querySelector('header a[href="index.html"]');
+    if (logoLink) {
+      logoLink.setAttribute('href', '/p2p-user-center');
+      logoLink.innerHTML = '<svg data-cvx-gem="1" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="9.2" r="3.3"/><path d="M5.3 18.8c1.2-3 3.7-4.6 6.7-4.6s5.5 1.6 6.7 4.6"/></svg>';
+      logoLink.dataset.cvxLogo = '1';
+    }
+    const authBtns = document.getElementById('indexAuthBtns');
+    if (authBtns) {
+      authBtns.innerHTML = '';
+      const depositBtn = document.createElement('a');
+      depositBtn.href = '/wallet';
+      depositBtn.textContent = 'Deposit';
+      depositBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 18px;border-radius:16px;background:#F68F15;color:#000;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap;';
+      authBtns.appendChild(depositBtn);
+      authBtns.style.cssText += ';display:flex!important';
+    }
+
+    // Dashboard block: Estimated Balance + Add Funds + quick actions
+    const ICON = {
+      buy: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2" fill="#fff" stroke="none"/>',
+      gift: '<rect x="4" y="9" width="16" height="11" rx="1.2"/><path d="M4 9h16M12 9v11M12 9c-1.6-3.6-6.4-3.6-6.4 0M12 9c1.6-3.6 6.4-3.6 6.4 0"/>',
+      ref: '<circle cx="10" cy="9" r="3.4"/><path d="M3.5 19c0.9-3 3.3-4.6 6.5-4.6M17 8v5M14.5 10.5H19.5"/>',
+      vip: '<path d="M4 9l4-5h8l4 5-8 11L4 9z"/>',
+      more: '<rect x="4" y="4" width="6" height="6" rx="1.2"/><rect x="14" y="4" width="6" height="6" rx="1.2"/><rect x="4" y="14" width="6" height="6" rx="1.2"/><rect x="14" y="14" width="6" height="6" rx="1.2"/>'
+    };
+    const actions = [
+      ['Buy Crypto', '/markets', ICON.buy],
+      ['Rewards', '/rewards', ICON.gift],
+      ['Referral', '/p2p-user-center', ICON.ref],
+      ['VIP Center', '#', ICON.vip],
+      ['More', '#', ICON.more]
+    ];
+    const dash = document.createElement('div');
+    dash.id = 'cvx-loggedin-dash';
+    dash.style.cssText = 'padding:18px 16px 4px;';
+    dash.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.5);font-size:14px;">
+        <span>Estimated Balance</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:10px;gap:12px;">
+        <div style="display:flex;align-items:baseline;gap:6px;min-width:0;">
+          <span id="cvx-est-balance" style="font-size:32px;font-weight:700;color:#fff;">0</span>
+          <span style="color:rgba(255,255,255,0.5);font-size:14px;">BTC ▾</span>
+        </div>
+        <a href="/wallet" style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 22px;border-radius:22px;background:#F68F15;color:#000;font-weight:700;font-size:15px;text-decoration:none;white-space:nowrap;">Add Funds</a>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:26px;text-align:center;">
+        ${actions.map(([label, href, path]) => `
+          <a href="${href}" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#eaecef;text-decoration:none;font-size:12px;width:19%;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${path}</svg>
+            <span style="white-space:nowrap;">${label}</span>
+          </a>`).join('')}
+      </div>
+    `;
+    heroWrap.insertAdjacentElement('afterend', dash);
+
+    // Best-effort real balance fetch (falls back to "0" shown above)
+    const token = localStorage.getItem('bitcovex_token');
+    if (token) {
+      fetch('/api/wallet/summary', { headers: { Authorization: 'Bearer ' + token } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          const usdt = data && data.summary && Number(data.summary.total_balance || data.summary.available_balance);
+          if (usdt != null && !isNaN(usdt)) {
+            const el = document.getElementById('cvx-est-balance');
+            if (el) el.textContent = usdt.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            const unitEl = el && el.nextElementSibling;
+            if (unitEl) unitEl.textContent = 'USDT ▾';
+          }
+        })
+        .catch(() => {});
+    }
   }
 
   // ── 8. EARTH VIDEO ────────────────────────────────────────────────────────
@@ -1538,7 +1635,7 @@
     injectMobileCSS();
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
     fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
-    fixAppSection(); hideBrokenElements();
+    fixAppSection(); hideBrokenElements(); applyLoggedInHomeUI();
     wireTopNav(); wireWordmarks();
     wireFAQ();
     // Build pairs section immediately (shows skeleton rows if no cache)
@@ -1551,7 +1648,7 @@
     setInterval(() => {
       fixHeaderLogo(); addHamburger(); wireTopNav(); wireWordmarks();
       wireTrade(); revealImages(); wirePairsTabs(); autoSlideCarousel();
-      hideBrokenElements(); fixAppSection();
+      hideBrokenElements(); fixAppSection(); applyLoggedInHomeUI();
     }, 3000);
     setInterval(async () => { await loadTicker(); applyPrices(); fixDesktopPairs(); }, 5000);
   }
