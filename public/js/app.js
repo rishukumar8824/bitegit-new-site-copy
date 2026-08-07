@@ -429,15 +429,27 @@
 
     const heroImg = document.querySelector('img[src*="hero-mockup"]');
     if (!heroImg) return; // hero not rendered yet — start() polling will retry
-    const heroWrap = heroImg.closest('div.md\\:hidden') || heroImg.parentElement.parentElement;
-    if (!heroWrap) return;
+    const heroLink = heroImg.closest('a') || heroImg.parentElement;
+    const heroWrap = heroImg.closest('div.md\\:hidden') || heroLink.parentElement;
+    if (!heroWrap || !heroLink) return;
 
     const marker = document.createElement('span');
     marker.id = 'cvx-loggedin-done';
     marker.style.display = 'none';
     document.body.appendChild(marker);
 
-    heroWrap.style.display = 'none';
+    // A page script (fixHero) polls for ~5s and forces display:block on any
+    // display:none ancestor of the hero <img> to counter a framework default.
+    // Collapsing the <a> via display:none would get fought and reset — so
+    // hide the <img> itself (untouched by that poller) and collapse the
+    // link's box via height/overflow instead of display.
+    heroImg.style.setProperty('display', 'none', 'important');
+    heroLink.style.setProperty('height', '0', 'important');
+    heroLink.style.setProperty('min-height', '0', 'important');
+    heroLink.style.setProperty('overflow', 'hidden', 'important');
+    heroLink.style.setProperty('margin', '0', 'important');
+    heroLink.style.setProperty('pointer-events', 'none', 'important');
+    heroWrap.style.setProperty('padding-top', '14px', 'important');
 
     // Header: logo → avatar, Sign up → Deposit
     const logoLink = document.querySelector('header a[href="index.html"]');
@@ -495,7 +507,7 @@
           </a>`).join('')}
       </div>
     `;
-    heroWrap.insertAdjacentElement('afterend', dash);
+    heroLink.insertAdjacentElement('afterend', dash);
 
     // Best-effort real balance fetch (falls back to "0" shown above)
     const token = localStorage.getItem('bitcovex_token');
