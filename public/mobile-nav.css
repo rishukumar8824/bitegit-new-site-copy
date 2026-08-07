@@ -52,6 +52,18 @@
     fill: currentColor;
   }
 
+  .mobile-app-nav .nav-icon img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .mobile-app-nav a.active .nav-icon img,
+  .mobile-app-nav a[aria-current='page'] .nav-icon img {
+    filter: brightness(0) saturate(100%) invert(70%) sepia(53%) saturate(1116%) hue-rotate(342deg) brightness(101%) contrast(93%);
+  }
+
   .mobile-app-nav .nav-label {
     font-size: 0.68rem;
     font-weight: 500;
