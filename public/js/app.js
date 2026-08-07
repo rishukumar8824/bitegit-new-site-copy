@@ -928,11 +928,15 @@
       if (container.dataset.cvxCarousel) return;
       container.dataset.cvxCarousel = '1';
 
-      track.style.transition = 'transform 0.5s ease';
+      track.style.transition = 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)';
       track.style.willChange = 'transform';
 
       let current = 0;
       const total = slides.length;
+      // Measure real per-slide pixel offsets instead of assuming equal-width
+      // full-bleed slides — fixed-width "peek" slides (e.g. Swiper cards)
+      // need the actual offsetLeft delta or they overlap/jump mid-slide.
+      const baseLeft = slides[0].offsetLeft;
 
       const parent = container.parentElement;
       const dots = parent ? [...parent.querySelectorAll('[class*="rounded-full"],[class*="dot"]')].filter(d => {
@@ -942,7 +946,8 @@
 
       const goTo = (idx) => {
         current = (idx + total) % total;
-        track.style.transform = `translateX(-${current * (100 / total)}%)`;
+        const offset = slides[current].offsetLeft - baseLeft;
+        track.style.transform = `translateX(-${offset}px)`;
         dots.forEach((dot, i) => {
           dot.style.opacity = i === current ? '1' : '0.4';
           dot.style.transform = i === current ? 'scaleX(2.5)' : 'scaleX(1)';
