@@ -912,6 +912,12 @@
     });
 
     candidates.forEach(container => {
+      // Real Swiper.js instances (e.g. the promo banner) run their own
+      // autoplay/transition — driving transform here too fights it and
+      // causes janky, desynced motion. Hand those to fixPromoSwiper() below
+      // instead, which takes full ownership.
+      if (container.classList.contains('swiper')) return;
+
       // Skip any carousel that contains the app-download QR/phone content
       const hasQR = container.querySelector('img[alt="qrcode"], img[src^="data:image"]');
       const hasAppText = /scan.*download|ios.*android|trade with confidence/i.test(container.textContent || '');
@@ -958,8 +964,84 @@
       setInterval(() => goTo(current + 1), 3000);
     });
 
+    fixPromoSwiper();
+
     const marker = document.createElement('span');
     marker.id = 'cvx-carousel-done';
+    marker.style.display = 'none';
+    document.body.appendChild(marker);
+  }
+
+  // Promo banner (real Swiper.js) shows fixed-width "peek" cards natively —
+  // force one full-width slide at a time and drive it ourselves so it can't
+  // fight the library's own autoplay/pagination and desync.
+  function fixPromoSwiper() {
+    if (document.getElementById('cvx-promo-done')) return;
+    const swiper = document.querySelector('.swiper.swiper-initialized');
+    if (!swiper) return;
+    const track = swiper.firstElementChild;
+    if (!track) return;
+    const slides = [...track.children];
+    if (slides.length < 2) return;
+
+    slides.forEach(s => {
+      s.style.setProperty('width', '100%', 'important');
+      s.style.setProperty('flex-shrink', '0', 'important');
+      s.style.setProperty('margin-right', '0px', 'important');
+    });
+    track.style.setProperty('display', 'flex', 'important');
+    track.style.setProperty('transition', 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)', 'important');
+    track.style.setProperty('will-change', 'transform', 'important');
+
+    let current = 0;
+    const total = slides.length;
+
+    // Build our own pagination dots so they stay perfectly in sync — the
+    // native progress bar is driven by Swiper's own timer, which we're
+    // bypassing, so it would otherwise drift out of step with the slides.
+    const nativeDots = swiper.parentElement.querySelector('.absolute.top-0.h-1, [class*="bg-always_white"]');
+    const dotsHolder = document.createElement('div');
+    dotsHolder.style.cssText = 'display:flex;gap:6px;justify-content:center;margin-top:12px;';
+    for (let i = 0; i < total; i++) {
+      const dot = document.createElement('span');
+      dot.style.cssText = 'height:3px;border-radius:2px;background:#fff;opacity:0.35;width:16px;transition:opacity .3s,width .3s;';
+      dotsHolder.appendChild(dot);
+    }
+    if (nativeDots && nativeDots.parentElement) {
+      nativeDots.parentElement.style.display = 'none';
+      nativeDots.parentElement.insertAdjacentElement('afterend', dotsHolder);
+    } else {
+      swiper.insertAdjacentElement('afterend', dotsHolder);
+    }
+    const dots = [...dotsHolder.children];
+
+    // A MutationObserver safety net: if Swiper's own autoplay still writes
+    // to the track's transform, snap it straight back to our position so
+    // the two engines never visibly fight.
+    let expected = '';
+    const applyTransform = () => {
+      expected = `translateX(-${current * 100}%)`;
+      track.style.setProperty('transform', expected, 'important');
+    };
+    const observer = new MutationObserver(() => {
+      if (track.style.transform !== expected) applyTransform();
+    });
+    observer.observe(track, { attributes: true, attributeFilter: ['style'] });
+
+    const goTo = (idx) => {
+      current = (idx + total) % total;
+      applyTransform();
+      dots.forEach((dot, i) => {
+        dot.style.opacity = i === current ? '1' : '0.35';
+        dot.style.width = i === current ? '24px' : '16px';
+      });
+    };
+
+    goTo(0);
+    setInterval(() => goTo(current + 1), 3000);
+
+    const marker = document.createElement('span');
+    marker.id = 'cvx-promo-done';
     marker.style.display = 'none';
     document.body.appendChild(marker);
   }
