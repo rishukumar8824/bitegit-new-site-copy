@@ -408,10 +408,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function reorderHeader(){
     var searchDiv = document.getElementById("hdrSearchWrap");
     var headphoneDiv = document.querySelector("header .relative.group.h-full.flex.items-center.ps-2");
+    var signupImg = document.querySelector("a[href=\"/signup\"] img");
+    var searchSvg = searchDiv ? searchDiv.querySelector("svg") : null;
+    var headphoneImg = headphoneDiv ? headphoneDiv.querySelector("img") : null;
+    var hamburgerBtn = document.querySelector("header .flex.shrink-0.items-center.justify-end.h-full button");
     if (!searchDiv || !headphoneDiv || !headphoneDiv.parentElement) return false;
     headphoneDiv.parentElement.insertBefore(searchDiv, headphoneDiv);
-    searchDiv.style.cssText += ";margin-left:16px!important;margin-right:16px!important";
-    headphoneDiv.style.cssText += ";margin-left:0px!important";
+    searchDiv.style.cssText += ";margin-left:10px!important;margin-right:10px!important";
+    headphoneDiv.style.cssText += ";margin-left:0px!important;margin-right:10px!important";
+    if (signupImg) signupImg.style.cssText += ";height:28px!important";
+    if (searchSvg) { searchSvg.setAttribute("height","17"); searchSvg.setAttribute("width","17"); }
+    if (headphoneImg) headphoneImg.style.cssText += ";height:17px!important";
+    if (hamburgerBtn) { var svg = hamburgerBtn.querySelector("svg"); if (svg) { svg.setAttribute("height","17"); svg.setAttribute("width","17"); } hamburgerBtn.style.cssText += ";margin-left:2px!important"; }
     return true;
   }
   if (!reorderHeader()) {
