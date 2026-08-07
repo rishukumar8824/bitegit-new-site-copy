@@ -337,31 +337,63 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 (function(){
   var autoplayTimer = null;
   var pauseUntil = 0;
-  function pauseAutoplay(){ pauseUntil = Date.now() + 6000; }
-  function fitContainer(){
-    var slide = document.querySelector('.swiper-slide');
+  var currentIndex = 0;
+  var dragging = false;
+  function totalSlides(){ return document.querySelectorAll('.swiper-slide').length; }
+  function forceFullWidth(){
+    document.querySelectorAll('.swiper-slide').forEach(function(s){
+      s.style.setProperty('width', '100%', 'important');
+      s.style.setProperty('margin-right', '0px', 'important');
+    });
     var swiperEl = document.querySelector('.swiper');
-    if (!slide || !swiperEl) return false;
-    var w = slide.getBoundingClientRect().width;
-    if (!w) return false;
-    swiperEl.style.setProperty('width', w + 'px', 'important');
-    swiperEl.style.setProperty('margin', '0 auto', 'important');
-    swiperEl.style.setProperty('overflow', 'hidden', 'important');
-    return true;
+    if (swiperEl) swiperEl.style.setProperty('overflow', 'hidden', 'important');
+  }
+  function applyTransform(animate){
+    var wrapper = document.querySelector('.swiper-wrapper');
+    var n = totalSlides();
+    if (!wrapper || !n) return;
+    wrapper.style.transition = animate ? 'transform 0.4s ease' : 'none';
+    wrapper.style.transform = 'translateX(-' + (currentIndex * (100/n)) + '%)';
   }
   function tick(){
-    if (Date.now() < pauseUntil) return;
-    var prevBtn = document.querySelector('button[aria-label="Previous slide"]');
-    if (prevBtn && !prevBtn.disabled) prevBtn.click();
+    if (Date.now() < pauseUntil || dragging) return;
+    var n = totalSlides();
+    if (!n) return;
+    currentIndex = (currentIndex - 1 + n) % n;
+    applyTransform(true);
   }
+  function pauseAutoplay(){ pauseUntil = Date.now() + 6000; }
   function setup(){
     var swiperEl = document.querySelector('.swiper');
-    if (!swiperEl) return false;
-    swiperEl.addEventListener('touchstart', pauseAutoplay, {passive:true});
-    swiperEl.addEventListener('mousedown', pauseAutoplay);
-    if (!fitContainer()) return false;
-    if (!autoplayTimer) autoplayTimer = setInterval(function(){ tick(); fitContainer(); }, 3500);
-    window.addEventListener('resize', fitContainer);
+    var wrapper = document.querySelector('.swiper-wrapper');
+    if (!swiperEl || !wrapper) return false;
+    wrapper.style.display = 'flex';
+
+    var startX = 0, startPct = 0, active = false;
+    function pointerDown(x){ active = true; dragging = true; startX = x; startPct = -currentIndex * (100/totalSlides()); wrapper.style.transition = 'none'; pauseAutoplay(); }
+    function pointerMove(x){
+      if(!active) return;
+      var dx = x - startX; var w = swiperEl.clientWidth; var n = totalSlides();
+      var pct = startPct + (dx / w) * (100/n);
+      wrapper.style.transform = 'translateX(' + pct + '%)';
+    }
+    function pointerUp(x){
+      if(!active) return; active = false; dragging = false;
+      var dx = x - startX; var w = swiperEl.clientWidth; var n = totalSlides();
+      if (dx < -w*0.15) currentIndex = (currentIndex + 1) % n;
+      else if (dx > w*0.15) currentIndex = (currentIndex - 1 + n) % n;
+      applyTransform(true);
+    }
+    swiperEl.addEventListener('touchstart', function(e){ pointerDown(e.touches[0].clientX); }, {passive:true});
+    swiperEl.addEventListener('touchmove', function(e){ pointerMove(e.touches[0].clientX); }, {passive:true});
+    swiperEl.addEventListener('touchend', function(e){ pointerUp(e.changedTouches[0].clientX); });
+    swiperEl.addEventListener('mousedown', function(e){ pointerDown(e.clientX); });
+    document.addEventListener('mousemove', function(e){ pointerMove(e.clientX); });
+    document.addEventListener('mouseup', function(e){ pointerUp(e.clientX); });
+
+    forceFullWidth();
+    applyTransform(false);
+    if (!autoplayTimer) autoplayTimer = setInterval(function(){ tick(); forceFullWidth(); }, 3500);
     return true;
   }
   if (!setup()) {
