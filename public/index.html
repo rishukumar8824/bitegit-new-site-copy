@@ -327,4 +327,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 })();
 </script>
+<script>
+(function(){
+  function fixHero(){
+    var img = document.querySelector('img[src*="hero-mockup"]');
+    if (!img) return false;
+    var el = img.parentElement;
+    var fixed = false;
+    for (var i=0; i<8 && el; i++){
+      if (getComputedStyle(el).display === 'none'){
+        el.style.display = 'block';
+        fixed = true;
+      }
+      el = el.parentElement;
+    }
+    return fixed;
+  }
+  fixHero();
+  var tries = 0;
+  var t = setInterval(function(){
+    fixHero();
+    if(++tries >= 20) clearInterval(t);
+  }, 250);
+})();
+</script>
 </body></html>
