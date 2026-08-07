@@ -135,7 +135,8 @@ function applySecurityHeaders(app) {
                 'https://cdn.tailwindcss.com',
                 'https://cdn.jsdelivr.net',
                 'https://s3.tradingview.com',
-                'https://*.tradingview.com'
+                'https://*.tradingview.com',
+                'https://www.googletagmanager.com'
               ],
               styleSrc: [
                 "'self'",
@@ -155,7 +156,9 @@ function applySecurityHeaders(app) {
                 'https://api.coingecko.com',
                 'https://api.resend.com',
                 'https://*.tradingview.com',
-                'wss://*.tradingview.com'
+                'wss://*.tradingview.com',
+                'https://www.googletagmanager.com',
+                'https://www.google-analytics.com'
               ],
               frameSrc: ["'self'", 'https://*.tradingview.com'],
               fontSrc: ["'self'", 'https:', 'data:'],
@@ -189,7 +192,7 @@ function applySecurityHeaders(app) {
       (req, res, next) => {
         res.setHeader(
           'Content-Security-Policy',
-          "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.binance.com https://data-api.binance.vision https://api.bybit.com https://api.coingecko.com https://api.resend.com https://*.tradingview.com wss://*.tradingview.com; frame-src 'self' https://*.tradingview.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https: data:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
+          "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://s3.tradingview.com https://*.tradingview.com https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.binance.com https://data-api.binance.vision https://api.bybit.com https://api.coingecko.com https://api.resend.com https://*.tradingview.com wss://*.tradingview.com https://www.googletagmanager.com https://www.google-analytics.com; frame-src 'self' https://*.tradingview.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https: data:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
         );
         res.setHeader('X-Frame-Options', 'DENY');
         res.setHeader('X-Content-Type-Options', 'nosniff');
