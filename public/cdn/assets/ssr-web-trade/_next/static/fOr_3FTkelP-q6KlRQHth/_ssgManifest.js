@@ -1,1 +1,0 @@
-self.__SSG_MANIFEST=new Set(["\u002Fprice","\u002Fprice\u002F[currency]","\u002Fprice\u002Fcoin\u002F[currency]","\u002Ftrade-order\u002F[symbol]","\u002Ftrade\u002F[symbol]","\u002Ftrade\u002Fpre-market"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()

@@ -1,1 +1,0 @@
-import{w as n,j as p,k as c}from"./chunk-CMR93jiK.js";import"./chunk-EiQadrRv.js";const m=({isUp:s,className:o,children:l})=>{const{buyUpColorClass:r,sellDownColorClass:t}=n(),a=s?r:t;return p.jsx("span",{className:c(a,o),children:l})};export{m as U};
