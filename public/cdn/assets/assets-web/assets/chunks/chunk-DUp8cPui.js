@@ -1,0 +1,1 @@
+import{r as e}from"./chunk-EiQadrRv.js";var a=function(r){return typeof r=="function"};function c(r,t){if(r===t)return!0;for(var n=0;n<r.length;n++)if(!Object.is(r[n],t[n]))return!1;return!0}function u(r){var t=e.useRef(r);return t.current=r,t}var o=function(r){var t=u(r);e.useEffect(function(){return function(){t.current()}},[])};export{o as a,c as d,a as i,u};
