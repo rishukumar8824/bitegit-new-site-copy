@@ -337,24 +337,57 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 (function(){
   var autoplayTimer = null;
   var pauseUntil = 0;
-  function tick(){
-    if (Date.now() < pauseUntil) return;
-    var prevBtn = document.querySelector('button[aria-label="Previous slide"]');
-    if (prevBtn && !prevBtn.disabled) prevBtn.click();
-  }
-  function pauseAutoplay(){ pauseUntil = Date.now() + 6000; }
+  var currentIndex = 0;
+  var dragging = false;
   function forceFullWidth(){
     document.querySelectorAll('.swiper-slide').forEach(function(s){
       s.style.setProperty('width', '100%', 'important');
       s.style.setProperty('margin-right', '0px', 'important');
     });
   }
+  function applyTransform(animate){
+    var wrapper = document.querySelector('.swiper-wrapper');
+    if (!wrapper) return;
+    wrapper.style.transition = animate ? 'transform 0.4s ease' : 'none';
+    wrapper.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
+  }
+  function tick(){
+    if (Date.now() < pauseUntil || dragging) return;
+    var slides = document.querySelectorAll('.swiper-slide');
+    if (!slides.length) return;
+    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+    applyTransform(true);
+    var dots = document.querySelectorAll('.swiper-pagination-bullet, [class*="pagination"] > *');
+  }
+  function pauseAutoplay(){ pauseUntil = Date.now() + 6000; }
   function setup(){
     var swiperEl = document.querySelector('.swiper');
-    if (!swiperEl) return false;
+    var wrapper = document.querySelector('.swiper-wrapper');
+    if (!swiperEl || !wrapper) return false;
+    swiperEl.style.overflow = 'hidden';
+    wrapper.style.display = 'flex';
     swiperEl.addEventListener('touchstart', pauseAutoplay, {passive:true});
     swiperEl.addEventListener('mousedown', pauseAutoplay);
+
+    var startX = 0, startTransform = 0, active = false;
+    function pointerDown(x){ active = true; dragging = true; startX = x; startTransform = -currentIndex * (swiperEl.clientWidth); wrapper.style.transition = 'none'; pauseAutoplay(); }
+    function pointerMove(x){ if(!active) return; var dx = x - startX; wrapper.style.transform = 'translateX(' + (startTransform + dx) + 'px)'; }
+    function pointerUp(x){
+      if(!active) return; active = false; dragging = false;
+      var dx = x - startX; var w = swiperEl.clientWidth; var slides = document.querySelectorAll('.swiper-slide');
+      if (dx < -w*0.15) currentIndex = (currentIndex + 1) % slides.length;
+      else if (dx > w*0.15) currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+      applyTransform(true);
+    }
+    swiperEl.addEventListener('touchstart', function(e){ pointerDown(e.touches[0].clientX); }, {passive:true});
+    swiperEl.addEventListener('touchmove', function(e){ pointerMove(e.touches[0].clientX); }, {passive:true});
+    swiperEl.addEventListener('touchend', function(e){ pointerUp(e.changedTouches[0].clientX); });
+    swiperEl.addEventListener('mousedown', function(e){ pointerDown(e.clientX); });
+    document.addEventListener('mousemove', function(e){ pointerMove(e.clientX); });
+    document.addEventListener('mouseup', function(e){ pointerUp(e.clientX); });
+
     forceFullWidth();
+    applyTransform(false);
     if (!autoplayTimer) autoplayTimer = setInterval(function(){ tick(); forceFullWidth(); }, 3500);
     return true;
   }
@@ -426,6 +459,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   if (!reorderHeader()) {
     var tries = 0;
     var t = setInterval(function(){ if (reorderHeader() || ++tries >= 20) clearInterval(t); }, 250);
+  }
+})();
+</script>
+<script>
+(function(){
+  function fixMoreGap(){
+    var imgs = document.querySelectorAll('img[src*="notice.png"]');
+    var fixed = false;
+    imgs.forEach(function(img){
+      var el = img.closest('div[style*="margin-top"]');
+      if (el) { el.style.setProperty('margin-top', '8px', 'important'); fixed = true; }
+    });
+    return fixed;
+  }
+  if (!fixMoreGap()) {
+    var tries = 0;
+    var t = setInterval(function(){ if (fixMoreGap() || ++tries >= 20) clearInterval(t); }, 250);
   }
 })();
 </script>
