@@ -169,6 +169,7 @@
           c.style.color = j === i ? '#fff' : 'rgba(255,255,255,0.45)';
           c.style.fontWeight = j === i ? '700' : '500';
         });
+        renderRows();
       });
       categoryBar.appendChild(cat);
     });
@@ -218,11 +219,40 @@
     const TICKER_SYM = { XAU: 'PAXG', XLM: 'XLM', HYPE: 'HYPE' };
     function getTickerKey(sym) { return (TICKER_SYM[sym] || sym) + 'USDT'; }
 
+    const ALL_KNOWN_SYMS = ['BTC', 'BNB', 'SOL', 'ETH', 'DOT', 'HBAR', 'LINK', 'XLM', 'XRP', 'DOGE', 'ADA', 'AVAX', 'PAXG'];
+
     function getPairsList() {
       const [fixed, pool, count] =
         activeTab === 1 ? [FUTURES_FIXED, FUTURES_ROTATE, 7] :
         activeTab === 2 ? [TRADFI_FIXED, TRADFI_ROTATE, 4] :
         [SPOT_FIXED, SPOT_ROTATE, 4];
+
+      // Each category shows a genuinely different, real-data-driven list —
+      // not just a relabeled copy of Favorites.
+      if (activeCategory === 2) { // TradFi
+        return [TRADFI_FIXED, ...TRADFI_ROTATE.slice(0, count)];
+      }
+      if (activeCategory === 3 && tickerMap) { // Top Gainers — ranked by real 24h change
+        const ranked = ALL_KNOWN_SYMS.slice().sort((a, b) => {
+          const ta = tickerMap[getTickerKey(a)], tb = tickerMap[getTickerKey(b)];
+          return (tb ? Number(tb.change24h) : -999) - (ta ? Number(ta.change24h) : -999);
+        });
+        return ranked.slice(0, count + 1);
+      }
+      if (activeCategory === 1 && tickerMap) { // Hot — ranked by real 24h volume
+        const known = [fixed, ...pool];
+        const ranked = known.slice().sort((a, b) => {
+          const ta = tickerMap[getTickerKey(a)], tb = tickerMap[getTickerKey(b)];
+          return (tb ? Number(tb.quoteVolume) : 0) - (ta ? Number(ta.quoteVolume) : 0);
+        });
+        return ranked.slice(0, count + 1);
+      }
+      if (activeCategory === 4) { // New Listing — best-effort distinct ordering
+        const reordered = [...pool].reverse();
+        return [reordered[0], ...reordered.slice(1, count + 1)];
+      }
+
+      // Favorites (default): fixed first, rest rotate through the pool
       const rotated = [];
       for (let i = 0; i < count; i++) rotated.push(pool[(rotateOffset + i) % pool.length]);
       return [fixed, ...rotated];
