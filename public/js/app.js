@@ -289,11 +289,11 @@
 
     function renderRowList(pairsList, loading) {
       const header = document.createElement('div');
-      header.style.cssText = 'display:flex;align-items:center;padding:6px 16px 10px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;width:100%;box-sizing:border-box;';
+      header.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 16px 10px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;width:100%;box-sizing:border-box;';
       header.innerHTML = `<div style="width:28px;flex-shrink:0;"></div>
         <div style="flex:1;min-width:0;padding-left:8px;">Trading Pair</div>
-        <div style="text-align:right;flex-shrink:0;min-width:80px;padding-right:10px;">Last Price</div>
-        <div style="flex-shrink:0;min-width:66px;text-align:center;">24H Gain</div>`;
+        <div style="text-align:right;flex-shrink:0;min-width:88px;padding-right:10px;">Last Price</div>
+        <div style="flex-shrink:0;min-width:70px;text-align:center;">24H Gain</div>`;
       rowsDiv.appendChild(header);
 
       pairsList.forEach(sym => {
@@ -306,7 +306,7 @@
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:56px;width:100%;box-sizing:border-box;';
+        row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:56px;width:100%;box-sizing:border-box;';
 
         row.appendChild(makeIcon(sym));
 
@@ -317,14 +317,14 @@
         row.appendChild(nameCol);
 
         const priceCol = document.createElement('div');
-        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:80px;padding-right:10px;';
+        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:88px;padding-right:4px;';
         priceCol.innerHTML = `<div style="font-size:15px;font-weight:600;color:#fff;">${price}</div>
           <div style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-top:2px;">${t?'$'+price:''}</div>`;
         row.appendChild(priceCol);
 
         const pillCol = document.createElement('div');
         pillCol.style.cssText = 'flex-shrink:0;';
-        pillCol.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:66px;padding:6px 10px;border-radius:8px;background:${pillBg};color:#fff;font-size:13px;font-weight:700;">${chgStr}</span>`;
+        pillCol.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:70px;padding:6px 10px;border-radius:8px;background:${pillBg};color:#fff;font-size:13px;font-weight:700;">${chgStr}</span>`;
         row.appendChild(pillCol);
 
         rowsDiv.appendChild(row);
