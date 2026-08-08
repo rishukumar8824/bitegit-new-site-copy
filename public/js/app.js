@@ -192,19 +192,20 @@
       return n.toFixed(2);
     }
 
-    function makeIcon(sym) {
+    function makeIcon(sym, size) {
+      size = size || 28;
       const iconColor = COIN_COLORS[sym] || '#888';
       const imgSrc = COIN_IMG[sym] || '';
       const wrap = document.createElement('div');
-      wrap.style.cssText = 'width:28px;height:28px;flex-shrink:0;';
+      wrap.style.cssText = `width:${size}px;height:${size}px;flex-shrink:0;`;
       if (imgSrc) {
         const img = document.createElement('img');
         img.src = imgSrc;
         img.alt = sym;
-        img.style.cssText = 'width:28px;height:28px;border-radius:50%;display:block;';
+        img.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;display:block;`;
         img.onerror = function() {
           const circle = document.createElement('div');
-          circle.style.cssText = `width:28px;height:28px;border-radius:50%;background:${iconColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;`;
+          circle.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:${iconColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;`;
           circle.textContent = sym[0];
           wrap.replaceChild(circle, img);
         };
@@ -288,16 +289,18 @@
     }
 
     function renderRowList(pairsList, loading) {
-      // Full-width table layout (same approach as /markets page): percentage
-      // columns so the table always fills the container edge-to-edge.
+      // Exact port of the /markets page table (see public/markets.css
+      // .mk-table + its @media (max-width:768px) block, and the row
+      // markup in public/markets.js renderTable()) — same widths,
+      // paddings, font-sizes and colors, just wired to this widget's data.
       const table = document.createElement('table');
-      table.style.cssText = 'width:100%;table-layout:fixed;border-collapse:collapse;';
+      table.style.cssText = 'width:100%;border-collapse:collapse;font-size:0.9rem;background:#000;table-layout:fixed;';
 
       const thead = document.createElement('thead');
       thead.innerHTML = `<tr>
-        <th style="width:46%;text-align:left;padding:6px 8px 10px 16px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;">Trading Pair</th>
-        <th style="width:29%;text-align:right;padding:6px 8px 10px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;">Last Price</th>
-        <th style="width:25%;text-align:center;padding:6px 16px 10px 8px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;">24H Gain</th>
+        <th style="width:45%;text-align:left;padding:0.6rem 0.5rem;color:#6b7a99;font-size:0.73rem;font-weight:500;white-space:nowrap;">Trading Pair</th>
+        <th style="width:30%;text-align:right;padding:0.6rem 0.5rem;color:#6b7a99;font-size:0.73rem;font-weight:500;white-space:nowrap;">Last Price</th>
+        <th style="width:25%;text-align:right;padding:0.6rem 0.5rem;color:#6b7a99;font-size:0.73rem;font-weight:500;white-space:nowrap;">24H Gain</th>
       </tr>`;
       table.appendChild(thead);
 
@@ -309,32 +312,30 @@
         const chg = t ? Number(t.change24h) : 0;
         const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : (loading ? '···' : '—');
         const up = chg >= 0;
-        const pillBg = !t ? 'rgba(255,255,255,0.08)' : up ? 'rgba(46,189,133,0.9)' : 'rgba(246,70,93,0.9)';
+        const chgColor = !t ? '#95a3bc' : up ? '#19d27f' : '#ff5f82';
 
         const tr = document.createElement('tr');
-        tr.style.cssText = 'cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);';
+        tr.style.cssText = 'background:#000;cursor:pointer;';
         tr.onclick = () => { window.location.href = 'trade.html'; };
 
         const tdName = document.createElement('td');
-        tdName.style.cssText = 'padding:10px 8px 10px 16px;vertical-align:middle;';
+        tdName.style.cssText = 'padding:0.8rem 0.5rem;vertical-align:middle;';
         const nameWrap = document.createElement('div');
-        nameWrap.style.cssText = 'display:flex;align-items:center;gap:8px;min-width:0;';
-        nameWrap.appendChild(makeIcon(sym));
+        nameWrap.style.cssText = 'display:flex;align-items:center;gap:0.85rem;min-width:0;';
+        nameWrap.appendChild(makeIcon(sym, 32));
         const nameText = document.createElement('div');
         nameText.style.cssText = 'min-width:0;overflow:hidden;';
-        nameText.innerHTML = `<div style="font-size:15px;font-weight:600;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>
-          <div style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.4);margin-top:2px;">${sym}</div>`;
+        nameText.innerHTML = `<span style="font-weight:700;font-size:0.85rem;color:#f4f8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}/USDT</span>`;
         nameWrap.appendChild(nameText);
         tdName.appendChild(nameWrap);
 
         const tdPrice = document.createElement('td');
-        tdPrice.style.cssText = 'text-align:right;padding:10px 8px;vertical-align:middle;';
-        tdPrice.innerHTML = `<div style="font-size:15px;font-weight:600;color:#fff;">${price}</div>
-          <div style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-top:2px;">${t?'$'+price:''}</div>`;
+        tdPrice.style.cssText = 'text-align:right;padding:0.8rem 0.5rem;vertical-align:middle;';
+        tdPrice.innerHTML = `<span style="font-weight:600;font-size:0.92rem;color:#f4f8ff;">${price}</span>`;
 
         const tdGain = document.createElement('td');
-        tdGain.style.cssText = 'text-align:center;padding:10px 16px 10px 8px;vertical-align:middle;';
-        tdGain.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:60px;padding:6px 10px;border-radius:8px;background:${pillBg};color:#fff;font-size:13px;font-weight:700;">${chgStr}</span>`;
+        tdGain.style.cssText = 'text-align:right;padding:0.8rem 0.5rem;vertical-align:middle;';
+        tdGain.innerHTML = `<span style="font-weight:700;font-size:0.88rem;color:${chgColor};">${chgStr}</span>`;
 
         tr.appendChild(tdName);
         tr.appendChild(tdPrice);
