@@ -300,9 +300,9 @@
 
       const thead = document.createElement('thead');
       thead.innerHTML = `<tr>
-        <th style="width:42%;text-align:left;padding:6px 6px 10px 10px;color:#a0a3a7;font-size:12px;font-weight:500;white-space:nowrap;">Trading Pair<span style="font-weight:500;">/24h Volume</span></th>
-        <th style="width:29%;text-align:right;padding:6px 6px 10px;color:#a0a3a7;font-size:12px;font-weight:500;white-space:nowrap;">Last Price</th>
-        <th style="width:29%;text-align:right;padding:6px 10px 10px 6px;color:#a0a3a7;font-size:12px;font-weight:500;white-space:nowrap;">24h Change</th>
+        <th style="width:42%;text-align:left;padding:6px 4px 10px 4px;color:#a0a3a7;font-size:12px;font-weight:500;white-space:nowrap;">Trading Pair<span style="font-weight:500;">/24h Volume</span></th>
+        <th style="width:29%;text-align:right;padding:6px 4px 10px;color:#a0a3a7;font-size:12px;font-weight:500;white-space:nowrap;">Last Price</th>
+        <th style="width:29%;text-align:right;padding:6px 4px 10px 4px;color:#a0a3a7;font-size:12px;font-weight:500;white-space:nowrap;">24h Change</th>
       </tr>`;
       table.appendChild(thead);
 
@@ -318,11 +318,11 @@
         const pillBg = !t ? '#3a3a3a' : up ? '#2ebe65' : '#f24040';
 
         const tr = document.createElement('tr');
-        tr.style.cssText = 'background:#000;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);';
+        tr.style.cssText = 'background:#000;cursor:pointer;';
         tr.onclick = () => { window.location.href = 'trade.html'; };
 
         const tdName = document.createElement('td');
-        tdName.style.cssText = 'padding:10px 6px 10px 10px;vertical-align:middle;';
+        tdName.style.cssText = 'padding:10px 4px 10px 4px;vertical-align:middle;';
         const nameWrap = document.createElement('div');
         nameWrap.style.cssText = 'display:flex;align-items:center;min-width:0;';
         const iconWrap = makeIcon(sym, 24);
@@ -336,11 +336,11 @@
         tdName.appendChild(nameWrap);
 
         const tdPrice = document.createElement('td');
-        tdPrice.style.cssText = 'text-align:right;padding:10px 8px;vertical-align:middle;';
+        tdPrice.style.cssText = 'text-align:right;padding:10px 4px;vertical-align:middle;';
         tdPrice.innerHTML = `<span style="font-size:14px;font-weight:500;color:#fafafa;">${price}</span>`;
 
         const tdGain = document.createElement('td');
-        tdGain.style.cssText = 'text-align:right;padding:10px 10px 10px 8px;vertical-align:middle;';
+        tdGain.style.cssText = 'text-align:right;padding:10px 4px 10px 4px;vertical-align:middle;';
         tdGain.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:80px;padding:0 10px;border-radius:6px;background:${pillBg};color:#fff;font-size:14px;font-weight:500;">${chgStr}</span>`;
 
         tr.appendChild(tdName);
