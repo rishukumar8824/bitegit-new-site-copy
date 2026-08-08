@@ -289,18 +289,20 @@
     }
 
     function renderRowList(pairsList, loading) {
-      // Exact port of the /markets page table (see public/markets.css
-      // .mk-table + its @media (max-width:768px) block, and the row
-      // markup in public/markets.js renderTable()) — same widths,
-      // paddings, font-sizes and colors, just wired to this widget's data.
+      // Exact port of the live /markets page table (public/market.html —
+      // the real Next.js-rendered page, mobile layout): same column
+      // widths (38/31/31%), same "Trading Pair/24h Volume" header, same
+      // muted volume sub-line, and the same solid red/green change pill
+      // (colors read straight from the compiled tailwind css:
+      // --color-fn_red_default:#f24040, --color-green-6d:#2ebe65).
       const table = document.createElement('table');
-      table.style.cssText = 'width:100%;border-collapse:collapse;font-size:0.9rem;background:#000;table-layout:fixed;';
+      table.style.cssText = 'width:100%;border-collapse:collapse;background:#000;table-layout:fixed;';
 
       const thead = document.createElement('thead');
       thead.innerHTML = `<tr>
-        <th style="width:45%;text-align:left;padding:0.6rem 0.5rem;color:#6b7a99;font-size:0.73rem;font-weight:500;white-space:nowrap;">Trading Pair</th>
-        <th style="width:30%;text-align:right;padding:0.6rem 0.5rem;color:#6b7a99;font-size:0.73rem;font-weight:500;white-space:nowrap;">Last Price</th>
-        <th style="width:25%;text-align:right;padding:0.6rem 0.5rem;color:#6b7a99;font-size:0.73rem;font-weight:500;white-space:nowrap;">24H Gain</th>
+        <th style="width:42%;text-align:left;padding:6px 6px 10px 10px;color:#a0a3a7;font-size:12px;font-weight:500;white-space:nowrap;">Trading Pair<span style="font-weight:500;">/24h Volume</span></th>
+        <th style="width:29%;text-align:right;padding:6px 6px 10px;color:#a0a3a7;font-size:12px;font-weight:500;white-space:nowrap;">Last Price</th>
+        <th style="width:29%;text-align:right;padding:6px 10px 10px 6px;color:#a0a3a7;font-size:12px;font-weight:500;white-space:nowrap;">24h Change</th>
       </tr>`;
       table.appendChild(thead);
 
@@ -309,33 +311,37 @@
       pairsList.forEach(sym => {
         const t = tickerMap ? (tickerMap[getTickerKey(sym)] || tickerMap[sym + 'USDT']) : null;
         const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : (loading ? '···' : '—');
+        const vol = t ? fmtVol(t.quoteVolume) : (loading ? '···' : '—');
         const chg = t ? Number(t.change24h) : 0;
         const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : (loading ? '···' : '—');
         const up = chg >= 0;
-        const chgColor = !t ? '#95a3bc' : up ? '#19d27f' : '#ff5f82';
+        const pillBg = !t ? '#3a3a3a' : up ? '#2ebe65' : '#f24040';
 
         const tr = document.createElement('tr');
-        tr.style.cssText = 'background:#000;cursor:pointer;';
+        tr.style.cssText = 'background:#000;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);';
         tr.onclick = () => { window.location.href = 'trade.html'; };
 
         const tdName = document.createElement('td');
-        tdName.style.cssText = 'padding:0.8rem 0.5rem;vertical-align:middle;';
+        tdName.style.cssText = 'padding:10px 6px 10px 10px;vertical-align:middle;';
         const nameWrap = document.createElement('div');
-        nameWrap.style.cssText = 'display:flex;align-items:center;gap:0.85rem;min-width:0;';
-        nameWrap.appendChild(makeIcon(sym, 32));
+        nameWrap.style.cssText = 'display:flex;align-items:center;min-width:0;';
+        const iconWrap = makeIcon(sym, 24);
+        iconWrap.style.marginRight = '8px';
+        nameWrap.appendChild(iconWrap);
         const nameText = document.createElement('div');
-        nameText.style.cssText = 'min-width:0;overflow:hidden;';
-        nameText.innerHTML = `<span style="font-weight:700;font-size:0.85rem;color:#f4f8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}/USDT</span>`;
+        nameText.style.cssText = 'min-width:0;overflow:hidden;display:flex;flex-direction:column;';
+        nameText.innerHTML = `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><span style="font-size:14px;font-weight:500;color:#fafafa;">${sym}</span><span style="font-size:12px;font-weight:500;color:#fafafa;opacity:0.4;margin-left:2px;">/USDT</span></span>
+          <span style="font-size:12px;color:#a0a3a7;margin-top:2px;">${vol}</span>`;
         nameWrap.appendChild(nameText);
         tdName.appendChild(nameWrap);
 
         const tdPrice = document.createElement('td');
-        tdPrice.style.cssText = 'text-align:right;padding:0.8rem 0.5rem;vertical-align:middle;';
-        tdPrice.innerHTML = `<span style="font-weight:600;font-size:0.92rem;color:#f4f8ff;">${price}</span>`;
+        tdPrice.style.cssText = 'text-align:right;padding:10px 8px;vertical-align:middle;';
+        tdPrice.innerHTML = `<span style="font-size:14px;font-weight:500;color:#fafafa;">${price}</span>`;
 
         const tdGain = document.createElement('td');
-        tdGain.style.cssText = 'text-align:right;padding:0.8rem 0.5rem;vertical-align:middle;';
-        tdGain.innerHTML = `<span style="font-weight:700;font-size:0.88rem;color:${chgColor};">${chgStr}</span>`;
+        tdGain.style.cssText = 'text-align:right;padding:10px 10px 10px 8px;vertical-align:middle;';
+        tdGain.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:80px;padding:0 10px;border-radius:6px;background:${pillBg};color:#fff;font-size:14px;font-weight:500;">${chgStr}</span>`;
 
         tr.appendChild(tdName);
         tr.appendChild(tdPrice);
