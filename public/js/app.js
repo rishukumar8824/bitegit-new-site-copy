@@ -154,10 +154,29 @@
     mobileOnlyStyle.textContent = '@media (min-width: 768px) { #cvx-mobile-market { display: none !important; } }';
     document.head.appendChild(mobileOnlyStyle);
 
+    // Category row: Favorites / Hot / TradFi / Top Gainers / New Listing
+    const CATEGORIES = ['Favorites', 'Hot', 'TradFi', 'Top Gainers', 'New Listing'];
+    const categoryBar = document.createElement('div');
+    categoryBar.style.cssText = 'display:flex;gap:20px;padding:10px 16px;overflow-x:auto;overflow-y:hidden;width:100%;box-sizing:border-box;-webkit-overflow-scrolling:touch;';
+    let activeCategory = 0;
+    CATEGORIES.forEach((label, i) => {
+      const cat = document.createElement('div');
+      cat.textContent = label;
+      cat.style.cssText = `flex-shrink:0;font-size:14px;white-space:nowrap;cursor:pointer;transition:color 0.2s;color:${i === 0 ? '#fff' : 'rgba(255,255,255,0.45)'};font-weight:${i === 0 ? '700' : '500'};`;
+      cat.addEventListener('click', () => {
+        activeCategory = i;
+        [...categoryBar.children].forEach((c, j) => {
+          c.style.color = j === i ? '#fff' : 'rgba(255,255,255,0.45)';
+          c.style.fontWeight = j === i ? '700' : '500';
+        });
+      });
+      categoryBar.appendChild(cat);
+    });
+
     // Main tabs — no sub-tabs (match bitbase)
     const TABS = ['Spot', 'Futures', 'TradFi', 'Volume Ranking >'];
     const tabBar = document.createElement('div');
-    tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;overflow-y:hidden;margin-bottom:0;border:none;outline:none;-webkit-overflow-scrolling:touch;';
+    tabBar.style.cssText = 'display:flex;gap:0;padding:0 16px;overflow-x:auto;overflow-y:hidden;margin-bottom:0;border:none;outline:none;-webkit-overflow-scrolling:touch;width:100%;box-sizing:border-box;border-bottom:1px solid rgba(255,255,255,0.08);';
 
     const rowsDiv = document.createElement('div');
     rowsDiv.style.cssText = 'display:flex;flex-direction:column;width:100%;';
@@ -175,15 +194,15 @@
       const iconColor = COIN_COLORS[sym] || '#888';
       const imgSrc = COIN_IMG[sym] || '';
       const wrap = document.createElement('div');
-      wrap.style.cssText = 'width:32px;height:32px;flex-shrink:0;';
+      wrap.style.cssText = 'width:28px;height:28px;flex-shrink:0;';
       if (imgSrc) {
         const img = document.createElement('img');
         img.src = imgSrc;
         img.alt = sym;
-        img.style.cssText = 'width:32px;height:32px;border-radius:50%;display:block;';
+        img.style.cssText = 'width:28px;height:28px;border-radius:50%;display:block;';
         img.onerror = function() {
           const circle = document.createElement('div');
-          circle.style.cssText = `width:32px;height:32px;border-radius:50%;background:${iconColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;`;
+          circle.style.cssText = `width:28px;height:28px;border-radius:50%;background:${iconColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;`;
           circle.textContent = sym[0];
           wrap.replaceChild(circle, img);
         };
@@ -223,19 +242,19 @@
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:12px 8px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:64px;width:100%;box-sizing:border-box;';
+        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:10px 8px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:56px;width:100%;box-sizing:border-box;';
 
         row.appendChild(makeIcon(sym));
 
         const nameCol = document.createElement('div');
         nameCol.style.cssText = 'flex:1;min-width:0;overflow:hidden;padding-left:8px;';
-        nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>
+        nameCol.innerHTML = `<div style="font-size:14px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>
           <div style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.4);margin-top:2px;">${sym}</div>`;
         row.appendChild(nameCol);
 
         const priceCol = document.createElement('div');
         priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:80px;padding-right:10px;';
-        priceCol.innerHTML = `<div style="font-size:15px;font-weight:600;${loading?'color:rgba(255,255,255,0.25);':''}">${price}</div>
+        priceCol.innerHTML = `<div style="font-size:14px;font-weight:600;${loading?'color:rgba(255,255,255,0.25);':''}">${price}</div>
           <div style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-top:2px;">${t?'$'+price:''}</div>`;
         row.appendChild(priceCol);
 
@@ -269,13 +288,14 @@
         renderRows();
       };
       tab.setAttribute('data-cvxtab', i);
-      tab.style.cssText = 'padding:10px 12px;font-size:15px;cursor:pointer;white-space:nowrap;transition:color 0.2s;color:rgba(255,255,255,0.45);font-weight:600;';
+      tab.style.cssText = 'padding:8px 10px;font-size:13px;cursor:pointer;white-space:nowrap;transition:color 0.2s;color:rgba(255,255,255,0.45);font-weight:600;';
       tab.addEventListener('click', setActive);
       tabBar.appendChild(tab);
       if (i === 0) setTimeout(setActive, 0);
     });
 
     _mobileRenderRows = renderRows;
+    wrapper.appendChild(categoryBar);
     wrapper.appendChild(tabBar);
     wrapper.appendChild(rowsDiv);
     desktopPairs.parentElement.insertBefore(wrapper, desktopPairs);
