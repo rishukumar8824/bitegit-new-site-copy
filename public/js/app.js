@@ -47,21 +47,22 @@
     DOT:  'https://s2.coinmarketcap.com/static/img/coins/64x64/6636.png',
     HBAR: 'https://s2.coinmarketcap.com/static/img/coins/64x64/4642.png',
     PAXG: 'https://s2.coinmarketcap.com/static/img/coins/64x64/4705.png',
+    TRX:  'https://s2.coinmarketcap.com/static/img/coins/64x64/1958.png',
   };
   const SPOT_PAIRS    = ['BTC', 'ETH', 'SOL', 'XRP', 'PAXG'];
   const FUTURES_PAIRS = ['BTC', 'ETH', 'SOL', 'XRP', 'BNB', 'DOGE', 'ADA', 'AVAX'];
   const TRADFI_PAIRS  = ['XAU', 'LINK', 'DOT', 'HBAR', 'XLM'];
   // First entry of each list stays fixed on top; the rest rotate through a
   // wider pool every few seconds so more coins get visibility.
-  const SPOT_FIXED = 'BTC', SPOT_ROTATE = ['ETH', 'SOL', 'XRP', 'PAXG', 'BNB', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT', 'HBAR', 'XLM'];
+  const SPOT_FIXED = 'BTC', SPOT_ROTATE = ['SOL', 'ETH', 'BNB', 'XRP', 'TRX', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT', 'HBAR', 'XLM'];
   const FUTURES_FIXED = 'BTC', FUTURES_ROTATE = ['ETH', 'SOL', 'XRP', 'BNB', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT', 'HBAR', 'XLM', 'PAXG'];
   const TRADFI_FIXED = 'XAU', TRADFI_ROTATE = ['LINK', 'DOT', 'HBAR', 'XLM', 'BNB', 'ADA', 'AVAX', 'ETH', 'SOL', 'XRP'];
   const COIN_COLORS = { BTC:'#F7931A', ETH:'#627EEA', SOL:'#9945FF', HYPE:'#4FAAFF', XAU:'#E5C55A',
     XRP:'#00AAE4', BNB:'#F3BA2F', DOGE:'#C3A634', ADA:'#0D1E2D', AVAX:'#E84142',
-    PAXG:'#D4AF37', LINK:'#2A5ADA', DOT:'#E6007A', HBAR:'#222', XLM:'#000' };
+    PAXG:'#D4AF37', LINK:'#2A5ADA', DOT:'#E6007A', HBAR:'#222', XLM:'#000', TRX:'#FF060A' };
   const COIN_NAME = { BTC:'Bitcoin', ETH:'Ethereum', SOL:'Solana', HYPE:'Hyperliquid', XAU:'Gold',
     XRP:'Ripple', BNB:'BNB', DOGE:'Dogecoin', ADA:'Cardano', AVAX:'Avalanche',
-    PAXG:'PAX Gold', LINK:'Chainlink', DOT:'Polkadot', HBAR:'Hedera' };
+    PAXG:'PAX Gold', LINK:'Chainlink', DOT:'Polkadot', HBAR:'Hedera', TRX:'TRON' };
 
   // ── 1. MOBILE CSS — hide desktop elements on mobile ──────────────────────
   function injectMobileCSS() {
@@ -287,6 +288,14 @@
     }
 
     function renderRowList(pairsList, loading) {
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;padding:6px 16px 10px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;width:100%;box-sizing:border-box;';
+      header.innerHTML = `<div style="width:28px;flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;padding-left:8px;">Trading Pair</div>
+        <div style="text-align:right;flex-shrink:0;min-width:80px;padding-right:10px;">Last Price</div>
+        <div style="flex-shrink:0;min-width:66px;text-align:center;">24H Gain</div>`;
+      rowsDiv.appendChild(header);
+
       pairsList.forEach(sym => {
         const t = tickerMap ? (tickerMap[getTickerKey(sym)] || tickerMap[sym + 'USDT']) : null;
         const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : (loading ? '···' : '—');
@@ -303,13 +312,13 @@
 
         const nameCol = document.createElement('div');
         nameCol.style.cssText = 'flex:1;min-width:0;overflow:hidden;padding-left:8px;';
-        nameCol.innerHTML = `<div style="font-size:14px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>
+        nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>
           <div style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.4);margin-top:2px;">${sym}</div>`;
         row.appendChild(nameCol);
 
         const priceCol = document.createElement('div');
         priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:80px;padding-right:10px;';
-        priceCol.innerHTML = `<div style="font-size:14px;font-weight:600;">${price}</div>
+        priceCol.innerHTML = `<div style="font-size:15px;font-weight:600;color:#fff;">${price}</div>
           <div style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-top:2px;">${t?'$'+price:''}</div>`;
         row.appendChild(priceCol);
 
@@ -716,7 +725,7 @@
 
   async function loadTicker() {
     const ALL_LOAD_SYMS = ['BTCUSDT','BNBUSDT','SOLUSDT','ETHUSDT','DOTUSDT','HBARUSDT','LINKUSDT','XLMUSDT',
-                           'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','PAXGUSDT'];
+                           'XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','PAXGUSDT','TRXUSDT'];
     const parseTicker = (data) => {
       if (!Array.isArray(data) || !data.length) return false;
       tickerMap = {};
