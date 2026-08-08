@@ -475,7 +475,7 @@
     const dash = document.createElement('a');
     dash.id = 'cvx-loggedin-dash';
     dash.href = '/wallet';
-    dash.style.cssText = 'display:block;padding:6px 0 0;';
+    dash.style.cssText = 'display:block;padding:26px 0 0;';
     dash.innerHTML = '<img src="/images/brand/loggedin-dashboard.png" alt="Estimated Balance" style="width:100%;height:auto;display:block;">';
     heroLink.insertAdjacentElement('afterend', dash);
   }
