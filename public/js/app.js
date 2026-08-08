@@ -288,13 +288,20 @@
     }
 
     function renderRowList(pairsList, loading) {
-      const header = document.createElement('div');
-      header.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 16px 10px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;width:100%;box-sizing:border-box;';
-      header.innerHTML = `<div style="width:28px;flex-shrink:0;"></div>
-        <div style="flex:1;min-width:0;padding-left:8px;">Trading Pair</div>
-        <div style="text-align:right;flex-shrink:0;min-width:88px;padding-right:10px;">Last Price</div>
-        <div style="flex-shrink:0;min-width:70px;text-align:center;">24H Gain</div>`;
-      rowsDiv.appendChild(header);
+      // Full-width table layout (same approach as /markets page): percentage
+      // columns so the table always fills the container edge-to-edge.
+      const table = document.createElement('table');
+      table.style.cssText = 'width:100%;table-layout:fixed;border-collapse:collapse;';
+
+      const thead = document.createElement('thead');
+      thead.innerHTML = `<tr>
+        <th style="width:46%;text-align:left;padding:6px 8px 10px 16px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;">Trading Pair</th>
+        <th style="width:29%;text-align:right;padding:6px 8px 10px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;">Last Price</th>
+        <th style="width:25%;text-align:center;padding:6px 16px 10px 8px;color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;">24H Gain</th>
+      </tr>`;
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
 
       pairsList.forEach(sym => {
         const t = tickerMap ? (tickerMap[getTickerKey(sym)] || tickerMap[sym + 'USDT']) : null;
@@ -304,31 +311,39 @@
         const up = chg >= 0;
         const pillBg = !t ? 'rgba(255,255,255,0.08)' : up ? 'rgba(46,189,133,0.9)' : 'rgba(246,70,93,0.9)';
 
-        const row = document.createElement('a');
-        row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:56px;width:100%;box-sizing:border-box;';
+        const tr = document.createElement('tr');
+        tr.style.cssText = 'cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);';
+        tr.onclick = () => { window.location.href = 'trade.html'; };
 
-        row.appendChild(makeIcon(sym));
-
-        const nameCol = document.createElement('div');
-        nameCol.style.cssText = 'flex:1;min-width:0;overflow:hidden;padding-left:8px;';
-        nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>
+        const tdName = document.createElement('td');
+        tdName.style.cssText = 'padding:10px 8px 10px 16px;vertical-align:middle;';
+        const nameWrap = document.createElement('div');
+        nameWrap.style.cssText = 'display:flex;align-items:center;gap:8px;min-width:0;';
+        nameWrap.appendChild(makeIcon(sym));
+        const nameText = document.createElement('div');
+        nameText.style.cssText = 'min-width:0;overflow:hidden;';
+        nameText.innerHTML = `<div style="font-size:15px;font-weight:600;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>
           <div style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.4);margin-top:2px;">${sym}</div>`;
-        row.appendChild(nameCol);
+        nameWrap.appendChild(nameText);
+        tdName.appendChild(nameWrap);
 
-        const priceCol = document.createElement('div');
-        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:88px;padding-right:4px;';
-        priceCol.innerHTML = `<div style="font-size:15px;font-weight:600;color:#fff;">${price}</div>
+        const tdPrice = document.createElement('td');
+        tdPrice.style.cssText = 'text-align:right;padding:10px 8px;vertical-align:middle;';
+        tdPrice.innerHTML = `<div style="font-size:15px;font-weight:600;color:#fff;">${price}</div>
           <div style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-top:2px;">${t?'$'+price:''}</div>`;
-        row.appendChild(priceCol);
 
-        const pillCol = document.createElement('div');
-        pillCol.style.cssText = 'flex-shrink:0;';
-        pillCol.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:70px;padding:6px 10px;border-radius:8px;background:${pillBg};color:#fff;font-size:13px;font-weight:700;">${chgStr}</span>`;
-        row.appendChild(pillCol);
+        const tdGain = document.createElement('td');
+        tdGain.style.cssText = 'text-align:center;padding:10px 16px 10px 8px;vertical-align:middle;';
+        tdGain.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:60px;padding:6px 10px;border-radius:8px;background:${pillBg};color:#fff;font-size:13px;font-weight:700;">${chgStr}</span>`;
 
-        rowsDiv.appendChild(row);
+        tr.appendChild(tdName);
+        tr.appendChild(tdPrice);
+        tr.appendChild(tdGain);
+        tbody.appendChild(tr);
       });
+
+      table.appendChild(tbody);
+      rowsDiv.appendChild(table);
 
       const more = document.createElement('a');
       more.href = '/markets';
