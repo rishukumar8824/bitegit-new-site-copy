@@ -260,7 +260,7 @@
 
     function renderFavoritesGrid(pairsList, loading) {
       const grid = document.createElement('div');
-      grid.style.cssText = 'display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;padding:14px 16px;width:100%;box-sizing:border-box;';
+      grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 16px;width:100%;box-sizing:border-box;';
       pairsList.forEach(sym => {
         const t = tickerMap ? (tickerMap[getTickerKey(sym)] || tickerMap[sym + 'USDT']) : null;
         const chg = t ? Number(t.change24h) : 0;
@@ -269,12 +269,12 @@
 
         const card = document.createElement('a');
         card.href = 'trade.html';
-        card.style.cssText = 'position:relative;background:rgba(255,255,255,0.04);border-radius:10px;padding:12px 10px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;box-sizing:border-box;width:100%;';
+        card.style.cssText = 'position:relative;background:rgba(255,255,255,0.04);border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;box-sizing:border-box;width:100%;';
         card.innerHTML = `
-          <div style="font-size:13px;font-weight:700;line-height:1.2;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;font-size:11px;"> /USDT</span></div>
-          <div style="font-size:12px;font-weight:600;color:${chgColor};">${chgStr}</div>
-          <div style="position:absolute;top:8px;right:8px;width:17px;height:17px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;">
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div style="font-size:15px;font-weight:700;line-height:1.2;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;font-size:13px;"> /USDT</span></div>
+          <div style="font-size:13px;font-weight:600;color:${chgColor};">${chgStr}</div>
+          <div style="position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>`;
         grid.appendChild(card);
       });
