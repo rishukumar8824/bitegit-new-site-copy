@@ -2984,6 +2984,27 @@ app.get('/api/p2p/exchange-ticker', async (req, res) => {
 });
 
 // API v1 ticker endpoint - used by frontend market pages
+app.get('/api/v1/market/stock', async (req, res) => {
+  const symbol = String(req.query.symbol || 'NVDA').toUpperCase().replace(/[^A-Z.]/g, '').slice(0, 10);
+  try {
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`,
+      { headers: { 'User-Agent': 'Mozilla/5.0' } }
+    );
+    const data = await response.json();
+    const meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
+    if (!response.ok || !meta || typeof meta.regularMarketPrice !== 'number') {
+      throw new Error('Stock API unavailable');
+    }
+    const lastPrice = meta.regularMarketPrice;
+    const prevClose = meta.previousClose || meta.chartPreviousClose || lastPrice;
+    const change24h = prevClose ? ((lastPrice - prevClose) / prevClose) * 100 : 0;
+    return res.json({ source: 'yahoo', symbol, lastPrice, change24h, updatedAt: new Date().toISOString() });
+  } catch (error) {
+    return res.json({ source: 'fallback', symbol, lastPrice: null, change24h: null, updatedAt: new Date().toISOString() });
+  }
+});
+
 app.get('/api/v1/market/tickers', async (req, res) => {
   const requestedSymbols = String(req.query.symbols || '')
     .split(',')

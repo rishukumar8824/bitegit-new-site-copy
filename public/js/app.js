@@ -51,6 +51,11 @@
   const SPOT_PAIRS    = ['BTC', 'ETH', 'SOL', 'XRP', 'PAXG'];
   const FUTURES_PAIRS = ['BTC', 'ETH', 'SOL', 'XRP', 'BNB', 'DOGE', 'ADA', 'AVAX'];
   const TRADFI_PAIRS  = ['XAU', 'LINK', 'DOT', 'HBAR', 'XLM'];
+  // First entry of each list stays fixed on top; the rest rotate through a
+  // wider pool every few seconds so more coins get visibility.
+  const SPOT_FIXED = 'BTC', SPOT_ROTATE = ['ETH', 'SOL', 'XRP', 'PAXG', 'BNB', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT', 'HBAR', 'XLM'];
+  const FUTURES_FIXED = 'BTC', FUTURES_ROTATE = ['ETH', 'SOL', 'XRP', 'BNB', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT', 'HBAR', 'XLM', 'PAXG'];
+  const TRADFI_FIXED = 'XAU', TRADFI_ROTATE = ['LINK', 'DOT', 'HBAR', 'XLM', 'BNB', 'ADA', 'AVAX', 'ETH', 'SOL', 'XRP'];
   const COIN_COLORS = { BTC:'#F7931A', ETH:'#627EEA', SOL:'#9945FF', HYPE:'#4FAAFF', XAU:'#E5C55A',
     XRP:'#00AAE4', BNB:'#F3BA2F', DOGE:'#C3A634', ADA:'#0D1E2D', AVAX:'#E84142',
     PAXG:'#D4AF37', LINK:'#2A5ADA', DOT:'#E6007A', HBAR:'#222', XLM:'#000' };
@@ -194,9 +199,19 @@
     const TICKER_SYM = { XAU: 'PAXG', XLM: 'XLM', HYPE: 'HYPE' };
     function getTickerKey(sym) { return (TICKER_SYM[sym] || sym) + 'USDT'; }
 
+    function getPairsList() {
+      const [fixed, pool, count] =
+        activeTab === 1 ? [FUTURES_FIXED, FUTURES_ROTATE, 7] :
+        activeTab === 2 ? [TRADFI_FIXED, TRADFI_ROTATE, 4] :
+        [SPOT_FIXED, SPOT_ROTATE, 4];
+      const rotated = [];
+      for (let i = 0; i < count; i++) rotated.push(pool[(rotateOffset + i) % pool.length]);
+      return [fixed, ...rotated];
+    }
+
     function renderRows() {
       rowsDiv.innerHTML = '';
-      const pairsList = activeTab === 1 ? FUTURES_PAIRS : activeTab === 2 ? TRADFI_PAIRS : SPOT_PAIRS;
+      const pairsList = getPairsList();
       const loading = !tickerMap;
       pairsList.forEach(sym => {
         const t = tickerMap ? (tickerMap[getTickerKey(sym)] || tickerMap[sym + 'USDT']) : null;
@@ -233,6 +248,8 @@
     }
 
     let activeTab = 0;
+    let rotateOffset = 0;
+    setInterval(() => { rotateOffset++; renderRows(); }, 4000);
     TABS.forEach((label, i) => {
       const tab = document.createElement('div');
       tab.textContent = label;
@@ -464,20 +481,30 @@
       const depositBtn = document.createElement('a');
       depositBtn.href = '/wallet';
       depositBtn.textContent = 'Deposit';
-      depositBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 18px;border-radius:16px;background:#F68F15;color:#000;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap;';
+      depositBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;height:27px;padding:0 14px;border-radius:14px;background:#F68F15;color:#000;font-weight:700;font-size:12.5px;text-decoration:none;white-space:nowrap;';
       authBtns.appendChild(depositBtn);
       authBtns.style.cssText += ';display:flex!important';
     }
 
-    // Dashboard block: the exact reference image (Estimated Balance / Add
-    // Funds / Buy Crypto-Rewards-Referral-VIP Center-More row), used as-is —
-    // same pattern as the hero-mockup image below the logged-out CTA.
-    const dash = document.createElement('a');
+    // Dashboard block: the exact reference image (Estimated Balance / Buy
+    // Crypto-Rewards-Referral-VIP Center-More row), used as-is — same
+    // pattern as the hero-mockup image below the logged-out CTA. The Add
+    // Funds pill is painted out of the image and rebuilt as a real
+    // (smaller, resizable) button positioned over the same spot.
+    const dash = document.createElement('div');
     dash.id = 'cvx-loggedin-dash';
-    dash.href = '/wallet';
-    dash.style.cssText = 'display:block;padding:26px 0 0;';
-    dash.innerHTML = '<img src="/images/brand/loggedin-dashboard.png" alt="Estimated Balance" style="width:100%;height:auto;display:block;">';
+    dash.style.cssText = 'padding:26px 0 0;';
+    dash.innerHTML = `
+      <div style="position:relative;">
+        <a href="/wallet" style="display:block;"><img src="/images/brand/loggedin-dashboard.png" alt="Estimated Balance" style="width:100%;height:auto;display:block;"></a>
+        <a href="/wallet" style="position:absolute;right:4%;top:36.6%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 18px;border-radius:17px;background:#F68F15;color:#000;font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap;">Add Funds</a>
+      </div>
+    `;
     heroLink.insertAdjacentElement('afterend', dash);
+
+    // Nudge the ticker cards down a bit for breathing room under the dash
+    const tickerGrid = document.getElementById('heroTickerGrid');
+    if (tickerGrid) tickerGrid.style.setProperty('margin-top', '28px', 'important');
   }
 
   // ── 8. EARTH VIDEO ────────────────────────────────────────────────────────

@@ -131,6 +131,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <a href="/trade/spot/XAUTUSDT" data-tk="XAUTUSDT" style="position:absolute;left:51.5%;top:24%;width:24%;height:12%;background:#131516"></a>
   <a href="/trade/spot/ETHUSDT" data-tk="ETHUSDT" style="position:absolute;left:6.5%;top:70%;width:24%;height:12%;background:#131516"></a>
   <a href="/tradfi" style="position:absolute;left:51.5%;top:70%;width:24%;height:12%;background:#131516"></a>
+  <div class="tk-txt" data-for="NVDA" style="position:absolute;left:51.5%;top:70%;width:24%;height:12%;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;color:#fff;pointer-events:none"><span class="tk-price">--</span><span class="tk-change" style="font-size:10px;font-weight:500"></span></div>
   <div class="tk-txt" data-for="BTCUSDT" style="position:absolute;left:6.5%;top:24%;width:24%;height:12%;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;color:#fff;pointer-events:none"><span class="tk-price">--</span><span class="tk-change" style="font-size:10px;font-weight:500"></span></div>
   <div class="tk-txt" data-for="XAUTUSDT" style="position:absolute;left:51.5%;top:24%;width:24%;height:12%;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;color:#fff;pointer-events:none"><span class="tk-price">--</span><span class="tk-change" style="font-size:10px;font-weight:500"></span></div>
   <div class="tk-txt" data-for="ETHUSDT" style="position:absolute;left:6.5%;top:70%;width:24%;height:12%;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;color:#fff;pointer-events:none"><span class="tk-price">--</span><span class="tk-change" style="font-size:10px;font-weight:500"></span></div>
@@ -151,6 +152,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         chEl.textContent = (up?"+":"") + t.change24h.toFixed(2) + "%";
         chEl.style.color = up ? "#1db26e" : "#e05252";
       });
+    }).catch(function(){});
+    fetch("/api/v1/market/stock?symbol=NVDA").then(function(r){return r.json();}).then(function(t){
+      if(!t || t.lastPrice == null) return;
+      var el = document.querySelector('.tk-txt[data-for="NVDA"]');
+      if(!el) return;
+      el.querySelector(".tk-price").textContent = fmt(t.lastPrice, 2);
+      var chEl = el.querySelector(".tk-change");
+      var up = t.change24h >= 0;
+      chEl.textContent = (up?"+":"") + t.change24h.toFixed(2) + "%";
+      chEl.style.color = up ? "#1db26e" : "#e05252";
     }).catch(function(){});
   }
   refresh();
