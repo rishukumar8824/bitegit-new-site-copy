@@ -162,7 +162,7 @@
     CATEGORIES.forEach((label, i) => {
       const cat = document.createElement('div');
       cat.textContent = label;
-      cat.style.cssText = `flex-shrink:0;font-size:14px;white-space:nowrap;cursor:pointer;transition:color 0.2s;color:${i === 0 ? '#fff' : 'rgba(255,255,255,0.45)'};font-weight:${i === 0 ? '700' : '500'};`;
+      cat.style.cssText = `flex-shrink:0;font-size:18px;white-space:nowrap;cursor:pointer;transition:color 0.2s;color:${i === 0 ? '#fff' : 'rgba(255,255,255,0.45)'};font-weight:${i === 0 ? '700' : '500'};`;
       cat.addEventListener('click', () => {
         activeCategory = i;
         [...categoryBar.children].forEach((c, j) => {
@@ -258,10 +258,35 @@
       return [fixed, ...rotated];
     }
 
-    function renderRows() {
-      rowsDiv.innerHTML = '';
-      const pairsList = getPairsList();
-      const loading = !tickerMap;
+    function renderFavoritesGrid(pairsList, loading) {
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px;width:100%;box-sizing:border-box;';
+      pairsList.forEach(sym => {
+        const t = tickerMap ? (tickerMap[getTickerKey(sym)] || tickerMap[sym + 'USDT']) : null;
+        const chg = t ? Number(t.change24h) : 0;
+        const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : (loading ? '···' : '—');
+        const chgColor = !t ? 'rgba(255,255,255,0.3)' : chg >= 0 ? UP : DOWN;
+
+        const card = document.createElement('a');
+        card.href = 'trade.html';
+        card.style.cssText = 'position:relative;background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;text-decoration:none;color:inherit;';
+        card.innerHTML = `
+          <div style="font-size:17px;font-weight:700;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;font-size:14px;"> /USDT</span></div>
+          <div style="font-size:14px;font-weight:600;color:${chgColor};">${chgStr}</div>
+          <div style="position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>`;
+        grid.appendChild(card);
+      });
+      rowsDiv.appendChild(grid);
+
+      const addBtn = document.createElement('div');
+      addBtn.textContent = 'Add to Favorites';
+      addBtn.style.cssText = 'display:block;margin:6px 16px 14px;padding:14px 0;text-align:center;border-radius:24px;background:#F68F15;color:#000;font-weight:700;font-size:15px;';
+      rowsDiv.appendChild(addBtn);
+    }
+
+    function renderRowList(pairsList, loading) {
       pairsList.forEach(sym => {
         const t = tickerMap ? (tickerMap[getTickerKey(sym)] || tickerMap[sym + 'USDT']) : null;
         const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : (loading ? '···' : '—');
@@ -303,9 +328,19 @@
       rowsDiv.appendChild(more);
     }
 
+    function renderRows() {
+      rowsDiv.innerHTML = '';
+      const pairsList = getPairsList();
+      const loading = !tickerMap;
+      if (activeCategory === 0) {
+        renderFavoritesGrid(pairsList, loading);
+      } else {
+        renderRowList(pairsList, loading);
+      }
+    }
+
     let activeTab = 0;
-    let rotateOffset = 0;
-    setInterval(() => { rotateOffset++; renderRows(); }, 4000);
+    const rotateOffset = 0; // pairs list stays static — no auto-rotation
     TABS.forEach((label, i) => {
       const tab = document.createElement('div');
       tab.textContent = label;
