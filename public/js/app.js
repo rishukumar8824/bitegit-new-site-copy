@@ -218,7 +218,8 @@
         const price = t ? fmt(t.lastPrice, t.lastPrice < 1 ? 4 : 2) : (loading ? '···' : '—');
         const chg = t ? Number(t.change24h) : 0;
         const chgStr = t ? ((chg >= 0 ? '+' : '') + fmt(chg, 2) + '%') : (loading ? '···' : '—');
-        const chgColor = !t ? 'rgba(255,255,255,0.3)' : chg >= 0 ? UP : DOWN;
+        const up = chg >= 0;
+        const pillBg = !t ? 'rgba(255,255,255,0.08)' : up ? 'rgba(46,189,133,0.9)' : 'rgba(246,70,93,0.9)';
 
         const row = document.createElement('a');
         row.href = 'trade.html';
@@ -228,14 +229,20 @@
 
         const nameCol = document.createElement('div');
         nameCol.style.cssText = 'flex:1;min-width:0;overflow:hidden;padding-left:8px;';
-        nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>`;
+        nameCol.innerHTML = `<div style="font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;">/USDT</span></div>
+          <div style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.4);margin-top:2px;">${sym}</div>`;
         row.appendChild(nameCol);
 
         const priceCol = document.createElement('div');
-        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:90px;';
+        priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:80px;padding-right:10px;';
         priceCol.innerHTML = `<div style="font-size:15px;font-weight:600;${loading?'color:rgba(255,255,255,0.25);':''}">${price}</div>
-          <div style="font-size:12px;font-weight:500;color:${chgColor};margin-top:3px;">${chgStr}</div>`;
+          <div style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-top:2px;">${t?'$'+price:''}</div>`;
         row.appendChild(priceCol);
+
+        const pillCol = document.createElement('div');
+        pillCol.style.cssText = 'flex-shrink:0;';
+        pillCol.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:66px;padding:6px 10px;border-radius:8px;background:${pillBg};color:#fff;font-size:13px;font-weight:700;">${chgStr}</span>`;
+        row.appendChild(pillCol);
 
         rowsDiv.appendChild(row);
       });
@@ -505,6 +512,25 @@
     // Nudge the ticker cards down a bit for breathing room under the dash
     const tickerGrid = document.getElementById('heroTickerGrid');
     if (tickerGrid) tickerGrid.style.setProperty('margin-top', '28px', 'important');
+
+    // Hide the promo banner (BWTC/affiliate carousel) once logged in and
+    // let the Spot/Futures/TradFi pairs list move up to fill the gap.
+    hidePromoBannerIfLoggedIn();
+  }
+
+  function hidePromoBannerIfLoggedIn() {
+    if (!window._cvxLoggedIn) return;
+    const swiper = document.querySelector('.swiper');
+    if (!swiper) return;
+    const homeMain = document.querySelector('.home_main');
+    if (!homeMain) return;
+    let bannerSection = swiper;
+    while (bannerSection.parentElement && bannerSection.parentElement !== homeMain) {
+      bannerSection = bannerSection.parentElement;
+    }
+    if (bannerSection.parentElement === homeMain) {
+      bannerSection.style.setProperty('display', 'none', 'important');
+    }
   }
 
   // ── 8. EARTH VIDEO ────────────────────────────────────────────────────────
