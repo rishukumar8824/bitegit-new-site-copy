@@ -225,7 +225,7 @@
       const [fixed, pool, count] =
         activeTab === 1 ? [FUTURES_FIXED, FUTURES_ROTATE, 7] :
         activeTab === 2 ? [TRADFI_FIXED, TRADFI_ROTATE, 4] :
-        [SPOT_FIXED, SPOT_ROTATE, 4];
+        [SPOT_FIXED, SPOT_ROTATE, 5];
 
       // Each category shows a genuinely different, real-data-driven list —
       // not just a relabeled copy of Favorites.
@@ -260,7 +260,7 @@
 
     function renderFavoritesGrid(pairsList, loading) {
       const grid = document.createElement('div');
-      grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px;width:100%;box-sizing:border-box;';
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;padding:14px 16px;width:100%;box-sizing:border-box;';
       pairsList.forEach(sym => {
         const t = tickerMap ? (tickerMap[getTickerKey(sym)] || tickerMap[sym + 'USDT']) : null;
         const chg = t ? Number(t.change24h) : 0;
@@ -269,12 +269,12 @@
 
         const card = document.createElement('a');
         card.href = 'trade.html';
-        card.style.cssText = 'position:relative;background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;text-decoration:none;color:inherit;';
+        card.style.cssText = 'position:relative;background:rgba(255,255,255,0.04);border-radius:10px;padding:12px 10px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;box-sizing:border-box;width:100%;';
         card.innerHTML = `
-          <div style="font-size:17px;font-weight:700;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;font-size:14px;"> /USDT</span></div>
-          <div style="font-size:14px;font-weight:600;color:${chgColor};">${chgStr}</div>
-          <div style="position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <div style="font-size:13px;font-weight:700;line-height:1.2;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;font-size:11px;"> /USDT</span></div>
+          <div style="font-size:12px;font-weight:600;color:${chgColor};">${chgStr}</div>
+          <div style="position:absolute;top:8px;right:8px;width:17px;height:17px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>`;
         grid.appendChild(card);
       });
@@ -297,7 +297,7 @@
 
         const row = document.createElement('a');
         row.href = 'trade.html';
-        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:10px 8px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:56px;width:100%;box-sizing:border-box;';
+        row.style.cssText = 'display:flex;align-items:center;gap:0;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);text-decoration:none;color:inherit;cursor:pointer;min-height:56px;width:100%;box-sizing:border-box;';
 
         row.appendChild(makeIcon(sym));
 
@@ -309,7 +309,7 @@
 
         const priceCol = document.createElement('div');
         priceCol.style.cssText = 'text-align:right;flex-shrink:0;min-width:80px;padding-right:10px;';
-        priceCol.innerHTML = `<div style="font-size:14px;font-weight:600;${loading?'color:rgba(255,255,255,0.25);':''}">${price}</div>
+        priceCol.innerHTML = `<div style="font-size:14px;font-weight:600;">${price}</div>
           <div style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-top:2px;">${t?'$'+price:''}</div>`;
         row.appendChild(priceCol);
 
