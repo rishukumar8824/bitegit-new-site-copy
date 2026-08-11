@@ -726,11 +726,29 @@ body.p2p-kyc-open { overflow: hidden; }
 /* ===== GATE.IO CONTROLS ===== */
 .gt-controls { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 0.5rem; }
 .gt-controls-row1 { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.gt-side-tabs { display: flex; gap: 0; }
-.gt-side-tab { min-height: 44px; padding: 0 1.1rem; border: none; border-bottom: 2.5px solid transparent; background: transparent; color: #848E9C; font-size: 1.05rem; font-weight: 700; cursor: pointer; font-family: 'Manrope', sans-serif; transition: color 0.15s, border-color 0.15s; }
-.gt-side-tab[data-side="buy"].active { color: #2EBD85; border-bottom-color: #2EBD85; }
-.gt-side-tab[data-side="sell"].active { color: var(--p2p-red); border-bottom-color: var(--p2p-red); }
-.gt-side-tab.active { color: #fff; border-bottom-color: #2EBD85; }
+/* Segmented pill toggle (Bybit-style box), kept compact/small */
+.gt-side-tabs {
+  display: flex;
+  gap: 2px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 9px;
+  padding: 3px;
+}
+.gt-side-tab {
+  min-height: 30px;
+  padding: 0 0.9rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #848E9C;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  transition: color 0.15s, background-color 0.15s;
+}
+.gt-side-tab[data-side="buy"].active { background: #2EBD85; color: #06120d; }
+.gt-side-tab[data-side="sell"].active { background: var(--p2p-red); color: #fff; }
 .gt-controls-right { display: flex; align-items: center; gap: 0.45rem; }
 .gt-icon-btn { width: 38px; height: 38px; border-radius: 8px; border: none; background: rgba(255,255,255,0.07); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
 .gt-currency-wrap { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.08); border-radius: 8px; padding: 0 0.6rem; height: 38px; }
@@ -2204,7 +2222,7 @@ body.p2p-kyc-open { overflow: hidden; }
   align-items: center;
   justify-content: flex-end;
   gap: 3px;
-  padding: 1rem 0.25rem 0;
+  padding: 1.3rem 0.25rem 0;
   text-decoration: none;
   color: #848E9C;
   font-size: 0;
@@ -5177,7 +5195,7 @@ body.mob-screen-open .p2p-secondary-nav {
     opacity: 1;
   }
   .gt-side-tabs { flex-shrink: 0; }
-  .gt-side-tab { padding: 0 1.2rem; font-size: 1rem; min-height: 48px; }
+  .gt-side-tab { padding: 0 0.95rem; font-size: 0.84rem; min-height: 32px; }
 
   /* Row2 = filter bar, collapses together with row1 */
   .gt-controls-row2 {
@@ -5256,29 +5274,18 @@ body.mob-screen-open .p2p-secondary-nav {
     margin-top: -44px;
     padding-top: 44px;
   }
-  /* Buy/Sell row — pinned below the subnav and always visible once
-     scrolled (true sticky, never collapses). Its static-mode width is
-     already identical to its fixed-mode width (no horizontal padding
-     anywhere in this chain on mobile), so switching position can't
-     shift the tabs sideways; .p2p-board's padding-top below exactly
-     compensates the 48px it removes from the flow so nothing jumps
-     vertically either. */
+  /* Buy/Sell row — collapses away on scroll along with the filter row.
+     It never becomes position:fixed, so there's no static→fixed reflow
+     that could shift the pill toggle sideways. Only the subnav
+     (Express/P2P/FiatClaw) stays pinned at the top. */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row1 {
-    position: fixed !important;
-    top: 44px !important;
-    left: 0;
-    right: 0;
-    z-index: 205;
-    background: #000 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    max-height: none !important;
-    min-height: 48px !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transition: none !important;
-  }
-  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-board {
-    padding-top: 48px;
+    max-height: 0 !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
+    opacity: 0;
+    pointer-events: none;
   }
   /* Filter row (USDT / Amount / Payment) — collapses away too */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row2 {
@@ -5302,12 +5309,16 @@ body.mob-screen-open .p2p-secondary-nav {
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-mobile-bottom-nav {
     transform: translateY(100%);
   }
-  /* Almost no reserved space at the bottom of the list while the nav is
-     hidden — cards fill that area instead of leaving a black gap where
-     the nav used to be */
+  /* No reserved space at the bottom of the list while the nav is hidden
+     — cards fill all the way to the edge instead of leaving a black gap
+     where the nav used to be. Transitions in step with the nav's own
+     slide so the cards visibly grow into the space as it clears. */
+  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) #p2pCards {
+    transition: padding-bottom 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) #p2pCards {
-    padding-bottom: 0.5rem;
-    scroll-padding-bottom: 0.5rem;
+    padding-bottom: 0;
+    scroll-padding-bottom: 0;
   }
 }
 

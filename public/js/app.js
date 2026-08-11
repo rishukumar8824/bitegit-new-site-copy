@@ -1149,6 +1149,12 @@
       // instead, which takes full ownership.
       if (container.classList.contains('swiper')) return;
 
+      // Skip the P2P Buy/Sell segmented toggle — it's an overflow:hidden
+      // row wrapping a 2-item flex pill, which otherwise matches this
+      // carousel heuristic and gets auto-slid every 3s, making the toggle
+      // visibly drift left/right on its own.
+      if (container.closest('.gt-controls-row1, .gt-side-tabs') || container.querySelector('.gt-side-tabs')) return;
+
       // Skip any carousel that contains the app-download QR/phone content
       const hasQR = container.querySelector('img[alt="qrcode"], img[src^="data:image"]');
       const hasAppText = /scan.*download|ios.*android|trade with confidence/i.test(container.textContent || '');
