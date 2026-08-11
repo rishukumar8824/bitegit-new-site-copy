@@ -2185,13 +2185,13 @@ body.p2p-kyc-open { overflow: hidden; }
   left: 0;
   right: 0;
   z-index: 900;
-  background: #161A1E;
+  background: #070808;
   backdrop-filter: none;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255,255,255,0.07);
   display: flex;
   align-items: stretch;
-  min-height: calc(60px + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
+  min-height: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
   box-shadow: none;
 }
 
@@ -2200,22 +2200,31 @@ body.p2p-kyc-open { overflow: hidden; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 3px;
-  padding: 0.6rem 0.25rem;
+  padding: 0.6rem 0.25rem 0.1rem;
   text-decoration: none;
   color: #848E9C;
   font-size: 0;
   transition: color 0.15s;
 }
 
-.p2p-mobile-bottom-nav a.active { color: #2EBD85; }
+.p2p-mobile-bottom-nav a.active { color: #fff; }
 .p2p-mobile-bottom-nav a.active .nav-icon { stroke: #2EBD85; color: #2EBD85; }
+.p2p-mobile-bottom-nav a.active .nav-icon-img { filter: brightness(0) saturate(100%) invert(100%); opacity: 1; }
 .p2p-mobile-bottom-nav a:hover { color: rgba(255,255,255,0.8); }
 
 .p2p-mobile-bottom-nav .nav-icon {
   font-size: 1.2rem;
   line-height: 1;
+}
+
+.p2p-mobile-bottom-nav .nav-icon-img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  opacity: 0.45;
+  transition: opacity 0.15s;
 }
 
 .p2p-mobile-bottom-nav .nav-label {
@@ -3665,10 +3674,10 @@ body.mob-screen-open .p2p-secondary-nav {
   }
 
   .p2p-card-footer .offer-action-btn {
-    min-height: 36px;
-    padding: 0 1.1rem;
+    min-height: 30px;
+    padding: 0 0.85rem;
     border-radius: 999px;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -5238,10 +5247,24 @@ body.mob-screen-open .p2p-secondary-nav {
     margin-top: -44px;
     padding-top: 44px;
   }
-  /* Filter row (USDT / Amount / Payment) — sticky below subnav when scrolled, NEVER cut off */
-  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row2 {
+  /* Buy/Sell row — sticky below subnav when scrolled, stays visible (no collapse) */
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row1 {
     position: fixed !important;
     top: 44px !important;
+    left: 0;
+    right: 0;
+    z-index: 210;
+    background: #0b0e11 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    max-height: none !important;
+    min-height: 48px !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  /* Filter row (USDT / Amount / Payment) — sticky below the Buy/Sell row when scrolled, NEVER cut off */
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row2 {
+    position: fixed !important;
+    top: 92px !important;
     left: 0;
     right: 0;
     z-index: 209;
@@ -5249,19 +5272,9 @@ body.mob-screen-open .p2p-secondary-nav {
     border-bottom: 1px solid rgba(255,255,255,0.07);
     padding: 8px 14px !important;
   }
-  /* Compensate for fixed filter row height (~54px) so cards don't jump under it */
+  /* Compensate for fixed Buy/Sell + filter row height (~102px) so cards don't jump under it */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-board {
-    padding-top: 54px;
-  }
-  /* Buy/Sell row — collapse vertically when scrolled down */
-  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row1 {
-    max-height: 0 !important;
-    min-height: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    overflow: hidden !important;
-    opacity: 0;
-    pointer-events: none;
+    padding-top: 102px;
   }
   /* Alert bar collapse on scroll */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
