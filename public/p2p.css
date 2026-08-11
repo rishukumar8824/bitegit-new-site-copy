@@ -2185,13 +2185,13 @@ body.p2p-kyc-open { overflow: hidden; }
   left: 0;
   right: 0;
   z-index: 900;
-  background: #070808;
+  background: #000 !important;
   backdrop-filter: none;
   border-top: 1px solid rgba(255,255,255,0.07);
   display: flex;
   align-items: stretch;
-  min-height: calc(60px + env(safe-area-inset-bottom));
-  padding-bottom: calc(4px + env(safe-area-inset-bottom));
+  min-height: calc(54px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
   box-shadow: none;
   transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
   will-change: transform;
@@ -2204,7 +2204,7 @@ body.p2p-kyc-open { overflow: hidden; }
   align-items: center;
   justify-content: flex-end;
   gap: 3px;
-  padding: 0.85rem 0.25rem 0;
+  padding: 1rem 0.25rem 0;
   text-decoration: none;
   color: #848E9C;
   font-size: 0;
@@ -5160,9 +5160,9 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* ── Mobile overrides ── */
 @media (max-width: 767px) {
-  /* Buy/Sell row — static, no animation, no transform, no transition:
-     position swaps between static/fixed on scroll and must snap instantly,
-     otherwise the tabs visibly slide sideways as the layout re-flows. */
+  /* Buy/Sell row — never position:fixed (that static→fixed swap is what
+     made the tabs visibly slide sideways). It only ever collapses in
+     place via max-height/opacity, which can't shift anything horizontally. */
   .gt-controls-row1 {
     display: flex !important;
     align-items: center;
@@ -5171,7 +5171,7 @@ body.mob-screen-open .p2p-secondary-nav {
     max-height: 80px;
     overflow: hidden;
     animation: none !important;
-    transition: none !important;
+    transition: max-height 0.18s ease, opacity 0.15s ease, padding 0.18s ease, min-height 0.18s ease !important;
     transform: none !important;
     will-change: auto !important;
     opacity: 1;
@@ -5179,7 +5179,7 @@ body.mob-screen-open .p2p-secondary-nav {
   .gt-side-tabs { flex-shrink: 0; }
   .gt-side-tab { padding: 0 1.2rem; font-size: 1rem; min-height: 48px; }
 
-  /* Row2 = sticky filter bar */
+  /* Row2 = filter bar, collapses together with row1 */
   .gt-controls-row2 {
     background: #000;
     padding: 8px 14px;
@@ -5190,6 +5190,8 @@ body.mob-screen-open .p2p-secondary-nav {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     flex-wrap: nowrap;
+    max-height: 60px;
+    transition: max-height 0.18s ease, opacity 0.15s ease, padding 0.18s ease, border-color 0.18s ease !important;
   }
   .gt-controls-row2::-webkit-scrollbar { display: none; }
   .gt-asset-wrap, .gt-amount-wrap, .gt-pay-wrap, .gt-filter-icon-btn { flex-shrink: 0; }
@@ -5254,34 +5256,28 @@ body.mob-screen-open .p2p-secondary-nav {
     margin-top: -44px;
     padding-top: 44px;
   }
-  /* Buy/Sell row — sticky below subnav when scrolled, stays visible (no collapse) */
+  /* Buy/Sell row — collapses away on scroll (no position:fixed, so there's
+     no static→fixed reflow and nothing can visibly shift sideways). Only
+     the subnav (Express/P2P/FiatClaw) stays pinned at the top. */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row1 {
-    position: fixed !important;
-    top: 44px !important;
-    left: 0;
-    right: 0;
-    z-index: 210;
-    background: #000 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    max-height: none !important;
-    min-height: 48px !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
+    max-height: 0 !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
+    opacity: 0;
+    pointer-events: none;
   }
-  /* Filter row (USDT / Amount / Payment) — sticky below the Buy/Sell row when scrolled, NEVER cut off */
+  /* Filter row (USDT / Amount / Payment) — collapses away too */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls-row2 {
-    position: fixed !important;
-    top: 92px !important;
-    left: 0;
-    right: 0;
-    z-index: 209;
-    background: #000 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    padding: 8px 14px !important;
-  }
-  /* Compensate for fixed Buy/Sell + filter row height (~102px) so cards don't jump under it */
-  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-board {
-    padding-top: 102px;
+    max-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    border-bottom-color: transparent !important;
+    overflow: hidden !important;
+    opacity: 0;
+    pointer-events: none;
   }
   /* Alert bar collapse on scroll */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar {
