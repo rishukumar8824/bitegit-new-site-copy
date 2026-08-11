@@ -2190,9 +2190,11 @@ body.p2p-kyc-open { overflow: hidden; }
   border-top: 1px solid rgba(255,255,255,0.07);
   display: flex;
   align-items: stretch;
-  min-height: calc(64px + env(safe-area-inset-bottom));
-  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  min-height: calc(60px + env(safe-area-inset-bottom));
+  padding-bottom: calc(4px + env(safe-area-inset-bottom));
   box-shadow: none;
+  transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
+  will-change: transform;
 }
 
 .p2p-mobile-bottom-nav a {
@@ -2202,7 +2204,7 @@ body.p2p-kyc-open { overflow: hidden; }
   align-items: center;
   justify-content: flex-end;
   gap: 3px;
-  padding: 0.6rem 0.25rem 0.1rem;
+  padding: 0.85rem 0.25rem 0;
   text-decoration: none;
   color: #848E9C;
   font-size: 0;
@@ -4877,10 +4879,10 @@ body.mob-screen-open .p2p-secondary-nav {
   flex-shrink: 0;
 }
 .bbt-avatar {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: #fff;
   display: flex;
@@ -4892,12 +4894,15 @@ body.mob-screen-open .p2p-secondary-nav {
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #2ebd85;
   border: 1.5px solid #000;
   display: block;
+}
+.bbt-avatar-wrap .bbt-online-dot.is-offline {
+  background: rgba(255,255,255,0.25);
 }
 .bbt-name-wrap {
   display: flex;
@@ -4986,7 +4991,7 @@ body.mob-screen-open .p2p-secondary-nav {
   line-height: 1;
 }
 .bbt-pnum {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.5px;
@@ -5155,16 +5160,18 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* ── Mobile overrides ── */
 @media (max-width: 767px) {
-  /* Buy/Sell row — static, no animation, no transform; max-height enables collapse on scroll */
+  /* Buy/Sell row — static, no animation, no transform, no transition:
+     position swaps between static/fixed on scroll and must snap instantly,
+     otherwise the tabs visibly slide sideways as the layout re-flows. */
   .gt-controls-row1 {
     display: flex !important;
     align-items: center;
     padding: 0 14px;
     min-height: 48px;
-    max-height: 80px; /* allow collapse transition */
+    max-height: 80px;
     overflow: hidden;
     animation: none !important;
-    transition: max-height 0.18s ease, opacity 0.15s ease, padding 0.18s ease, min-height 0.18s ease !important;
+    transition: none !important;
     transform: none !important;
     will-change: auto !important;
     opacity: 1;
@@ -5174,7 +5181,7 @@ body.mob-screen-open .p2p-secondary-nav {
 
   /* Row2 = sticky filter bar */
   .gt-controls-row2 {
-    background: #0b0e11;
+    background: #000;
     padding: 8px 14px;
     margin: 0;
     gap: 6px;
@@ -5254,7 +5261,7 @@ body.mob-screen-open .p2p-secondary-nav {
     left: 0;
     right: 0;
     z-index: 210;
-    background: #0b0e11 !important;
+    background: #000 !important;
     border-bottom: 1px solid rgba(255,255,255,0.07);
     max-height: none !important;
     min-height: 48px !important;
@@ -5268,7 +5275,7 @@ body.mob-screen-open .p2p-secondary-nav {
     left: 0;
     right: 0;
     z-index: 209;
-    background: #0b0e11 !important;
+    background: #000 !important;
     border-bottom: 1px solid rgba(255,255,255,0.07);
     padding: 8px 14px !important;
   }
@@ -5281,6 +5288,16 @@ body.mob-screen-open .p2p-secondary-nav {
     max-height: 0 !important;
     opacity: 0;
     pointer-events: none;
+  }
+  /* Bottom nav — slides away while scrolling down the list, slides back
+     in as soon as the user scrolls back up (same trigger as the header) */
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-mobile-bottom-nav {
+    transform: translateY(100%);
+  }
+  /* Less reserved space at the bottom of the list while the nav is
+     hidden, so there's no leftover black gap below the last card */
+  body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) #p2pCards {
+    padding-bottom: 1rem;
   }
 }
 

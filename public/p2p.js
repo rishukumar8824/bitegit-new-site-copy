@@ -3230,7 +3230,7 @@ function renderOffers(data, append) {
     }).join('');
     const _isTopPick = index === 0;
     const _topPickBadge = _isTopPick ? '<span class="bbt-top-pick-badge">Top Picks for New Users ⓘ</span>' : '';
-    const _onlineDot = onlineStatus === 'online' ? '<span class="bbt-online-dot"></span>' : '';
+    const _onlineDot = `<span class="bbt-online-dot${onlineStatus === 'online' ? '' : ' is-offline'}"></span>`;
     const _respTag = _respLabel ? `<span class="bbt-resp-time"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${_respLabel}</span>` : '';
     const _fastRelease = (_respMins != null && _respMins <= 5) ? '<span class="bbt-fast-release"><svg width="9" height="9" viewBox="0 0 24 24" fill="#4ade80" stroke="none"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>Fast release</span>' : '';
     cardsHtml.push(`
@@ -9705,18 +9705,23 @@ window.deleteMobAd = async function(offerId) {
 (function() {
   var _pCards = document.getElementById('p2pCards');
   if (!_pCards) return;
-  var _lastY = 0, _ticking = false;
+  var _lastY = 0, _ticking = false, _isDown = false;
   _pCards.addEventListener('scroll', function() {
     if (_ticking) return;
     _ticking = true;
     requestAnimationFrame(function() {
       var y = _pCards.scrollTop;
+      var dy = y - _lastY;
+      // Once pinned, only unpin on a clear upward move (or back near the
+      // top) — comparing every frame's tiny delta against a small +/-2px
+      // band let momentum/rubber-band jitter flip the class many times a
+      // second, which made the sticky Buy/Sell bar visibly jump.
       if (y <= 20) {
-        document.body.classList.remove('p2p-scroll-down');
-      } else if (y > _lastY + 2) {
-        document.body.classList.add('p2p-scroll-down');
-      } else if (y < _lastY - 2) {
-        document.body.classList.remove('p2p-scroll-down');
+        if (_isDown) { _isDown = false; document.body.classList.remove('p2p-scroll-down'); }
+      } else if (!_isDown && dy > 6) {
+        _isDown = true; document.body.classList.add('p2p-scroll-down');
+      } else if (_isDown && dy < -6) {
+        _isDown = false; document.body.classList.remove('p2p-scroll-down');
       }
       _lastY = y;
       _ticking = false;
