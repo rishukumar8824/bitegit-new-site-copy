@@ -1129,6 +1129,14 @@
   function autoSlideCarousel() {
     if (document.getElementById('cvx-carousel-done')) return;
 
+    // /markets is a scraped snapshot page whose Tabs components (Watchlist/
+    // Spot/Futures/TradFi, and the horizontal coin-scroll rows) all share
+    // the exact overflow-hidden + flex-row wrapper shape this heuristic
+    // looks for, so it kept grabbing them and auto-sliding functional tab
+    // bars every 3s. None of that page's carousel-shaped elements are
+    // actual promo carousels, so skip this behavior there entirely.
+    if (document.body.classList.contains('markets-page') || /\/markets(\.html)?$/.test(location.pathname)) return;
+
     // Find "Trade with Confidence" section — must NOT be carousel-animated
     const appH2 = [...document.querySelectorAll('h2')].find(h => h.textContent.includes('Trade with Confidence'));
     const appSection = appH2 ? (appH2.closest('section') || appH2.parentElement) : null;
