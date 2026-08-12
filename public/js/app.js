@@ -529,10 +529,10 @@
       authRow.style.cssText = 'display:flex;gap:10px;padding:8px 16px 16px;flex-shrink:0;';
       const loginBtn = document.createElement('a');
       loginBtn.href = '/login'; loginBtn.textContent = 'Log in';
-      loginBtn.style.cssText = 'flex:1;text-align:center;padding:11px 0;border-radius:6px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;letter-spacing:0.01em;';
+      loginBtn.style.cssText = 'flex:1;text-align:center;padding:13px 0;border-radius:999px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;letter-spacing:0.01em;';
       const signupBtn = document.createElement('a');
       signupBtn.href = '/signup'; signupBtn.textContent = 'Sign up';
-      signupBtn.style.cssText = 'flex:1;text-align:center;padding:11px 0;border-radius:6px;background:#F68F15;color:#000;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:0.01em;';
+      signupBtn.style.cssText = 'flex:1;text-align:center;padding:13px 0;border-radius:999px;background:#F68F15;color:#000;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:0.01em;';
       if (!window._cvxLoggedIn) {
         authRow.appendChild(loginBtn);
         authRow.appendChild(signupBtn);
@@ -546,7 +546,11 @@
       NAV.forEach(({ label, href, arrow }) => {
         const row = document.createElement('a');
         row.href = href;
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:17px 20px;color:#eaecef;text-decoration:none;font-size:16px;font-weight:500;border-bottom:1px solid rgba(255,255,255,0.07);';
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:17px 20px;color:#eaecef;text-decoration:none;font-size:16px;font-weight:500;';
+        // Only the language row gets a divider above it, separating it
+        // from the main nav group — matches the reference exactly instead
+        // of a line under every single row.
+        if (label === 'English / USD') row.style.borderTop = '1px solid rgba(255,255,255,0.07)';
         const labelSpan = document.createElement('span');
         labelSpan.textContent = label;
         row.appendChild(labelSpan);
@@ -560,7 +564,7 @@
       const appBtn = document.createElement('a');
       appBtn.href = '#';
       appBtn.textContent = 'APP Download';
-      appBtn.style.cssText = 'display:block;margin:16px;padding:14px 0;text-align:center;border-radius:8px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;flex-shrink:0;';
+      appBtn.style.cssText = 'display:block;margin:16px;padding:14px 0;text-align:center;border-radius:999px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;flex-shrink:0;';
       appBtn.addEventListener('click', () => closePanel());
       panel.appendChild(appBtn);
 
