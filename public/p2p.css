@@ -2213,6 +2213,13 @@ body.p2p-kyc-open { overflow: hidden; }
   box-shadow: none;
   transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
   will-change: transform;
+  /* iOS Safari can leave fixed-position elements showing a stale frame
+     during momentum-scroll of a nested scroller (#p2pCards) — forcing
+     this onto its own GPU compositing layer keeps it repainting in step
+     with the scroll instead of "sticking" until the scroll settles. */
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .p2p-mobile-bottom-nav a {
@@ -5326,7 +5333,7 @@ body.mob-screen-open .p2p-secondary-nav {
   /* Bottom nav — slides away while scrolling down the list, slides back
      in as soon as the user scrolls back up (same trigger as the header) */
   body.p2p-page.p2p-scroll-down[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-mobile-bottom-nav {
-    transform: translateY(100%);
+    transform: translate3d(0, 100%, 0);
   }
   /* No reserved space at the bottom of the list while the nav is hidden
      — cards fill all the way to the edge instead of leaving a black gap
