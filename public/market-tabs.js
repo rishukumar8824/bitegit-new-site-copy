@@ -85,6 +85,24 @@
 (function () {
   var mode = 'spot'; // 'spot' | 'perp'
 
+  // market.html only ships one static list of pairs — there's no separate
+  // futures dataset to swap in. Stablecoins are the one legitimate,
+  // non-fabricated way to make the Futures view actually differ: they
+  // don't trade as perpetuals anywhere, so hiding them for a real (if
+  // partial) "Futures" filter beats either doing nothing or inventing
+  // fake data.
+  var STABLES = ['USDC', 'USDT', 'USD1', 'BUSD', 'DAI', 'TUSD', 'FDUSD', 'USDD', 'USDE', 'PYUSD'];
+
+  function applyRowFilter() {
+    var rows = document.querySelectorAll('table tbody tr');
+    [].forEach.call(rows, function (tr) {
+      var spans = tr.querySelectorAll('td:first-child span.text-sm.font-medium.text-text_primary');
+      var base = spans[0] && spans[0].textContent.trim().toUpperCase();
+      var hide = mode === 'perp' && base && STABLES.indexOf(base) !== -1;
+      tr.style.display = hide ? 'none' : '';
+    });
+  }
+
   function findMainTabBar() {
     // Anchor on the "Watchlist" button text — it's unique on the page —
     // then use its parent as the tab group, so this keeps working even
@@ -102,6 +120,16 @@
       b.classList.toggle('text-text_primary', on);
       b.classList.toggle('text-text_secondary', !on);
     });
+    // The little sliding pill under the tabs is a separate absolutely-
+    // positioned div driven by inline transform/width — toggling the
+    // button classes alone doesn't move it. Keep its own width, just
+    // re-center it under the newly active button.
+    var indicator = group.querySelector('div.absolute.bottom-0');
+    if (indicator) {
+      var w = parseFloat(indicator.style.width) || indicator.offsetWidth;
+      var x = btn.offsetLeft + btn.offsetWidth / 2 - w / 2;
+      indicator.style.transform = 'translateX(' + x + 'px)';
+    }
   }
 
   function wireTabBar() {
@@ -128,6 +156,7 @@
       // Watchlist/TradFi/New: just reflect the active tab visually — no
       // dedicated view exists for them on this scraped page.
       setActiveButton(group, btn);
+      applyRowFilter();
     });
   }
 
@@ -158,6 +187,7 @@
   function boot() {
     wireTabBar();
     wirePairsTable();
+    applyRowFilter();
   }
 
   if (document.readyState === 'loading') {
