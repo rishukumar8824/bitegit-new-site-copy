@@ -108,6 +108,17 @@
     var group = findMainTabBar();
     if (!group || group.dataset.cvxWired) return;
     group.dataset.cvxWired = '1';
+    // The tab row is overflow-x-auto (it scrolls when tabs overflow), and
+    // WebKit/iOS resolves a quick tap inside a scrollable region as
+    // "maybe a scroll" before committing to a click — the delay/ambiguity
+    // can swallow the tap or turn it into a text-selection highlight
+    // instead of a click. touch-action + user-select tell it to treat
+    // taps on these buttons as immediate clicks, not scroll candidates.
+    [].forEach.call(group.querySelectorAll('button'), function (b) {
+      b.style.touchAction = 'manipulation';
+      b.style.webkitUserSelect = 'none';
+      b.style.userSelect = 'none';
+    });
     group.addEventListener('click', function (e) {
       var btn = e.target.closest('button');
       if (!btn) return;
@@ -133,6 +144,7 @@
     var tbody = table && table.querySelector('tbody');
     if (!tbody || tbody.dataset.cvxWired) return;
     tbody.dataset.cvxWired = '1';
+    tbody.style.touchAction = 'manipulation';
     // Delegated listener — survives price updates that only patch text
     // in-place (no row re-creation), and any future full re-renders too.
     tbody.addEventListener('click', function (e) {
