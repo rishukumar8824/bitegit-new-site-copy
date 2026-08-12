@@ -2942,6 +2942,18 @@ function closeMerchantBadgeSheet() {
   var drop = document.getElementById('gtPayDropdown');
   var label = document.getElementById('gtPayLabel');
   var payInput = document.getElementById('paymentFilter');
+  function positionPayDropdown() {
+    // position:fixed dropdown — computed from the trigger's real viewport
+    // rect so it can never get clipped by row2's horizontal scroll or end
+    // up mostly off-screen (it used to open at a fixed left:0 offset that
+    // landed past the right edge on narrow phones).
+    var r = wrap.getBoundingClientRect();
+    var dropWidth = Math.max(drop.offsetWidth || 180, 180);
+    var left = Math.min(r.left, window.innerWidth - dropWidth - 12);
+    left = Math.max(left, 12);
+    drop.style.left = left + 'px';
+    drop.style.top = (r.bottom + 6) + 'px';
+  }
   if (wrap && drop) {
     wrap.addEventListener('click', function(e) {
       var opt = e.target.closest('.gt-pay-opt');
@@ -2955,11 +2967,17 @@ function closeMerchantBadgeSheet() {
         if (applyBtn) applyBtn.click();
         return;
       }
+      var opening = !drop.classList.contains('open');
       drop.classList.toggle('open');
+      if (opening) positionPayDropdown();
     });
     document.addEventListener('click', function(e) {
       if (!wrap.contains(e.target)) drop.classList.remove('open');
     });
+    // It's position:fixed now, so its coords go stale once the list
+    // scrolls under it — just close it rather than tracking scroll.
+    var cardsEl = document.getElementById('p2pCards');
+    if (cardsEl) cardsEl.addEventListener('scroll', function() { drop.classList.remove('open'); }, { passive: true });
   }
   // Filter icon button
   var fi2 = document.getElementById('applyFilters2');
