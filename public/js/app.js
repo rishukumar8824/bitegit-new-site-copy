@@ -459,10 +459,20 @@
 
   // ── 6. HEADER LOGO ────────────────────────────────────────────────────────
   function fixHeaderLogo() {
-    const logoLink = document.querySelector('header a[href="index.html"]');
+    // Home page keeps its own header exactly as-is — this only swaps the
+    // "Bitcovex" text wordmark for the icon on every other page.
+    if (/^\/(index\.html)?$/.test(location.pathname)) return;
+    // The link's actual href is "/", not "index.html" — the old selector
+    // never matched anything, so this never ran anywhere.
+    const logoLink = document.querySelector('header a[href="/"]');
     if (!logoLink) return;
-    // Always ensure only gem SVG shows — no text
+    // Only touch it if it's actually showing the broken text wordmark
+    // (the scraped-page bug this exists to fix) — pages like p2p.html
+    // already render a real <img> logo here and must be left alone, or
+    // this would tear that out and replace it with the gem SVG.
     const hasGem = logoLink.querySelector('svg[data-cvx-gem]');
+    const hasWordmark = logoLink.querySelector('.cvx-wordmark');
+    if (!hasGem && !hasWordmark) return;
     if (!hasGem) {
       logoLink.innerHTML = '';
       const gem = makeGemSVG('26', '30');
@@ -488,7 +498,7 @@
     const btn = document.createElement('button');
     btn.setAttribute('aria-label', 'Menu');
     btn.innerHTML = '<svg width="20" height="16" viewBox="0 0 20 16" fill="currentColor"><rect width="20" height="2.5" rx="1.2"/><rect y="6.75" width="20" height="2.5" rx="1.2"/><rect y="13.5" width="20" height="2.5" rx="1.2"/></svg>';
-    btn.style.cssText = 'background:none;border:none;color:#fff;cursor:pointer;padding:6px 8px;display:flex;align-items:center;margin-left:4px;';
+    btn.style.cssText = 'background:none;border:none;color:#fff;cursor:pointer;padding:6px 8px;display:flex;align-items:center;margin-left:4px;touch-action:manipulation;-webkit-user-select:none;user-select:none;';
 
     btn.addEventListener('click', () => {
       const existing = document.getElementById('cvx-mobile-nav');
