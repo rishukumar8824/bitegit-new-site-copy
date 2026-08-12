@@ -59,7 +59,6 @@
           <a href="#">Express</a>
           <a href="/p2p" class="active">P2P</a>
           <a href="#">FiatClaw</a>
-          <button class="p2p-subnav-inr-pill" type="button" id="p2pInrPill" aria-label="Currency">INR &#9660;</button>
         </div>
         <div class="p2p-subnav-right">
           <div class="p2p-currency-pill" id="p2pCurrencyPill">
@@ -128,12 +127,6 @@
               <button class="gt-side-tab" data-side="sell" type="button">Sell</button>
             </div>
             <div class="gt-controls-right">
-              <button id="refreshOffers" type="button" class="gt-icon-btn" aria-label="Refresh">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              </button>
-              <button id="applyFilters" type="button" class="gt-icon-btn" aria-label="Filter">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-              </button>
               <div class="gt-currency-wrap">
                 <select id="currencyFilter" class="gt-currency-select" aria-label="Fiat currency">
                   <option value="INR" selected>INR</option>
@@ -2979,10 +2972,13 @@ function closeMerchantBadgeSheet() {
     var cardsEl = document.getElementById('p2pCards');
     if (cardsEl) cardsEl.addEventListener('scroll', function() { drop.classList.remove('open'); }, { passive: true });
   }
-  // Filter icon button
+  // Filter icon button (row1's refresh/filter icons were removed — this
+  // is the only trigger left, so it does the reload directly)
   var fi2 = document.getElementById('applyFilters2');
-  var fi1 = document.getElementById('applyFilters');
-  if (fi2 && fi1) fi2.addEventListener('click', function(){ fi1.click(); });
+  if (fi2) fi2.addEventListener('click', function(){
+    if (typeof loadOffers === 'function') loadOffers();
+    if (typeof loadLiveOrders === 'function') loadLiveOrders();
+  });
 })();
 </script>
 </body>
