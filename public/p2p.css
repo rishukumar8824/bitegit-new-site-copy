@@ -4743,11 +4743,12 @@ body.mob-screen-open .p2p-secondary-nav {
 /* Covers the "Bybit P2P" speech bubble in p2p-people.png */
 .bft-bubble-cover {
   position: absolute;
-  top: 24%;
-  left: 18%;
-  width: 68%;
-  height: 22%;
-  background: #0b0b0b;
+  top: 12%;
+  left: 34%;
+  width: 55%;
+  height: 24%;
+  background: #F4A916;
+  border-radius: 22px 22px 22px 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4889,11 +4890,12 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 .bbt-hd-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 7px;
   flex: 1;
   min-width: 0;
 }
+.bbt-avatar-wrap { margin-top: 1px; }
 /* Avatar wrapper for online-dot corner positioning */
 .bbt-avatar-wrap {
   position: relative;
