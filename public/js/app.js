@@ -644,7 +644,7 @@
     heroWrap.style.setProperty('padding-top', '14px', 'important');
 
     // Header: logo → avatar, Sign up → Deposit
-    const logoLink = document.querySelector('header a[href="index.html"]');
+    const logoLink = document.querySelector('header a[href="/"]');
     if (logoLink) {
       logoLink.setAttribute('href', '/p2p-user-center');
       logoLink.innerHTML = '<svg data-cvx-gem="1" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="9.2" r="3.3"/><path d="M5.3 18.8c1.2-3 3.7-4.6 6.7-4.6s5.5 1.6 6.7 4.6"/></svg>';
