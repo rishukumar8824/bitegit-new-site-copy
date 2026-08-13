@@ -38,6 +38,23 @@ function registerPushRoutes(app, deps = {}) {
       return res.status(500).json({ message: 'Failed to remove push token.' });
     }
   });
+
+  // Sends a push to the caller's own registered devices — for verifying the
+  // pipeline end-to-end (device token really registered, FCM really configured,
+  // notification really reaches a locked/backgrounded phone) without needing
+  // a second account or a real order action to trigger one.
+  app.post('/api/p2p/push/test', requiresP2PUser, async (req, res) => {
+    try {
+      await pushService.sendPushToUser(req.p2pUser.id, {
+        title: 'Bitcovex test push',
+        body: 'If you can see this, real push notifications are working.',
+        data: { type: 'test' }
+      });
+      return res.json({ success: true, message: 'Test push sent (if a device token was registered).' });
+    } catch (error) {
+      return res.status(500).json({ message: 'Failed to send test push.' });
+    }
+  });
 }
 
 module.exports = { registerPushRoutes };
