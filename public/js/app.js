@@ -10,13 +10,19 @@
   window._cvxLoggedIn = !!localStorage.getItem('bitcovex_token');
 
   const NAV = [
-    { label: 'Buy Crypto', href: '/markets', arrow: true },
+    { label: 'Buy Crypto', href: '/markets', arrow: true, children: [
+        { label: 'P2P Trading', href: 'p2p.html' },
+        { label: 'Quick Buy',   href: 'credit_card.html' },
+      ] },
     { label: 'Markets',    href: '/markets', arrow: false },
-    { label: 'P2P',        href: 'p2p.html',    arrow: false },
-    { label: 'Trade',      href: 'trade.html',  arrow: true },
-    { label: 'Futures',    href: 'futures_overview.html', arrow: true },
+    { label: 'Trade',      href: 'trade.html',  arrow: true, children: [
+        { label: 'Spot',    href: 'trade.html' },
+        { label: 'Futures', href: 'futures_overview.html' },
+      ] },
     { label: 'TradFi',     href: 'tradfi.html', arrow: true },
-    { label: 'Finance',    href: 'finance.html',arrow: true },
+    { label: 'Finance',    href: 'finance.html',arrow: true, children: [
+        { label: 'Simple Earn', href: 'finance.html' },
+      ] },
     { label: 'Activity',   href: '#',           arrow: true },
     { label: 'Glory of Legends', href: '#',     arrow: false },
     { label: 'English / USD',    href: '#',     arrow: false },
@@ -506,9 +512,9 @@
 
       const panel = document.createElement('div');
       panel.id = 'cvx-mobile-nav';
-      panel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;font-family:-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94);will-change:transform;';
+      panel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;font-family:-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;transform:translateY(-100%);transition:transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94);will-change:transform;';
 
-      const closePanel = () => { panel.style.transform = 'translateX(100%)'; setTimeout(() => panel.remove(), 380); };
+      const closePanel = () => { panel.style.transform = 'translateY(-100%)'; setTimeout(() => panel.remove(), 380); };
       // ── Top bar: logo + X ──
       const topBar = document.createElement('div');
       topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 16px;flex-shrink:0;';
@@ -542,11 +548,11 @@
       // ── Nav list (scrollable) ──
       const navScroll = document.createElement('div');
       navScroll.style.cssText = 'flex:1;overflow-y:auto;';
-      const CHEVRON = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35;flex-shrink:0;"><polyline points="6,4 10,8 6,12"/></svg>`;
-      NAV.forEach(({ label, href, arrow }) => {
-        const row = document.createElement('a');
-        row.href = href;
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:17px 20px;color:#eaecef;text-decoration:none;font-size:16px;font-weight:500;';
+      const CHEVRON = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35;flex-shrink:0;transition:transform 0.2s;"><polyline points="6,4 10,8 6,12"/></svg>`;
+      NAV.forEach(({ label, href, arrow, children }) => {
+        const row = document.createElement(children ? 'button' : 'a');
+        if (children) { row.type = 'button'; } else { row.href = href; }
+        row.style.cssText = 'display:flex;width:100%;align-items:center;justify-content:space-between;padding:17px 20px;color:#eaecef;text-decoration:none;font-size:16px;font-weight:500;background:none;border:none;text-align:left;font-family:inherit;';
         // Only the language row gets a divider above it, separating it
         // from the main nav group — matches the reference exactly instead
         // of a line under every single row.
@@ -554,6 +560,38 @@
         const labelSpan = document.createElement('span');
         labelSpan.textContent = label;
         row.appendChild(labelSpan);
+
+        if (children) {
+          // Down-pointing chevron that rotates open — this row expands an
+          // accordion of sub-items instead of navigating away.
+          const chev = document.createElement('span');
+          chev.innerHTML = CHEVRON;
+          chev.style.cssText = 'display:flex;transform:rotate(90deg);';
+          row.appendChild(chev);
+
+          const sub = document.createElement('div');
+          sub.style.cssText = 'max-height:0;overflow:hidden;transition:max-height 0.25s ease;background:rgba(255,255,255,0.03);';
+          children.forEach(({ label: cLabel, href: cHref }) => {
+            const cRow = document.createElement('a');
+            cRow.href = cHref;
+            cRow.textContent = cLabel;
+            cRow.style.cssText = 'display:block;padding:14px 20px 14px 36px;color:#b7bdc6;text-decoration:none;font-size:15px;font-weight:500;';
+            cRow.addEventListener('click', () => closePanel());
+            sub.appendChild(cRow);
+          });
+
+          let open = false;
+          row.addEventListener('click', () => {
+            open = !open;
+            chev.style.transform = open ? 'rotate(-90deg)' : 'rotate(90deg)';
+            sub.style.maxHeight = open ? sub.scrollHeight + 'px' : '0';
+          });
+
+          navScroll.appendChild(row);
+          navScroll.appendChild(sub);
+          return;
+        }
+
         if (arrow) row.insertAdjacentHTML('beforeend', CHEVRON);
         row.addEventListener('click', () => closePanel());
         navScroll.appendChild(row);
@@ -569,7 +607,7 @@
       panel.appendChild(appBtn);
 
       document.body.appendChild(panel);
-      requestAnimationFrame(() => requestAnimationFrame(() => { panel.style.transform = 'translateX(0)'; }));
+      requestAnimationFrame(() => requestAnimationFrame(() => { panel.style.transform = 'translateY(0)'; }));
     });
 
     rightBox.appendChild(btn);
