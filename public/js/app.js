@@ -512,9 +512,9 @@
 
       const panel = document.createElement('div');
       panel.id = 'cvx-mobile-nav';
-      panel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;font-family:-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;transform:translateY(-100%);transition:transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94);will-change:transform;';
+      panel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;font-family:-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94);will-change:transform;';
 
-      const closePanel = () => { panel.style.transform = 'translateY(-100%)'; setTimeout(() => panel.remove(), 380); };
+      const closePanel = () => { panel.style.transform = 'translateX(100%)'; setTimeout(() => panel.remove(), 380); };
       // ── Top bar: logo + X ──
       const topBar = document.createElement('div');
       topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 16px;flex-shrink:0;';
@@ -607,7 +607,7 @@
       panel.appendChild(appBtn);
 
       document.body.appendChild(panel);
-      requestAnimationFrame(() => requestAnimationFrame(() => { panel.style.transform = 'translateY(0)'; }));
+      requestAnimationFrame(() => requestAnimationFrame(() => { panel.style.transform = 'translateX(0)'; }));
     });
 
     rightBox.appendChild(btn);
