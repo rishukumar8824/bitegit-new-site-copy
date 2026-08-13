@@ -305,6 +305,46 @@ body.p2p-kyc-open { overflow: hidden; }
 .p2p-dl-item:hover { background: rgba(255,255,255,0.04); color: #eaecef; }
 .p2p-dl-active { color: #eaecef !important; font-weight: 700; }
 
+/* Accordion groups (Buy Crypto / Trade / Finance) — matches the home
+   page hamburger menu's structure so both menus stay consistent. */
+.p2p-dl-group-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  color: rgba(255,255,255,0.65);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.7rem 1.1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.p2p-dl-group-btn:hover { background: rgba(255,255,255,0.04); color: #eaecef; }
+.p2p-dl-chevron { opacity: 0.4; transition: transform 0.2s; flex-shrink: 0; }
+.p2p-dl-group.is-open .p2p-dl-chevron { transform: rotate(90deg); }
+.p2p-dl-submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+  background: rgba(255,255,255,0.03);
+}
+.p2p-dl-group.is-open .p2p-dl-submenu { max-height: 200px; }
+.p2p-dl-sub-item {
+  display: block;
+  padding: 0.6rem 1.1rem 0.6rem 2rem;
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.p2p-dl-sub-item:hover { color: #eaecef; }
+
 /* Fallback for old-style links in drawer */
 .p2p-drawer-links a {
   color: rgba(255,255,255,0.65);

@@ -6180,6 +6180,11 @@ p2pNavClose?.addEventListener('click', () => setP2PNavOpen(false));
 p2pNavOverlay?.addEventListener('click', () => setP2PNavOpen(false));
 
 p2pNavDrawer?.addEventListener('click', (event) => {
+  const toggleBtn = event.target.closest('[data-dl-toggle]');
+  if (toggleBtn) {
+    toggleBtn.closest('.p2p-dl-group')?.classList.toggle('is-open');
+    return;
+  }
   const link = event.target.closest('a[href]');
   if (link) {
     setP2PNavOpen(false);

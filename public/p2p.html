@@ -90,13 +90,39 @@
         <button id="p2pNavClose" type="button" aria-label="Close">✕</button>
       </div>
       <nav class="p2p-drawer-links" aria-label="Mobile navigation">
-        <a href="/" class="p2p-dl-item">Buy Crypto</a>
+        <div class="p2p-dl-group">
+          <button type="button" class="p2p-dl-group-btn" data-dl-toggle>
+            <span>Buy Crypto</span>
+            <svg class="p2p-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+          </button>
+          <div class="p2p-dl-submenu">
+            <a href="p2p.html" class="p2p-dl-sub-item p2p-dl-active">P2P Trading</a>
+            <a href="credit_card.html" class="p2p-dl-sub-item">Quick Buy</a>
+          </div>
+        </div>
         <a href="/markets" class="p2p-dl-item">Markets</a>
-        <a href="/trade" class="p2p-dl-item">Trade</a>
-        <a href="/futures" class="p2p-dl-item">Futures</a>
-        <a href="/p2p" class="p2p-dl-item p2p-dl-active">P2P</a>
-        <a href="/" class="p2p-dl-item">Earn</a>
-        <a href="/wallet" class="p2p-dl-item">Assets</a>
+        <div class="p2p-dl-group">
+          <button type="button" class="p2p-dl-group-btn" data-dl-toggle>
+            <span>Trade</span>
+            <svg class="p2p-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+          </button>
+          <div class="p2p-dl-submenu">
+            <a href="trade.html" class="p2p-dl-sub-item">Spot</a>
+            <a href="futures_overview.html" class="p2p-dl-sub-item">Futures</a>
+          </div>
+        </div>
+        <a href="tradfi.html" class="p2p-dl-item">TradFi</a>
+        <div class="p2p-dl-group">
+          <button type="button" class="p2p-dl-group-btn" data-dl-toggle>
+            <span>Finance</span>
+            <svg class="p2p-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+          </button>
+          <div class="p2p-dl-submenu">
+            <a href="finance.html" class="p2p-dl-sub-item">Simple Earn</a>
+          </div>
+        </div>
+        <a href="#" class="p2p-dl-item">Activity</a>
+        <a href="#" class="p2p-dl-item">Glory of Legends</a>
       </nav>
       <div class="p2p-drawer-footer">
         <div class="p2p-drawer-lang">
