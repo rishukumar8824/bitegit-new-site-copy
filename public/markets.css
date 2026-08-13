@@ -168,7 +168,7 @@ body.markets-nav-open { overflow: hidden; }
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.6);
-  z-index: 300;
+  z-index: 99998;
 }
 
 .mk-nav-overlay.hidden { display: none; }
@@ -179,7 +179,9 @@ body.markets-nav-open { overflow: hidden; }
   width: 100%;
   height: 100%;
   background: #000;
-  z-index: 400;
+  /* Must clear .mobile-app-nav (z-index 999) — otherwise the bottom tab
+     bar bleeds through this "full-screen" panel instead of being covered. */
+  z-index: 99999;
   transform: translateX(100%);
   transition: transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   display: flex;
