@@ -26,6 +26,12 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
+  /* Home page dropped P2P from this bar (still reachable via the
+     hamburger menu's Buy Crypto > P2P Trading) — back to 5 even columns. */
+  .mobile-app-nav-5col {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
   .mobile-app-nav a {
     text-decoration: none;
     color: var(--mn-text);
