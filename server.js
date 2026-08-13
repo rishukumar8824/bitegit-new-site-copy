@@ -16,6 +16,8 @@ const { sanitizeRequestPayload, validateRequest, validationRules } = require('./
 const { apiNotFoundHandler, errorHandler } = require('./middleware/error-handler');
 const { registerAuthRoutes } = require('./routes/auth');
 const { registerP2POrderRoutes } = require('./routes/p2p-orders');
+const { registerPushRoutes } = require('./routes/push');
+const { createPushNotificationService } = require('./services/push-notification-service');
 const { createAuditLogService } = require('./services/audit-log-service');
 const { createP2POrderExpiryService } = require('./services/p2p-order-expiry-service');
 const { createAuthEmailService } = require('./services/auth-email-service');
@@ -394,6 +396,7 @@ let p2pOrderExpiryService = null;
 let p2pOrderController = null;
 let authEmailService = null;
 let p2pEmailService = null;
+let pushService = null;
 let otpAuthStore = null;
 let otpAuthService = null;
 let userCenterStore = null;
@@ -3655,6 +3658,13 @@ app.post('/api/p2p/orders/:orderId/mark-paid', requiresP2PUser, async (req, res)
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
+    if (pushService && updatedOrder.sellerUserId) {
+      pushService.sendPushToUser(updatedOrder.sellerUserId, {
+        title: 'Payment sent',
+        body: `Buyer marked payment sent for order #${updatedOrder.reference || updatedOrder.id}. Verify and release.`,
+        data: { type: 'order_update', orderId: updatedOrder.id }
+      }).catch(() => {});
+    }
     // Notify seller to release crypto
     if (p2pEmailService) {
       const sellerParticipant = (updatedOrder.participants || []).find(p => p.role === 'seller');
@@ -3692,6 +3702,13 @@ app.post('/api/p2p/orders/:orderId/release', requiresP2PUser, async (req, res) =
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
+    if (pushService && updatedOrder.buyerUserId) {
+      pushService.sendPushToUser(updatedOrder.buyerUserId, {
+        title: 'Crypto released',
+        body: `${updatedOrder.cryptoAmount || ''} ${updatedOrder.asset || 'USDT'} has been credited to your wallet.`,
+        data: { type: 'order_update', orderId: updatedOrder.id }
+      }).catch(() => {});
+    }
     return res.json({ ok: true, order: normalizedOrder });
   } catch (e) {
     return res.status(400).json({ message: e.message || 'Failed to release order' });
@@ -3713,6 +3730,17 @@ app.post('/api/p2p/orders/:orderId/cancel', requiresP2PUser, async (req, res) =>
     broadcastOrderEvent(updatedOrder.id, 'order_update', { order: normalizedOrder });
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
+    if (pushService) {
+      const actingUserId = String(req.p2pUser.id);
+      const otherUserId = actingUserId === String(updatedOrder.buyerUserId) ? updatedOrder.sellerUserId : updatedOrder.buyerUserId;
+      if (otherUserId) {
+        pushService.sendPushToUser(otherUserId, {
+          title: 'Order cancelled',
+          body: `Order #${updatedOrder.reference || updatedOrder.id} was cancelled.`,
+          data: { type: 'order_update', orderId: updatedOrder.id }
+        }).catch(() => {});
+      }
+    }
     return res.json({ success: true, order: { ...normalizedOrder, messages: normalizedMessages }, messages: normalizedMessages });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Server error.' });
@@ -4667,6 +4695,18 @@ app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) =>
     broadcastOrderEvent(updatedOrder.id, 'message_update', { messages: normalizedMessages });
     broadcastParticipantOrderEvent(updatedOrder, 'orders_refresh', participantPayload);
 
+    if (pushService) {
+      const actingUserId = String(req.p2pUser.id);
+      const otherUserId = actingUserId === String(updatedOrder.buyerUserId) ? updatedOrder.sellerUserId : updatedOrder.buyerUserId;
+      if (otherUserId) {
+        pushService.sendPushToUser(otherUserId, {
+          title: 'Dispute filed',
+          body: `An appeal was filed on order #${updatedOrder.reference || updatedOrder.id}. Support is reviewing.`,
+          data: { type: 'order_update', orderId: updatedOrder.id }
+        }).catch(() => {});
+      }
+    }
+
     // Notify admin via SSE immediately (real-time popup in admin dashboard)
     const raisedByUser = req.p2pUser.username || req.p2pUser.email;
     broadcastAdminSupportEvent({
@@ -4992,6 +5032,19 @@ app.post('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) 
 
     const normalizedMessages = toClientMessages(mutation.order.messages);
     broadcastOrderEvent(mutation.order.id, 'message_update', { messages: normalizedMessages });
+    if (pushService) {
+      const buyerId = mutation.order.buyerId || mutation.order.buyerUserId;
+      const sellerId = mutation.order.sellerId || mutation.order.sellerUserId;
+      const actingUserId = String(req.p2pUser.id);
+      const otherUserId = actingUserId === String(buyerId) ? sellerId : buyerId;
+      if (otherUserId && (text || imageBase64)) {
+        pushService.sendPushToUser(otherUserId, {
+          title: req.p2pUser.username || 'New message',
+          body: text ? text.slice(0, 120) : 'Sent an image',
+          data: { type: 'chat_message', orderId: mutation.order.id }
+        }).catch(() => {});
+      }
+    }
 
     return res.status(201).json({
       message: 'Message sent.',
@@ -6703,6 +6756,12 @@ async function boot() {
     registerP2POrderRoutes(app, {
       requiresP2PUser,
       controller: p2pOrderController
+    });
+
+    pushService = createPushNotificationService({ getCollections });
+    registerPushRoutes(app, {
+      requiresP2PUser,
+      pushService
     });
 
     adminStore = createAdminStore({
