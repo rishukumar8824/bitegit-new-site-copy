@@ -83,10 +83,16 @@ function createPushNotificationService({ getCollections }) {
       for (const [k, v] of Object.entries(data)) {
         stringData[k] = typeof v === 'string' ? v : JSON.stringify(v);
       }
+      // title/body travel as data fields, not as a top-level "notification" payload —
+      // if "notification" is present, Android auto-displays it itself whenever the app
+      // is backgrounded and skips the app's onMessageReceived entirely, which means our
+      // custom large icon / styling never runs for that (very common) case. Data-only
+      // messages always reach onMessageReceived, so the client is fully in control.
+      stringData.title = title;
+      stringData.body = body || '';
 
       const response = await admin.messaging().sendEachForMulticast({
         tokens,
-        notification: { title, body: body || '' },
         data: stringData,
         android: { priority: 'high' }
       });
