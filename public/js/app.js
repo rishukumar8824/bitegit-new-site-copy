@@ -721,20 +721,22 @@
       return v;
     };
 
-    section.querySelectorAll('span').forEach(span => {
-      if (!span.children.length && !span.textContent.trim()) {
-        const p = span.parentElement;
-        if (p && /flex-1/.test(p.className) && /opacity/.test(p.className))
-          span.appendChild(makeVideo('width:100%;height:auto;max-height:580px;object-fit:contain;'));
-      }
+    // Only the first matching slot gets a video — the selectors below can match
+    // several empty spans/divs at once (e.g. duplicated responsive markup), and
+    // appending a video to every one of them fired off several simultaneous
+    // downloads of the same file, which stalled the rest of the page load.
+    const bigSlot = [...section.querySelectorAll('span')].find(span => {
+      if (span.children.length || span.textContent.trim()) return false;
+      const p = span.parentElement;
+      return p && /flex-1/.test(p.className) && /opacity/.test(p.className);
     });
+    if (bigSlot) bigSlot.appendChild(makeVideo('width:100%;height:auto;max-height:580px;object-fit:contain;'));
 
-    section.querySelectorAll('div > div').forEach(d => {
-      if (!d.children.length && !d.textContent.trim()) {
-        if (/absolute/.test(d.className) || /absolute/.test((d.parentElement || {}).className || ''))
-          d.appendChild(makeVideo('width:220px;height:220px;object-fit:contain;'));
-      }
+    const smallSlot = [...section.querySelectorAll('div > div')].find(d => {
+      if (d.children.length || d.textContent.trim()) return false;
+      return /absolute/.test(d.className) || /absolute/.test((d.parentElement || {}).className || '');
     });
+    if (smallSlot) smallSlot.appendChild(makeVideo('width:220px;height:220px;object-fit:contain;'));
   }
 
   // ── 9. PAIRS TABS ─────────────────────────────────────────────────────────
