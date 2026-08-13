@@ -236,7 +236,7 @@ body{padding-bottom:64px}
 /* NAV DRAWER */
 .nav-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:none;opacity:0;transition:opacity .25s}
 .nav-overlay.open{display:block;opacity:1}
-.nav-drawer{position:fixed;top:0;right:0;bottom:0;width:72vw;max-width:280px;background:#0d1117;z-index:601;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.nav-drawer{position:fixed;inset:0;width:100%;background:#000;z-index:601;transform:translateX(100%);transition:transform .38s cubic-bezier(.25,.46,.45,.94);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
 .nav-drawer.open{transform:translateX(0)}
 .nav-drawer-hdr{display:flex;align-items:center;padding:16px 16px 12px;border-bottom:1px solid #1a1f2e}
 .nav-drawer-logo{font-size:18px;font-weight:800;color:#e8eaf0;flex:1}
@@ -245,6 +245,14 @@ body{padding-bottom:64px}
 .nav-link-item{display:flex;align-items:center;gap:14px;padding:14px 20px;color:#e8eaf0;text-decoration:none;font-size:15px;cursor:pointer;border-bottom:1px solid #0d1421}
 .nav-link-item:active{background:#1a1f2e}
 .nav-link-item svg{width:20px;height:20px;fill:currentColor;flex-shrink:0;color:#8fa0bb}
+.nav-dl-group-btn{width:100%;background:none;border:none;font-family:inherit;text-align:left;color:#e8eaf0;font-size:15px;padding:14px 20px;border-bottom:1px solid #0d1421;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.nav-dl-group-btn:active{background:#1a1f2e}
+.nav-dl-chevron{opacity:.4;transition:transform .2s;flex-shrink:0}
+.nav-dl-group.is-open .nav-dl-chevron{transform:rotate(90deg)}
+.nav-dl-submenu{max-height:0;overflow:hidden;transition:max-height .25s ease;background:rgba(255,255,255,.03)}
+.nav-dl-group.is-open .nav-dl-submenu{max-height:200px}
+.nav-dl-sub-item{display:block;padding:12px 20px 12px 40px;color:#8fa0bb;text-decoration:none;font-size:14px;border-bottom:1px solid #0d1421}
+.nav-dl-sub-item:active{background:#1a1f2e}
 .nav-drawer-footer{padding:16px 20px;border-top:1px solid #1a1f2e}
 .nav-footer-btn{display:block;width:100%;padding:12px;background:#f68f15;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;margin-bottom:8px}
 .nav-footer-btn.outline{background:none;border:1px solid #2a3040;color:#e8eaf0}
@@ -260,24 +268,41 @@ body{padding-bottom:64px}
     <button class="nav-drawer-close" onclick="closeNavMenu()">✕</button>
   </div>
   <div class="nav-drawer-body">
-    <a class="nav-link-item" href="/">
-      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home
-    </a>
-    <a class="nav-link-item" href="/markets">
-      <svg viewBox="0 0 24 24"><path d="M3.5 18.5l6-6 4 4 7-7.5"/><path d="M3.5 18.5l6-6 4 4 7-7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Markets
-    </a>
-    <a class="nav-link-item" href="/trade/spot/BTCUSDT">
-      <svg viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>Trade
-    </a>
-    <a class="nav-link-item" href="/p2p">
-      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>P2P
-    </a>
-    <a class="nav-link-item" href="/wallet">
-      <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>Wallet
-    </a>
-    <a class="nav-link-item" href="/settings">
-      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.6-.22l-2.39.96a7.03 7.03 0 00-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Settings
-    </a>
+    <div class="nav-dl-group">
+      <button type="button" class="nav-dl-group-btn" data-dl-toggle>
+        <span>Buy Crypto</span>
+        <svg class="nav-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+      </button>
+      <div class="nav-dl-submenu">
+        <a href="p2p.html" class="nav-dl-sub-item">P2P Trading</a>
+        <a href="credit_card.html" class="nav-dl-sub-item">Quick Buy</a>
+      </div>
+    </div>
+    <a class="nav-link-item" href="/markets">Markets</a>
+    <div class="nav-dl-group">
+      <button type="button" class="nav-dl-group-btn" data-dl-toggle>
+        <span>Trade</span>
+        <svg class="nav-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+      </button>
+      <div class="nav-dl-submenu">
+        <a href="trade.html" class="nav-dl-sub-item">Spot</a>
+        <a href="futures_overview.html" class="nav-dl-sub-item">Futures</a>
+      </div>
+    </div>
+    <a class="nav-link-item" href="tradfi.html">TradFi</a>
+    <div class="nav-dl-group">
+      <button type="button" class="nav-dl-group-btn" data-dl-toggle>
+        <span>Finance</span>
+        <svg class="nav-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+      </button>
+      <div class="nav-dl-submenu">
+        <a href="finance.html" class="nav-dl-sub-item">Simple Earn</a>
+      </div>
+    </div>
+    <a class="nav-link-item" href="#">Activity</a>
+    <a class="nav-link-item" href="#">Glory of Legends</a>
+    <a class="nav-link-item" href="/wallet">Wallet</a>
+    <a class="nav-link-item" href="/settings">Settings</a>
   </div>
   <div class="nav-drawer-footer" id="navDrawerFooter">
     <button class="nav-footer-btn" onclick="location.href='/register'">Sign Up</button>
@@ -981,6 +1006,10 @@ function closeNavMenu(){
   g('navDrawer').classList.remove('open');
   const ov=g('navOverlay');ov.classList.remove('open');setTimeout(()=>{ov.style.display='none';},260);
 }
+g('navDrawer')?.addEventListener('click', (e)=>{
+  const toggleBtn = e.target.closest('[data-dl-toggle]');
+  if (toggleBtn) { toggleBtn.closest('.nav-dl-group')?.classList.toggle('is-open'); }
+});
 async function loadPairs(){
   pairsLoaded=true;
   try{
