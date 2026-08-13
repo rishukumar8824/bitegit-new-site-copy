@@ -127,22 +127,6 @@ const mobileCurrencyBtn = document.getElementById('mobileCurrencyBtn');
 const p2pMobileBottomNav =
   document.querySelector('.p2p-mobile-bottom-nav') ||
   document.querySelector('.mobile-app-nav');
-
-// iOS Safari collapses/expands its own address bar on scroll without
-// resizing the layout viewport in step — a `position:fixed;bottom:0`
-// element then briefly renders a stale/ghost frame at the old bottom
-// edge until the browser's compositor catches up. Pinning the nav to
-// window.visualViewport (which DOES update live) removes that gap.
-if (p2pMobileBottomNav && window.visualViewport) {
-  const repositionMobileNav = () => {
-    const vv = window.visualViewport;
-    const offset = window.innerHeight - (vv.height + vv.offsetTop);
-    p2pMobileBottomNav.style.transform = `translate3d(0, -${Math.max(0, offset)}px, 0)`;
-  };
-  window.visualViewport.addEventListener('resize', repositionMobileNav);
-  window.visualViewport.addEventListener('scroll', repositionMobileNav);
-  repositionMobileNav();
-}
 const p2pBoardCard = document.querySelector('.p2p-board-card');
 const ordersSection = document.getElementById('orders');
 const adsSection = document.getElementById('ads');
