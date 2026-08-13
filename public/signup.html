@@ -143,17 +143,6 @@
     .success-icon { font-size: 52px; margin-bottom: 18px; }
     .success-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
     .success-sub { color: var(--muted); font-size: 15px; line-height: 1.5; }
-
-    /* Candle-wave loading indicator */
-    .candle-loader { display: inline-flex; align-items: flex-end; gap: 3px; height: 16px; vertical-align: middle; }
-    .candle-loader span { width: 3px; height: 6px; background: currentColor; border-radius: 2px; animation: candleWave 0.9s ease-in-out infinite; }
-    .candle-loader span:nth-child(1) { animation-delay: 0s; }
-    .candle-loader span:nth-child(2) { animation-delay: 0.12s; }
-    .candle-loader span:nth-child(3) { animation-delay: 0.24s; }
-    .candle-loader span:nth-child(4) { animation-delay: 0.36s; }
-    .candle-loader span:nth-child(5) { animation-delay: 0.48s; }
-    @keyframes candleWave { 0%, 100% { height: 6px; } 50% { height: 16px; } }
-    .btn-next.loading { cursor: wait; }
   </style>
 </head>
 <body>
@@ -295,17 +284,14 @@
     steps[name].classList.add('active');
   }
 
-  const CANDLE_HTML = '<span class="candle-loader"><span></span><span></span><span></span><span></span><span></span></span>';
   function setBtnLoading(btn, on, label) {
     if (on) {
-      btn.dataset.label = btn.textContent;
-      btn.classList.add('enabled', 'loading');
       btn.disabled = true;
-      btn.innerHTML = CANDLE_HTML + (label ? ' ' + label : '');
+      window.awShowLoading(label || '');
     } else {
-      btn.classList.remove('loading');
       btn.disabled = false;
-      btn.textContent = btn.dataset.label || label || btn.textContent;
+      window.awHideLoading();
+      if (label) btn.textContent = label;
     }
   }
 
@@ -428,7 +414,7 @@
   async function sendOtp() {
     const email = contactInp.value.trim().toLowerCase();
     sendOtpBtn.disabled = true;
-    sendOtpBtn.innerHTML = CANDLE_HTML;
+    window.awShowLoading('Sending code…');
     try {
       const res = await fetch('/api/signup/send-code', {
         method: 'POST',
@@ -436,6 +422,7 @@
         body: JSON.stringify({ contact: email })
       });
       const data = await res.json().catch(() => ({}));
+      window.awHideLoading();
       if (res.ok) {
         showStatus('Verification code sent to your email.', 'success');
         startOtpTimer();
@@ -445,6 +432,7 @@
         sendOtpBtn.textContent = 'Resend';
       }
     } catch {
+      window.awHideLoading();
       showStatus('Network error. Try again.', 'fail');
       sendOtpBtn.disabled = false;
       sendOtpBtn.textContent = 'Resend';
@@ -491,5 +479,6 @@
   document.getElementById('appleBtn').addEventListener('click', () => alert('Apple sign-up coming soon.'));
 })();
 </script>
+<script src="/auth-widgets.js"></script>
 </body>
 </html>
