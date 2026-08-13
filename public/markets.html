@@ -62,13 +62,39 @@
         <a href="/signup" style="flex:1;text-align:center;padding:0.5rem;background:#00b8d4;border-radius:8px;color:#000;font-weight:700;font-size:0.9rem;text-decoration:none;">Sign Up</a>
       </div>
       <nav class="mk-nav-links" aria-label="Mobile navigation">
-        <a href="/">Buy Crypto</a>
+        <div class="mk-dl-group">
+          <button type="button" class="mk-dl-group-btn" data-dl-toggle>
+            <span>Buy Crypto</span>
+            <svg class="mk-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+          </button>
+          <div class="mk-dl-submenu">
+            <a href="p2p.html" class="mk-dl-sub-item">P2P Trading</a>
+            <a href="credit_card.html" class="mk-dl-sub-item">Quick Buy</a>
+          </div>
+        </div>
         <a href="/markets">Markets</a>
-        <a href="/trade">Spot</a>
-        <a href="/trade">Futures</a>
-        <a href="/p2p">P2P</a>
-        <a href="/">Earn</a>
-        <a href="/wallet">Assets</a>
+        <div class="mk-dl-group">
+          <button type="button" class="mk-dl-group-btn" data-dl-toggle>
+            <span>Trade</span>
+            <svg class="mk-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+          </button>
+          <div class="mk-dl-submenu">
+            <a href="trade.html" class="mk-dl-sub-item">Spot</a>
+            <a href="futures_overview.html" class="mk-dl-sub-item">Futures</a>
+          </div>
+        </div>
+        <a href="tradfi.html">TradFi</a>
+        <div class="mk-dl-group">
+          <button type="button" class="mk-dl-group-btn" data-dl-toggle>
+            <span>Finance</span>
+            <svg class="mk-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
+          </button>
+          <div class="mk-dl-submenu">
+            <a href="finance.html" class="mk-dl-sub-item">Simple Earn</a>
+          </div>
+        </div>
+        <a href="#">Activity</a>
+        <a href="#">Glory of Legends</a>
       </nav>
     </aside>
 

@@ -428,6 +428,11 @@ marketsMenuToggle?.addEventListener('click', () => setNavOpen(true));
 marketsNavClose?.addEventListener('click', () => setNavOpen(false));
 marketsNavOverlay?.addEventListener('click', () => setNavOpen(false));
 marketsNavDrawer?.addEventListener('click', e => {
+  const toggleBtn = e.target.closest('[data-dl-toggle]');
+  if (toggleBtn) {
+    toggleBtn.closest('.mk-dl-group')?.classList.toggle('is-open');
+    return;
+  }
   if (e.target.closest('a[href]')) setNavOpen(false);
 });
 
