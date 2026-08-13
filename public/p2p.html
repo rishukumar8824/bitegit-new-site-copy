@@ -42,13 +42,10 @@
           <a href="/p2p" class="active">P2P</a>
           <a href="/">Earn</a>
         </nav>
-        <div class="p2p-header-actions">
+        <div class="p2p-header-actions" data-nav-right-box="true">
           <button id="openAuthBtn" class="p2p-login-btn" type="button" data-auth-guest-only>Log In</button>
           <button id="openSignupBtn" class="p2p-signup-btn" type="button" data-auth-guest-only>Sign Up</button>
           <a id="openAssetsBtn" class="p2p-user-btn hidden" href="/p2p#profile" data-auth-user-only>Assets</a>
-          <button id="p2pMenuToggle" class="p2p-hamburger" type="button" aria-label="Open menu" aria-controls="p2pNavDrawer" aria-expanded="false">
-            <span></span><span></span><span></span>
-          </button>
         </div>
       </div>
     </header>
@@ -79,64 +76,6 @@
         </div>
       </div>
     </nav>
-
-    <!-- Mobile drawer -->
-    <div id="p2pNavOverlay" class="p2p-nav-overlay" aria-hidden="true"></div>
-    <aside id="p2pNavDrawer" class="p2p-nav-drawer" aria-hidden="true">
-      <div class="p2p-drawer-head">
-        <a href="/" style="display:flex;align-items:center;text-decoration:none;">
-          <img src="/images/bitbase-logo.png" alt="Bitcovex" width="30" height="30" style="display:block;object-fit:contain;flex-shrink:0;border-radius:8px;"/>
-        </a>
-        <button id="p2pNavClose" type="button" aria-label="Close">✕</button>
-      </div>
-      <div class="p2p-drawer-actions">
-        <button id="openAuthBtnDrawer" type="button" data-auth-guest-only>Log In</button>
-        <button id="openSignupBtnDrawer" type="button" class="p2p-signup-btn" data-auth-guest-only>Sign Up</button>
-        <a id="drawerAssetsBtn" href="/p2p#profile" class="hidden" data-auth-user-only>Assets</a>
-      </div>
-      <nav class="p2p-drawer-links" aria-label="Mobile navigation">
-        <div class="p2p-dl-group">
-          <button type="button" class="p2p-dl-group-btn" data-dl-toggle>
-            <span>Buy Crypto</span>
-            <svg class="p2p-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
-          </button>
-          <div class="p2p-dl-submenu">
-            <a href="p2p.html" class="p2p-dl-sub-item p2p-dl-active">P2P Trading</a>
-            <a href="credit_card.html" class="p2p-dl-sub-item">Quick Buy</a>
-          </div>
-        </div>
-        <a href="/markets" class="p2p-dl-item">Markets</a>
-        <div class="p2p-dl-group">
-          <button type="button" class="p2p-dl-group-btn" data-dl-toggle>
-            <span>Trade</span>
-            <svg class="p2p-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
-          </button>
-          <div class="p2p-dl-submenu">
-            <a href="trade.html" class="p2p-dl-sub-item">Spot</a>
-            <a href="futures_overview.html" class="p2p-dl-sub-item">Futures</a>
-          </div>
-        </div>
-        <a href="tradfi.html" class="p2p-dl-item">TradFi</a>
-        <div class="p2p-dl-group">
-          <button type="button" class="p2p-dl-group-btn" data-dl-toggle>
-            <span>Finance</span>
-            <svg class="p2p-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
-          </button>
-          <div class="p2p-dl-submenu">
-            <a href="finance.html" class="p2p-dl-sub-item">Simple Earn</a>
-          </div>
-        </div>
-        <a href="#" class="p2p-dl-item">Activity</a>
-        <a href="#" class="p2p-dl-item">Glory of Legends</a>
-      </nav>
-      <div class="p2p-drawer-footer">
-        <div class="p2p-drawer-lang">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M12 2C12 2 8 7 8 12s4 10 4 10" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M12 2c0 0 4 5 4 10s-4 10-4 10" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M2 12h20" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/></svg>
-          <span>English / USD</span>
-        </div>
-      </div>
-      <a href="#" class="p2p-drawer-app-dl">APP Download</a>
-    </aside>
 
     <main class="p2p-main-wrap">
 

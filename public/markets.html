@@ -34,72 +34,16 @@
           <a href="/p2p">P2P</a>
           <a href="/">Earn</a>
         </nav>
-        <div class="mk-actions">
+        <div class="mk-actions" data-nav-right-box="true">
           <a id="marketsLoginBtn" class="mk-login" href="/login">Log In</a>
           <a id="marketsSignupBtn" class="mk-signup" href="/signup">Sign Up</a>
           <a id="marketsUserBtn" href="/wallet" style="display:none;align-items:center;gap:6px;background:#1a2540;border-radius:20px;padding:5px 12px 5px 5px;text-decoration:none;color:#e2e8f0;font-size:13px;font-weight:600;">
             <span id="marketsUserAvatar" style="width:24px;height:24px;border-radius:50%;background:#00b8d4;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;flex-shrink:0;">U</span>
             <span id="marketsUserName" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Account</span>
           </a>
-          <button id="marketsMenuToggle" class="mk-hamburger" type="button" aria-label="Open menu" aria-controls="marketsNavDrawer" aria-expanded="false">
-            <span></span><span></span><span></span>
-          </button>
         </div>
       </div>
     </header>
-
-    <!-- Mobile drawer -->
-    <div id="marketsNavOverlay" class="mk-nav-overlay hidden" aria-hidden="true"></div>
-    <aside id="marketsNavDrawer" class="mk-nav-drawer" aria-hidden="true">
-      <div class="mk-nav-head">
-        <strong style="display:flex;align-items:center;gap:8px;">
-          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAMAAACahl6sAAAAaVBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////2jxWAgIBbNQff398hIB5AQECfn59gYGC/v797SAsQDw7v7+9wcHDPz8+QkJBQUFCvr68wMDCPj4+1aQ9+a1RQMaPeAAAADHRSTlMA3yCZEO9luYBQz0A9u/KtAAAEGklEQVR42u3d247jKBCAYTA+p6rd4MNgO4fuff+HXGluUDQ7gXSIcNXyv8EnMHYcI4SnsqtVIyUkrOob1Z5K8XwOoSQcJqm6n2FOTQVHS3VPD0ZbwSGTdUGb4ZKtCK2WcOhkLUIqGjh8TSG81RUQqPINSqmASEo8quiBTH3xwCGBULLwOAhLnIO2xDlYSHogWF/+4VDgicgqXAPRanFXUQHRquIO0gDZGs/Eojm5JBBOupWrBdK1nlshmarSXSE8hkQC8Srxuw7Id/I8nNC6l5RAv6p8ZmZ9fn/8ve9PSFn3xMz69fG4X5AwFb5m2Q9fBtIlwy+RTw8j8ZCU4sQD0omWB6QWigdEiYYHpBE9D4gUFRcI8IBAhmRIhmRIhmRIhmRIhmRIhmRIhmRIhmRIhmRIhmRIhvyPIYYLBL65QOw3cYjLfD7snymor2Eebwkh/gZ8ov263YhDXHq6EIe41mkkDnHpmTzEUchDHIU4xKUNcYhr4AJBbYhDXBsXCH5xgeBimUBQG+oQJ6EOcRImENwtEwheuUBw4ALBmQtkNUwguHCB4MYFshomEFy4QHDkAlm4QHDkAlm4QHBMBNkwcksiyIixs2kgsGDkhkQQO6WYW89DzNfy9yYDAGBGT5fhumJ45h2Q2xrpMe+yYGjbOyAaH7daCM3o+HNLxFuTtvj3nPUNkDnuL+1xxZBuh4fALUiyHR8CFwxoIgCBM/rbKUCsRm8rAUjY5LIUILCiN0MCMqC3kQTEoLcLAUjQ3JppQK5cIBMXyMAGwuViPzNZfuHKBbIzubNb9AYkIDP1x/jwN3oLCYhBb2cSkAm9XVJAznGukPRvURZ4KqOP+l5rtfBEdkd/1yQQHGI7cE4DWc0T8yrZ23gb85OxbcWQdngDBM6xPuOzs8awtrdAYNDoz7cfxMxfK4Zm4kJc5r8b74n6QYf/V3dbMX5zAggYjbHTkAICt7QDAuKwX3BoSASxSQcExFE/fNCQDHKOOyBMPgXcgQnEMIEMwAOigQdkNUwgM/CADMADcgUekN3m7Xt5Q2VEiHOwgOwWWEAmABaQAVhA9AivJORBIIuFV6oOAlk3eK1eNEeAnC28WCNUesgywsspUSeARGO4WtElgERjuE6iTLjHah0sRKoUQibaY6XPY9Qj0pJc7XraDMRMxT2gcvZultH7dN5G+5ZjBMsK6Fd6jmumdSb4CcjXid9VQDzJ4MRmd4w2g8tdFtwO0RalBMJJNgfNczz6XxQVEK0qxF018YnlUnQfTu4reyBYL/6skCRvhR4JTYeTUHc4CXGHk/RApv7eQXYVVqV4XF0BgapaeCsaOHxNIUKqJRw6WYvQ2gNTqrYU4RW1JM5wdep4iuYkflLZKQmHSaquFD+vPLWq6aukAtmo2ov4FyDASiGoxnN6AAAAAElFTkSuQmCC" alt="" width="28" height="28" style="display:block;object-fit:contain;border-radius:7px;flex-shrink:0;">
-        </strong>
-        <button id="marketsNavClose" type="button" aria-label="Close menu">✕</button>
-      </div>
-      <div id="marketsDrawerAuthBtns" style="padding:8px 16px 16px;">
-        <div style="display:flex;gap:10px;">
-          <a href="/login" style="flex:1;text-align:center;padding:13px 0;border-radius:999px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;">Log in</a>
-          <a href="/signup" style="flex:1;text-align:center;padding:13px 0;border-radius:999px;background:#F68F15;color:#000;text-decoration:none;font-size:15px;font-weight:700;">Sign up</a>
-        </div>
-      </div>
-      <nav class="mk-nav-links" aria-label="Mobile navigation">
-        <div class="mk-dl-group">
-          <button type="button" class="mk-dl-group-btn" data-dl-toggle>
-            <span>Buy Crypto</span>
-            <svg class="mk-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
-          </button>
-          <div class="mk-dl-submenu">
-            <a href="p2p.html" class="mk-dl-sub-item">P2P Trading</a>
-            <a href="credit_card.html" class="mk-dl-sub-item">Quick Buy</a>
-          </div>
-        </div>
-        <a href="/markets">Markets</a>
-        <div class="mk-dl-group">
-          <button type="button" class="mk-dl-group-btn" data-dl-toggle>
-            <span>Trade</span>
-            <svg class="mk-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
-          </button>
-          <div class="mk-dl-submenu">
-            <a href="trade.html" class="mk-dl-sub-item">Spot</a>
-            <a href="futures_overview.html" class="mk-dl-sub-item">Futures</a>
-          </div>
-        </div>
-        <a href="tradfi.html">TradFi</a>
-        <div class="mk-dl-group">
-          <button type="button" class="mk-dl-group-btn" data-dl-toggle>
-            <span>Finance</span>
-            <svg class="mk-dl-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 10,8 6,12"/></svg>
-          </button>
-          <div class="mk-dl-submenu">
-            <a href="finance.html" class="mk-dl-sub-item">Simple Earn</a>
-          </div>
-        </div>
-        <a href="#">Activity</a>
-        <a href="#">Glory of Legends</a>
-      </nav>
-      <a href="#" style="display:block;margin:16px;margin-top:auto;padding:14px 0;text-align:center;border-radius:999px;background:#2b2f36;color:#eaecef;text-decoration:none;font-size:15px;font-weight:600;flex-shrink:0;">APP Download</a>
-    </aside>
 
     <!-- Live ticker bar -->
     <div class="mk-ticker-bar" aria-hidden="true">
