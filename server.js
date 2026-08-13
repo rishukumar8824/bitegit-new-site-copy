@@ -5,6 +5,7 @@ let geoip = null;
 try { geoip = require('geoip-lite'); } catch(e) { /* optional */ }
 const { localFaceMatch } = require('./services/local-face-match');
 const express = require('express');
+const compression = require('compression');
 const path = require('path');
 const { connectToMongo, getCollections, getMongoClient, getMongoConfig, isDbConnected } = require('./lib/db');
 const { createRepositories } = require('./lib/repositories');
@@ -420,6 +421,7 @@ const socialFeedBootstrapService = createSocialFeedService({
 });
 
 const validation = validationRules();
+app.use(compression());
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(sanitizeRequestPayload);
