@@ -2967,10 +2967,9 @@ function closeMerchantBadgeSheet() {
     document.addEventListener('click', function(e) {
       if (!wrap.contains(e.target)) drop.classList.remove('open');
     });
-    // It's position:fixed now, so its coords go stale once the list
+    // It's position:fixed now, so its coords go stale once the page
     // scrolls under it — just close it rather than tracking scroll.
-    var cardsEl = document.getElementById('p2pCards');
-    if (cardsEl) cardsEl.addEventListener('scroll', function() { drop.classList.remove('open'); }, { passive: true });
+    window.addEventListener('scroll', function() { drop.classList.remove('open'); }, { passive: true });
   }
   // Filter icon button (row1's refresh/filter icons were removed — this
   // is the only trigger left, so it does the reload directly)

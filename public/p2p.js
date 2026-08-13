@@ -9702,15 +9702,17 @@ window.deleteMobAd = async function(offerId) {
 })();
 
 // ── Scroll-to-hide header on mobile P2P ──
+// Listens on the window/document, not #p2pCards — the page now scrolls
+// natively (like Bybit) instead of locking body height and scrolling only
+// the inner cards list, so the real scroll position lives on the document.
 (function() {
-  var _pCards = document.getElementById('p2pCards');
-  if (!_pCards) return;
+  if (!document.getElementById('p2pCards')) return;
   var _lastY = 0, _ticking = false, _isDown = false;
-  _pCards.addEventListener('scroll', function() {
+  window.addEventListener('scroll', function() {
     if (_ticking) return;
     _ticking = true;
     requestAnimationFrame(function() {
-      var y = _pCards.scrollTop;
+      var y = window.scrollY || document.documentElement.scrollTop;
       var dy = y - _lastY;
       // Once pinned, only unpin on a clear upward move (or back near the
       // top) — comparing every frame's tiny delta against a small +/-2px

@@ -3459,43 +3459,17 @@ body.mob-screen-open .p2p-secondary-nav {
   /* Tighter main padding + room for bottom nav */
   .p2p-main-wrap { padding: 0; }
 
-  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) {
-    height: 100dvh;
-    overflow: hidden;
-  }
-
-  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-main-wrap {
-    height: calc(100dvh - 52px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-board {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    margin-bottom: 0;
-  }
-
-  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-board-topbar,
-  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .gt-controls,
-  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) .p2p-alert-bar,
-  body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) #loadMoreOffersBtn {
-    flex-shrink: 0;
-  }
-
+  /* The document itself scrolls here (matches Bybit) instead of locking
+     body height and scrolling only the inner #p2pCards list. That old
+     fixed-height + inner-scroll setup never let Safari see a real page
+     scroll, so its own address bar never auto-collapsed the way it does
+     on a normally scrolling page — this restores native page scroll so
+     it does. */
   body.p2p-page[data-mobile-tab="p2p"]:not(.mob-screen-open) #p2pCards {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
     /* Matches the bottom nav's own height (40px + safe-area) instead of
        over-reserving — the old 4.15rem left a visible black strip below
        the last card even once the nav had fully slid away. */
     padding-bottom: calc(40px + env(safe-area-inset-bottom));
-    scroll-padding-bottom: calc(40px + env(safe-area-inset-bottom));
     scrollbar-width: none;
   }
 
