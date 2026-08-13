@@ -485,6 +485,9 @@
         <div style="display:flex;gap:18px;align-items:center;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <button class="mob-screen-menu-btn" aria-label="Menu" style="background:none;border:none;color:#fff;cursor:pointer;padding:0;display:flex;align-items:center;">
+            <svg width="18" height="14" viewBox="0 0 20 16" fill="currentColor"><rect width="20" height="2.5" rx="1.2"/><rect y="6.75" width="20" height="2.5" rx="1.2"/><rect y="13.5" width="20" height="2.5" rx="1.2"/></svg>
+          </button>
         </div>
       </div>
 
@@ -529,7 +532,12 @@
         <button class="mob-back-btn" data-mob-back="p2p" aria-label="Back" style="background:none;border:none;color:#fff;cursor:pointer;padding:4px;display:flex;align-items:center;">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="font-size:14px;color:rgba(255,255,255,0.5);cursor:pointer;">Help &amp; Support</span>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span style="font-size:14px;color:rgba(255,255,255,0.5);cursor:pointer;">Help &amp; Support</span>
+          <button class="mob-screen-menu-btn" aria-label="Menu" style="background:none;border:none;color:#fff;cursor:pointer;padding:4px;display:flex;align-items:center;">
+            <svg width="20" height="16" viewBox="0 0 20 16" fill="currentColor"><rect width="20" height="2.5" rx="1.2"/><rect y="6.75" width="20" height="2.5" rx="1.2"/><rect y="13.5" width="20" height="2.5" rx="1.2"/></svg>
+          </button>
+        </div>
       </div>
 
       <!-- User hero: avatar + name + badges -->
@@ -1100,7 +1108,9 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <h2>Post Ad</h2>
-        <div style="width:32px"></div>
+        <button class="mob-screen-menu-btn" aria-label="Menu" style="background:none;border:none;color:#fff;cursor:pointer;padding:4px;display:flex;align-items:center;width:32px;justify-content:flex-end;">
+          <svg width="18" height="14" viewBox="0 0 20 16" fill="currentColor"><rect width="20" height="2.5" rx="1.2"/><rect y="6.75" width="20" height="2.5" rx="1.2"/><rect y="13.5" width="20" height="2.5" rx="1.2"/></svg>
+        </button>
       </div>
 
       <!-- Tab: Create / My Ads -->
@@ -2944,6 +2954,19 @@ function closeMerchantBadgeSheet() {
   if (fi2) fi2.addEventListener('click', function(){
     if (typeof loadOffers === 'function') loadOffers();
     if (typeof loadLiveOrders === 'function') loadLiveOrders();
+  });
+})();
+</script>
+<script>
+(function () {
+  // Profile/Orders/Ads screens hide the main .p2p-header (and its hamburger)
+  // via CSS — these buttons reuse that same hidden hamburger button/panel
+  // instead of duplicating the site-nav menu logic.
+  document.querySelectorAll('.mob-screen-menu-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var mainMenuBtn = document.querySelector('.p2p-header button[aria-label="Menu"]');
+      if (mainMenuBtn) mainMenuBtn.click();
+    });
   });
 })();
 </script>
