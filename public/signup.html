@@ -143,6 +143,17 @@
     .success-icon { font-size: 52px; margin-bottom: 18px; }
     .success-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
     .success-sub { color: var(--muted); font-size: 15px; line-height: 1.5; }
+
+    /* Candle-wave loading indicator */
+    .candle-loader { display: inline-flex; align-items: flex-end; gap: 3px; height: 16px; vertical-align: middle; }
+    .candle-loader span { width: 3px; height: 6px; background: currentColor; border-radius: 2px; animation: candleWave 0.9s ease-in-out infinite; }
+    .candle-loader span:nth-child(1) { animation-delay: 0s; }
+    .candle-loader span:nth-child(2) { animation-delay: 0.12s; }
+    .candle-loader span:nth-child(3) { animation-delay: 0.24s; }
+    .candle-loader span:nth-child(4) { animation-delay: 0.36s; }
+    .candle-loader span:nth-child(5) { animation-delay: 0.48s; }
+    @keyframes candleWave { 0%, 100% { height: 6px; } 50% { height: 16px; } }
+    .btn-next.loading { cursor: wait; }
   </style>
 </head>
 <body>
@@ -284,6 +295,20 @@
     steps[name].classList.add('active');
   }
 
+  const CANDLE_HTML = '<span class="candle-loader"><span></span><span></span><span></span><span></span><span></span></span>';
+  function setBtnLoading(btn, on, label) {
+    if (on) {
+      btn.dataset.label = btn.textContent;
+      btn.classList.add('enabled', 'loading');
+      btn.disabled = true;
+      btn.innerHTML = CANDLE_HTML + (label ? ' ' + label : '');
+    } else {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.textContent = btn.dataset.label || label || btn.textContent;
+    }
+  }
+
   // ── Step 1: Email ──
   const contactInp = document.getElementById('contactInp');
   const contactErr = document.getElementById('contactErr');
@@ -372,6 +397,11 @@
 
   backToPassword.addEventListener('click', () => goTo('password'));
 
+  function updateOtpBtn() {
+    submitBtn.classList.toggle('enabled', /^\d{6}$/.test(otpInp.value.trim()));
+  }
+  otpInp.addEventListener('input', updateOtpBtn);
+
   let otpTimer = null;
   function startOtpTimer() {
     let left = 60;
@@ -398,6 +428,7 @@
   async function sendOtp() {
     const email = contactInp.value.trim().toLowerCase();
     sendOtpBtn.disabled = true;
+    sendOtpBtn.innerHTML = CANDLE_HTML;
     try {
       const res = await fetch('/api/signup/send-code', {
         method: 'POST',
@@ -430,8 +461,7 @@
     if (!/^\d{6}$/.test(otpCode)) {
       otpErr.classList.add('show'); otpInp.classList.add('invalid'); return;
     }
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Creating account…';
+    setBtnLoading(submitBtn, true, 'Creating account…');
     try {
       const res = await fetch('/api/p2p/register', {
         method: 'POST',
@@ -449,13 +479,11 @@
         setTimeout(() => { window.location.href = '/p2p'; }, 1800);
       } else {
         showStatus(data.message || 'Registration failed. Please try again.', 'fail');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Create Account';
+        setBtnLoading(submitBtn, false, 'Create Account');
       }
     } catch {
       showStatus('Network error. Please try again.', 'fail');
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Create Account';
+      setBtnLoading(submitBtn, false, 'Create Account');
     }
   });
 
