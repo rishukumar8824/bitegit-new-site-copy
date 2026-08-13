@@ -2208,7 +2208,7 @@ body.p2p-kyc-open { overflow: hidden; }
   border-top: 1px solid rgba(255,255,255,0.07);
   display: flex;
   align-items: stretch;
-  min-height: calc(54px + env(safe-area-inset-bottom));
+  min-height: calc(40px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   box-shadow: none;
   transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
@@ -2229,7 +2229,7 @@ body.p2p-kyc-open { overflow: hidden; }
   align-items: center;
   justify-content: flex-end;
   gap: 3px;
-  padding: 1.3rem 0.25rem 0;
+  padding: 0.4rem 0.25rem 0;
   text-decoration: none;
   color: #848E9C;
   font-size: 0;
@@ -3491,11 +3491,11 @@ body.mob-screen-open .p2p-secondary-nav {
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    /* Matches the bottom nav's own height (54px + safe-area) instead of
+    /* Matches the bottom nav's own height (40px + safe-area) instead of
        over-reserving — the old 4.15rem left a visible black strip below
        the last card even once the nav had fully slid away. */
-    padding-bottom: calc(54px + env(safe-area-inset-bottom));
-    scroll-padding-bottom: calc(54px + env(safe-area-inset-bottom));
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(40px + env(safe-area-inset-bottom));
     scrollbar-width: none;
   }
 
