@@ -691,14 +691,14 @@
 
   function animateBalanceTo(el, target) {
     var start = 0;
-    var duration = 700;
+    var duration = 2200;
     var startTime = null;
     function tick(now) {
       if (startTime === null) startTime = now;
       var progress = Math.min(1, (now - startTime) / duration);
-      var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-      var value = start + (target - start) * eased;
-      el.innerHTML = value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+      var eased = 1 - Math.pow(1 - progress, 2); // ease-out quad — slower, smoother
+      var value = Math.round(start + (target - start) * eased);
+      el.innerHTML = value.toLocaleString() +
         '<span style="color:#8a8a8a;font-weight:500;font-size:0.5em;">USDT</span>';
       if (progress < 1) requestAnimationFrame(tick);
     }
