@@ -728,12 +728,35 @@
     const section = h2.closest('section');
     if (!section) return;
 
+    const VIDEO_SRC = '/cdn/imgs/index-web/home/earth_video_v2_mini.mp4';
+    const lazyVideos = [];
     const makeVideo = (styles) => {
       const v = document.createElement('video');
-      v.src = '/cdn/imgs/index-web/home/earth_video_v2_mini.mp4';
-      v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
+      v.preload = 'none';
+      v.muted = true; v.loop = true; v.playsInline = true;
       v.style.cssText = styles;
+      lazyVideos.push(v);
       return v;
+    };
+
+    // Don't download the 2.3MB clip until the section is about to scroll
+    // into view — appending it with a real `src` immediately competed with
+    // the rest of the page's initial requests for bandwidth.
+    const startLazyVideos = () => {
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const v = entry.target;
+            io.unobserve(v);
+            v.src = VIDEO_SRC;
+            v.play().catch(() => {});
+          });
+        }, { rootMargin: '200px' });
+        lazyVideos.forEach((v) => io.observe(v));
+      } else {
+        lazyVideos.forEach((v) => { v.src = VIDEO_SRC; v.play().catch(() => {}); });
+      }
     };
 
     // Only the first matching slot gets a video — the selectors below can match
@@ -752,6 +775,8 @@
       return /absolute/.test(d.className) || /absolute/.test((d.parentElement || {}).className || '');
     });
     if (smallSlot) smallSlot.appendChild(makeVideo('width:220px;height:220px;object-fit:contain;'));
+
+    startLazyVideos();
   }
 
   // ── 9. PAIRS TABS ─────────────────────────────────────────────────────────
