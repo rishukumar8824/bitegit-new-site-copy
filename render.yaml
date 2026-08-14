@@ -2,7 +2,7 @@ services:
   - type: web
     name: bitegit-app
     env: node
-    plan: free
+    plan: starter
     branch: main
     rootDir: .
     buildCommand: npm install
