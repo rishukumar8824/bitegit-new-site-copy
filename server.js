@@ -5560,7 +5560,7 @@ app.get('/api/admin/dashboard/overview', requiresAdminSession, async (req, res) 
     // KYC pending count
     let pendingKyc = 0;
     try {
-      const kycUsers = await adminStore.listUsers({ kyc: 'pending', limit: 1 });
+      const kycUsers = await adminStore.listUsers({ kycStatus: 'PENDING_REVIEW', limit: 1 });
       pendingKyc = kycUsers?.total || 0;
     } catch (_) {}
     return res.json({

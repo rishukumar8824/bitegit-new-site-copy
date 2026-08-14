@@ -845,7 +845,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
 
     const requiresPostFilter = Boolean(userIdQuery || normalizedStatusFilter || kycStatusQuery);
     const baseCursor = p2pCredentials
-      .find(query, { projection: { email: 1, role: 1, updatedAt: 1, createdAt: 1, lastActiveAt: 1 } })
+      .find(query, { projection: { email: 1, role: 1, updatedAt: 1, createdAt: 1, lastActiveAt: 1, kycStatus: 1 } })
       .sort({ updatedAt: -1 });
 
     const credentials = requiresPostFilter
@@ -871,7 +871,13 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
         email: item.email,
         role: String(item.role || 'USER').toUpperCase(),
         status: normalizeUserStatus(profile?.status || 'ACTIVE'),
-        kycStatus: String(profile?.kycStatus || 'PENDING').toUpperCase(),
+        // p2pCredentials.kycStatus is the real source of truth (set by the actual KYC
+        // submit/review flow); adminUserProfiles.kycStatus is a legacy field that only
+        // ever gets touched by a manual admin review and otherwise stays unset — using it
+        // alone made every not-yet-reviewed user look identically "PENDING" regardless of
+        // whether they'd actually submitted documents, so the real PENDING_REVIEW state
+        // never surfaced in this list.
+        kycStatus: String(item.kycStatus || profile?.kycStatus || 'NOT_SUBMITTED').toUpperCase(),
         balance: getAvailableBalance(wallet),
         lockedBalance: toNumber(wallet?.lockedBalance, 0),
         updatedAt: toDate(item.updatedAt || item.createdAt || Date.now()).toISOString(),
@@ -1024,10 +1030,14 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     const normalizedUserId = String(userId || '').trim();
     const profile = await adminUserProfiles.findOne({ userId: normalizedUserId });
     const document = await adminKycDocuments.findOne({ userId: normalizedUserId });
+    // Same real-status fallback as getKycDocuments/listUsers below — adminUserProfiles
+    // only gets a kycStatus once an admin has reviewed, so a fresh submission needs the
+    // actual request record's status or it shows as a generic default forever.
+    const kycRequest = await p2pKycRequests.findOne({ userId: normalizedUserId });
 
     return {
       userId: normalizedUserId,
-      kycStatus: String(profile?.kycStatus || 'PENDING').toUpperCase(),
+      kycStatus: String(profile?.kycStatus || kycRequest?.status || 'NOT_SUBMITTED').toUpperCase(),
       remarks: String(profile?.kycRemarks || ''),
       documents: Array.isArray(document?.documents) ? document.documents : []
     };
