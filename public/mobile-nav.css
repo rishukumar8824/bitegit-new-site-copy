@@ -76,3 +76,15 @@
     color: var(--mn-active);
   }
 }
+
+@media (max-width: 767px) {
+  [data-cvx-nav-links] { display: none !important; }
+  #indexAuthBtns { display: none !important; }
+  [data-nav-right-box] [role="separator"] { display: none !important; }
+  [data-cvx-icon-btn] { display: none !important; }
+  #cvx-desktop-pairs { display: none !important; }
+  [data-cvx-html-more] { display: none !important; }
+}
+/* Hide Bitbase Zendesk chat widget */
+#launcher, [data-slot="zendesk_launcher"], [data-slot="zendesk_launcher_container"] { display: none !important; }
+iframe[title="Button to launch messaging window"] { display: none !important; }
