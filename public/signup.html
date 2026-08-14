@@ -464,7 +464,7 @@
         if (data.user) localStorage.setItem('cvx_user', JSON.stringify(data.user));
         document.getElementById('successEmail').textContent = email;
         goTo('success');
-        setTimeout(() => { window.location.href = '/p2p'; }, 1800);
+        setTimeout(() => { window.location.href = '/'; }, 1800);
       } else {
         showStatus(data.message || 'Registration failed. Please try again.', 'fail');
         setBtnLoading(submitBtn, false, 'Create Account');

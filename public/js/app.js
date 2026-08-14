@@ -689,6 +689,22 @@
     hidePromoBannerIfLoggedIn();
   }
 
+  function animateBalanceTo(el, target) {
+    var start = 0;
+    var duration = 700;
+    var startTime = null;
+    function tick(now) {
+      if (startTime === null) startTime = now;
+      var progress = Math.min(1, (now - startTime) / duration);
+      var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      var value = start + (target - start) * eased;
+      el.innerHTML = value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+        '<span style="color:#8a8a8a;font-weight:500;font-size:0.5em;">USDT</span>';
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
   function loadHomeBalance() {
     fetch('/api/wallet/summary', { credentials: 'include' }).then(function(r) {
       return r.ok ? r.json() : null;
@@ -696,8 +712,7 @@
       var el = document.getElementById('cvxHomeBalanceValue');
       if (!el || !d || !d.summary) return;
       var avail = Number(d.summary.available_balance || 0);
-      el.innerHTML = avail.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
-        '<span style="color:#8a8a8a;font-weight:500;font-size:0.5em;">USDT</span>';
+      animateBalanceTo(el, avail);
     }).catch(function() { /* leave blank on error */ });
   }
 
