@@ -49,6 +49,7 @@ const viewLoaders = {
   blockchain: loadBlockchain,
   compliance: loadCompliance,
   settings: loadSettings,
+  content: loadContent,
   monitoring: loadMonitoring,
   audit: loadAudit,
   adminusers: loadAdminUsers,
@@ -73,6 +74,7 @@ const PAGE_TITLES = {
   blockchain: 'Blockchain',
   compliance: 'Compliance',
   settings: 'Platform Settings',
+  content: 'Site Content',
   monitoring: 'Monitoring',
   audit: 'Audit Logs',
   adminusers: 'Admin Users',
@@ -2231,6 +2233,19 @@ async function loadSettings() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Site Content
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function loadContent() {
+  const payload = await apiRequest('/content/home-hero');
+  const content = payload.content || {};
+  const form = document.getElementById('homeHeroForm');
+  form.desktopImageUrl.value = content.desktopImageUrl || '';
+  form.mobileImageUrl.value = content.mobileImageUrl || '';
+  form.linkUrl.value = content.linkUrl || '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Monitoring
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -3693,6 +3708,25 @@ function wireEventListeners() {
       showMessage('Platform settings saved.', 'success');
     } catch (error) {
       showMessage(error.message || 'Failed to save platform settings.', 'error');
+    }
+  });
+
+  // Site content
+  document.getElementById('homeHeroForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    try {
+      await apiRequest('/content/home-hero', {
+        method: 'PUT',
+        body: JSON.stringify({
+          desktopImageUrl: form.desktopImageUrl.value.trim(),
+          mobileImageUrl: form.mobileImageUrl.value.trim(),
+          linkUrl: form.linkUrl.value.trim()
+        })
+      });
+      showMessage('Content saved.', 'success');
+    } catch (error) {
+      showMessage(error.message || 'Failed to save content.', 'error');
     }
   });
 

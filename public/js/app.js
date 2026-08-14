@@ -672,10 +672,13 @@
     dash.innerHTML = `
       <div style="position:relative;">
         <a href="/wallet" style="display:block;"><img src="/images/brand/loggedin-dashboard.png" alt="Estimated Balance" style="width:100%;height:auto;display:block;"></a>
+        <div style="position:absolute;left:3%;top:33%;width:24%;height:19%;background:#000;"></div>
+        <a href="/wallet" id="cvxHomeBalanceValue" style="position:absolute;left:4%;top:34.5%;display:flex;align-items:baseline;gap:6px;color:#fff;font-weight:700;font-size:min(7vw,32px);text-decoration:none;white-space:nowrap;line-height:1;">&nbsp;</a>
         <a href="/wallet" style="position:absolute;right:4%;top:36.6%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 18px;border-radius:17px;background:#F68F15;color:#000;font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap;">Add Funds</a>
       </div>
     `;
     heroLink.insertAdjacentElement('afterend', dash);
+    loadHomeBalance();
 
     // Nudge the ticker cards down a bit for breathing room under the dash
     const tickerGrid = document.getElementById('heroTickerGrid');
@@ -684,6 +687,18 @@
     // Hide the promo banner (BWTC/affiliate carousel) once logged in and
     // let the Spot/Futures/TradFi pairs list move up to fill the gap.
     hidePromoBannerIfLoggedIn();
+  }
+
+  function loadHomeBalance() {
+    fetch('/api/wallet/summary', { credentials: 'include' }).then(function(r) {
+      return r.ok ? r.json() : null;
+    }).then(function(d) {
+      var el = document.getElementById('cvxHomeBalanceValue');
+      if (!el || !d || !d.summary) return;
+      var avail = Number(d.summary.available_balance || 0);
+      el.innerHTML = avail.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+        '<span style="color:#8a8a8a;font-weight:500;font-size:0.5em;">USDT</span>';
+    }).catch(function() { /* leave blank on error */ });
   }
 
   function hidePromoBannerIfLoggedIn() {
@@ -1801,6 +1816,28 @@
     });
   }
 
+  // ── HOME HERO CONTENT (admin-editable override) ──────────────────────────
+  function applyHomeHeroContent() {
+    var desktopLink = document.getElementById('heroBannerDesktopLink');
+    var desktopImg = document.getElementById('heroBannerDesktopImg');
+    var mobileLink = document.getElementById('heroBannerMobileLink');
+    var mobileImg = document.getElementById('heroBannerMobileImg');
+    if (!desktopImg && !mobileImg) return; // not the home page
+
+    fetch('/api/site-content/home-hero').then(function(r) {
+      return r.ok ? r.json() : null;
+    }).then(function(data) {
+      var content = data && data.content;
+      if (!content) return; // keep hardcoded defaults
+      if (content.desktopImageUrl && desktopImg) desktopImg.src = content.desktopImageUrl;
+      if (content.mobileImageUrl && mobileImg) mobileImg.src = content.mobileImageUrl;
+      if (content.linkUrl) {
+        if (desktopLink) desktopLink.href = content.linkUrl;
+        if (mobileLink) mobileLink.href = content.linkUrl;
+      }
+    }).catch(function() { /* keep hardcoded defaults */ });
+  }
+
   // ── FAQ ACCORDION ─────────────────────────────────────────────────────────
   function wireFAQ() {
     document.querySelectorAll('.faq-item-title').forEach(function(title) {
@@ -1839,7 +1876,7 @@
     fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
     fixAppSection(); hideBrokenElements(); applyLoggedInHomeUI();
     wireTopNav(); wireWordmarks();
-    wireFAQ();
+    wireFAQ(); applyHomeHeroContent();
     // Build pairs section immediately (shows skeleton rows if no cache)
     buildMobileMarket();
     // If cached prices exist, fill in instantly

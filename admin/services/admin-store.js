@@ -346,6 +346,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     adminAuditLogs,
     adminLoginHistory,
     adminPlatformSettings,
+    siteContent,
     adminSupportTickets,
     adminWalletConfig,
     adminHotWallets,
@@ -2071,6 +2072,28 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return next;
   }
 
+  async function getSiteContent(key) {
+    const current = await siteContent.findOne({ key });
+    return current?.value || null;
+  }
+
+  async function setSiteContent(key, value, actorId = 'system') {
+    await siteContent.updateOne(
+      { key },
+      {
+        $set: {
+          key,
+          value,
+          updatedBy: actorId,
+          updatedAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+
+    return value;
+  }
+
   async function listComplianceFlags(params = {}) {
     const { page, limit, skip } = parsePagination(params);
     const rows = await adminComplianceFlags.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray();
@@ -2370,6 +2393,8 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     getRevenueSummary,
     getPlatformSettings,
     updatePlatformSettings,
+    getSiteContent,
+    setSiteContent,
     listComplianceFlags,
     createComplianceFlag,
     exportTransactionsCsv,

@@ -6809,6 +6809,19 @@ async function boot() {
       collections
     });
 
+    app.get('/api/site-content/:key', async (req, res) => {
+      try {
+        const content = await adminStore.getSiteContent(req.params.key);
+        res.set('Cache-Control', 'public, max-age=60');
+        if (!content) {
+          return res.status(404).json({ content: null });
+        }
+        return res.json({ content });
+      } catch (err) {
+        return res.status(500).json({ content: null });
+      }
+    });
+
     const extendedStore = createAdminExtendedStore({ collections });
     registerAdminExtendedRoutes(app, {
       adminStore,

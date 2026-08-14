@@ -34,6 +34,13 @@
       "cwd": "/Users/sumitkmina/Documents/New project"
     },
     {
+      "name": "Bitcovex Site (current)",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3500,
+      "autoPort": true
+    },
+    {
       "name": "Lead Backend",
       "runtimeExecutable": "node",
       "runtimeArgs": ["backend/server.js"],

@@ -367,6 +367,12 @@ function registerAdminRoutes(app, deps) {
   router.put('/settings/platform', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'settings', action: 'update_platform_settings' }, adminControllers.updatePlatformSettings));
 
   // -------------------------
+  // Site Content
+  // -------------------------
+  router.get('/content/:key', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'content', action: 'get_site_content' }, adminControllers.getSiteContent));
+  router.put('/content/:key', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'content', action: 'update_site_content' }, adminControllers.updateSiteContent));
+
+  // -------------------------
   // Compliance
   // -------------------------
   router.get('/compliance/flags', protect(ROLE_GROUPS.COMPLIANCE), withLogging({ module: 'compliance', action: 'list_flags' }, adminControllers.listComplianceFlags));

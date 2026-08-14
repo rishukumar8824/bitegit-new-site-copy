@@ -635,6 +635,25 @@ function createAdminControllers({
     return res.json({ message: 'Platform settings updated.', settings });
   }
 
+  async function getSiteContent(req, res) {
+    const value = await adminStore.getSiteContent(req.params.key);
+    return res.json({ content: value });
+  }
+
+  async function updateSiteContent(req, res) {
+    const value = await adminStore.setSiteContent(req.params.key, req.body || {}, req.adminAuth.adminId);
+
+    await logAudit(req, {
+      module: 'content',
+      action: 'update_site_content',
+      entityType: 'site_content',
+      entityId: req.params.key,
+      meta: req.body || {}
+    });
+
+    return res.json({ message: 'Content updated.', content: value });
+  }
+
   async function listComplianceFlags(req, res) {
     const data = await adminStore.listComplianceFlags(req.query);
     return res.json(data);
@@ -838,6 +857,8 @@ function createAdminControllers({
     revenueSummary,
     getPlatformSettings,
     updatePlatformSettings,
+    getSiteContent,
+    updateSiteContent,
     listComplianceFlags,
     createComplianceFlag,
     exportComplianceTransactions,
