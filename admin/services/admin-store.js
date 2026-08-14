@@ -1068,6 +1068,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     let aadhaarFront = null;
     let aadhaarBack = null;
     let selfie = null;
+    let livenessVideo = null;
 
     if (kycRequest.aadhaarFrontImage) {
       try {
@@ -1093,6 +1094,14 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       }
     }
 
+    if (kycRequest.livenessVideo) {
+      try {
+        livenessVideo = decryptText(kycRequest.livenessVideo);
+      } catch (_err) {
+        livenessVideo = null;
+      }
+    }
+
     const aadhaarMasked = String(kycRequest.aadhaarMasked || '');
     const aadhaarLast4 = aadhaarMasked.length >= 4 ? aadhaarMasked.slice(-4) : aadhaarMasked;
 
@@ -1104,6 +1113,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       aadhaarFront,
       aadhaarBack,
       selfie,
+      livenessVideo,
       aadhaarLast4,
       aadhaarMasked,
       submittedAt: kycRequest.createdAt ? toDate(kycRequest.createdAt).toISOString() : null

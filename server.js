@@ -444,13 +444,26 @@ app.use('/downloads', (req, res, next) => {
   res.set('Expires', '0');
   next();
 });
+const LONG_CACHE_EXTENSIONS = /\.(png|jpe?g|webp|gif|ico|svg|woff2?|ttf|mp4|webm)$/i;
+const MEDIUM_CACHE_EXTENSIONS = /\.(css|js)$/i;
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
   maxAge: 0,
-  setHeaders: function(res) {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+  setHeaders: function(res, filePath) {
+    if (LONG_CACHE_EXTENSIONS.test(filePath)) {
+      // Images/fonts/video rarely change and are the heaviest assets on the
+      // page — was previously no-store, forcing a full re-download of every
+      // asset on every single page view (including repeat visits).
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    } else if (MEDIUM_CACHE_EXTENSIONS.test(filePath)) {
+      // Shorter cache for CSS/JS so bug-fix deploys still reach users soon.
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    } else {
+      // HTML and everything else (unversioned pages that must always be fresh).
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
   }
 }));
 
@@ -2353,6 +2366,7 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
   const aadhaarFrontImage       = parseImageField(req.body?.aadhaarFrontImage);
   const aadhaarBackImage        = parseImageField(req.body?.aadhaarBackImage);
   const selfieWithDocumentImage = parseImageField(req.body?.selfieImage);
+  const livenessVideo           = parseImageField(req.body?.livenessVideo);
   try {
     aadhaarDigits = normalizeAadhaarNumber(req.body?.aadhaarNumber);
   } catch (error) {
@@ -2388,6 +2402,7 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
     const encAadhaarFront = aadhaarFrontImage.dataUrl ? encryptText(aadhaarFrontImage.dataUrl) : '';
     const encAadhaarBack  = aadhaarBackImage.dataUrl  ? encryptText(aadhaarBackImage.dataUrl)  : '';
     const encSelfie       = selfieWithDocumentImage.dataUrl ? encryptText(selfieWithDocumentImage.dataUrl) : '';
+    const encLivenessVideo = livenessVideo.dataUrl ? encryptText(livenessVideo.dataUrl) : '';
 
     const firstName = String(req.body?.firstName || '').trim();
     const lastName  = String(req.body?.lastName  || '').trim();
@@ -2405,6 +2420,7 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
       aadhaarFrontImage: encAadhaarFront,
       aadhaarBackImage: encAadhaarBack,
       selfieWithDocumentImage: encSelfie,
+      livenessVideo: encLivenessVideo,
       rejectionReason,
       faceMatch: {
         provider: faceMatch.provider,
@@ -5182,7 +5198,7 @@ app.get('/api/admin/kyc/live-notify', async (req, res) => {
 app.get('/api/admin/users/:userId/kyc/image/:type', requiresAdminSession, async (req, res) => {
   const userId = String(req.params.userId || '').trim();
   const type = String(req.params.type || '').trim();
-  if (!userId || !['aadhaar', 'aadhaar-back', 'selfie'].includes(type)) {
+  if (!userId || !['aadhaar', 'aadhaar-back', 'selfie', 'video'].includes(type)) {
     return res.status(400).json({ message: 'Invalid request' });
   }
   try {
@@ -5190,6 +5206,7 @@ app.get('/api/admin/users/:userId/kyc/image/:type', requiresAdminSession, async 
     const data = await adminStore.getKycDocuments(userId);
     const raw = type === 'aadhaar' ? data.aadhaarFront
               : type === 'aadhaar-back' ? data.aadhaarBack
+              : type === 'video' ? data.livenessVideo
               : data.selfie;
     if (!raw) return res.status(404).json({ message: 'Image not found' });
     const match = String(raw).match(/^data:([^;]+);base64,(.+)$/s);
@@ -5615,6 +5632,7 @@ app.get('/api/admin/users/:userId/kyc/documents', requiresAdminSession, async (r
       hasAadhaarFront: !!data.aadhaarFront,
       hasAadhaarBack: !!data.aadhaarBack,
       hasSelfie: !!data.selfie,
+      hasVideo: !!data.livenessVideo,
     });
   } catch (e) { return res.status(500).json({ message: 'Failed to get KYC documents', error: e.message }); }
 });

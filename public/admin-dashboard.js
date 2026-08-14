@@ -556,6 +556,7 @@ async function viewKycDocuments(userId) {
   const aadhaarContainer = document.getElementById('kycDocAadhaarContainer');
   const aadhaarBackContainer = document.getElementById('kycDocAadhaarBackContainer');
   const selfieContainer = document.getElementById('kycDocSelfieContainer');
+  const videoContainer = document.getElementById('kycDocVideoContainer');
 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
@@ -615,6 +616,13 @@ async function viewKycDocuments(userId) {
       selfieContainer.innerHTML = noImg('Selfie');
     }
 
+    if (kyc.hasVideo) {
+      const src = `/api/admin/users/${encodeURIComponent(userId)}/kyc/image/video`;
+      videoContainer.innerHTML = `<video src="${src}" controls playsinline style="${imgStyle}" onerror="this.parentElement.innerHTML='<div style=\\'padding:16px;text-align:center;color:var(--red);font-size:12px;\\'>Video failed to load</div>'"></video>`;
+    } else {
+      videoContainer.innerHTML = noImg('liveness video');
+    }
+
     document.getElementById('kycDocActions').innerHTML = `
       <button class="btn-primary" style="flex:1;" data-kyc-doc-action="approve" data-user-id="${escH(userId)}">✓ Approve KYC</button>
       <button class="btn-danger"  style="flex:1;" data-kyc-doc-action="reject"  data-user-id="${escH(userId)}">✕ Reject KYC</button>
@@ -623,6 +631,7 @@ async function viewKycDocuments(userId) {
     aadhaarContainer.innerHTML = `<div style="padding:16px;color:var(--red);font-size:12px;">Error: ${escH(error.message)}</div>`;
     aadhaarBackContainer.innerHTML = '';
     selfieContainer.innerHTML = '';
+    videoContainer.innerHTML = '';
     showMessage(error.message || 'Failed to load KYC documents.', 'error');
   }
 }
