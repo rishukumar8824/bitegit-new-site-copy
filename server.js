@@ -2323,6 +2323,33 @@ app.get('/api/p2p/kyc/status', requiresP2PUser, async (req, res) => {
   }
 });
 
+// Temporary diagnostic — lets the submitting user (no admin needed) confirm what
+// actually landed in their own KYC request record, e.g. whether the liveness
+// video really made it to storage. Safe to remove once the video pipeline is
+// confirmed working end-to-end; returns presence/size only, never raw content.
+app.get('/api/p2p/kyc/debug', requiresP2PUser, async (req, res) => {
+  try {
+    const userId = String(req.p2pUser?.id || '').trim();
+    const request = await repos.getP2PKycRequestByUserId(userId);
+    if (!request) return res.json({ found: false });
+    return res.json({
+      found: true,
+      requestId: request.requestId,
+      status: request.status,
+      createdAt: request.createdAt,
+      hasAadhaarFront: !!request.aadhaarFrontImage,
+      hasAadhaarBack: !!request.aadhaarBackImage,
+      hasSelfie: !!request.selfieWithDocumentImage,
+      hasLivenessVideo: !!request.livenessVideo,
+      livenessVideoEncryptedLength: String(request.livenessVideo || '').length,
+      fullName: request.fullName,
+      dateOfBirth: request.dateOfBirth
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'debug error', error: error.message });
+  }
+});
+
 app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
   const userId = String(req.p2pUser?.id || '').trim();
   const email = String(req.p2pUser?.email || '')
