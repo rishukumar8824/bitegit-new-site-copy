@@ -1000,8 +1000,10 @@
       'justify-content:space-between;padding:10px 40px 10px 16px;gap:12px;';
     banner.innerHTML =
       '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
-        '<img src="/cdn/brand/logo.png" alt="" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;' +
-          'object-fit:cover;border:0.5px solid rgba(255,255,255,0.6);" />' +
+        '<div style="width:36px;height:36px;border-radius:9px;flex-shrink:0;overflow:hidden;' +
+          'border:1px solid rgba(255,255,255,0.6);box-sizing:border-box;">' +
+          '<img src="/cdn/brand/logo.png" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" />' +
+        '</div>' +
         '<div style="min-width:0;">' +
           '<div style="color:#fff;font-weight:700;font-size:14px;">Bitcovex App</div>' +
           '<div style="color:#9a9a9a;font-size:12px;">Trade Anywhere, Anytime</div>' +
