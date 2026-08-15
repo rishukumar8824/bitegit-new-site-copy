@@ -442,6 +442,12 @@ app.use('/downloads', (req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
+  // In-app browsers (WhatsApp/Telegram/Instagram share links) can't always
+  // resolve a filename from the URL alone and fall back to a generic
+  // ".bin" name without this — forces the real filename+extension everywhere.
+  if (/\.apk$/i.test(req.path)) {
+    res.set('Content-Disposition', `attachment; filename="${path.basename(req.path)}"`);
+  }
   next();
 });
 const LONG_CACHE_EXTENSIONS = /\.(png|jpe?g|webp|gif|ico|svg|woff2?|ttf|mp4|webm)$/i;
