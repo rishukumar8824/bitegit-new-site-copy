@@ -693,25 +693,32 @@
     var chars = target.toLocaleString().split('');
     el.innerHTML = '';
     var numWrap = document.createElement('span');
+    numWrap.style.cssText = 'display:inline-flex;';
     el.appendChild(numWrap);
     var suffix = document.createElement('span');
     suffix.style.cssText = 'color:#8a8a8a;font-weight:500;font-size:0.5em;';
     suffix.textContent = 'USDT';
     el.appendChild(suffix);
-    var i = 0;
-    function revealNext() {
-      if (i >= chars.length) return;
-      var span = document.createElement('span');
-      span.textContent = chars[i];
-      span.style.cssText = 'opacity:0;transition:opacity .18s ease;';
-      numWrap.appendChild(span);
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() { span.style.opacity = '1'; });
-      });
-      i++;
-      setTimeout(revealNext, 140);
-    }
-    revealNext();
+    chars.forEach(function(ch, idx) {
+      // Each digit slides up into place from below its own final slot —
+      // never renders a placeholder "0" first, just the real character.
+      var mask = document.createElement('span');
+      mask.style.cssText = 'display:inline-block;overflow:hidden;height:1.15em;line-height:1.15em;vertical-align:bottom;';
+      var inner = document.createElement('span');
+      inner.textContent = ch;
+      inner.style.cssText = 'display:inline-block;transform:translateY(100%);opacity:0;' +
+        'transition:transform .7s cubic-bezier(.22,1,.36,1), opacity .7s ease;';
+      mask.appendChild(inner);
+      numWrap.appendChild(mask);
+      setTimeout(function() {
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            inner.style.transform = 'translateY(0)';
+            inner.style.opacity = '1';
+          });
+        });
+      }, idx * 260);
+    });
   }
 
   function loadHomeBalance() {
