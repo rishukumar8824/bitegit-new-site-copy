@@ -1406,9 +1406,14 @@
         .catch(function() { return _fakeRes({ status: 'error', message: 'Network error' }); });
     }
 
-    // ── Transfer / Convert (not fully supported — show balance update) ──
-    if (path === '/wallet/transfer' || path === '/wallet/convert') {
-      return _fakeRes({ status: 'success', message: 'Done' });
+    // ── Transfer (Spot ↔ Funding) ──
+    if (path === '/wallet/transfer') {
+      return fetch('/api/wallet/transfer', opts);
+    }
+
+    // ── Convert (instant coin swap) ──
+    if (path === '/wallet/convert') {
+      return fetch('/api/wallet/convert', opts);
     }
 
     // Fallback
@@ -1722,7 +1727,23 @@
     document.getElementById('tfMaxBal').textContent = '0.0000 ' + coin;
   }
 
-  function tfSetAll() { document.getElementById('tfQtyInput').value = '0'; }
+  var tfDirection = 'spot_to_funding';
+
+  function tfCurrentMaxBal() {
+    return tfDirection === 'spot_to_funding' ? (spotBalance || 0) : (fundingBalance || 0);
+  }
+
+  function tfRefreshBalDisplay() {
+    var max = tfCurrentMaxBal();
+    var fromBalEl = document.getElementById('tfFromBal');
+    var maxBalEl = document.getElementById('tfMaxBal');
+    if (fromBalEl) fromBalEl.textContent = max.toFixed(4) + ' USDT';
+    if (maxBalEl) maxBalEl.textContent = max.toFixed(4) + ' USDT';
+  }
+
+  function tfSetAll() {
+    document.getElementById('tfQtyInput').value = tfCurrentMaxBal().toFixed(4).replace(/\.?0+$/, '');
+  }
 
   function swapAccounts() {
     var fromEl = document.getElementById('tfFromLabel');
@@ -1730,16 +1751,20 @@
     var tmp = fromEl.textContent;
     fromEl.textContent = toEl.textContent;
     toEl.textContent = tmp;
+    tfDirection = tfDirection === 'spot_to_funding' ? 'funding_to_spot' : 'spot_to_funding';
+    tfRefreshBalDisplay();
   }
 
   function doTransferNow() {
+    var coin = (document.getElementById('tfCoinName') || {}).textContent || 'USDT';
+    if (coin !== 'USDT') { showToast('Only USDT transfers are supported right now.'); return; }
     var qty = parseFloat(document.getElementById('tfQtyInput').value);
     if(!qty || qty <= 0) { showToast('Please enter transfer quantity'); return; }
     var btn = document.querySelector('#screenTransfer .w-btn-full') || document.querySelector('#screenTransfer button[onclick="doTransferNow()"]');
     if(btn) { btn.disabled = true; btn.textContent = 'Transferring...'; }
     bcvFetch('/wallet/transfer', {
       method: 'POST',
-      body: JSON.stringify({ amount: qty, currency: 'USDT', wallet_type: 'spot', to_wallet_type: 'funding' })
+      body: JSON.stringify({ amount: qty, direction: tfDirection })
     })
     .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
     .then(function(res){
@@ -2317,6 +2342,12 @@
       var bal = parseFloat((document.getElementById('ovBal_USDT') || {}).textContent) || 0;
       document.getElementById('cvFromBal').textContent = bal.toFixed(2);
       cvRefreshUI();
+    }
+    if(id === 'screenTransfer') {
+      tfDirection = 'spot_to_funding';
+      document.getElementById('tfFromLabel').textContent = 'Spot Account';
+      document.getElementById('tfToLabel').textContent = 'Funding Account';
+      tfRefreshBalDisplay();
     }
   };
 

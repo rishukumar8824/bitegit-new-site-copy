@@ -2642,6 +2642,136 @@ app.get('/api/wallet/summary', requiresP2PUser, async (req, res) => {
   }
 });
 
+// Spot ↔ Funding internal transfer. "Funding" is the same locked balance the
+// P2P security-deposit feature uses (lockFunds/unlockFunds) — no separate
+// funding ledger exists, so this just moves money between available/locked.
+app.post('/api/wallet/transfer', requiresP2PUser, async (req, res) => {
+  try {
+    const amount = Number(req.body?.amount);
+    const direction = String(req.body?.direction || '').trim();
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Enter a valid amount.' });
+    }
+    if (!['spot_to_funding', 'funding_to_spot'].includes(direction)) {
+      return res.status(400).json({ success: false, message: 'Invalid transfer direction.' });
+    }
+    const userId = req.p2pUser.id;
+    const reference = {
+      type: 'wallet_transfer',
+      currency: 'USDT',
+      username: req.p2pUser.username,
+      metadata: { direction }
+    };
+    const wallet =
+      direction === 'spot_to_funding'
+        ? await walletService.lockFunds(userId, amount, reference)
+        : await walletService.unlockFunds(userId, amount, reference);
+    return res.json({ success: true, message: 'Transfer successful.', wallet });
+  } catch (error) {
+    const knownStatus = Number(error?.status || 0);
+    if (knownStatus >= 400 && knownStatus < 500) {
+      return res.status(knownStatus).json({ success: false, message: String(error.message || 'Transfer failed.') });
+    }
+    console.error('[wallet-transfer]', error);
+    return res.status(500).json({ success: false, message: 'Server error while processing transfer.' });
+  }
+});
+
+const WALLET_CONVERT_COINS = new Set(['USDT', 'BTC', 'ETH', 'BNB', 'XRP']);
+
+async function getConvertUsdtPrice(coinSymbol) {
+  if (coinSymbol === 'USDT') return 1;
+  try {
+    const tickerRes = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${coinSymbol}USDT`);
+    const tickerRaw = await tickerRes.json();
+    if (tickerRes.ok && tickerRaw && Number(tickerRaw.lastPrice) > 0) {
+      return Number(tickerRaw.lastPrice);
+    }
+  } catch (_) {}
+  const fallback = createFallbackTickerSnapshot([`${coinSymbol}USDT`])[0];
+  return Number(fallback?.lastPrice || 0);
+}
+
+// Instant coin swap within the spot wallet, priced off the same live Binance
+// reference used by /api/trade/orders. Only USDT + the 5 coins the Convert
+// screen's coin picker supports are allowed (CV_COINS in wallet.html).
+app.post('/api/wallet/convert', requiresP2PUser, async (req, res) => {
+  try {
+    const from = String(req.body?.from_currency || '').trim().toUpperCase();
+    const to = String(req.body?.to_currency || '').trim().toUpperCase();
+    const amount = Number(req.body?.amount);
+
+    if (!WALLET_CONVERT_COINS.has(from) || !WALLET_CONVERT_COINS.has(to) || from === to) {
+      return res.status(400).json({ success: false, message: 'Invalid conversion pair.' });
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Enter a valid amount.' });
+    }
+
+    const userId = req.p2pUser.id;
+    const { wallets } = getCollections();
+    const wallet = await wallets.findOne({ userId });
+    const fromBal =
+      from === 'USDT'
+        ? Number(wallet?.availableBalance ?? wallet?.balance ?? 0)
+        : Number(wallet?.spotHoldings?.[from] ?? 0);
+    if (fromBal < amount) {
+      return res.status(400).json({ success: false, message: `Insufficient ${from} balance. Available: ${fromBal.toFixed(8)} ${from}.` });
+    }
+
+    const [fromPrice, toPrice] = await Promise.all([getConvertUsdtPrice(from), getConvertUsdtPrice(to)]);
+    if (!fromPrice || !toPrice) {
+      return res.status(503).json({ success: false, message: 'Unable to get market price right now.' });
+    }
+    const usdtValue = amount * fromPrice;
+    const toQty = Number((usdtValue / toPrice).toFixed(8));
+
+    const inc = {};
+    if (from === 'USDT') {
+      inc.availableBalance = -amount;
+      inc.balance = -amount;
+    } else {
+      inc[`spotHoldings.${from}`] = -amount;
+    }
+    if (to === 'USDT') {
+      inc.availableBalance = (inc.availableBalance || 0) + toQty;
+      inc.balance = (inc.balance || 0) + toQty;
+    } else {
+      inc[`spotHoldings.${to}`] = toQty;
+    }
+
+    const filter = { userId };
+    if (from === 'USDT') {
+      filter.$or = [{ availableBalance: { $gte: amount } }, { balance: { $gte: amount } }];
+    } else {
+      filter[`spotHoldings.${from}`] = { $gte: amount };
+    }
+
+    const now = Date.now();
+    const updated = await wallets.findOneAndUpdate(
+      filter,
+      { $inc: inc, $set: { updatedAt: now } },
+      { returnDocument: 'after' }
+    );
+    if (!updated?.value && !updated) {
+      return res.status(400).json({ success: false, message: `Insufficient ${from} balance or concurrent update. Please try again.` });
+    }
+
+    return res.json({
+      success: true,
+      message: `Converted ${amount} ${from} to ${toQty} ${to}.`,
+      from,
+      to,
+      amount,
+      received: toQty,
+      rate: fromPrice / toPrice
+    });
+  } catch (error) {
+    console.error('[wallet-convert]', error);
+    return res.status(500).json({ success: false, message: 'Server error while processing conversion.' });
+  }
+});
+
 app.get('/api/deposits/active', requiresP2PUser, async (req, res) => {
   if (!adminStore || typeof adminStore.getPendingDepositByUser !== 'function') {
     return res.status(503).json({ message: 'Deposit service is not available right now.' });
