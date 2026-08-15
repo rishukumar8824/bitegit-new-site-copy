@@ -690,22 +690,28 @@
   }
 
   function animateBalanceTo(el, target) {
-    var start = 0;
-    var duration = 3800;
-    var startTime = null;
-    function tick(now) {
-      if (startTime === null) startTime = now;
-      var progress = Math.min(1, (now - startTime) / duration);
-      // ease-in-out cubic — no fast burst at the start, no jerky finish either
-      var eased = progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-      var value = Math.round(start + (target - start) * eased);
-      el.innerHTML = value.toLocaleString() +
-        '<span style="color:#8a8a8a;font-weight:500;font-size:0.5em;">USDT</span>';
-      if (progress < 1) requestAnimationFrame(tick);
+    var chars = target.toLocaleString().split('');
+    el.innerHTML = '';
+    var numWrap = document.createElement('span');
+    el.appendChild(numWrap);
+    var suffix = document.createElement('span');
+    suffix.style.cssText = 'color:#8a8a8a;font-weight:500;font-size:0.5em;';
+    suffix.textContent = 'USDT';
+    el.appendChild(suffix);
+    var i = 0;
+    function revealNext() {
+      if (i >= chars.length) return;
+      var span = document.createElement('span');
+      span.textContent = chars[i];
+      span.style.cssText = 'opacity:0;transition:opacity .18s ease;';
+      numWrap.appendChild(span);
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { span.style.opacity = '1'; });
+      });
+      i++;
+      setTimeout(revealNext, 140);
     }
-    requestAnimationFrame(tick);
+    revealNext();
   }
 
   function loadHomeBalance() {
