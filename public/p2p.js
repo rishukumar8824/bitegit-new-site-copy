@@ -8017,6 +8017,39 @@ window.deleteMobAd = async function(offerId) {
 // ===== MOB-SCREEN NAV (profile / orders screens) =====
 (function initMobScreenNav() {
   var profileFlowScreens = new Set(['mobProfileScreen', 'mobProfileEditScreen', 'mobPaymentMethodsScreen', 'mobPaymentMethodTypesScreen', 'mobPaymentMethodFormScreen', 'mobTradingDataScreen', 'mobSupportScreen', 'mobSupportChatScreen', 'mob2FAScreen']);
+
+  // iOS Safari rubber-bands the whole page (revealing whatever sits behind
+  // the fixed-position screen) unless the body itself is pinned in place —
+  // overflow:hidden alone doesn't stop it. Capture scroll position and lock
+  // via position:fixed while a top-level screen (Orders/Profile/Ads) is open.
+  var _mobLockScrollY = 0;
+  var _mobBodyLocked = false;
+  function lockBodyScroll() {
+    if (_mobBodyLocked) return;
+    _mobLockScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.position = 'fixed';
+    document.body.style.top = (-_mobLockScrollY) + 'px';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+    _mobBodyLocked = true;
+  }
+  function unlockBodyScroll() {
+    if (!_mobBodyLocked) return;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    window.scrollTo(0, _mobLockScrollY);
+    _mobBodyLocked = false;
+  }
+
+  // Whether the currently-open top-level screen was reached via a hash
+  // deep-link on page load (e.g. Home's avatar → /p2p#profile) rather than
+  // an in-page tab tap — so Back can return to the real previous page.
+  var _mobOpenedViaDeepLink = false;
+
   function showMobScreen(screenId) {
     var all = document.querySelectorAll('.mob-screen');
     all.forEach(function(s){ s.style.display = 'none'; s.classList.remove('mob-screen-visible'); });
@@ -8042,6 +8075,7 @@ window.deleteMobAd = async function(offerId) {
 
     if (profileFlowScreens.has(screenId) || screenId === 'mobOrdersScreen' || screenId === 'mobPostAdScreen') {
       document.body.classList.add('mob-screen-open');
+      lockBodyScroll();
       if (profileFlowScreens.has(screenId)) {
         document.body.dataset.mobileTab = 'profile';
         setMobileNavActive('profile');
@@ -8073,6 +8107,7 @@ window.deleteMobAd = async function(offerId) {
     var all = document.querySelectorAll('.mob-screen');
     all.forEach(function(s){ s.style.display = 'none'; s.classList.remove('mob-screen-visible'); });
     document.body.classList.remove('mob-screen-open', 'mob-profile-open', 'sp-screen-open');
+    unlockBodyScroll();
     document.body.dataset.mobileTab = 'p2p';
     setMobileNavActive('p2p');
     ['kycBasicScreen','kycAdvanceScreen'].forEach(function(id){
@@ -8085,12 +8120,17 @@ window.deleteMobAd = async function(offerId) {
   // Restore screen on refresh from hash
   (function restoreFromHash() {
     var hash = window.location.hash.replace('#','');
-    if (hash === 'profile') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); loadMerchantBadge && loadMerchantBadge(); refreshCurrentUserKyc && refreshCurrentUserKyc(); }, 300); }
+    // A hash present on first load means we arrived via a deep link (e.g.
+    // Home's avatar → /p2p#profile) rather than an in-page tab tap — Back
+    // should leave the page entirely, not just drop to the p2p tab.
+    var cameFromDeepLink = !!hash && document.referrer &&
+      (function(){ try { return new URL(document.referrer).origin === location.origin && new URL(document.referrer).pathname !== location.pathname; } catch(e){ return false; } })();
+    if (hash === 'profile') { _mobOpenedViaDeepLink = cameFromDeepLink; showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); loadMerchantBadge && loadMerchantBadge(); refreshCurrentUserKyc && refreshCurrentUserKyc(); }, 300); }
     else if (hash === 'profile-payment') { openPaymentMethodsScreen(); }
     else if (hash === 'profile-payment-add') { openPaymentMethodPickerScreen(); }
-    else if (hash === 'orders') { showMobScreen('mobOrdersScreen'); }
+    else if (hash === 'orders') { _mobOpenedViaDeepLink = cameFromDeepLink; showMobScreen('mobOrdersScreen'); }
     else if (hash === 'buy') { setTimeout(function(){ var t = document.querySelector('.gt-side-tab[data-side="buy"],.side-tab[data-side="buy"]'); if(t) t.click(); }, 200); }
-    else if (hash === 'deposit') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); }, 300); }
+    else if (hash === 'deposit') { _mobOpenedViaDeepLink = cameFromDeepLink; showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); }, 300); }
     else if (hash === 'withdraw') { setTimeout(function(){ if(typeof openWithdrawModal==='function') openWithdrawModal(); }, 400); }
     else if (hash === 'support') { setTimeout(function(){ showMobScreen('mobSupportScreen'); }, 200); }
     else if (hash === 'transfer') { setTimeout(function(){ var t = document.querySelector('.gt-side-tab[data-side="buy"],.side-tab[data-side="buy"]'); if(t) t.click(); }, 200); }
@@ -8105,15 +8145,28 @@ window.deleteMobAd = async function(offerId) {
       var mob = tab.getAttribute('data-mob');
       document.querySelectorAll('.mob-tab').forEach(function(t){ t.classList.remove('active'); });
       tab.classList.add('active');
+      // An explicit in-page tab tap overrides any deep-link Back target.
+      _mobOpenedViaDeepLink = false;
       if (mob === 'profile') { showMobScreen('mobProfileScreen'); setTimeout(function(){ loadProfilePanel && loadProfilePanel(); refreshCurrentUserKyc && refreshCurrentUserKyc(); }, 200); }
       else if (mob === 'orders') showMobScreen('mobOrdersScreen');
       else if (mob === 'post') { handlePostAdTabClick(); }
       else hideMobScreens();
       return;
     }
-    // Back to main
+    // Back to main — return to wherever the user actually came from: the
+    // real previous page if this screen was opened via a deep link, or
+    // just the p2p tab if it was opened from within this page.
     var back = e.target.closest('[data-mob-back]');
-    if (back) { e.preventDefault(); hideMobScreens(); return; }
+    if (back) {
+      e.preventDefault();
+      if (_mobOpenedViaDeepLink) {
+        _mobOpenedViaDeepLink = false;
+        history.back();
+      } else {
+        hideMobScreens();
+      }
+      return;
+    }
     // Open Payment Methods from profile menu
     var pmRow = e.target.closest('[data-open-payment]');
     if (pmRow) {

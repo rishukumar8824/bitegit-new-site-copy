@@ -2318,8 +2318,8 @@ body.p2p-kyc-open { overflow: hidden; }
 }
 
 .p2p-mobile-bottom-nav .nav-label {
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 750;
   font-family: 'Manrope', sans-serif;
 }
 
@@ -2415,20 +2415,24 @@ body.mob-screen-open {
 #mobOrdersScreen,
 #mobProfileScreen,
 #mobPostAdScreen {
-  inset: 0 0 calc(76px + env(safe-area-inset-bottom)) 0;
+  /* No bottom nav inside these screens anymore — fill the full viewport,
+     no reserved strip left for it to hide behind (that gap was letting
+     the page underneath show through on scroll). */
+  inset: 0;
   height: auto !important;
-  padding-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Bottom nav + hamburger menu are hidden while inside Orders/Profile/Ads —
+   only the screen's own back arrow navigates out. */
 body.mob-screen-open .p2p-mobile-bottom-nav,
 body[data-mobile-tab="orders"] .p2p-mobile-bottom-nav,
 body[data-mobile-tab="profile"] .p2p-mobile-bottom-nav,
-body[data-mobile-tab="ads"] .p2p-mobile-bottom-nav {
-  display: flex !important;
+body[data-mobile-tab="post"] .p2p-mobile-bottom-nav {
+  display: none !important;
 }
 
-/* Hide bottom nav on support screens */
-body.sp-screen-open .p2p-mobile-bottom-nav {
+.mob-screen-menu-btn {
   display: none !important;
 }
 
