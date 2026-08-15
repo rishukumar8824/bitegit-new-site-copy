@@ -977,7 +977,7 @@
 
   // ── 12b. TOP APP-DOWNLOAD BANNER ────────────────────────────────────────────
   function injectAppDownloadBanner() {
-    if (sessionStorage.getItem('cvx_app_banner_dismissed')) return;
+    if (localStorage.getItem('cvx_app_banner_dismissed')) return;
     if (document.getElementById('cvx-app-banner')) return;
     const header = document.querySelector('header');
     if (!header) return;
@@ -995,23 +995,22 @@
 
     const banner = document.createElement('div');
     banner.id = 'cvx-app-banner';
-    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:1000;background:#0b0b0b;' +
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:1000;background:#000;' +
       'border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;' +
-      'justify-content:space-between;padding:10px 16px;gap:12px;';
+      'justify-content:space-between;padding:10px 40px 10px 16px;gap:12px;';
     banner.innerHTML =
       '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
-        '<img src="/cdn/brand/logo.png" alt="" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;object-fit:cover;" />' +
+        '<img src="/cdn/brand/logo.png" alt="" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;' +
+          'object-fit:cover;border:1.5px solid #fff;" />' +
         '<div style="min-width:0;">' +
           '<div style="color:#fff;font-weight:700;font-size:14px;">Bitcovex App</div>' +
           '<div style="color:#9a9a9a;font-size:12px;">Trade Anywhere, Anytime</div>' +
         '</div>' +
       '</div>' +
-      '<div style="display:flex;align-items:center;gap:14px;flex-shrink:0;">' +
-        '<a href="/downloads/Bitcovex.apk" download style="background:#F68F15;color:#000;font-weight:700;' +
-          'font-size:13px;padding:8px 16px;border-radius:8px;text-decoration:none;white-space:nowrap;">Get App</a>' +
-        '<button id="cvx-app-banner-close" aria-label="Close" style="background:none;border:none;' +
-          'color:#9a9a9a;font-size:20px;cursor:pointer;line-height:1;padding:4px;">×</button>' +
-      '</div>';
+      '<a href="/downloads/Bitcovex.apk" download style="background:#F68F15;color:#000;font-weight:700;' +
+        'font-size:13px;padding:8px 16px;border-radius:8px;text-decoration:none;white-space:nowrap;flex-shrink:0;">Get App</a>' +
+      '<button id="cvx-app-banner-close" aria-label="Close" style="position:absolute;top:8px;right:8px;' +
+        'background:none;border:none;color:#9a9a9a;font-size:20px;cursor:pointer;line-height:1;padding:4px;">×</button>';
     document.body.appendChild(banner);
 
     function reposition() {
@@ -1027,7 +1026,7 @@
       window.removeEventListener('resize', reposition);
       headerWrap.style.removeProperty('top');
       if (content) content.style.marginTop = header.offsetHeight + 'px';
-      sessionStorage.setItem('cvx_app_banner_dismissed', '1');
+      localStorage.setItem('cvx_app_banner_dismissed', '1');
     });
   }
 
