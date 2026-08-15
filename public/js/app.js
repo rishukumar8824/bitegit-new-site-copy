@@ -1640,8 +1640,8 @@
         </div>
         <!-- Bottom action buttons -->
         <div style="flex-shrink:0;display:flex;gap:8px;padding:10px 12px 14px;background:#161a1e;border-top:1px solid rgba(255,255,255,0.08);">
-          <button id="cvx-btn-long" style="flex:1;height:46px;background:#2ebd85;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Long</button>
-          <button id="cvx-btn-short" style="flex:1;height:46px;background:#f6465d;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Short</button>
+          <button id="cvx-btn-long" style="flex:1;height:46px;background:#00c853;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Long</button>
+          <button id="cvx-btn-short" style="flex:1;height:46px;background:#ff3b30;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;">Open Short</button>
         </div>
         <!-- Order Placement panel (hidden by default) -->
         <div id="cvx-order-panel" style="display:none;position:absolute;left:0;right:0;bottom:0;background:#161a1e;border-top:1px solid rgba(255,255,255,0.1);z-index:10;padding:0 12px 16px;">
@@ -1695,11 +1695,11 @@
         // Toggle Open/Close visual state based on long/short
         if (opOpen && opClose) {
           if (side === 'long') {
-            opOpen.style.background = '#2ebd85'; opOpen.style.color = '#fff';
+            opOpen.style.background = '#00c853'; opOpen.style.color = '#fff';
             opClose.style.background = 'transparent'; opClose.style.color = 'rgba(255,255,255,0.5)';
           } else {
             opOpen.style.background = '#fff'; opOpen.style.color = '#000';
-            opClose.style.background = '#f6465d'; opClose.style.color = '#fff';
+            opClose.style.background = '#ff3b30'; opClose.style.color = '#fff';
           }
         }
         const prEl = document.getElementById('cvx-op-price');
@@ -1713,7 +1713,7 @@
         if(opClose){opClose.style.background='transparent'; opClose.style.color='rgba(255,255,255,0.5)';}
       });
       if (opClose) opClose.addEventListener('click', () => {
-        opClose.style.background='#f6465d'; opClose.style.color='#fff';
+        opClose.style.background='#ff3b30'; opClose.style.color='#fff';
         if(opOpen){opOpen.style.background='transparent'; opOpen.style.color='rgba(255,255,255,0.5)';}
       });
 
