@@ -254,7 +254,7 @@
   <!-- OVERVIEW PANEL -->
   <div id="ovPanelOverview">
     <!-- Empty state -->
-    <div style="display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem 1rem;background:#000">
+    <div id="ovEmptyState" style="display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem 1rem;background:#000">
       <svg width="80" height="60" viewBox="0 0 100 75" fill="none">
         <rect x="20" y="30" width="60" height="35" rx="4" fill="#3a2a00"/>
         <rect x="30" y="25" width="40" height="12" rx="3" fill="#4a3500"/>
@@ -2152,6 +2152,10 @@
         // Spot Account row in Overview panel
         var acctSpot = document.getElementById('acctSpotBal');
         if(acctSpot) acctSpot.textContent = spotBalance.toFixed(2) + ' USDT';
+
+        // "No assets" placeholder should only show when there's actually nothing
+        var emptyState = document.getElementById('ovEmptyState');
+        if (emptyState) emptyState.style.display = (totalBalance > 0) ? 'none' : '';
 
         // Spot tab coin list — load holdings too
         var spotList = document.getElementById('ovSpotCoinList');
