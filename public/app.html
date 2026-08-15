@@ -207,8 +207,8 @@
   </div>
   <div style="padding:1rem">
     <div style="font-size:1.5rem;font-weight:800;margin-bottom:.3rem">Total Assets (USDT)</div>
-    <div style="font-size:2.2rem;font-weight:900;margin-bottom:.15rem">0.0000</div>
-    <div style="font-size:.82rem;color:#8a9bb5;margin-bottom:1.5rem">≈ $0.00</div>
+    <div id="homeTotalBal" style="font-size:2.2rem;font-weight:900;margin-bottom:.15rem">0.0000</div>
+    <div id="homeTotalBalUsd" style="font-size:.82rem;color:#8a9bb5;margin-bottom:1.5rem">≈ $0.00</div>
     <!-- Quick actions -->
     <div style="display:flex;gap:.6rem;margin-bottom:1.5rem">
       <button onclick="go('sDeposit')" style="flex:1;background:#c8f439;border:none;border-radius:10px;padding:.65rem;font-weight:800;font-size:.88rem;color:#000;cursor:pointer">Deposit</button>
@@ -742,6 +742,23 @@
 <script>
   var stack = [];
   var rewardsScreens = ['sRewards','sWelfareCenter','sReferral'];
+
+  // Real balance — was hardcoded "0.0000" before, never fetched.
+  function loadHomeBalance() {
+    fetch('/api/wallet/summary', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) {
+        var s = d && d.summary;
+        if (!s) return;
+        var total = Number(s.total_balance || 0);
+        var totalEl = document.getElementById('homeTotalBal');
+        var usdEl = document.getElementById('homeTotalBalUsd');
+        if (totalEl) totalEl.textContent = total.toFixed(4);
+        if (usdEl) usdEl.textContent = '≈ $' + total.toFixed(2);
+      })
+      .catch(function() {});
+  }
+  loadHomeBalance();
 
   function go(id) {
     var cur = document.querySelector('.screen.active');
