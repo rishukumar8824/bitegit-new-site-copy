@@ -1001,7 +1001,7 @@
     banner.innerHTML =
       '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
         '<img src="/cdn/brand/logo.png" alt="" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;' +
-          'object-fit:cover;border:1.5px solid #fff;" />' +
+          'object-fit:cover;border:0.5px solid rgba(255,255,255,0.6);" />' +
         '<div style="min-width:0;">' +
           '<div style="color:#fff;font-weight:700;font-size:14px;">Bitcovex App</div>' +
           '<div style="color:#9a9a9a;font-size:12px;">Trade Anywhere, Anytime</div>' +
@@ -1016,7 +1016,7 @@
     function reposition() {
       const bannerHeight = banner.offsetHeight;
       headerWrap.style.setProperty('top', bannerHeight + 'px', 'important');
-      if (content) content.style.marginTop = (bannerHeight + header.offsetHeight) + 'px';
+      if (content) content.style.marginTop = bannerHeight + 'px';
     }
     reposition();
     window.addEventListener('resize', reposition);
