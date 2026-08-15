@@ -691,12 +691,15 @@
 
   function animateBalanceTo(el, target) {
     var start = 0;
-    var duration = 2200;
+    var duration = 3800;
     var startTime = null;
     function tick(now) {
       if (startTime === null) startTime = now;
       var progress = Math.min(1, (now - startTime) / duration);
-      var eased = 1 - Math.pow(1 - progress, 2); // ease-out quad — slower, smoother
+      // ease-in-out cubic — no fast burst at the start, no jerky finish either
+      var eased = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
       var value = Math.round(start + (target - start) * eased);
       el.innerHTML = value.toLocaleString() +
         '<span style="color:#8a8a8a;font-weight:500;font-size:0.5em;">USDT</span>';
@@ -956,6 +959,54 @@
         }
       };
       if (img.complete) show(); else { img.addEventListener('load', show); img.addEventListener('error', show); }
+    });
+  }
+
+  // ── 12b. TOP APP-DOWNLOAD BANNER ────────────────────────────────────────────
+  function injectAppDownloadBanner() {
+    if (sessionStorage.getItem('cvx_app_banner_dismissed')) return;
+    if (document.getElementById('cvx-app-banner')) return;
+    const header = document.querySelector('header');
+    if (!header) return;
+    // Header's own inner nav box also carries the "flex-1" utility class, so a plain
+    // querySelector('.flex-1') can match that instead of the real page-content wrapper —
+    // filter to the first .flex-1 that isn't nested inside the header.
+    const content = [...document.querySelectorAll('.flex-1')].find((el) => !header.contains(el));
+
+    const banner = document.createElement('div');
+    banner.id = 'cvx-app-banner';
+    banner.style.cssText = 'position:fixed;left:0;right:0;z-index:998;background:#0b0b0b;' +
+      'border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;' +
+      'justify-content:space-between;padding:10px 16px;gap:12px;';
+    banner.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
+        '<img src="/logos/bitegit-b.png" alt="" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;object-fit:cover;" />' +
+        '<div style="min-width:0;">' +
+          '<div style="color:#fff;font-weight:700;font-size:14px;">Bitcovex App</div>' +
+          '<div style="color:#9a9a9a;font-size:12px;">Trade Anywhere, Anytime</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:14px;flex-shrink:0;">' +
+        '<a href="/downloads/Bitcovex.apk" download style="background:#F68F15;color:#000;font-weight:700;' +
+          'font-size:13px;padding:8px 16px;border-radius:8px;text-decoration:none;white-space:nowrap;">Get App</a>' +
+        '<button id="cvx-app-banner-close" aria-label="Close" style="background:none;border:none;' +
+          'color:#9a9a9a;font-size:20px;cursor:pointer;line-height:1;padding:4px;">×</button>' +
+      '</div>';
+    document.body.appendChild(banner);
+
+    function reposition() {
+      const headerHeight = header.offsetHeight;
+      banner.style.top = headerHeight + 'px';
+      if (content) content.style.marginTop = (headerHeight + banner.offsetHeight) + 'px';
+    }
+    reposition();
+    window.addEventListener('resize', reposition);
+
+    document.getElementById('cvx-app-banner-close').addEventListener('click', () => {
+      banner.remove();
+      window.removeEventListener('resize', reposition);
+      if (content) content.style.marginTop = header.offsetHeight + 'px';
+      sessionStorage.setItem('cvx_app_banner_dismissed', '1');
     });
   }
 
@@ -1915,7 +1966,7 @@
     fixHeaderLogo(); addHamburger(); addEarthVideo(); wirePairsTabs();
     fixFooter(); fixSecuritySection(); fixSecurityText(); autoSlideCarousel();
     fixAppSection(); hideBrokenElements(); applyLoggedInHomeUI();
-    wireTopNav(); wireWordmarks();
+    wireTopNav(); wireWordmarks(); injectAppDownloadBanner();
     wireFAQ(); applyHomeHeroContent();
     // Build pairs section immediately (shows skeleton rows if no cache)
     buildMobileMarket();
