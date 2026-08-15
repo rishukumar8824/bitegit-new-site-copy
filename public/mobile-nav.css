@@ -10,7 +10,7 @@
 
 @media (max-width: 768px) {
   body.has-mobile-nav {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
   }
 
   .mobile-app-nav {
@@ -21,7 +21,7 @@
     z-index: 999;
     background: #000;
     border-top: 1px solid rgba(255,255,255,0.07);
-    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+    padding: 12px 0 calc(6px + env(safe-area-inset-bottom));
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }

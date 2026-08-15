@@ -810,8 +810,8 @@ body.p2p-kyc-open { overflow: hidden; }
   font-family: 'Manrope', sans-serif;
   transition: color 0.15s, background-color 0.15s;
 }
-.gt-side-tab[data-side="buy"].active { background: #2EBD85; color: #06120d; }
-.gt-side-tab[data-side="sell"].active { background: var(--p2p-red); color: #fff; }
+.gt-side-tab[data-side="buy"].active { background: #00c853; color: #06120d; }
+.gt-side-tab[data-side="sell"].active { background: #ff3b30; color: #fff; }
 .gt-controls-right { display: flex; align-items: center; gap: 0.45rem; }
 .gt-icon-btn { width: 38px; height: 38px; border-radius: 8px; border: none; background: rgba(255,255,255,0.07); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
 .gt-currency-wrap { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.08); border-radius: 8px; padding: 0 0.6rem; height: 38px; }
@@ -5134,7 +5134,7 @@ body.mob-screen-open .p2p-secondary-nav {
   transition: opacity 0.15s, transform 0.1s;
   -webkit-tap-highlight-color: transparent;
 }
-.bbt-action-btn.bbt-sell-btn { background: #f6465d; }
+.bbt-action-btn.bbt-sell-btn { background: #ff3b30; }
 .bbt-action-btn:disabled { opacity: 0.38; cursor: not-allowed; }
 .bbt-action-btn:not(:disabled):active { opacity: 0.82; transform: translateY(-3px) scale(0.95); }
 
