@@ -974,6 +974,13 @@
     if (document.getElementById('cvx-app-banner')) return;
     const header = document.querySelector('header');
     if (!header) return;
+    // The header sits inside its own "fixed top-0" wrapper div — that wrapper, not
+    // <header> itself, is what needs pushing down so the banner can sit above it.
+    let headerWrap = header.parentElement;
+    while (headerWrap && headerWrap !== document.body && getComputedStyle(headerWrap).position !== 'fixed') {
+      headerWrap = headerWrap.parentElement;
+    }
+    if (!headerWrap || headerWrap === document.body) headerWrap = header;
     // Header's own inner nav box also carries the "flex-1" utility class, so a plain
     // querySelector('.flex-1') can match that instead of the real page-content wrapper —
     // filter to the first .flex-1 that isn't nested inside the header.
@@ -981,12 +988,12 @@
 
     const banner = document.createElement('div');
     banner.id = 'cvx-app-banner';
-    banner.style.cssText = 'position:fixed;left:0;right:0;z-index:998;background:#0b0b0b;' +
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:1000;background:#0b0b0b;' +
       'border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;' +
       'justify-content:space-between;padding:10px 16px;gap:12px;';
     banner.innerHTML =
       '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
-        '<img src="/logos/bitegit-b.png" alt="" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;object-fit:cover;" />' +
+        '<img src="/cdn/brand/logo.png" alt="" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;object-fit:cover;" />' +
         '<div style="min-width:0;">' +
           '<div style="color:#fff;font-weight:700;font-size:14px;">Bitcovex App</div>' +
           '<div style="color:#9a9a9a;font-size:12px;">Trade Anywhere, Anytime</div>' +
@@ -1001,9 +1008,9 @@
     document.body.appendChild(banner);
 
     function reposition() {
-      const headerHeight = header.offsetHeight;
-      banner.style.top = headerHeight + 'px';
-      if (content) content.style.marginTop = (headerHeight + banner.offsetHeight) + 'px';
+      const bannerHeight = banner.offsetHeight;
+      headerWrap.style.setProperty('top', bannerHeight + 'px', 'important');
+      if (content) content.style.marginTop = (bannerHeight + header.offsetHeight) + 'px';
     }
     reposition();
     window.addEventListener('resize', reposition);
@@ -1011,6 +1018,7 @@
     document.getElementById('cvx-app-banner-close').addEventListener('click', () => {
       banner.remove();
       window.removeEventListener('resize', reposition);
+      headerWrap.style.removeProperty('top');
       if (content) content.style.marginTop = header.offsetHeight + 'px';
       sessionStorage.setItem('cvx_app_banner_dismissed', '1');
     });
