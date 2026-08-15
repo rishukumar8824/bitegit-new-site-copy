@@ -4913,8 +4913,8 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 .bbt-top-pick-badge {
   position: absolute;
-  top: 10px;
-  right: 12px;
+  top: 4px;
+  right: 4px;
   font-size: 9.5px;
   color: #F68F15;
   border: 1px solid rgba(246,143,21,0.5);
@@ -4922,6 +4922,10 @@ body.mob-screen-open .p2p-secondary-nav {
   padding: 2px 8px;
   white-space: nowrap;
   pointer-events: none;
+}
+/* Give the header row room so it clears the badge above it instead of overlapping */
+.bbt-top-pick .bbt-hd {
+  margin-top: 20px;
 }
 
 /* Header row: avatar + name + chips | orders right */
@@ -4977,7 +4981,7 @@ body.mob-screen-open .p2p-secondary-nav {
   min-width: 0;
 }
 .bbt-name {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #eaecef;
   white-space: nowrap;
@@ -5119,19 +5123,20 @@ body.mob-screen-open .p2p-secondary-nav {
   padding: 8px 16px;
   border: none;
   border-radius: 24px;
-  background: #2ebd85;
+  background: #00c853;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  transform: translateY(-3px);
   transition: opacity 0.15s, transform 0.1s;
   -webkit-tap-highlight-color: transparent;
 }
 .bbt-action-btn.bbt-sell-btn { background: #f6465d; }
 .bbt-action-btn:disabled { opacity: 0.38; cursor: not-allowed; }
-.bbt-action-btn:not(:disabled):active { opacity: 0.82; transform: scale(0.95); }
+.bbt-action-btn:not(:disabled):active { opacity: 0.82; transform: translateY(-3px) scale(0.95); }
 
 /* ── Buy/Sell bar injected inside #p2pCards (scrolls away) ── */
 .bbt-bs-bar {
