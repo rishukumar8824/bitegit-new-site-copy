@@ -239,7 +239,7 @@ function buildBitegitFooter() {
 </td></tr></table>
 <table cellpadding="0" cellspacing="0" style="margin:0 0 22px 0;"><tr>
   <td style="padding-right:10px;">
-    <a href="#" style="display:inline-block;background:#1a1a1d !important;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #444 !important;min-width:140px;">
+    <a href="#" style="display:inline-block;background:transparent !important;padding:6px 4px;text-decoration:none;min-width:140px;">
       <table cellpadding="0" cellspacing="0"><tr>
         <td style="padding-right:8px;vertical-align:middle;"><img src="https://${BRAND_DOMAIN}/icons/playstore.png" width="24" height="24" alt="Google Play" style="display:block;border:0;"/></td>
         <td style="vertical-align:middle;">
@@ -250,7 +250,7 @@ function buildBitegitFooter() {
     </a>
   </td>
   <td>
-    <a href="#" style="display:inline-block;background:#1a1a1d !important;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #444 !important;min-width:140px;">
+    <a href="#" style="display:inline-block;background:transparent !important;padding:6px 4px;text-decoration:none;min-width:140px;">
       <table cellpadding="0" cellspacing="0"><tr>
         <td style="padding-right:8px;vertical-align:middle;"><img src="https://${BRAND_DOMAIN}/icons/appstore.png" width="24" height="24" alt="App Store" style="display:block;border:0;"/></td>
         <td style="vertical-align:middle;">
