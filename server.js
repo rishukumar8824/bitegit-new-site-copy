@@ -1,5 +1,10 @@
 require('dotenv').config();
 
+// One-time first-deposit bonus rule (see /api/admin/wallet/deposits/:id/review and
+// /api/rewards/deposit-bonus for the two places that read these).
+const DEPOSIT_BONUS_THRESHOLD_USDT = 100;
+const DEPOSIT_BONUS_AMOUNT_USDT = 5;
+
 const crypto = require('crypto');
 let geoip = null;
 try { geoip = require('geoip-lite'); } catch(e) { /* optional */ }
@@ -2316,6 +2321,22 @@ app.get('/api/p2p/me', async (req, res) => {
       kyc: kycProfile
     }
   });
+});
+
+// ── Deposit bonus status — one-time credit for a first deposit >= threshold ──
+app.get('/api/rewards/deposit-bonus', requiresP2PUser, async (req, res) => {
+  try {
+    const cols = getCollections();
+    const claim = await cols.depositBonusClaims.findOne({ userId: req.p2pUser.id });
+    return res.json({
+      thresholdUsdt: DEPOSIT_BONUS_THRESHOLD_USDT,
+      bonusAmountUsdt: DEPOSIT_BONUS_AMOUNT_USDT,
+      claimed: Boolean(claim),
+      claimedAt: claim ? claim.createdAt : null
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while loading deposit bonus status.' });
+  }
 });
 
 app.get('/api/p2p/kyc/status', requiresP2PUser, async (req, res) => {
@@ -5529,6 +5550,35 @@ app.post('/api/admin/wallet/deposits/:depositId/review', requiresAdminSession, a
         referenceId: deposit.id,
         metadata: { source: 'admin_deposit_approval' }
       });
+
+      // One-time first-deposit bonus: deposit >= DEPOSIT_BONUS_THRESHOLD_USDT unlocks a
+      // single DEPOSIT_BONUS_AMOUNT_USDT credit per user, ever. Amount is compared in
+      // USDT terms only (non-USDT deposits don't currently qualify — no FX conversion here).
+      try {
+        const depositCoin = String(deposit.coin || 'USDT').toUpperCase();
+        const depositAmount = Number(deposit.amount || 0);
+        if (depositCoin === 'USDT' && depositAmount >= DEPOSIT_BONUS_THRESHOLD_USDT) {
+          const cols = getCollections();
+          const existingClaim = await cols.depositBonusClaims.findOne({ userId: deposit.userId });
+          if (!existingClaim) {
+            await cols.depositBonusClaims.insertOne({
+              userId: deposit.userId,
+              depositId: deposit.id,
+              bonusAmount: DEPOSIT_BONUS_AMOUNT_USDT,
+              currency: 'USDT',
+              createdAt: new Date().toISOString()
+            });
+            await walletService.creditAvailable(deposit.userId, DEPOSIT_BONUS_AMOUNT_USDT, {
+              type: 'bonus',
+              currency: 'USDT',
+              referenceId: `deposit_bonus_${deposit.id}`,
+              metadata: { source: 'first_deposit_bonus', triggeringDepositId: deposit.id }
+            });
+          }
+        }
+      } catch (bonusError) {
+        console.error('[deposit-bonus] failed to grant deposit bonus:', bonusError.message);
+      }
     }
 
     // Send deposit success email
