@@ -113,25 +113,15 @@ function createP2PEmailService() {
   <table cellpadding="0" cellspacing="0" style="margin:0 0 22px 0;">
     <tr>
       <td style="padding-right:10px;">
-        <a href="#" style="display:inline-block;background:#000;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
-          <table cellpadding="0" cellspacing="0"><tr>
-            <td style="padding-right:8px;vertical-align:middle;"><img src="${SOCIAL_ICONS.playstore}" width="28" height="28" alt="Google Play" style="display:block;border:0;"/></td>
-            <td style="vertical-align:middle;">
-              <span style="display:block;font-size:9px;color:#ccc;letter-spacing:0.5px;line-height:1.4;">GET IT ON</span>
-              <span style="display:block;font-size:16px;color:#fff;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">Google Play</span>
-            </td>
-          </tr></table>
+        <a href="#" style="display:inline-block;background:#000000;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
+          <span style="display:block;font-size:9px;color:#ccc;letter-spacing:0.5px;line-height:1.4;">GET IT ON</span>
+          <span style="display:block;font-size:16px;color:#fff;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">Google Play</span>
         </a>
       </td>
       <td>
-        <a href="#" style="display:inline-block;background:#000;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
-          <table cellpadding="0" cellspacing="0"><tr>
-            <td style="padding-right:8px;vertical-align:middle;"><img src="${SOCIAL_ICONS.appstore}" width="28" height="28" alt="App Store" style="display:block;border:0;"/></td>
-            <td style="vertical-align:middle;">
-              <span style="display:block;font-size:9px;color:#ccc;letter-spacing:0.5px;line-height:1.4;">Download on the</span>
-              <span style="display:block;font-size:16px;color:#fff;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">App Store</span>
-            </td>
-          </tr></table>
+        <a href="#" style="display:inline-block;background:#000000;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
+          <span style="display:block;font-size:9px;color:#ccc;letter-spacing:0.5px;line-height:1.4;">Download on the</span>
+          <span style="display:block;font-size:16px;color:#fff;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">App Store</span>
         </a>
       </td>
     </tr>
@@ -145,8 +135,8 @@ function createP2PEmailService() {
   }
 
   function buildHeader() {
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>P2P Order</title></head><body style="margin:0;padding:0;background:${BRAND_BG};font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 12px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:${BRAND_BG};border-radius:8px;overflow:hidden;border:1px solid ${BRAND_BORDER};">
-<tr><td style="padding:22px 28px;text-align:center;background:#000000;">
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="dark"/><meta name="supported-color-schemes" content="dark"/><title>P2P Order</title><style>body,table,td{background-color:${BRAND_BG} !important;}</style></head><body bgcolor="${BRAND_BG}" style="margin:0;padding:0;background:${BRAND_BG};font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="padding:20px 12px;background:${BRAND_BG};"><tr><td align="center" bgcolor="${BRAND_BG}" style="background:${BRAND_BG};"><table width="600" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="max-width:600px;width:100%;background:${BRAND_BG};border-radius:8px;overflow:hidden;border:1px solid ${BRAND_BORDER};">
+<tr><td style="padding:22px 28px;text-align:center;background:#000000;" bgcolor="#000000">
   <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
     <td style="padding-right:2px;vertical-align:middle;">
       <img src="https://${BRAND_DOMAIN}/cdn/brand/logo.png" width="22" height="22" alt="${BRAND_NAME}" style="display:block;border:0;border-radius:5px;"/>
