@@ -115,7 +115,7 @@ function createP2PEmailService() {
       <td style="padding-right:10px;">
         <a href="#" style="display:inline-block;background:transparent !important;padding:6px 4px;text-decoration:none;min-width:140px;">
           <table cellpadding="0" cellspacing="0"><tr>
-            <td style="padding-right:8px;vertical-align:middle;"><img src="https://${BRAND_DOMAIN}/icons/playstore.png" width="24" height="24" alt="Google Play" style="display:block;border:0;"/></td>
+            <td style="padding-right:8px;vertical-align:middle;"><table cellpadding="0" cellspacing="0"><tr><td style="background:#ffffff !important;border-radius:6px;padding:3px;"><img src="https://${BRAND_DOMAIN}/icons/playstore.png" width="24" height="24" alt="Google Play" style="display:block;border:0;"/></td></tr></table></td>
             <td style="vertical-align:middle;">
               <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">GET IT ON</span>
               <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">Google Play</span>
@@ -126,7 +126,7 @@ function createP2PEmailService() {
       <td>
         <a href="#" style="display:inline-block;background:transparent !important;padding:6px 4px;text-decoration:none;min-width:140px;">
           <table cellpadding="0" cellspacing="0"><tr>
-            <td style="padding-right:8px;vertical-align:middle;"><img src="https://${BRAND_DOMAIN}/icons/appstore.png" width="24" height="24" alt="App Store" style="display:block;border:0;"/></td>
+            <td style="padding-right:8px;vertical-align:middle;"><table cellpadding="0" cellspacing="0"><tr><td style="background:#ffffff !important;border-radius:6px;padding:3px;"><img src="https://${BRAND_DOMAIN}/icons/appstore.png" width="24" height="24" alt="App Store" style="display:block;border:0;"/></td></tr></table></td>
             <td style="vertical-align:middle;">
               <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">Download on the</span>
               <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">App Store</span>
