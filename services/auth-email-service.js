@@ -240,14 +240,24 @@ function buildBitegitFooter() {
 <table cellpadding="0" cellspacing="0" style="margin:0 0 22px 0;"><tr>
   <td style="padding-right:10px;">
     <a href="#" style="display:inline-block;background:#1a1a1d !important;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #444 !important;min-width:140px;">
-      <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">GET IT ON</span>
-      <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">Google Play</span>
+      <table cellpadding="0" cellspacing="0"><tr>
+        <td style="padding-right:8px;vertical-align:middle;"><img src="https://${BRAND_DOMAIN}/icons/playstore.png" width="24" height="24" alt="Google Play" style="display:block;border:0;"/></td>
+        <td style="vertical-align:middle;">
+          <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">GET IT ON</span>
+          <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">Google Play</span>
+        </td>
+      </tr></table>
     </a>
   </td>
   <td>
     <a href="#" style="display:inline-block;background:#1a1a1d !important;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #444 !important;min-width:140px;">
-      <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">Download on the</span>
-      <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">App Store</span>
+      <table cellpadding="0" cellspacing="0"><tr>
+        <td style="padding-right:8px;vertical-align:middle;"><img src="https://${BRAND_DOMAIN}/icons/appstore.png" width="24" height="24" alt="App Store" style="display:block;border:0;"/></td>
+        <td style="vertical-align:middle;">
+          <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">Download on the</span>
+          <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">App Store</span>
+        </td>
+      </tr></table>
     </a>
   </td>
 </tr></table>
