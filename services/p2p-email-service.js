@@ -174,7 +174,7 @@ function createP2PEmailService() {
       const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
       const subject = `[${BRAND_NAME}] [P2P] New Order Confirmation`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;">
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
   <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">[P2P] New Order Confirmation</h1>
   <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT};">Hi ${escapeHtml(maskedEmail)},</p>
   <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">Your buy order <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(order.id || ''))}</strong> has been created and the seller's funds have been locked. Please complete the order promptly as it will be automatically cancelled after <strong>15 minutes</strong>.</p>
@@ -236,7 +236,7 @@ ${closeHtml()}`;
   <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">Please do not reply to this email</p>`;
       }
 
-      const html = buildHeader() + `<tr><td style="padding:28px 28px 0;">${bodyContent}</td></tr>` + buildFooter() + closeHtml();
+      const html = buildHeader() + `<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">${bodyContent}</td></tr>` + buildFooter() + closeHtml();
       return sendEmail({ to: email, subject, text: `[P2P] Order ${order.id} update: ${status}`, html });
     } catch (e) {
       return { delivered: false, reason: e.message };
@@ -249,7 +249,7 @@ ${closeHtml()}`;
       const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
       const subject = `[${BRAND_NAME}] [P2P] Confirm Payment — 5 Minutes Left!`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;">
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
     <tr><td style="background:#2a2410;border:1px solid ${BRAND_ACCENT};border-radius:8px;padding:14px 18px;">
       <p style="margin:0;font-size:14px;font-weight:700;color:${BRAND_ACCENT};">&#9888; Action Required — Only 5 Minutes Remaining!</p>
@@ -283,7 +283,7 @@ ${closeHtml()}`;
       );
       const subject = `[${BRAND_NAME}] [P2P] Crypto Released — Funds Deposited`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;">
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
   <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#ffffff;">P2P Trading Update</h1>
   <p style="margin:0 0 18px;font-size:15px;color:${BRAND_TEXT};line-height:1.8;">Hi ${escapeHtml(maskedEmail)},</p>
   <p style="margin:0 0 18px;font-size:15px;color:${BRAND_TEXT};line-height:1.8;">
@@ -324,7 +324,7 @@ ${closeHtml()}`;
       const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
       const subject = `[${BRAND_NAME}] [P2P] Order Cancelled`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;">
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
   <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">[P2P] Order Cancelled</h1>
   <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT};">Hi ${escapeHtml(maskedEmail)},</p>
   <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">Your P2P order <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(order.id || 'N/A'))}</strong> has been cancelled. Any locked funds have been returned to your account.</p>
@@ -347,7 +347,7 @@ ${closeHtml()}`;
       const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
       const subject = `[${BRAND_NAME}] [P2P] Dispute Raised — Order ${escapeHtml(String(order.id || ''))}`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;">
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
     <tr><td style="background:#2a1414;border:1px solid #ff6b6b;border-radius:8px;padding:14px 18px;">
       <p style="margin:0;font-size:14px;font-weight:700;color:#ff6b6b;">&#9888; A dispute has been raised on this order.</p>

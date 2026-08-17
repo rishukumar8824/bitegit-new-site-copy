@@ -230,7 +230,7 @@ function buildBitegitHeader() {
 
 function buildBitegitFooter() {
   const year = new Date().getFullYear();
-  return `<tr><td style="padding:24px 28px 28px;border-top:1px solid ${BRAND_BORDER};">
+  return `<tr><td style="padding:24px 28px 28px;border-top:1px solid ${BRAND_BORDER};background:${BRAND_BG};" bgcolor="${BRAND_BG}">
 <p style="margin:0 0 14px;font-size:15px;color:#ffffff;font-weight:700;">Contact Us</p>
 <p style="margin:0 0 4px;font-size:13px;color:${BRAND_MUTED};">24*7 customer service or email <a href="mailto:support@${BRAND_DOMAIN}" style="color:${BRAND_ACCENT};text-decoration:none;">support@${BRAND_DOMAIN}</a></p>
 <p style="margin:0 0 18px;font-size:12px;color:${BRAND_MUTED};">* This email is sent automatically and you do not need to reply.</p>
@@ -260,7 +260,7 @@ function buildBitegitFooter() {
 
 function createOtpTemplate({ title, code, expiresInMinutes, note, maskedEmail = '' }) {
   return buildBitegitHeader() + `
-<tr><td style="padding:32px 28px 0;">
+<tr><td style="padding:32px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
   <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};">Dear ${BRAND_NAME} user${maskedEmail ? ` (${escapeHtml(maskedEmail)})` : ''}:</p>
   <h1 style="margin:0 0 24px;font-size:24px;font-weight:800;color:#ffffff;line-height:1.4;">${escapeHtml(title)}</h1>
   <div style="font-size:40px;font-weight:800;letter-spacing:6px;color:#ffffff;margin-bottom:18px;">
@@ -278,7 +278,7 @@ function createOtpTemplate({ title, code, expiresInMinutes, note, maskedEmail = 
 function createNewDeviceTemplate({ email, loginTimeUtc, ipAddress, userAgent, location }) {
   const maskedEmail = String(email).replace(/^(.{4}).*(@.*)$/, '$1****$2');
   return buildBitegitHeader() + `
-<tr><td style="padding:32px 28px 0;">
+<tr><td style="padding:32px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
   <div style="background:#2a2410;border:1px solid ${BRAND_ACCENT};border-radius:8px;padding:14px 18px;margin-bottom:20px;">
     <span style="font-size:14px;font-weight:700;color:${BRAND_ACCENT};">&#9888; New Device or Location Login Detected</span>
   </div>
@@ -363,7 +363,7 @@ function createAuthEmailService() {
     const subject = `[${BRAND_NAME}] ${asset} Deposit Successful`;
     const text = `${asset} Deposit Successful. Amount: ${amount} ${asset}.`;
     const html = buildBitegitHeader() + `
-<tr><td style="padding:32px 28px 0;">
+<tr><td style="padding:32px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
   <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};">Dear ${BRAND_NAME} user (${escapeHtml(maskedEmail)}):</p>
   <h1 style="margin:0 0 20px;font-size:24px;font-weight:800;color:#ffffff;">Deposit successful</h1>
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
@@ -391,7 +391,7 @@ function createAuthEmailService() {
     const subject = `[${BRAND_NAME}] ${asset} Withdrawal Successful`;
     const text = `${asset} Withdrawal Successful. Amount: ${amount} ${asset}. Address: ${address}. TxId: ${txId}`;
     const html = buildBitegitHeader() + `
-<tr><td style="padding:32px 28px 0;">
+<tr><td style="padding:32px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
   <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};">Dear ${BRAND_NAME} user (${escapeHtml(maskedEmail)}):</p>
   <h1 style="margin:0 0 16px;font-size:24px;font-weight:800;color:#ffffff;">Withdrawal successful</h1>
   <p style="margin:0 0 20px;font-size:14px;color:${BRAND_TEXT};line-height:1.6;">Withdrawal has been successful. Check the details below:</p>
