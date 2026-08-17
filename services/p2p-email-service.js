@@ -102,49 +102,49 @@ function createP2PEmailService() {
     const year = new Date().getFullYear();
     return `
 <tr><td style="padding:24px 28px 28px;border-top:1px solid ${BRAND_BORDER};">
-  <p style="margin:0 0 14px;font-size:15px;color:#ffffff;font-weight:700;">Contact Us</p>
-  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_MUTED};">24*7 customer service or email <a href="mailto:support@${BRAND_DOMAIN}" style="color:${BRAND_ACCENT};text-decoration:none;">support@${BRAND_DOMAIN}</a></p>
-  <p style="margin:0 0 18px;font-size:12px;color:${BRAND_MUTED};">* This email is sent automatically and you do not need to reply.</p>
+  <p style="margin:0 0 14px;font-size:15px;color:#ffffff !important;font-weight:700;">Contact Us</p>
+  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_MUTED} !important;">24*7 customer service or email <a href="mailto:support@${BRAND_DOMAIN}" style="color:${BRAND_ACCENT} !important;text-decoration:none;">support@${BRAND_DOMAIN}</a></p>
+  <p style="margin:0 0 18px;font-size:12px;color:${BRAND_MUTED} !important;">* This email is sent automatically and you do not need to reply.</p>
 
   <table cellpadding="0" cellspacing="0" style="margin:0 0 22px 0;"><tr><td>
-    <a href="https://${BRAND_DOMAIN}/support" style="display:inline-block;border:1px solid ${BRAND_ACCENT};border-radius:20px;padding:8px 22px;text-decoration:none;font-size:13px;font-weight:700;color:${BRAND_ACCENT};">Consult</a>
+    <a href="https://${BRAND_DOMAIN}/support" style="display:inline-block;border:1px solid ${BRAND_ACCENT};border-radius:20px;padding:8px 22px;text-decoration:none;font-size:13px;font-weight:700;color:${BRAND_ACCENT} !important;">Consult</a>
   </td></tr></table>
 
   <table cellpadding="0" cellspacing="0" style="margin:0 0 22px 0;">
     <tr>
       <td style="padding-right:10px;">
-        <a href="#" style="display:inline-block;background:#000000;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
-          <span style="display:block;font-size:9px;color:#ccc;letter-spacing:0.5px;line-height:1.4;">GET IT ON</span>
-          <span style="display:block;font-size:16px;color:#fff;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">Google Play</span>
+        <a href="#" style="display:inline-block;background:#000000 !important;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
+          <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">GET IT ON</span>
+          <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">Google Play</span>
         </a>
       </td>
       <td>
-        <a href="#" style="display:inline-block;background:#000000;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
-          <span style="display:block;font-size:9px;color:#ccc;letter-spacing:0.5px;line-height:1.4;">Download on the</span>
-          <span style="display:block;font-size:16px;color:#fff;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">App Store</span>
+        <a href="#" style="display:inline-block;background:#000000 !important;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
+          <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">Download on the</span>
+          <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">App Store</span>
         </a>
       </td>
     </tr>
   </table>
 
-  <p style="margin:0 0 10px;font-size:12px;color:${BRAND_MUTED};line-height:1.6;">Risk warning: Cryptocurrency trading involves high risk with significant price volatility and potential for substantial losses. Please trade with caution.</p>
-  <p style="margin:0 0 18px;font-size:12px;color:${BRAND_MUTED};line-height:1.6;">Kindly note: Please be aware of phishing sites and confirm you are visiting the official <a href="https://${BRAND_DOMAIN}" style="color:${BRAND_ACCENT};text-decoration:none;">${BRAND_DOMAIN}</a> website before entering sensitive data.</p>
-  <div style="height:1px;background:${BRAND_BORDER};margin-bottom:16px;"></div>
-  <p style="margin:0;font-size:12px;color:${BRAND_MUTED};">&copy; 2025-${year} <a href="https://${BRAND_DOMAIN}" style="color:${BRAND_ACCENT};text-decoration:none;">${BRAND_DOMAIN}</a> All Rights Reserved.</p>
+  <p style="margin:0 0 10px;font-size:12px;color:${BRAND_MUTED} !important;line-height:1.6;">Risk warning: Cryptocurrency trading involves high risk with significant price volatility and potential for substantial losses. Please trade with caution.</p>
+  <p style="margin:0 0 18px;font-size:12px;color:${BRAND_MUTED} !important;line-height:1.6;">Kindly note: Please be aware of phishing sites and confirm you are visiting the official <a href="https://${BRAND_DOMAIN}" style="color:${BRAND_ACCENT} !important;text-decoration:none;">${BRAND_DOMAIN}</a> website before entering sensitive data.</p>
+  <div style="height:1px;background:${BRAND_BORDER} !important;margin-bottom:16px;"></div>
+  <p style="margin:0;font-size:12px;color:${BRAND_MUTED} !important;">&copy; 2025-${year} <a href="https://${BRAND_DOMAIN}" style="color:${BRAND_ACCENT} !important;text-decoration:none;">${BRAND_DOMAIN}</a> All Rights Reserved.</p>
 </td></tr>`;
   }
 
   function buildHeader() {
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>P2P Order</title></head><body bgcolor="${BRAND_BG}" style="margin:0;padding:0;background:${BRAND_BG};font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="padding:20px 12px;background:${BRAND_BG};"><tr><td align="center" bgcolor="${BRAND_BG}" style="background:${BRAND_BG};"><table width="600" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="max-width:600px;width:100%;background:${BRAND_BG};border-radius:8px;overflow:hidden;border:1px solid ${BRAND_BORDER};">
-<tr><td style="padding:22px 28px;text-align:center;background:#000000;" bgcolor="#000000">
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>P2P Order</title><meta name="color-scheme" content="light dark"/><meta name="supported-color-schemes" content="light dark"/><style>:root{color-scheme:light dark;supported-color-schemes:light dark;}body,table,td{background-color:${BRAND_BG} !important;}[data-ogsc] body,[data-ogsc] table,[data-ogsc] td{background-color:${BRAND_BG} !important;}@media (prefers-color-scheme: light){body,table,td{background-color:${BRAND_BG} !important;}}</style></head><body bgcolor="${BRAND_BG}" style="margin:0;padding:0;background:${BRAND_BG} !important;font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="padding:20px 12px;background:${BRAND_BG} !important;"><tr><td align="center" bgcolor="${BRAND_BG}" style="background:${BRAND_BG} !important;"><table width="600" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="max-width:600px;width:100%;background:${BRAND_BG} !important;border-radius:8px;overflow:hidden;border:1px solid ${BRAND_BORDER};">
+<tr><td style="padding:22px 28px;text-align:center;background:#000000 !important;" bgcolor="#000000">
   <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
     <td style="padding-right:2px;vertical-align:middle;">
       <img src="https://${BRAND_DOMAIN}/cdn/brand/logo.png" width="22" height="22" alt="${BRAND_NAME}" style="display:block;border:0;border-radius:5px;"/>
     </td>
-    <td style="font-size:19px;font-weight:700;color:#ffffff;letter-spacing:0.2px;vertical-align:middle;">${BRAND_NAME.charAt(0) + BRAND_NAME.slice(1).toLowerCase()}</td>
+    <td style="font-size:19px;font-weight:700;color:#ffffff !important;letter-spacing:0.2px;vertical-align:middle;">${BRAND_NAME.charAt(0) + BRAND_NAME.slice(1).toLowerCase()}</td>
   </tr></table>
 </td></tr>
-<tr><td style="height:1px;background:${BRAND_BORDER};line-height:1px;font-size:0;">&nbsp;</td></tr>`;
+<tr><td style="height:1px;background:${BRAND_BORDER} !important;line-height:1px;font-size:0;">&nbsp;</td></tr>`;
   }
 
   function buildDetailsBox(order) {
@@ -153,12 +153,12 @@ function createP2PEmailService() {
       : new Date().toISOString().replace('T', ' ').slice(0, 19) + ' (UTC)';
     return `
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
-  <tr><td style="background:${BRAND_CARD};border:1px solid ${BRAND_BORDER};border-radius:6px;padding:18px 20px;">
+  <tr><td style="background:${BRAND_CARD} !important;border:1px solid ${BRAND_BORDER};border-radius:6px;padding:18px 20px;">
     <table width="100%" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_TEXT};width:160px;vertical-align:top;">Order ID:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${escapeHtml(String(order.id || 'N/A'))}</td></tr>
-      <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_TEXT};vertical-align:top;">Trade amount:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${escapeHtml(String(order.cryptoAmount || '0'))} ${escapeHtml(String(order.asset || 'USDT'))}</td></tr>
-      <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_TEXT};vertical-align:top;">Transaction amount:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${escapeHtml(String(order.fiatAmount || '0'))} ${escapeHtml(String(order.fiatCurrency || 'INR'))}</td></tr>
-      <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_TEXT};vertical-align:top;">Creation time:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${escapeHtml(creationTime)}</td></tr>
+      <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_TEXT} !important;width:160px;vertical-align:top;">Order ID:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${escapeHtml(String(order.id || 'N/A'))}</td></tr>
+      <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_TEXT} !important;vertical-align:top;">Trade amount:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${escapeHtml(String(order.cryptoAmount || '0'))} ${escapeHtml(String(order.asset || 'USDT'))}</td></tr>
+      <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_TEXT} !important;vertical-align:top;">Transaction amount:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${escapeHtml(String(order.fiatAmount || '0'))} ${escapeHtml(String(order.fiatCurrency || 'INR'))}</td></tr>
+      <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_TEXT} !important;vertical-align:top;">Creation time:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${escapeHtml(creationTime)}</td></tr>
     </table>
   </td></tr>
 </table>`;
@@ -174,15 +174,15 @@ function createP2PEmailService() {
       const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
       const subject = `[${BRAND_NAME}] [P2P] New Order Confirmation`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
-  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">[P2P] New Order Confirmation</h1>
-  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT};">Hi ${escapeHtml(maskedEmail)},</p>
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">Your buy order <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(order.id || ''))}</strong> has been created and the seller's funds have been locked. Please complete the order promptly as it will be automatically cancelled after <strong>15 minutes</strong>.</p>
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff !important;">[P2P] New Order Confirmation</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT} !important;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.7;">Your buy order <strong style="color:${BRAND_ACCENT} !important;">${escapeHtml(String(order.id || ''))}</strong> has been created and the seller's funds have been locked. Please complete the order promptly as it will be automatically cancelled after <strong>15 minutes</strong>.</p>
   ${buildDetailsBox(order)}
-  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT};text-decoration:none;font-weight:600;">View Details</a></p>
-  <p style="margin:0 0 28px;font-size:13px;color:${BRAND_TEXT};">If you do not recognize this activity, please <a href="https://${BRAND_DOMAIN}/support" style="color:${BRAND_ACCENT};text-decoration:none;">contact support</a>.</p>
-  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT};">${BRAND_NAME} Team</p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">Please do not reply to this email</p>
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT} !important;text-decoration:none;font-weight:600;">View Details</a></p>
+  <p style="margin:0 0 28px;font-size:13px;color:${BRAND_TEXT} !important;">If you do not recognize this activity, please <a href="https://${BRAND_DOMAIN}/support" style="color:${BRAND_ACCENT} !important;text-decoration:none;">contact support</a>.</p>
+  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT} !important;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">Please do not reply to this email</p>
 </td></tr>
 ${buildFooter()}
 ${closeHtml()}`;
@@ -201,42 +201,42 @@ ${closeHtml()}`;
       if (status === 'new_order_seller') {
         subject = `[${BRAND_NAME}] [P2P] New Order Received`;
         bodyContent = `
-  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">[P2P] New Order Received</h1>
-  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT};">Hi ${escapeHtml(maskedEmail)},</p>
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">A buyer has placed order <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(order.id || ''))}</strong>. Your funds have been locked in escrow. Please wait for the buyer to complete payment — once they confirm, you will receive another email to release the crypto.</p>
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff !important;">[P2P] New Order Received</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT} !important;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.7;">A buyer has placed order <strong style="color:${BRAND_ACCENT} !important;">${escapeHtml(String(order.id || ''))}</strong>. Your funds have been locked in escrow. Please wait for the buyer to complete payment — once they confirm, you will receive another email to release the crypto.</p>
   ${buildDetailsBox(order)}
-  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT};text-decoration:none;font-weight:600;">View Details</a></p>
-  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT};">${BRAND_NAME} Team</p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">Please do not reply to this email</p>`;
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT} !important;text-decoration:none;font-weight:600;">View Details</a></p>
+  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT} !important;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">Please do not reply to this email</p>`;
       } else if (status === 'payment_sent_seller') {
         subject = `[${BRAND_NAME}] [P2P] Action Required — Release Crypto`;
         bodyContent = `
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-    <tr><td style="background:#2a2410;border:1px solid ${BRAND_ACCENT};border-radius:8px;padding:14px 18px;">
-      <p style="margin:0;font-size:14px;font-weight:700;color:${BRAND_ACCENT};">&#9888; Action Required — Buyer has sent payment!</p>
+    <tr><td style="background:#2a2410 !important;border:1px solid ${BRAND_ACCENT};border-radius:8px;padding:14px 18px;">
+      <p style="margin:0;font-size:14px;font-weight:700;color:${BRAND_ACCENT} !important;">&#9888; Action Required — Buyer has sent payment!</p>
     </td></tr>
   </table>
-  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">[P2P] Release Crypto</h1>
-  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT};">Hi ${escapeHtml(maskedEmail)},</p>
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">The buyer has confirmed payment for order <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(order.id || ''))}</strong>. Please verify payment in your bank/UPI account and <strong>release the crypto</strong> to complete the trade.</p>
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff !important;">[P2P] Release Crypto</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT} !important;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.7;">The buyer has confirmed payment for order <strong style="color:${BRAND_ACCENT} !important;">${escapeHtml(String(order.id || ''))}</strong>. Please verify payment in your bank/UPI account and <strong>release the crypto</strong> to complete the trade.</p>
   ${buildDetailsBox(order)}
-  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT};text-decoration:none;font-weight:600;">Go to Order &rarr; Release Crypto</a></p>
-  <p style="margin:0 0 28px;font-size:13px;color:${BRAND_MUTED};">Do NOT release crypto until you have verified payment in your account.</p>
-  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT};">${BRAND_NAME} Team</p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">Please do not reply to this email</p>`;
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT} !important;text-decoration:none;font-weight:600;">Go to Order &rarr; Release Crypto</a></p>
+  <p style="margin:0 0 28px;font-size:13px;color:${BRAND_MUTED} !important;">Do NOT release crypto until you have verified payment in your account.</p>
+  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT} !important;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">Please do not reply to this email</p>`;
       } else {
         subject = `[${BRAND_NAME}] [P2P] Order Update`;
         bodyContent = `
-  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">[P2P] Order Update</h1>
-  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT};">Hi ${escapeHtml(maskedEmail)},</p>
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">Your P2P order <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(order.id || ''))}</strong> status has been updated to: <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(status || ''))}</strong>.</p>
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff !important;">[P2P] Order Update</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT} !important;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.7;">Your P2P order <strong style="color:${BRAND_ACCENT} !important;">${escapeHtml(String(order.id || ''))}</strong> status has been updated to: <strong style="color:${BRAND_ACCENT} !important;">${escapeHtml(String(status || ''))}</strong>.</p>
   ${buildDetailsBox(order)}
-  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT};text-decoration:none;font-weight:600;">View Details</a></p>
-  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT};">${BRAND_NAME} Team</p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">Please do not reply to this email</p>`;
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT} !important;text-decoration:none;font-weight:600;">View Details</a></p>
+  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT} !important;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">Please do not reply to this email</p>`;
       }
 
-      const html = buildHeader() + `<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">${bodyContent}</td></tr>` + buildFooter() + closeHtml();
+      const html = buildHeader() + `<tr><td style="padding:28px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">${bodyContent}</td></tr>` + buildFooter() + closeHtml();
       return sendEmail({ to: email, subject, text: `[P2P] Order ${order.id} update: ${status}`, html });
     } catch (e) {
       return { delivered: false, reason: e.message };
@@ -249,19 +249,19 @@ ${closeHtml()}`;
       const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
       const subject = `[${BRAND_NAME}] [P2P] Confirm Payment — 5 Minutes Left!`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-    <tr><td style="background:#2a2410;border:1px solid ${BRAND_ACCENT};border-radius:8px;padding:14px 18px;">
-      <p style="margin:0;font-size:14px;font-weight:700;color:${BRAND_ACCENT};">&#9888; Action Required — Only 5 Minutes Remaining!</p>
+    <tr><td style="background:#2a2410 !important;border:1px solid ${BRAND_ACCENT};border-radius:8px;padding:14px 18px;">
+      <p style="margin:0;font-size:14px;font-weight:700;color:${BRAND_ACCENT} !important;">&#9888; Action Required — Only 5 Minutes Remaining!</p>
     </td></tr>
   </table>
-  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">[P2P] Confirm Payment</h1>
-  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT};">Hi ${escapeHtml(maskedEmail)},</p>
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">You have a P2P order <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(order.id || ''))}</strong> that needs payment confirmation within the next <strong style="color:#e53935;">5 minutes</strong>, otherwise the order will be cancelled.</p>
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff !important;">[P2P] Confirm Payment</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT} !important;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.7;">You have a P2P order <strong style="color:${BRAND_ACCENT} !important;">${escapeHtml(String(order.id || ''))}</strong> that needs payment confirmation within the next <strong style="color:#e53935 !important;">5 minutes</strong>, otherwise the order will be cancelled.</p>
   ${buildDetailsBox(order)}
-  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT};text-decoration:none;font-weight:600;">View Details</a></p>
-  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT};">${BRAND_NAME} Team</p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">Please do not reply to this email</p>
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT} !important;text-decoration:none;font-weight:600;">View Details</a></p>
+  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT} !important;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">Please do not reply to this email</p>
 </td></tr>
 ${buildFooter()}
 ${closeHtml()}`;
@@ -283,18 +283,18 @@ ${closeHtml()}`;
       );
       const subject = `[${BRAND_NAME}] [P2P] Crypto Released — Funds Deposited`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
-  <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#ffffff;">P2P Trading Update</h1>
-  <p style="margin:0 0 18px;font-size:15px;color:${BRAND_TEXT};line-height:1.8;">Hi ${escapeHtml(maskedEmail)},</p>
-  <p style="margin:0 0 18px;font-size:15px;color:${BRAND_TEXT};line-height:1.8;">
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
+  <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#ffffff !important;">P2P Trading Update</h1>
+  <p style="margin:0 0 18px;font-size:15px;color:${BRAND_TEXT} !important;line-height:1.8;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:15px;color:${BRAND_TEXT} !important;line-height:1.8;">
     <strong>${escapeHtml(sellerName)}</strong> has released the crypto and
-    <strong style="color:${BRAND_ACCENT};">${cryptoAmount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</strong>
+    <strong style="color:${BRAND_ACCENT} !important;">${cryptoAmount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</strong>
     have been deposited into your account.<br/>
     Order no. <strong>${escapeHtml(String(order.id || 'N/A'))}</strong>
   </p>
-  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT};text-decoration:none;font-weight:600;">View Details</a></p>
-  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT};">${BRAND_NAME} Team</p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">Please do not reply to this email</p>
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT} !important;text-decoration:none;font-weight:600;">View Details</a></p>
+  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT} !important;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">Please do not reply to this email</p>
 </td></tr>
 ${buildFooter()}
 ${closeHtml()}`;
@@ -324,14 +324,14 @@ ${closeHtml()}`;
       const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
       const subject = `[${BRAND_NAME}] [P2P] Order Cancelled`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
-  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">[P2P] Order Cancelled</h1>
-  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT};">Hi ${escapeHtml(maskedEmail)},</p>
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">Your P2P order <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(order.id || 'N/A'))}</strong> has been cancelled. Any locked funds have been returned to your account.</p>
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff !important;">[P2P] Order Cancelled</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT} !important;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.7;">Your P2P order <strong style="color:${BRAND_ACCENT} !important;">${escapeHtml(String(order.id || 'N/A'))}</strong> has been cancelled. Any locked funds have been returned to your account.</p>
   ${buildDetailsBox(order)}
-  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT};text-decoration:none;font-weight:600;">View Details</a></p>
-  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT};">${BRAND_NAME} Team</p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">Please do not reply to this email</p>
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT} !important;text-decoration:none;font-weight:600;">View Details</a></p>
+  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT} !important;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">Please do not reply to this email</p>
 </td></tr>
 ${buildFooter()}
 ${closeHtml()}`;
@@ -347,19 +347,19 @@ ${closeHtml()}`;
       const maskedEmail = email.replace(/^(.{4}).*(@.*)$/, '$1****$2');
       const subject = `[${BRAND_NAME}] [P2P] Dispute Raised — Order ${escapeHtml(String(order.id || ''))}`;
       const html = buildHeader() + `
-<tr><td style="padding:28px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
+<tr><td style="padding:28px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-    <tr><td style="background:#2a1414;border:1px solid #ff6b6b;border-radius:8px;padding:14px 18px;">
-      <p style="margin:0;font-size:14px;font-weight:700;color:#ff6b6b;">&#9888; A dispute has been raised on this order.</p>
+    <tr><td style="background:#2a1414 !important;border:1px solid #ff6b6b;border-radius:8px;padding:14px 18px;">
+      <p style="margin:0;font-size:14px;font-weight:700;color:#ff6b6b !important;">&#9888; A dispute has been raised on this order.</p>
     </td></tr>
   </table>
-  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">[P2P] Dispute Raised</h1>
-  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT};">Hi ${escapeHtml(maskedEmail)},</p>
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">A dispute has been raised by <strong>${escapeHtml(String(raisedBy || 'a participant'))}</strong> on order <strong style="color:${BRAND_ACCENT};">${escapeHtml(String(order.id || 'N/A'))}</strong>. Our support team will review and resolve it shortly.</p>
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff !important;">[P2P] Dispute Raised</h1>
+  <p style="margin:0 0 14px;font-size:14px;color:${BRAND_TEXT} !important;">Hi ${escapeHtml(maskedEmail)},</p>
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.7;">A dispute has been raised by <strong>${escapeHtml(String(raisedBy || 'a participant'))}</strong> on order <strong style="color:${BRAND_ACCENT} !important;">${escapeHtml(String(order.id || 'N/A'))}</strong>. Our support team will review and resolve it shortly.</p>
   ${buildDetailsBox(order)}
-  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT};text-decoration:none;font-weight:600;">View Order</a></p>
-  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT};">${BRAND_NAME} Team</p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">Please do not reply to this email</p>
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/p2p" style="color:${BRAND_ACCENT} !important;text-decoration:none;font-weight:600;">View Order</a></p>
+  <p style="margin:0 0 4px;font-size:13px;color:${BRAND_TEXT} !important;">${BRAND_NAME} Team</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">Please do not reply to this email</p>
 </td></tr>
 ${buildFooter()}
 ${closeHtml()}`;

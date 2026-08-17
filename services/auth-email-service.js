@@ -52,30 +52,30 @@ function buildEmailShell({ title, subtitle, bodyHtml }) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escapeHtml(title)}</title>
   </head>
-  <body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#111;">
+  <body style="margin:0;padding:0;background:#f4f4f5 !important;font-family:Arial,Helvetica,sans-serif;color:#111 !important;">
     <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 12px;">
       <tr>
         <td align="center">
-          <table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff;border:1px solid #e5e7eb;">
+          <table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff !important;border:1px solid #e5e7eb;">
             <tr>
-              <td style="background:${BRAND_DARK};padding:20px 28px;">
-                <div style="font-size:32px;font-weight:800;letter-spacing:0.5px;color:${BRAND_ACCENT};">${BRAND_NAME}</div>
+              <td style="background:${BRAND_DARK} !important;padding:20px 28px;">
+                <div style="font-size:32px;font-weight:800;letter-spacing:0.5px;color:${BRAND_ACCENT} !important;">${BRAND_NAME}</div>
               </td>
             </tr>
             <tr>
               <td style="padding:28px;">
-                <h1 style="margin:0 0 10px;font-size:34px;line-height:1.1;color:#111;">${escapeHtml(title)}</h1>
-                <p style="margin:0 0 22px;font-size:16px;line-height:1.5;color:#374151;">${escapeHtml(subtitle)}</p>
+                <h1 style="margin:0 0 10px;font-size:34px;line-height:1.1;color:#111 !important;">${escapeHtml(title)}</h1>
+                <p style="margin:0 0 22px;font-size:16px;line-height:1.5;color:#374151 !important;">${escapeHtml(subtitle)}</p>
                 ${bodyHtml}
-                <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#4b5563;"><em>This is an automated message, please do not reply.</em></p>
+                <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#4b5563 !important;"><em>This is an automated message, please do not reply.</em></p>
               </td>
             </tr>
             <tr>
               <td style="padding:24px 28px;border-top:1px solid #e5e7eb;">
-                <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#4b5563;">
+                <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#4b5563 !important;">
                   Keep your account secure. Never share verification codes with anyone.
                 </p>
-                <p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">
+                <p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280 !important;">
                   © ${new Date().getUTCFullYear()} ${BRAND_NAME}. All rights reserved.
                 </p>
               </td>
@@ -216,61 +216,61 @@ async function sendViaProvider({ to, subject, text, html }) {
 }
 
 function buildBitegitHeader() {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head><body bgcolor="${BRAND_BG}" style="margin:0;padding:0;background:${BRAND_BG};font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="padding:20px 12px;background:${BRAND_BG};"><tr><td align="center" bgcolor="${BRAND_BG}" style="background:${BRAND_BG};"><table width="600" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="max-width:600px;width:100%;background:${BRAND_BG};border-radius:8px;overflow:hidden;border:1px solid ${BRAND_BORDER};">
-<tr><td style="padding:22px 28px;text-align:center;background:#000000;" bgcolor="#000000">
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="light dark"/><meta name="supported-color-schemes" content="light dark"/><style>:root{color-scheme:light dark;supported-color-schemes:light dark;}body,table,td{background-color:${BRAND_BG} !important;}[data-ogsc] body,[data-ogsc] table,[data-ogsc] td{background-color:${BRAND_BG} !important;}@media (prefers-color-scheme: light){body,table,td{background-color:${BRAND_BG} !important;}}</style></head><body bgcolor="${BRAND_BG}" style="margin:0;padding:0;background:${BRAND_BG} !important;font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="padding:20px 12px;background:${BRAND_BG} !important;"><tr><td align="center" bgcolor="${BRAND_BG}" style="background:${BRAND_BG} !important;"><table width="600" cellpadding="0" cellspacing="0" bgcolor="${BRAND_BG}" style="max-width:600px;width:100%;background:${BRAND_BG} !important;border-radius:8px;overflow:hidden;border:1px solid ${BRAND_BORDER};">
+<tr><td style="padding:22px 28px;text-align:center;background:#000000 !important;" bgcolor="#000000">
   <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
     <td style="padding-right:2px;vertical-align:middle;">
       <img src="https://${BRAND_DOMAIN}/cdn/brand/logo.png" width="22" height="22" alt="${BRAND_NAME}" style="display:block;border:0;border-radius:5px;"/>
     </td>
-    <td style="font-size:19px;font-weight:700;color:#ffffff;letter-spacing:0.2px;vertical-align:middle;">${BRAND_NAME.charAt(0) + BRAND_NAME.slice(1).toLowerCase()}</td>
+    <td style="font-size:19px;font-weight:700;color:#ffffff !important;letter-spacing:0.2px;vertical-align:middle;">${BRAND_NAME.charAt(0) + BRAND_NAME.slice(1).toLowerCase()}</td>
   </tr></table>
 </td></tr>
-<tr><td style="height:1px;background:${BRAND_BORDER};line-height:1px;font-size:0;">&nbsp;</td></tr>`;
+<tr><td style="height:1px;background:${BRAND_BORDER} !important;line-height:1px;font-size:0;">&nbsp;</td></tr>`;
 }
 
 function buildBitegitFooter() {
   const year = new Date().getFullYear();
-  return `<tr><td style="padding:24px 28px 28px;border-top:1px solid ${BRAND_BORDER};background:${BRAND_BG};" bgcolor="${BRAND_BG}">
-<p style="margin:0 0 14px;font-size:15px;color:#ffffff;font-weight:700;">Contact Us</p>
-<p style="margin:0 0 4px;font-size:13px;color:${BRAND_MUTED};">24*7 customer service or email <a href="mailto:support@${BRAND_DOMAIN}" style="color:${BRAND_ACCENT};text-decoration:none;">support@${BRAND_DOMAIN}</a></p>
-<p style="margin:0 0 18px;font-size:12px;color:${BRAND_MUTED};">* This email is sent automatically and you do not need to reply.</p>
+  return `<tr><td style="padding:24px 28px 28px;border-top:1px solid ${BRAND_BORDER};background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
+<p style="margin:0 0 14px;font-size:15px;color:#ffffff !important;font-weight:700;">Contact Us</p>
+<p style="margin:0 0 4px;font-size:13px;color:${BRAND_MUTED} !important;">24*7 customer service or email <a href="mailto:support@${BRAND_DOMAIN}" style="color:${BRAND_ACCENT} !important;text-decoration:none;">support@${BRAND_DOMAIN}</a></p>
+<p style="margin:0 0 18px;font-size:12px;color:${BRAND_MUTED} !important;">* This email is sent automatically and you do not need to reply.</p>
 <table cellpadding="0" cellspacing="0" style="margin:0 0 22px 0;"><tr><td>
-  <a href="https://${BRAND_DOMAIN}/support" style="display:inline-block;border:1px solid ${BRAND_ACCENT};border-radius:20px;padding:8px 22px;text-decoration:none;font-size:13px;font-weight:700;color:${BRAND_ACCENT};">Consult</a>
+  <a href="https://${BRAND_DOMAIN}/support" style="display:inline-block;border:1px solid ${BRAND_ACCENT};border-radius:20px;padding:8px 22px;text-decoration:none;font-size:13px;font-weight:700;color:${BRAND_ACCENT} !important;">Consult</a>
 </td></tr></table>
 <table cellpadding="0" cellspacing="0" style="margin:0 0 22px 0;"><tr>
   <td style="padding-right:10px;">
-    <a href="#" style="display:inline-block;background:#000000;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
-      <span style="display:block;font-size:9px;color:#ccc;letter-spacing:0.5px;line-height:1.4;">GET IT ON</span>
-      <span style="display:block;font-size:16px;color:#fff;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">Google Play</span>
+    <a href="#" style="display:inline-block;background:#000000 !important;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
+      <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">GET IT ON</span>
+      <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">Google Play</span>
     </a>
   </td>
   <td>
-    <a href="#" style="display:inline-block;background:#000000;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
-      <span style="display:block;font-size:9px;color:#ccc;letter-spacing:0.5px;line-height:1.4;">Download on the</span>
-      <span style="display:block;font-size:16px;color:#fff;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">App Store</span>
+    <a href="#" style="display:inline-block;background:#000000 !important;border-radius:10px;padding:10px 20px;text-decoration:none;border:1px solid #333;min-width:140px;">
+      <span style="display:block;font-size:9px;color:#ccc !important;letter-spacing:0.5px;line-height:1.4;">Download on the</span>
+      <span style="display:block;font-size:16px;color:#fff !important;font-weight:700;font-family:Arial,sans-serif;line-height:1.3;">App Store</span>
     </a>
   </td>
 </tr></table>
-<p style="margin:0 0 10px;font-size:12px;color:${BRAND_MUTED};line-height:1.6;">Risk warning: Cryptocurrency trading involves high risk with significant price volatility and potential for substantial losses. Please trade with caution.</p>
-<p style="margin:0 0 18px;font-size:12px;color:${BRAND_MUTED};line-height:1.6;">Kindly note: Please be aware of phishing sites and confirm you are visiting the official <a href="https://${BRAND_DOMAIN}" style="color:${BRAND_ACCENT};text-decoration:none;">${BRAND_DOMAIN}</a> website before entering sensitive data.</p>
-<div style="height:1px;background:${BRAND_BORDER};margin-bottom:16px;"></div>
-<p style="margin:0;font-size:12px;color:${BRAND_MUTED};">&copy; 2025-${year} <a href="https://${BRAND_DOMAIN}" style="color:${BRAND_ACCENT};text-decoration:none;">${BRAND_DOMAIN}</a> All Rights Reserved.</p>
+<p style="margin:0 0 10px;font-size:12px;color:${BRAND_MUTED} !important;line-height:1.6;">Risk warning: Cryptocurrency trading involves high risk with significant price volatility and potential for substantial losses. Please trade with caution.</p>
+<p style="margin:0 0 18px;font-size:12px;color:${BRAND_MUTED} !important;line-height:1.6;">Kindly note: Please be aware of phishing sites and confirm you are visiting the official <a href="https://${BRAND_DOMAIN}" style="color:${BRAND_ACCENT} !important;text-decoration:none;">${BRAND_DOMAIN}</a> website before entering sensitive data.</p>
+<div style="height:1px;background:${BRAND_BORDER} !important;margin-bottom:16px;"></div>
+<p style="margin:0;font-size:12px;color:${BRAND_MUTED} !important;">&copy; 2025-${year} <a href="https://${BRAND_DOMAIN}" style="color:${BRAND_ACCENT} !important;text-decoration:none;">${BRAND_DOMAIN}</a> All Rights Reserved.</p>
 </td></tr></table></td></tr></table></body></html>`;
 }
 
 function createOtpTemplate({ title, code, expiresInMinutes, note, maskedEmail = '' }) {
   return buildBitegitHeader() + `
-<tr><td style="padding:32px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};">Dear ${BRAND_NAME} user${maskedEmail ? ` (${escapeHtml(maskedEmail)})` : ''}:</p>
-  <h1 style="margin:0 0 24px;font-size:24px;font-weight:800;color:#ffffff;line-height:1.4;">${escapeHtml(title)}</h1>
-  <div style="font-size:40px;font-weight:800;letter-spacing:6px;color:#ffffff;margin-bottom:18px;">
+<tr><td style="padding:32px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;">Dear ${BRAND_NAME} user${maskedEmail ? ` (${escapeHtml(maskedEmail)})` : ''}:</p>
+  <h1 style="margin:0 0 24px;font-size:24px;font-weight:800;color:#ffffff !important;line-height:1.4;">${escapeHtml(title)}</h1>
+  <div style="font-size:40px;font-weight:800;letter-spacing:6px;color:#ffffff !important;margin-bottom:18px;">
     ${escapeHtml(String(code))}
   </div>
-  <p style="margin:0 0 10px;font-size:14px;color:${BRAND_TEXT};">Verification code is valid for ${Number(expiresInMinutes)} minutes.</p>
-  <p style="margin:0 0 24px;font-size:14px;color:${BRAND_TEXT};line-height:1.6;">${escapeHtml(note)}</p>
-  <p style="margin:0 0 6px;font-size:14px;color:${BRAND_TEXT};">Thank you for your support and trust in ${BRAND_NAME}.</p>
-  <p style="margin:0 0 28px;font-size:14px;color:${BRAND_TEXT};">${BRAND_NAME} TEAM</p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">The message was sent automatically by the system. Please do not reply to this message.</p>
+  <p style="margin:0 0 10px;font-size:14px;color:${BRAND_TEXT} !important;">Verification code is valid for ${Number(expiresInMinutes)} minutes.</p>
+  <p style="margin:0 0 24px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.6;">${escapeHtml(note)}</p>
+  <p style="margin:0 0 6px;font-size:14px;color:${BRAND_TEXT} !important;">Thank you for your support and trust in ${BRAND_NAME}.</p>
+  <p style="margin:0 0 28px;font-size:14px;color:${BRAND_TEXT} !important;">${BRAND_NAME} TEAM</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">The message was sent automatically by the system. Please do not reply to this message.</p>
 </td></tr>
 ` + buildBitegitFooter();
 }
@@ -278,25 +278,25 @@ function createOtpTemplate({ title, code, expiresInMinutes, note, maskedEmail = 
 function createNewDeviceTemplate({ email, loginTimeUtc, ipAddress, userAgent, location }) {
   const maskedEmail = String(email).replace(/^(.{4}).*(@.*)$/, '$1****$2');
   return buildBitegitHeader() + `
-<tr><td style="padding:32px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
-  <div style="background:#2a2410;border:1px solid ${BRAND_ACCENT};border-radius:8px;padding:14px 18px;margin-bottom:20px;">
-    <span style="font-size:14px;font-weight:700;color:${BRAND_ACCENT};">&#9888; New Device or Location Login Detected</span>
+<tr><td style="padding:32px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
+  <div style="background:#2a2410 !important;border:1px solid ${BRAND_ACCENT};border-radius:8px;padding:14px 18px;margin-bottom:20px;">
+    <span style="font-size:14px;font-weight:700;color:${BRAND_ACCENT} !important;">&#9888; New Device or Location Login Detected</span>
   </div>
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};">Dear ${BRAND_NAME} user (${escapeHtml(maskedEmail)}):</p>
-  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff;">New Device Login Alert</h1>
-  <p style="margin:0 0 20px;font-size:14px;color:${BRAND_TEXT};line-height:1.7;">We detected a login to your account from a new device or IP address. If this was you, no action is needed. If not, <strong style="color:#ff6b6b;">reset your password immediately.</strong></p>
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;">Dear ${BRAND_NAME} user (${escapeHtml(maskedEmail)}):</p>
+  <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;color:#ffffff !important;">New Device Login Alert</h1>
+  <p style="margin:0 0 20px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.7;">We detected a login to your account from a new device or IP address. If this was you, no action is needed. If not, <strong style="color:#ff6b6b !important;">reset your password immediately.</strong></p>
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
-    <tr><td style="background:${BRAND_CARD};border:1px solid ${BRAND_BORDER};border-radius:6px;padding:18px 20px;">
+    <tr><td style="background:${BRAND_CARD} !important;border:1px solid ${BRAND_BORDER};border-radius:6px;padding:18px 20px;">
       <table width="100%" cellpadding="0" cellspacing="0">
-        <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_MUTED};width:130px;vertical-align:top;">Login time:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${escapeHtml(loginTimeUtc)}</td></tr>
-        <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_MUTED};vertical-align:top;">IP Address:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${escapeHtml(ipAddress)}</td></tr>
-        <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_MUTED};vertical-align:top;">Device:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;word-break:break-all;">${escapeHtml(userAgent)}</td></tr>
-        <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_MUTED};vertical-align:top;">Location:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${escapeHtml(location)}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_MUTED} !important;width:130px;vertical-align:top;">Login time:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${escapeHtml(loginTimeUtc)}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_MUTED} !important;vertical-align:top;">IP Address:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${escapeHtml(ipAddress)}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_MUTED} !important;vertical-align:top;">Device:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;word-break:break-all;">${escapeHtml(userAgent)}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;color:${BRAND_MUTED} !important;vertical-align:top;">Location:</td><td style="padding:6px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${escapeHtml(location)}</td></tr>
       </table>
     </td></tr>
   </table>
-  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/support" style="color:${BRAND_ACCENT};text-decoration:none;font-weight:600;">Secure my account</a></p>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">The message was sent automatically by the system. Please do not reply to this message.</p>
+  <p style="margin:0 0 10px;font-size:14px;"><a href="https://${BRAND_DOMAIN}/support" style="color:${BRAND_ACCENT} !important;text-decoration:none;font-weight:600;">Secure my account</a></p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">The message was sent automatically by the system. Please do not reply to this message.</p>
 </td></tr>
 ` + buildBitegitFooter();
 }
@@ -363,18 +363,18 @@ function createAuthEmailService() {
     const subject = `[${BRAND_NAME}] ${asset} Deposit Successful`;
     const text = `${asset} Deposit Successful. Amount: ${amount} ${asset}.`;
     const html = buildBitegitHeader() + `
-<tr><td style="padding:32px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};">Dear ${BRAND_NAME} user (${escapeHtml(maskedEmail)}):</p>
-  <h1 style="margin:0 0 20px;font-size:24px;font-weight:800;color:#ffffff;">Deposit successful</h1>
+<tr><td style="padding:32px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;">Dear ${BRAND_NAME} user (${escapeHtml(maskedEmail)}):</p>
+  <h1 style="margin:0 0 20px;font-size:24px;font-weight:800;color:#ffffff !important;">Deposit successful</h1>
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
-    <tr><td style="background:${BRAND_CARD};border:1px solid ${BRAND_BORDER};border-radius:6px;padding:18px 20px;">
+    <tr><td style="background:${BRAND_CARD} !important;border:1px solid ${BRAND_BORDER};border-radius:6px;padding:18px 20px;">
       <table width="100%" cellpadding="0" cellspacing="0">
-        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED};white-space:nowrap;width:155px;vertical-align:top;">Transaction time:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${escapeHtml(depositTime)}</td></tr>
-        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED};vertical-align:top;">Crypto received:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${amount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED} !important;white-space:nowrap;width:155px;vertical-align:top;">Transaction time:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${escapeHtml(depositTime)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED} !important;vertical-align:top;">Crypto received:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${amount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</td></tr>
       </table>
     </td></tr>
   </table>
-  <p style="margin:0 0 28px;font-size:14px;color:${BRAND_TEXT};">Go to your assets to check for details.</p>
+  <p style="margin:0 0 28px;font-size:14px;color:${BRAND_TEXT} !important;">Go to your assets to check for details.</p>
 </td></tr>
 ` + buildBitegitFooter();
     return sendViaProvider({ to: email, subject, text, html });
@@ -391,22 +391,22 @@ function createAuthEmailService() {
     const subject = `[${BRAND_NAME}] ${asset} Withdrawal Successful`;
     const text = `${asset} Withdrawal Successful. Amount: ${amount} ${asset}. Address: ${address}. TxId: ${txId}`;
     const html = buildBitegitHeader() + `
-<tr><td style="padding:32px 28px 0;background:${BRAND_BG};" bgcolor="${BRAND_BG}">
-  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT};">Dear ${BRAND_NAME} user (${escapeHtml(maskedEmail)}):</p>
-  <h1 style="margin:0 0 16px;font-size:24px;font-weight:800;color:#ffffff;">Withdrawal successful</h1>
-  <p style="margin:0 0 20px;font-size:14px;color:${BRAND_TEXT};line-height:1.6;">Withdrawal has been successful. Check the details below:</p>
+<tr><td style="padding:32px 28px 0;background:${BRAND_BG} !important;" bgcolor="${BRAND_BG}">
+  <p style="margin:0 0 18px;font-size:14px;color:${BRAND_TEXT} !important;">Dear ${BRAND_NAME} user (${escapeHtml(maskedEmail)}):</p>
+  <h1 style="margin:0 0 16px;font-size:24px;font-weight:800;color:#ffffff !important;">Withdrawal successful</h1>
+  <p style="margin:0 0 20px;font-size:14px;color:${BRAND_TEXT} !important;line-height:1.6;">Withdrawal has been successful. Check the details below:</p>
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
-    <tr><td style="background:${BRAND_CARD};border:1px solid ${BRAND_BORDER};border-radius:6px;padding:18px 20px;">
+    <tr><td style="background:${BRAND_CARD} !important;border:1px solid ${BRAND_BORDER};border-radius:6px;padding:18px 20px;">
       <table width="100%" cellpadding="0" cellspacing="0">
-        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED};white-space:nowrap;width:155px;vertical-align:top;">Withdrawal time:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${escapeHtml(withdrawalTime)}</td></tr>
-        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED};vertical-align:top;">Amount:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${amount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</td></tr>
-        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED};vertical-align:top;">Withdrawal address:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;word-break:break-all;">${escapeHtml(address)}</td></tr>
-        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED};vertical-align:top;">TxID:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;word-break:break-all;">${escapeHtml(txId)}</td></tr>
-        ${fee > 0 ? `<tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED};vertical-align:top;">Transaction fees:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT};font-weight:500;">${fee} ${escapeHtml(asset)}</td></tr>` : ''}
+        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED} !important;white-space:nowrap;width:155px;vertical-align:top;">Withdrawal time:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${escapeHtml(withdrawalTime)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED} !important;vertical-align:top;">Amount:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${amount.toLocaleString(undefined,{maximumFractionDigits:8})} ${escapeHtml(asset)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED} !important;vertical-align:top;">Withdrawal address:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;word-break:break-all;">${escapeHtml(address)}</td></tr>
+        <tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED} !important;vertical-align:top;">TxID:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;word-break:break-all;">${escapeHtml(txId)}</td></tr>
+        ${fee > 0 ? `<tr><td style="padding:7px 0;font-size:14px;color:${BRAND_MUTED} !important;vertical-align:top;">Transaction fees:</td><td style="padding:7px 0;font-size:14px;color:${BRAND_ACCENT} !important;font-weight:500;">${fee} ${escapeHtml(asset)}</td></tr>` : ''}
       </table>
     </td></tr>
   </table>
-  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED};">*This is an automated email notification.</p>
+  <p style="margin:0 0 28px;font-size:12px;color:${BRAND_MUTED} !important;">*This is an automated email notification.</p>
 </td></tr>
 ` + buildBitegitFooter();
     return sendViaProvider({ to: email, subject, text, html });
