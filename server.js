@@ -535,7 +535,7 @@ const HTML_TO_CLEAN_URL = {
   '/rewards.html': '/rewards',
   '/p2p-appeal.html': '/p2p-appeal',
   '/p2p-ratings.html': '/p2p-ratings',
-  '/app.html': '/app'
+  '/app.html': '/app-home'
 };
 app.use((req, res, next) => {
   const cleanUrl = HTML_TO_CLEAN_URL[req.path];
@@ -6452,7 +6452,7 @@ const CLEAN_STATIC_PAGES = {
   '/gate-trade': 'gate-trade.html',
   '/terms': 'terms.html',
   '/privacy': 'privacy.html',
-  '/app': 'app.html'
+  '/app-home': 'app.html'
 };
 Object.entries(CLEAN_STATIC_PAGES).forEach(([cleanPath, fileName]) => {
   app.get(cleanPath, (req, res) => {
