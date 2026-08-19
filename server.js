@@ -1318,6 +1318,28 @@ const loginAttemptLimiter = createIpAttemptLimiter({
   windowMs: 15 * 60 * 1000  // 15-minute lockout after 5 failed attempts
 });
 
+// A 6-digit OTP (900,000 possibilities) is brute-forceable in its 10-minute
+// validity window without a strict limiter — this caps both the requesting
+// IP and the target email independently, so an attacker can't just rotate IPs.
+const resetPasswordIpLimiter = createIpAttemptLimiter({
+  maxAttempts: 8,
+  windowMs: 15 * 60 * 1000
+});
+const resetPasswordEmailLimiter = createIpAttemptLimiter({
+  maxAttempts: 8,
+  windowMs: 15 * 60 * 1000
+});
+const MAX_RESET_OTP_ATTEMPTS = 5;
+
+// Guest support-chat tickets are looked up by ticketId with no login (by
+// design — a user without an account can still get support). That makes
+// ticketId itself a bearer token, so without a limiter here an attacker
+// could script through IDs and read/post into other people's conversations.
+const supportTicketLookupLimiter = createIpAttemptLimiter({
+  maxAttempts: 30,
+  windowMs: 5 * 60 * 1000
+});
+
 async function createSession() {
   const token = createToken();
   await repos.createAdminSession(token, Date.now() + SESSION_TTL_MS);
@@ -2169,9 +2191,27 @@ app.post('/api/p2p/reset-password', async (req, res) => {
   const newPassword = String(req.body.newPassword || '').trim();
   if (!email || !code || !newPassword) return res.status(400).json({ message: 'Email, code and new password required.' });
   if (newPassword.length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+
+  const requestIp = getRequestIp(req);
+  const ipCheck = resetPasswordIpLimiter(`reset_pw_ip:${requestIp}`);
+  const emailCheck = resetPasswordEmailLimiter(`reset_pw_email:${email}`);
+  if (!ipCheck.allowed || !emailCheck.allowed) {
+    const retryAfterSeconds = Math.max(ipCheck.retryAfterSeconds || 0, emailCheck.retryAfterSeconds || 0);
+    res.setHeader('Retry-After', String(retryAfterSeconds));
+    return res.status(429).json({ message: 'Too many attempts. Please try again later.', retryAfterSeconds });
+  }
+
   try {
     const otp = await repos.getSignupOtp(email, { purpose: 'p2p_password_reset' });
-    if (!otp || otp.code !== code || new Date(otp.expiresAt) < new Date()) {
+    if (!otp || new Date(otp.expiresAt) < new Date()) {
+      return res.status(400).json({ message: 'Invalid or expired reset code.' });
+    }
+    if (Number(otp.attempts || 0) >= MAX_RESET_OTP_ATTEMPTS) {
+      await repos.deleteSignupOtp(email, { purpose: 'p2p_password_reset' });
+      return res.status(400).json({ message: 'Too many incorrect attempts. Please request a new reset code.' });
+    }
+    if (otp.code !== code) {
+      await repos.incrementSignupOtpAttempts(email, { purpose: 'p2p_password_reset' });
       return res.status(400).json({ message: 'Invalid or expired reset code.' });
     }
     const hash = repos.hashPassword(newPassword);
@@ -5707,7 +5747,10 @@ app.post('/api/support/chat', async (req, res) => {
       return res.status(400).json({ message: 'Message is required.' });
     }
     const ticketData = {
-      id: `tkt_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      // Guest tickets are looked up by this ID with no login, so it doubles
+      // as a bearer token — needs real entropy, not Math.random() + a
+      // guessable timestamp.
+      id: `tkt_${crypto.randomBytes(16).toString('hex')}`,
       userId: email || 'guest',
       subject: topic ? `[${topic}] ${String(message).slice(0, 60)}` : String(message).slice(0, 80),
       status: 'OPEN',
@@ -5747,6 +5790,11 @@ app.post('/api/support/chat', async (req, res) => {
 
 // ── Public: get ticket messages (user polling for admin replies) ──────────────
 app.get('/api/support/ticket/:ticketId/messages', async (req, res) => {
+  const ticketCheck = supportTicketLookupLimiter(`support_ticket:${getRequestIp(req)}`);
+  if (!ticketCheck.allowed) {
+    res.setHeader('Retry-After', String(ticketCheck.retryAfterSeconds));
+    return res.status(429).json({ message: 'Too many requests. Please try again later.' });
+  }
   try {
     const { ticketId } = req.params;
     if (!ticketId) return res.status(400).json({ message: 'ticketId required' });
@@ -5777,6 +5825,11 @@ app.get('/api/support/ticket/:ticketId/messages', async (req, res) => {
 
 // ── Public: user sends a reply on an existing ticket ─────────────────────────
 app.post('/api/support/ticket/:ticketId/user-reply', async (req, res) => {
+  const ticketReplyCheck = supportTicketLookupLimiter(`support_ticket:${getRequestIp(req)}`);
+  if (!ticketReplyCheck.allowed) {
+    res.setHeader('Retry-After', String(ticketReplyCheck.retryAfterSeconds));
+    return res.status(429).json({ message: 'Too many requests. Please try again later.' });
+  }
   try {
     const { ticketId } = req.params;
     const { message, name } = req.body || {};
