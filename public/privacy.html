@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <title>Privacy Policy — Bitcovex</title>
+  <script>document.documentElement.classList.add('js');</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -32,6 +33,16 @@
     .notice { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--muted); margin-bottom: 24px; }
     a { color: var(--accent); }
     .back { display: inline-block; margin-top: 32px; font-size: 13px; color: var(--muted); text-decoration: none; }
+
+    /* Smooth "slides up from below" reveal — content is visible by default
+       (no JS / reduced motion) and only animates when JS + IntersectionObserver
+       are available, so nothing ever gets stuck invisible. */
+    .reveal { transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1); }
+    .js .reveal { opacity: 0; transform: translateY(28px); }
+    .js .reveal.is-visible { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .js .reveal { opacity: 1; transform: none; transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -39,59 +50,93 @@
     <a href="/" class="topbar">
       <img src="/images/bitbase-logo.png" alt="Bitcovex" width="32" height="32" />
     </a>
-    <h1>Privacy Policy</h1>
-    <div class="updated">Last updated: August 20, 2026</div>
 
-    <div class="notice">
-      This document is a general template and does not constitute legal advice. Have it reviewed against the
-      data-protection laws that apply to where your users live (e.g. GDPR, DPDP Act, CCPA) before relying on it.
+    <div class="reveal">
+      <h1>Privacy Policy</h1>
+      <div class="updated">Last updated: August 20, 2026</div>
+      <div class="notice">
+        This document is a general template and does not constitute legal advice. Have it reviewed against the
+        data-protection laws that apply to where your users live (e.g. GDPR, DPDP Act, CCPA) before relying on it.
+      </div>
     </div>
 
-    <h2>1. What We Collect</h2>
-    <table>
-      <tr><th>Category</th><th>Examples</th></tr>
-      <tr><td>Account data</td><td>Email, username, password hash, phone number</td></tr>
-      <tr><td>KYC data</td><td>Government ID, selfie/liveness check, proof of address</td></tr>
-      <tr><td>Financial data</td><td>Wallet addresses, deposit/withdrawal history, P2P order &amp; payment method details</td></tr>
-      <tr><td>Usage data</td><td>IP address, device/browser info, login history, session tokens</td></tr>
-      <tr><td>Support data</td><td>Messages you send to support, attached screenshots/documents</td></tr>
-    </table>
+    <div class="reveal">
+      <h2>1. What We Collect</h2>
+      <table>
+        <tr><th>Category</th><th>Examples</th></tr>
+        <tr><td>Account data</td><td>Email, username, password hash, phone number</td></tr>
+        <tr><td>KYC data</td><td>Government ID, selfie/liveness check, proof of address</td></tr>
+        <tr><td>Financial data</td><td>Wallet addresses, deposit/withdrawal history, P2P order &amp; payment method details</td></tr>
+        <tr><td>Usage data</td><td>IP address, device/browser info, login history, session tokens</td></tr>
+        <tr><td>Support data</td><td>Messages you send to support, attached screenshots/documents</td></tr>
+      </table>
+    </div>
 
-    <h2>2. Why We Collect It</h2>
-    <ul>
-      <li>To create and secure your account, and to authenticate you.</li>
-      <li>To meet legal KYC/AML obligations and respond to lawful requests from regulators or law enforcement.</li>
-      <li>To process deposits, withdrawals, and trades, and to detect fraud or abuse.</li>
-      <li>To provide customer support and respond to disputes.</li>
-      <li>To improve the Platform and communicate service updates.</li>
-    </ul>
+    <div class="reveal">
+      <h2>2. Why We Collect It</h2>
+      <ul>
+        <li>To create and secure your account, and to authenticate you.</li>
+        <li>To meet legal KYC/AML obligations and respond to lawful requests from regulators or law enforcement.</li>
+        <li>To process deposits, withdrawals, and trades, and to detect fraud or abuse.</li>
+        <li>To provide customer support and respond to disputes.</li>
+        <li>To improve the Platform and communicate service updates.</li>
+      </ul>
+    </div>
 
-    <h2>3. How We Store &amp; Protect It</h2>
-    <p>Passwords are stored hashed, never in plain text. KYC documents and financial records are stored in
-    access-controlled systems and retained only as long as required for the purpose collected or as required
-    by law (typically the account lifetime plus a regulatory retention period after closure).</p>
+    <div class="reveal">
+      <h2>3. How We Store &amp; Protect It</h2>
+      <p>Passwords are stored hashed, never in plain text. KYC documents and financial records are stored in
+      access-controlled systems and retained only as long as required for the purpose collected or as required
+      by law (typically the account lifetime plus a regulatory retention period after closure).</p>
+    </div>
 
-    <h2>4. Who We Share It With</h2>
-    <ul>
-      <li>Regulators, law enforcement, or courts, where legally required.</li>
-      <li>Service providers who help operate the Platform (e.g. email delivery, cloud hosting, KYC verification),
-      bound by confidentiality obligations.</li>
-      <li>We do not sell your personal data to third parties.</li>
-    </ul>
+    <div class="reveal">
+      <h2>4. Who We Share It With</h2>
+      <ul>
+        <li>Regulators, law enforcement, or courts, where legally required.</li>
+        <li>Service providers who help operate the Platform (e.g. email delivery, cloud hosting, KYC verification),
+        bound by confidentiality obligations.</li>
+        <li>We do not sell your personal data to third parties.</li>
+      </ul>
+    </div>
 
-    <h2>5. Cookies</h2>
-    <p>We use essential cookies/session tokens to keep you logged in and secure your session. We do not use
-    third-party advertising trackers.</p>
+    <div class="reveal">
+      <h2>5. Cookies</h2>
+      <p>We use essential cookies/session tokens to keep you logged in and secure your session. We do not use
+      third-party advertising trackers.</p>
+    </div>
 
-    <h2>6. Your Rights</h2>
-    <p>Depending on your jurisdiction, you may have the right to access, correct, or request deletion of your
-    personal data, subject to our legal obligation to retain certain financial and KYC records. To exercise
-    these rights, contact us through <a href="/p2p.html">in-app Support</a>.</p>
+    <div class="reveal">
+      <h2>6. Your Rights</h2>
+      <p>Depending on your jurisdiction, you may have the right to access, correct, or request deletion of your
+      personal data, subject to our legal obligation to retain certain financial and KYC records. To exercise
+      these rights, contact us through <a href="/p2p.html">in-app Support</a>.</p>
+    </div>
 
-    <h2>7. Changes to This Policy</h2>
-    <p>We may update this Privacy Policy from time to time. Material changes will be highlighted on this page.</p>
-
-    <a href="/" class="back">← Back to Bitcovex</a>
+    <div class="reveal">
+      <h2>7. Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. Material changes will be highlighted on this page.</p>
+      <a href="/" class="back">← Back to Bitcovex</a>
+    </div>
   </div>
+
+  <script>
+    (function () {
+      var els = document.querySelectorAll('.reveal');
+      if (!('IntersectionObserver' in window)) {
+        els.forEach(function (el) { el.classList.add('is-visible'); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+      els.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
 </body>
 </html>
