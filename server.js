@@ -471,6 +471,23 @@ app.use('/downloads', (req, res, next) => {
 });
 const LONG_CACHE_EXTENSIONS = /\.(png|jpe?g|webp|gif|ico|svg|woff2?|ttf|mp4|webm)$/i;
 const MEDIUM_CACHE_EXTENSIONS = /\.(css|js)$/i;
+
+// Block the old, guessable admin entry points from ever being served — the
+// admin panel now only lives behind ADMIN_PANEL_SECRET_PATH (see below).
+// Without this, express.static below would still hand these files out by
+// filename even after the route handlers for them were removed.
+const BLOCKED_ADMIN_FILE_PATHS = new Set([
+  '/admin.html',
+  '/admin-login.html',
+  '/admin-dashboard.html'
+]);
+app.use((req, res, next) => {
+  if (BLOCKED_ADMIN_FILE_PATHS.has(req.path)) {
+    return res.status(404).end();
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
   maxAge: 0,
@@ -6303,19 +6320,20 @@ app.patch('/api/admin/admins/:adminId/status', requiresAdminSession, async (req,
   return res.json({ ok: true });
 });
 
-app.get('/admin-login', (req, res) => {
-  return res.redirect('/admin/login');
-});
+// The admin panel intentionally does NOT live at /admin, /admin/login,
+// /admin-login, or /bitegit-admin anymore — those were guessable and are now
+// dead paths (the catch-all route below just serves the public homepage for
+// them, and the static-file block above stops admin-*.html being fetched by
+// filename). It lives at ADMIN_PANEL_SECRET_PATH instead. Keep this value out
+// of source control in real deployments (move it to an env var); it is
+// hardcoded here only because it replaces a previously fully-guessable path.
+const ADMIN_PANEL_SECRET_PATH = process.env.ADMIN_PANEL_SECRET_PATH || 'bcx-portal-10fd3834d3c6';
 
-app.get('/admin/login', (req, res) => {
+app.get(`/${ADMIN_PANEL_SECRET_PATH}/login`, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
 });
 
-app.get('/bitegit-admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
-});
-
-app.get('/admin', async (req, res) => {
+app.get(`/${ADMIN_PANEL_SECRET_PATH}`, async (req, res) => {
   try {
     const cookies = parseCookies(req);
     const legacySessionToken = String(cookies[SESSION_COOKIE_NAME] || '').trim();
@@ -6324,21 +6342,21 @@ app.get('/admin', async (req, res) => {
     if (!hasLegacySession && adminAuthMiddleware) {
       const accessToken = String(cookies[ADMIN_ACCESS_COOKIE_NAME] || '').trim();
       if (!accessToken) {
-        return res.redirect('/admin/login');
+        return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
       }
 
       try {
         await adminStore.verifyAdminAccessToken(accessToken);
       } catch (error) {
-        return res.redirect('/admin/login');
+        return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
       }
     } else if (!hasLegacySession && !adminAuthMiddleware) {
-      return res.redirect('/admin/login');
+      return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
     }
 
     return res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
   } catch (error) {
-    return res.redirect('/admin/login');
+    return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
   }
 });
 

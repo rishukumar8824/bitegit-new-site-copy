@@ -70,7 +70,10 @@ form.addEventListener('submit', async (event) => {
     }
 
     setMessage('Login successful. Redirecting to dashboard...', 'success');
-    window.location.href = '/admin';
+    // This page is only ever served at /<secret>/login, so the dashboard is
+    // the same path with the trailing /login stripped — avoids hardcoding
+    // the secret admin path in a statically-fetchable JS file.
+    window.location.href = window.location.pathname.replace(/\/login\/?$/, '') || '/';
   } catch (error) {
     setMessage(error.message || 'Unable to login.', 'error');
   } finally {

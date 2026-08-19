@@ -1433,7 +1433,7 @@ async function loadMerchantApplications() {
   try {
     var res = await fetch('/api/admin/merchant-applications', { credentials:'include' });
     if (res.status === 401 || res.status === 403) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#f59e0b;padding:24px;">Session expired — please <a href="/admin/login" style="color:#00b8d4;">log in again</a>.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#f59e0b;padding:24px;">Session expired — please <a href="' + (window.location.pathname.replace(/\/$/, '') + '/login') + '" style="color:#00b8d4;">log in again</a>.</td></tr>';
       return;
     }
     var data = await res.json();
