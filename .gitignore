@@ -17,3 +17,6 @@ node_modules/
 .claude/worktrees/
 flutter-sdk/
 android/
+
+# test tooling
+coverage/
