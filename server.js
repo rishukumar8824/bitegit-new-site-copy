@@ -488,6 +488,62 @@ app.use((req, res, next) => {
   next();
 });
 
+// Clean-URL redirects for every page that has a raw .html filename in
+// public/. This MUST run before express.static below — static serves any
+// matching file by its exact path first, so a redirect route registered
+// after express.static (as these used to be, further down this file) never
+// actually fires and the .html stays visible in the address bar.
+const HTML_TO_CLEAN_URL = {
+  '/p2p.html': '/p2p',
+  '/index.html': '/',
+  '/market.html': '/markets',
+  '/markets.html': '/markets',
+  '/chart.html': '/chart',
+  '/auth.html': '/auth',
+  '/wallet.html': '/wallet',
+  '/p2p-order-flow.html': '/p2p-order-flow',
+  '/p2p-buy.html': '/p2p-buy',
+  '/p2p-chat.html': '/p2p-chat',
+  '/p2p-order-history.html': '/p2p-order-history',
+  '/p2p-sell-flow.html': '/p2p-sell-flow',
+  '/p2p-user-center.html': '/p2p-user-center',
+  '/trade.html': '/trade',
+  '/tradfi.html': '/futures',
+  '/futures.html': '/futures',
+  '/about.html': '/about',
+  '/settings.html': '/settings',
+  '/kyc.html': '/kyc',
+  '/forgot-password.html': '/forgot-password',
+  '/login.html': '/login',
+  '/signup.html': '/signup',
+  '/register.html': '/signup',
+  '/rewards.html': '/rewards',
+  '/p2p-appeal.html': '/p2p-appeal',
+  '/p2p-ratings.html': '/p2p-ratings',
+  '/how_to_buy.html': '/how-to-buy',
+  '/app_download.html': '/app-download',
+  '/referral.html': '/referral',
+  '/finance.html': '/finance',
+  '/credit_card.html': '/credit-card',
+  '/affiliate.html': '/affiliate',
+  '/futures_overview.html': '/futures-overview',
+  '/gate-markets.html': '/gate-markets',
+  '/gate-home.html': '/gate-home',
+  '/gate-trade.html': '/gate-trade',
+  '/terms.html': '/terms',
+  '/privacy.html': '/privacy',
+  '/rewards.html': '/rewards',
+  '/p2p-appeal.html': '/p2p-appeal',
+  '/p2p-ratings.html': '/p2p-ratings'
+};
+app.use((req, res, next) => {
+  const cleanUrl = HTML_TO_CLEAN_URL[req.path];
+  if (cleanUrl) {
+    return res.redirect(301, cleanUrl);
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
   maxAge: 0,
@@ -6378,24 +6434,29 @@ app.get('/aboutUs', (req, res) => {
 app.get('/about', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'about.html'));
 });
-// Redirect .html URLs to clean URLs
-app.get('/p2p.html', (req, res) => res.redirect(301, '/p2p'));
-app.get('/index.html', (req, res) => res.redirect(301, '/'));
-app.get('/market.html', (req, res) => res.redirect(301, '/markets'));
-app.get('/chart.html', (req, res) => res.redirect(301, '/chart'));
-app.get('/auth.html', (req, res) => res.redirect(301, '/auth'));
-app.get('/wallet.html', (req, res) => res.redirect(301, '/wallet'));
-app.get('/p2p-order-flow.html', (req, res) => res.redirect(301, '/p2p-order-flow'));
-app.get('/p2p-buy.html', (req, res) => res.redirect(301, '/p2p-buy'));
-app.get('/p2p-chat.html', (req, res) => res.redirect(301, '/p2p-chat'));
-app.get('/p2p-order-history.html', (req, res) => res.redirect(301, '/p2p-order-history'));
-app.get('/p2p-sell-flow.html', (req, res) => res.redirect(301, '/p2p-sell-flow'));
-app.get('/p2p-user-center.html', (req, res) => res.redirect(301, '/p2p-user-center'));
-app.get('/trade.html', (req, res) => res.redirect(301, '/trade'));
-app.get('/tradfi.html', (req, res) => res.redirect(301, '/futures'));
-app.get('/futures.html', (req, res) => res.redirect(301, '/futures'));
-app.get('/markets.html', (req, res) => res.redirect(301, '/markets'));
-app.get('/market.html', (req, res) => res.redirect(301, '/markets'));
+// .html → clean URL redirects for these pages are registered up front,
+// before express.static (see HTML_TO_CLEAN_URL near the top of this file) —
+// a redirect route placed after express.static never fires, because static
+// already matches and serves the raw file first.
+const CLEAN_STATIC_PAGES = {
+  '/how-to-buy': 'how_to_buy.html',
+  '/app-download': 'app_download.html',
+  '/referral': 'referral.html',
+  '/finance': 'finance.html',
+  '/credit-card': 'credit_card.html',
+  '/affiliate': 'affiliate.html',
+  '/futures-overview': 'futures_overview.html',
+  '/gate-markets': 'gate-markets.html',
+  '/gate-home': 'gate-home.html',
+  '/gate-trade': 'gate-trade.html',
+  '/terms': 'terms.html',
+  '/privacy': 'privacy.html'
+};
+Object.entries(CLEAN_STATIC_PAGES).forEach(([cleanPath, fileName]) => {
+  app.get(cleanPath, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', fileName));
+  });
+});
 
 app.get('/auth', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'auth.html'));
@@ -6406,9 +6467,6 @@ app.get('/login', (req, res) => {
 app.get('/signup', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
-app.get('/login.html', (req, res) => res.redirect(301, '/login'));
-app.get('/signup.html', (req, res) => res.redirect(301, '/signup'));
-app.get('/register.html', (req, res) => res.redirect(301, '/signup'));
 app.get('/p2p', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p.html'));
 });
@@ -6455,22 +6513,18 @@ app.get('/earn', (req, res) => {
 app.get('/rewards', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'rewards.html'));
 });
-app.get('/rewards.html', (req, res) => res.redirect(301, '/rewards'));
 
 app.get('/p2p-appeal', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p-appeal.html'));
 });
-app.get('/p2p-appeal.html', (req, res) => res.redirect(301, '/p2p-appeal'));
 
 app.get('/p2p-ratings', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p-ratings.html'));
 });
-app.get('/p2p-ratings.html', (req, res) => res.redirect(301, '/p2p-ratings'));
 
 app.get('/chart', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chart.html'));
 });
-app.get('/chart.html', (req, res) => res.redirect(301, '/chart'));
 
 app.get('/futures', (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'tradfi.html'));
