@@ -1291,6 +1291,23 @@ function createIpAttemptLimiter({ maxAttempts, windowMs }) {
   };
 }
 
+// Mirrors sanitizeImageUrl in public/p2p-chat.js — that copy only protects
+// users of that one page. Any endpoint that stores a user-supplied "image"
+// value (P2P appeal evidence, order-chat images) must run it server-side too,
+// otherwise a value like "javascript:..." gets stored as-is and the admin
+// dashboard turns it into a clickable link/thumbnail — stored XSS in the
+// admin's session the moment they open it.
+const SAFE_DATA_IMAGE_RE = /^data:image\/(png|jpe?g|webp);base64,[a-z0-9+/=\s]+$/i;
+const SAFE_REMOTE_IMAGE_RE = /^https?:\/\/[^\s]+$/i;
+function sanitizeStoredImageUrl(rawUrl) {
+  const source = String(rawUrl || '').trim();
+  if (!source) return '';
+  if (SAFE_DATA_IMAGE_RE.test(source)) return source;
+  if (SAFE_REMOTE_IMAGE_RE.test(source)) return source;
+  if (source.startsWith('/')) return source;
+  return '';
+}
+
 function getRequestIp(req) {
   const forwardedRaw = String(req.headers['x-forwarded-for'] || '').trim();
   const firstForwarded = forwardedRaw.split(',')[0].trim();
@@ -2534,21 +2551,32 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
   }
 
   let aadhaarDigits = '';
-  // Parse image data URLs from request body
-  function parseImageField(raw) {
+  const KYC_MAX_VIDEO_BYTES = 20 * 1024 * 1024;
+  const KYC_ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+  const EMPTY_MEDIA_FIELD = { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
+  // Parse + validate a data: URL from the request body. allowedTypes/maxBytes
+  // enforce the same allowlist the strict KYC upload path already uses
+  // (extractKycImageData, KYC_ALLOWED_IMAGE_TYPES/KYC_MAX_IMAGE_BYTES above) —
+  // this path was missing that check, so a spoofed mimeType or oversized
+  // payload went straight into storage and, on review, straight into the
+  // admin's Content-Type header at the KYC image endpoint.
+  function parseMediaField(raw, allowedTypes, maxBytes) {
     const s = String(raw || '').trim();
-    if (!s || !s.startsWith('data:')) return { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
+    if (!s || !s.startsWith('data:')) return EMPTY_MEDIA_FIELD;
     const mimeMatch = s.match(/^data:([^;]+);base64,/);
-    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const mimeType = mimeMatch ? mimeMatch[1].toLowerCase() : '';
+    if (!allowedTypes.includes(mimeType)) return EMPTY_MEDIA_FIELD;
     const b64 = s.replace(/^data:[^;]+;base64,/, '');
     const buf = Buffer.from(b64, 'base64');
+    if (buf.length === 0 || buf.length > maxBytes) return EMPTY_MEDIA_FIELD;
     const sha256 = crypto.createHash('sha256').update(buf).digest('hex');
     return { dataUrl: s, mimeType, sizeBytes: buf.length, sha256 };
   }
+  const parseImageField = (raw) => parseMediaField(raw, KYC_ALLOWED_IMAGE_TYPES, KYC_MAX_IMAGE_BYTES);
   const aadhaarFrontImage       = parseImageField(req.body?.aadhaarFrontImage);
   const aadhaarBackImage        = parseImageField(req.body?.aadhaarBackImage);
   const selfieWithDocumentImage = parseImageField(req.body?.selfieImage);
-  const livenessVideo           = parseImageField(req.body?.livenessVideo);
+  const livenessVideo           = parseMediaField(req.body?.livenessVideo, KYC_ALLOWED_VIDEO_TYPES, KYC_MAX_VIDEO_BYTES);
   try {
     aadhaarDigits = normalizeAadhaarNumber(req.body?.aadhaarNumber);
   } catch (error) {
@@ -4988,11 +5016,12 @@ app.get('/api/p2p/orders/:orderId', requiresP2PUser, async (req, res) => {
 app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) => {
   const appealType = String(req.body.reason || req.body.appealType || '').trim();
   const appealReason = String(req.body.description || req.body.appealReason || '').trim();
-  const appealImages = Array.isArray(req.body.images)
+  const appealImages = (Array.isArray(req.body.images)
     ? req.body.images.slice(0, 3)
     : Array.isArray(req.body.appealImages)
       ? req.body.appealImages.slice(0, 3)
-      : [];
+      : []
+  ).map(sanitizeStoredImageUrl).filter(Boolean);
 
   if (!appealType) {
     return res.status(400).json({ message: 'Appeal reason is required.' });
@@ -5314,7 +5343,7 @@ app.get('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) =
 
 app.post('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) => {
   const text = String(req.body.text || '').trim();
-  const imageBase64 = req.body.imageBase64 || null;
+  const imageBase64 = sanitizeStoredImageUrl(req.body.imageBase64) || null;
 
   if (!text && !imageBase64) {
     return res.status(400).json({ message: 'Message text or image is required.' });
