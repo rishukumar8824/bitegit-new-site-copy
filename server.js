@@ -5308,12 +5308,10 @@ app.get('/api/p2p/me/stream', requiresP2PUser, (req, res) => {
 });
 
 // ── Admin Support SSE — live notify ──────────────────────────────────────────
-app.get('/api/admin/support/live-notify', async (req, res) => {
-  // Allow admin cookie or skip auth in dev
+app.get('/api/admin/support/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminSupportSseClients.add(res);
   res.write(': connected\n\n');
@@ -5322,16 +5320,10 @@ app.get('/api/admin/support/live-notify', async (req, res) => {
 });
 
 // ── Admin: Withdrawal live-notify SSE ─────────────────────────────────────────
-app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
-  try {
-    const cookies = parseCookies(req);
-    const accessToken = String(cookies[ADMIN_ACCESS_COOKIE_NAME] || '').trim();
-    if (!accessToken) return res.status(401).end();
-  } catch(_) {}
+app.get('/api/admin/withdrawal/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminWithdrawalSseClients.add(res);
   res.write(': connected\n\n');
@@ -5340,11 +5332,10 @@ app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
 });
 
 // ── Admin: New user live-notify SSE ───────────────────────────────────────────
-app.get('/api/admin/user/live-notify', async (req, res) => {
+app.get('/api/admin/user/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminUserSseClients.add(res);
   res.write(': connected\n\n');
@@ -5353,11 +5344,10 @@ app.get('/api/admin/user/live-notify', async (req, res) => {
 });
 
 // ── Admin: New deposit live-notify SSE ────────────────────────────────────────
-app.get('/api/admin/deposit/live-notify', async (req, res) => {
+app.get('/api/admin/deposit/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminDepositSseClients.add(res);
   res.write(': connected\n\n');
@@ -5366,11 +5356,10 @@ app.get('/api/admin/deposit/live-notify', async (req, res) => {
 });
 
 // ── Admin: KYC submission live-notify SSE ─────────────────────────────────────
-app.get('/api/admin/kyc/live-notify', async (req, res) => {
+app.get('/api/admin/kyc/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminKycSseClients.add(res);
   res.write(': connected\n\n');
