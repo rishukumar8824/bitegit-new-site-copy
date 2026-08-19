@@ -1,5 +1,19 @@
 require('dotenv').config();
 
+// Prevent an unhandled promise rejection or async throw anywhere in the app
+// (payment/withdrawal/P2P paths included) from silently killing the process
+// with no log line. uncaughtException still exits (Node's own state after one
+// is not trustworthy to keep serving from), but now it exits loudly and lets
+// the platform (Render) restart the process instead of hanging or corrupting
+// in-flight requests silently.
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[unhandledRejection]', reason && reason.stack ? reason.stack : reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('[uncaughtException] shutting down:', error && error.stack ? error.stack : error);
+  process.exit(1);
+});
+
 // One-time first-deposit bonus rule (see /api/admin/wallet/deposits/:id/review and
 // /api/rewards/deposit-bonus for the two places that read these).
 const DEPOSIT_BONUS_THRESHOLD_USDT = 100;
