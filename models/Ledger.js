@@ -5,7 +5,8 @@ const LEDGER_TYPES = [
   'trade_sell',
   'fee',
   'refund',
-  'admin_adjustment'
+  'admin_adjustment',
+  'bonus'
 ];
 
 function normalizeLedgerType(type) {

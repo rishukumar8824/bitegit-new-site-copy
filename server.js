@@ -5705,15 +5705,27 @@ app.post('/api/admin/wallet/deposits/:depositId/review', requiresAdminSession, a
         const depositAmount = Number(deposit.amount || 0);
         if (depositCoin === 'USDT' && depositAmount >= DEPOSIT_BONUS_THRESHOLD_USDT) {
           const cols = getCollections();
-          const existingClaim = await cols.depositBonusClaims.findOne({ userId: deposit.userId });
-          if (!existingClaim) {
-            await cols.depositBonusClaims.insertOne({
-              userId: deposit.userId,
-              depositId: deposit.id,
-              bonusAmount: DEPOSIT_BONUS_AMOUNT_USDT,
-              currency: 'USDT',
-              createdAt: new Date().toISOString()
-            });
+          // findOne-then-insertOne is a check-then-act race: two deposits for the
+          // same user approved within milliseconds of each other (e.g. an admin
+          // approving a backlog, or two automated confirmations landing close
+          // together) could both pass the "no existing claim" check before either
+          // insert lands, paying the one-time bonus more than once. An upsert
+          // keyed on userId is atomic at the database level — only one caller can
+          // ever be the one that actually inserts, decided by upsertedCount.
+          const claimResult = await cols.depositBonusClaims.updateOne(
+            { userId: deposit.userId },
+            {
+              $setOnInsert: {
+                userId: deposit.userId,
+                depositId: deposit.id,
+                bonusAmount: DEPOSIT_BONUS_AMOUNT_USDT,
+                currency: 'USDT',
+                createdAt: new Date().toISOString()
+              }
+            },
+            { upsert: true }
+          );
+          if (claimResult.upsertedCount === 1) {
             await walletService.creditAvailable(deposit.userId, DEPOSIT_BONUS_AMOUNT_USDT, {
               type: 'bonus',
               currency: 'USDT',
