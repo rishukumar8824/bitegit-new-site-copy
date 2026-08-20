@@ -4174,18 +4174,24 @@ async function createP2PAdController(req, res) {
       }
     } catch (_) {}
 
-    // Enforce 1 buy + 1 sell limit per merchant
-    const requestedSide = String(req.body.side || req.body.type || '').toLowerCase();
-    if (!requestedSide || !['buy', 'sell'].includes(requestedSide)) {
-      return res.status(400).json({ message: 'Ad side must be buy or sell.' });
+    // Enforce 1 buy + 1 sell limit per merchant.
+    // NOTE: requestedType here is the merchant's own posted ad type (BUY/SELL),
+    // which is the *opposite* of the stored `side` field on an offer document
+    // (`side` is inverted to represent the viewing buyer's tab, e.g. a SELL ad
+    // is stored with side:'buy' so buyers seeking to buy see it under the Buy
+    // tab). Must compare against `adType`/`type`, not `side`, or this check
+    // silently matches the wrong existing ad and blocks/permits the wrong side.
+    const requestedType = String(req.body.type || req.body.adType || req.body.side || '').toLowerCase();
+    if (!requestedType || !['buy', 'sell'].includes(requestedType)) {
+      return res.status(400).json({ message: 'Ad type must be buy or sell.' });
     }
-    const existingOfSide = await cols.p2pOffers.countDocuments({
+    const existingOfType = await cols.p2pOffers.countDocuments({
       $or: [{ createdByUserId: userId }, { advertiser: username }],
-      side: requestedSide,
+      adType: requestedType,
       status: { $ne: 'DELETED' }
     });
-    if (existingOfSide >= 1) {
-      return res.status(400).json({ message: `You already have an active ${requestedSide} ad. Delete it first before posting a new one.` });
+    if (existingOfType >= 1) {
+      return res.status(400).json({ message: `You already have an active ${requestedType} ad. Delete it first before posting a new one.` });
     }
 
     const savedOffer = await walletService.createEscrowAd({
@@ -4307,6 +4313,24 @@ app.delete('/api/p2p/offers/:offerId', requiresP2PUser, async (req, res) => {
     if (hasActive) return res.status(409).json({ message: 'Cannot delete ad with active orders.' });
     const deleted = await repos.deleteOffer(offerId, userId);
     if (!deleted) return res.status(404).json({ message: 'Delete failed.' });
+
+    // Release the USDT that was escrow-locked when this ad was created —
+    // deleteOffer() only flips the status flag, it never touched the wallet.
+    const lockedAmount = Number(offer.escrowLockedAmount || offer.availableAmount || offer.available || 0);
+    if (lockedAmount > 0) {
+      try {
+        await walletService.unlockFunds(userId, lockedAmount, {
+          type: 'p2p_ad_unlock',
+          currency: offer.asset || 'USDT',
+          username: req.p2pUser.username,
+          referenceId: `p2p_ad_unlock_${offerId}`,
+          metadata: { offerId, adType: offer.adType || offer.type }
+        });
+      } catch (unlockError) {
+        console.error('[p2p-offer-delete] failed to unlock escrow funds', offerId, unlockError);
+      }
+    }
+
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ message: 'Server error.' });

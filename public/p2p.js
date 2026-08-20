@@ -1347,7 +1347,7 @@ function renderMyAds(offers = []) {
       <article class="my-ad-card" data-offer-id="${offer.id}">
         <div class="my-ad-top">
           <div>
-            <span class="my-ad-type ${offer.side === 'buy' ? 'ad-buy' : 'ad-sell'}">${adType}</span>
+            <span class="my-ad-type ${adType === 'BUY' ? 'ad-buy' : 'ad-sell'}">${adType}</span>
             <strong class="my-ad-asset">${escapeHtml(offer.asset || 'USDT')}</strong>
           </div>
           ${statusLabel}
@@ -7838,8 +7838,8 @@ function initMobPostAdScreen() {
       window._myAdsCache = {};
       offers.forEach(function(o) { window._myAdsCache[o.id] = o; });
 
-      var hasBuy  = offers.some(function(o){ return o.side === 'buy'; });
-      var hasSell = offers.some(function(o){ return o.side === 'sell'; });
+      var hasBuy  = offers.some(function(o){ return (o.adType || o.type || '').toLowerCase() === 'buy'; });
+      var hasSell = offers.some(function(o){ return (o.adType || o.type || '').toLowerCase() === 'sell'; });
       var bothFull = hasBuy && hasSell;
 
       if (bothFull) {
@@ -7883,8 +7883,9 @@ function initMobPostAdScreen() {
       listEl.innerHTML = offers.map(function(o) {
         var isActive = o.status === 'ACTIVE';
         var pmList = Array.isArray(o.payments) ? o.payments.join(', ') : (o.payments || '');
+        var myAdType = (o.adType || o.type || '').toLowerCase();
         return '<div class="mob-myad-card">' +
-          '<div class="mob-myad-row"><span class="mob-myad-type ' + (o.side === 'sell' ? 'sell' : 'buy') + '">' + (o.side === 'sell' ? 'SELL' : 'BUY') + '</span>' +
+          '<div class="mob-myad-row"><span class="mob-myad-type ' + (myAdType === 'sell' ? 'sell' : 'buy') + '">' + (myAdType === 'sell' ? 'SELL' : 'BUY') + '</span>' +
           '<span class="mob-myad-status ' + (isActive ? 'active' : 'paused') + '">' + (o.status || 'PAUSED') + '</span></div>' +
           '<div class="mob-myad-price">₹' + (o.price || 0) + ' / USDT</div>' +
           '<div class="mob-myad-meta">Available: ' + (o.available || 0) + ' USDT &nbsp;|&nbsp; ' + (o.minLimit || 0) + '–' + (o.maxLimit || 0) + ' INR</div>' +

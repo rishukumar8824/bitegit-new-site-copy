@@ -99,9 +99,16 @@ body.p2p-chat-page {
   margin: 0;
 }
 
+.counterparty-wrap {
+  min-width: 0;
+}
+
 .counterparty-wrap p {
   font-size: 0.95rem;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .online-status {
