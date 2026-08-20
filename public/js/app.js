@@ -1181,8 +1181,11 @@
   }
 
   // ── 15. SECURITY SECTION ─────────────────────────────────────────────────
+  let _cvxSecurityBucket = null;
   function fixSecuritySection() {
-    if (document.getElementById('cvx-security-done')) return;
+    const _bucket = window.innerWidth > 767 ? 'desktop' : 'mobile';
+    if (_cvxSecurityBucket === _bucket) return;
+    _cvxSecurityBucket = _bucket;
     if (window.innerWidth > 767) {
       // Desktop: replace shield_v2.webp (dark/invisible) with shield_mobile.jpg (silver, visible)
       const desktopShield = document.querySelector('img[src*="shield_v2"]');
@@ -2011,6 +2014,12 @@
       hideBrokenElements(); fixAppSection(); applyLoggedInHomeUI();
     }, 3000);
     setInterval(async () => { await loadTicker(); applyPrices(); fixDesktopPairs(); }, 5000);
+
+    let _resizeT = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(_resizeT);
+      _resizeT = setTimeout(fixSecuritySection, 150);
+    }, { passive: true });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
