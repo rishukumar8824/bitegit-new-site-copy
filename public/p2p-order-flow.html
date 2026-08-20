@@ -248,10 +248,14 @@
       display: flex; justify-content: space-between; align-items: center;
       padding: 8px 0; font-size: 14px;
     }
-    .transfer-details .trow .tlabel { color: #666; }
+    .transfer-details .trow .tlabel { color: #666; flex-shrink: 0; }
     .transfer-details .trow .tval {
       color: #fff; font-weight: 500;
       display: flex; align-items: center; gap: 6px;
+      min-width: 0; overflow: hidden;
+    }
+    .transfer-details .trow .tval > span:first-child {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .transfer-details .trow .tval.big { font-size: 17px; font-weight: 700; }
 
@@ -543,7 +547,7 @@
   <div class="screen" id="screen-buy">
     <div class="topbar">
       <div class="back-btn" id="buyBackBtn">←</div>
-      <div class="title">Buy USDT</div>
+      <div class="title" id="buyScreenTitle">Buy USDT</div>
     </div>
 
     <div class="tabs">
@@ -581,14 +585,14 @@
 
     <div class="seller-stats">
       <div class="seller-stats-top">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div class="seller-avatar" id="buySellerAvatar">E<div class="dot"></div></div>
-          <div>
-            <span id="buy-seller-name" style="font-size:15px;font-weight:600;">ER.LAOR</span>
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;">
+          <div class="seller-avatar" id="buySellerAvatar" style="flex-shrink:0;">E<div class="dot"></div></div>
+          <div style="min-width:0;overflow:hidden;white-space:nowrap;">
+            <span id="buy-seller-name" style="font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:inline-block;vertical-align:middle;">ER.LAOR</span>
             <span class="star-icon">✦</span>
           </div>
         </div>
-        <div style="font-size:22px;color:#555;cursor:pointer;">→</div>
+        <div style="font-size:22px;color:#555;cursor:pointer;flex-shrink:0;">→</div>
       </div>
       <div class="stat-row"><span class="slabel">Pay within</span><span class="sval" id="stat-pay-within">15 minute(s)</span></div>
       <div class="stat-row"><span class="slabel">Historical orders</span><span class="sval" id="stat-historical">Buy 0 &nbsp; Sell 0</span></div>
@@ -2955,6 +2959,14 @@
   function renderBuyForm() {
     if (!currentAd) return;
     var ad = currentAd;
+    // ad.type/adType is the merchant's own posted side (a SELL ad means the
+    // merchant is selling, so the current viewer would be the buyer here;
+    // a BUY ad means the viewer would be selling to the merchant instead).
+    var adType = String(ad.type || ad.adType || 'SELL').toUpperCase();
+    var viewerAction = adType === 'SELL' ? 'Buy' : 'Sell';
+    setText('buyScreenTitle', viewerAction + ' USDT');
+    var buyBtnEl = document.getElementById('buyBtn');
+    if (buyBtnEl) buyBtnEl.textContent = viewerAction + ' USDT with 0 fees';
     var price = Number(ad.price || 101.3);
     setText('buy-price', '₹' + price.toFixed(2));
     var sellerName = ad.createdByUsername || ad.advertiser || 'SELLER';
