@@ -4678,7 +4678,7 @@ function renderMobileActiveOrders() {
     return;
   }
   list.innerHTML = orders.map(function(order) {
-    var sideLabel = (order.side || '').toUpperCase();
+    var sideLabel = getOrderDisplaySide(order);
     var amtLabel = '₹' + formatNumber(order.amountInr || 0);
     var statusCls = statusClass(order.status);
     var statusTxt = statusLabel(order.status);
@@ -4739,7 +4739,7 @@ async function loadMobileOrderHistory() {
       return;
     }
     list.innerHTML = orders.map(function(order) {
-      var sideLabel = (order.side || '').toUpperCase();
+      var sideLabel = getOrderDisplaySide(order);
       var statusCls = statusClass(order.status);
       var statusTxt = statusLabel(order.status);
       var date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN') : '--';
