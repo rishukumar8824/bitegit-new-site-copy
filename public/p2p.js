@@ -6246,6 +6246,11 @@ window.addEventListener('pagehide', () => {
   console.log('[init] loadCurrentUser done, currentUser:', currentUser ? currentUser.email : 'null');
 
   // Prioritize offer cards first. Defer heavier secondary panels until after the first visible list paints.
+  const _initialSide = new URLSearchParams(window.location.search).get('side');
+  if (_initialSide === 'sell' && sideTabs) {
+    const sellTab = sideTabs.querySelector('.side-tab[data-side="sell"], .gt-side-tab[data-side="sell"]');
+    if (sellTab) sellTab.click();
+  }
   await loadOffers();
   queueP2PNonCriticalLoads({
     includeTicker: true,
