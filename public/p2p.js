@@ -2764,16 +2764,18 @@ function getOrderRole(order) {
 }
 
 function getOrderDisplaySide(order) {
-  var rawSide = String(order && order.side || '').trim().toUpperCase();
-  if (!rawSide) {
-    return 'BUY';
-  }
+  // Derive directly from the viewer's actual role (buyerUserId/sellerUserId
+  // match) instead of inverting order.side - side is only ever correct for
+  // whichever party the ad's adType wasn't written for, and older orders
+  // created before that inversion logic existed can carry a stale/wrong
+  // side value forever (it's never touched by ad edits). Comparing against
+  // buyerUserId/sellerUserId is self-healing regardless of how old the
+  // order is.
   var role = getOrderRole(order);
-  if (role === 'seller') {
-    if (rawSide === 'BUY') return 'SELL';
-    if (rawSide === 'SELL') return 'BUY';
-  }
-  return rawSide;
+  if (role === 'seller') return 'SELL';
+  if (role === 'buyer') return 'BUY';
+  var rawSide = String(order && order.side || '').trim().toUpperCase();
+  return rawSide || 'BUY';
 }
 
 function resetOrderWatch() {
