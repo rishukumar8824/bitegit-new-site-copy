@@ -6528,6 +6528,7 @@ app.patch('/api/admin/admins/:adminId/status', requiresAdminSession, async (req,
 const ADMIN_PANEL_SECRET_PATH = process.env.ADMIN_PANEL_SECRET_PATH || 'bcx-portal-10fd3834d3c6';
 
 app.get(`/${ADMIN_PANEL_SECRET_PATH}/login`, (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
 });
 
@@ -6552,6 +6553,7 @@ app.get(`/${ADMIN_PANEL_SECRET_PATH}`, async (req, res) => {
       return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
     }
 
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     return res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
   } catch (error) {
     return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
@@ -6559,21 +6561,27 @@ app.get(`/${ADMIN_PANEL_SECRET_PATH}`, async (req, res) => {
 });
 
 app.get('/', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 app.get('/markets', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'market.html'));
 });
 app.get('/assets', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'assets', 'index.html'));
 });
 app.get('/chart', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'chart.html'));
 });
 app.get('/aboutUs', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'about.html'));
 });
 app.get('/about', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'about.html'));
 });
 // .html → clean URL redirects for these pages are registered up front,
@@ -6597,55 +6605,71 @@ const CLEAN_STATIC_PAGES = {
 };
 Object.entries(CLEAN_STATIC_PAGES).forEach(([cleanPath, fileName]) => {
   app.get(cleanPath, (req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.sendFile(path.join(__dirname, 'public', fileName));
   });
 });
 
 app.get('/auth', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'auth.html'));
 });
 app.get('/login', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 app.get('/signup', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
 app.get('/p2p', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'p2p.html'));
 });
 
 app.get('/settings', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'settings.html'));
 });
 app.get('/forgot-password', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'forgot-password.html'));
 });
 app.get('/reset-password', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'forgot-password.html'));
 });
 app.get('/p2p-order-flow', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'p2p-order-flow.html'));
 });
 app.get('/p2p-buy', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'p2p-buy.html'));
 });
 app.get('/wallet', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'wallet.html'));
 });
 app.get('/p2p-chat', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'p2p-chat.html'));
 });
 app.get('/p2p-order-history', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'p2p-order-history.html'));
 });
 app.get('/p2p-sell-flow', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'p2p-sell-flow.html'));
 });
 app.get('/p2p-user-center', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'p2p-user-center.html'));
 });
 
 app.get('/kyc', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'kyc.html'));
 });
 
@@ -6654,22 +6678,27 @@ app.get('/earn', (req, res) => {
 });
 
 app.get('/rewards', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'rewards.html'));
 });
 
 app.get('/p2p-appeal', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'p2p-appeal.html'));
 });
 
 app.get('/p2p-ratings', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'p2p-ratings.html'));
 });
 
 app.get('/chart', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'chart.html'));
 });
 
 app.get('/futures', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   return res.sendFile(path.join(__dirname, 'public', 'tradfi.html'));
 });
 
@@ -6692,6 +6721,7 @@ app.get('/trade/:market/:symbol', (req, res) => {
   if (!['spot', 'perp'].includes(market)) {
     return res.redirect('/trade/spot/BTCUSDT');
   }
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   return res.sendFile(path.join(__dirname, 'public', 'trade.html'));
 });
 
@@ -7329,6 +7359,7 @@ async function boot() {
     app.use(apiNotFoundHandler);
 
     app.get('*', (req, res) => {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.sendFile(path.join(__dirname, 'public', 'index.html'));
     });
 
