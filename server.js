@@ -6127,10 +6127,6 @@ app.post('/api/admin/users/:userId/force-logout', requiresAdminSession, async (r
   return res.json({ ok: true });
 });
 
-app.post('/api/admin/users/:userId/login-as', requiresAdminSession, async (req, res) => {
-  return res.status(403).json({ message: 'Login-as is disabled for security.' });
-});
-
 // ── Wallet ────────────────────────────────────────────────────────
 app.get('/api/admin/wallet/overview', requiresAdminSession, async (req, res) => {
   try {
