@@ -13,7 +13,8 @@
     "mobile:sync": "npx cap sync android",
     "mobile:open": "npx cap open android",
     "mobile:copy": "npx cap copy android",
-    "mobile:icons": "npx @capacitor/assets generate --android"
+    "mobile:icons": "npx @capacitor/assets generate --android",
+    "load-test": "node scripts/load-test.js"
   },
   "engines": {
     "node": ">=18"
@@ -38,6 +39,7 @@
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.1.0",
+    "autocannon": "^8.0.0",
     "jest": "^29.7.0",
     "mongodb-memory-server": "^10.4.3"
   }
