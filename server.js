@@ -1,5 +1,19 @@
 require('dotenv').config();
 
+const { sendViaProvider } = require('./services/auth-email-service');
+const { createAlertService } = require('./lib/alert-service');
+
+// Nothing was watching console.log/console.error in production — a stuck
+// withdrawal or a crash just sat in Render's log stream unread. This mails
+// ADMIN_EMAIL for crashes and (via the monitoring sweep below) for stuck
+// withdrawals / repeated-failure patterns, deduped so a repeating issue
+// doesn't spam the inbox every tick.
+const crashAlertService = createAlertService({
+  sendEmail: sendViaProvider,
+  adminEmail: process.env.ADMIN_EMAIL,
+  minIntervalMs: 5 * 60 * 1000
+});
+
 // Prevent an unhandled promise rejection or async throw anywhere in the app
 // (payment/withdrawal/P2P paths included) from silently killing the process
 // with no log line. uncaughtException still exits (Node's own state after one
@@ -7,11 +21,21 @@ require('dotenv').config();
 // the platform (Render) restart the process instead of hanging or corrupting
 // in-flight requests silently.
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('[unhandledRejection]', reason && reason.stack ? reason.stack : reason);
+  const message = reason && reason.stack ? reason.stack : String(reason);
+  console.error('[unhandledRejection]', message);
+  crashAlertService.notify('unhandled_rejection', 'Unhandled promise rejection', message).catch(() => {});
 });
 process.on('uncaughtException', (error) => {
-  console.error('[uncaughtException] shutting down:', error && error.stack ? error.stack : error);
-  process.exit(1);
+  const message = error && error.stack ? error.stack : String(error);
+  console.error('[uncaughtException] shutting down:', message);
+  const alertPromise = crashAlertService
+    .notify('uncaught_exception', 'Uncaught exception — process exiting', message)
+    .catch(() => {});
+  // Give the alert email a few seconds to go out, but never let a slow/failed
+  // send delay the restart Render is waiting to do.
+  Promise.race([alertPromise, new Promise((resolve) => setTimeout(resolve, 3000))]).finally(() =>
+    process.exit(1)
+  );
 });
 
 // One-time first-deposit bonus rule (see /api/admin/wallet/deposits/:id/review and
@@ -39,6 +63,7 @@ const { registerPushRoutes } = require('./routes/push');
 const { createPushNotificationService } = require('./services/push-notification-service');
 const { createAuditLogService } = require('./services/audit-log-service');
 const { createP2POrderExpiryService } = require('./services/p2p-order-expiry-service');
+const { createMonitoringService } = require('./lib/monitoring-service');
 const { createAuthEmailService } = require('./services/auth-email-service');
 const { createP2PEmailService } = require('./services/p2p-email-service');
 const tokenService = require('./services/tokenService');
@@ -92,6 +117,7 @@ const P2P_ACCESS_COOKIE_NAME = 'p2p_access_token';
 const P2P_REFRESH_COOKIE_NAME = 'p2p_refresh_token';
 const P2P_ORDER_TTL_MS = 1000 * 60 * 15;
 const P2P_EXPIRY_SWEEP_INTERVAL_MS = 30 * 1000;
+const MONITORING_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 const MERCHANT_ACTIVATION_DEPOSIT = 200; // Minimum security deposit to post ads
 const MERCHANT_BADGE_MIN_DEPOSIT = 500;  // Minimum security deposit for badge eligibility
 
@@ -427,6 +453,7 @@ let httpServer = null;
 let shuttingDown = false;
 let bootRetryTimer = null;
 let p2pExpirySweepTimer = null;
+let monitoringSweepTimer = null;
 const socialFeedBootstrapConfig = readSocialFeedConfig();
 const socialFeedBootstrapStore = createSocialFeedFallbackStore();
 const socialFeedBootstrapInitPromise = socialFeedBootstrapStore
@@ -6809,6 +6836,11 @@ function registerShutdownHandlers() {
         p2pExpirySweepTimer = null;
       }
 
+      if (monitoringSweepTimer) {
+        clearInterval(monitoringSweepTimer);
+        monitoringSweepTimer = null;
+      }
+
       const forceExitTimer = setTimeout(() => {
         console.log('Shutdown timeout reached. Forcing process exit.');
         process.exit(0);
@@ -7297,6 +7329,25 @@ async function boot() {
     }, P2P_EXPIRY_SWEEP_INTERVAL_MS);
     if (typeof p2pExpirySweepTimer.unref === 'function') {
       p2pExpirySweepTimer.unref();
+    }
+
+    const monitoringService = createMonitoringService({
+      withdrawalRequests: getCollections().withdrawalRequests,
+      walletFailures: getCollections().walletFailures,
+      alertService: crashAlertService
+    });
+    if (monitoringSweepTimer) {
+      clearInterval(monitoringSweepTimer);
+    }
+    monitoringSweepTimer = setInterval(async () => {
+      try {
+        await monitoringService.runMonitoringSweep();
+      } catch (error) {
+        console.error('Failed to run monitoring sweep:', error.message);
+      }
+    }, MONITORING_SWEEP_INTERVAL_MS);
+    if (typeof monitoringSweepTimer.unref === 'function') {
+      monitoringSweepTimer.unref();
     }
 
     persistenceReady = true;

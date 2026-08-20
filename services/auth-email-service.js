@@ -433,5 +433,6 @@ function createAuthEmailService() {
 }
 
 module.exports = {
-  createAuthEmailService
+  createAuthEmailService,
+  sendViaProvider
 };
