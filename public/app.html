@@ -466,8 +466,8 @@
       <svg viewBox="0 0 44 44" fill="none" width="44" height="44"><circle cx="22" cy="16" r="8" fill="#6b7280"/><ellipse cx="22" cy="36" rx="14" ry="9" fill="#6b7280"/></svg>
       <div class="av-edit">✏</div>
     </div>
-    <div class="prof-email">s****4@gmail.com</div>
-    <div class="prof-uid">UID:1132288 <button style="background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.75rem">⧉</button></div>
+    <div class="prof-email" id="profEmail">—</div>
+    <div class="prof-uid"><span id="profUid">UID:—</span> <button style="background:none;border:none;color:#8a9bb5;cursor:pointer;font-size:.75rem">⧉</button></div>
   </div>
   <div class="menu-list">
     <div class="mrow" onclick="go('sNickname')"><span class="mrow-lbl">User Nickname</span><span class="mchev">›</span></div>
@@ -759,6 +759,27 @@
       .catch(function() {});
   }
   loadHomeBalance();
+
+  // Real profile email/UID — was hardcoded "s****4@gmail.com" / "UID:1132288" before, never fetched.
+  function loadProfileIdentity() {
+    fetch('/api/p2p/me', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) {
+        var u = d && d.loggedIn && d.user;
+        if (!u) return;
+        var emailEl = document.getElementById('profEmail');
+        var uidEl = document.getElementById('profUid');
+        if (emailEl && u.email) {
+          var parts = String(u.email).split('@');
+          var local = parts[0] || '';
+          var masked = local.length > 3 ? local.slice(0, 3) + '***' : local.slice(0, 1) + '***';
+          emailEl.textContent = parts[1] ? masked + '@' + parts[1] : u.email;
+        }
+        if (uidEl) uidEl.textContent = 'UID:' + (u.id || u.userId || u.username || '—');
+      })
+      .catch(function() {});
+  }
+  loadProfileIdentity();
 
   function go(id) {
     var cur = document.querySelector('.screen.active');

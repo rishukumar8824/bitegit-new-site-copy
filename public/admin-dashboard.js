@@ -1,5 +1,14 @@
 const API_BASE = '/api/admin';
 
+// This dashboard is only ever served at the secret admin path (e.g.
+// /bcx-portal-xxxx). Deriving the login URL from the current path — instead
+// of hardcoding it — keeps that secret path out of this statically-fetchable
+// JS file.
+function adminLoginUrl() {
+  const base = window.location.pathname.replace(/\/$/, '');
+  return `${base}/login`;
+}
+
 const state = {
   currentView: 'overview',
   admin: null,
@@ -176,7 +185,7 @@ async function apiRequest(path, options = {}) {
   });
 
   if (response.status === 401) {
-    window.location.href = '/admin/login';
+    window.location.href = adminLoginUrl();
     throw new Error('Unauthorized');
   }
 
@@ -3436,7 +3445,7 @@ function wireEventListeners() {
     } catch (_error) {
       // Ignore
     } finally {
-      window.location.href = '/admin/login';
+      window.location.href = adminLoginUrl();
     }
   };
 

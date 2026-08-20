@@ -3285,39 +3285,11 @@ function renderOffers(data, append) {
   }
 }
 
-function getDummyOffers(side) {
-  const buyOffers = [
-    { id: 'demo_1', advertiser: 'Psarkar', orders: 1237, completionRate: 97, price: 109.39, available: 7.49, asset: 'USDT', minLimit: 109.39, maxLimit: 819.33, payments: ['UPI', 'Paytm', 'PhonePe'], releaseTime: 1, responseTime: 1, baseOrders: 0, onlineStatus: 'online' },
-    { id: 'demo_2', advertiser: 'MR. JINU', orders: 3, completionRate: 100, price: 103.00, available: 400, asset: 'USDT', minLimit: 20000, maxLimit: 41200, payments: ['Cash Deposit to Bank'], responseTime: 3, onlineStatus: 'online' },
-    { id: 'demo_3', advertiser: 'Yoge_n', orders: 76, completionRate: 86, price: 103.80, available: 988.9029, asset: 'USDT', minLimit: 49000, maxLimit: 102650, payments: ['Cash Deposit to Bank'], responseTime: 8, onlineStatus: 'online' },
-    { id: 'demo_4', advertiser: 'QICKSELLER', orders: 55, completionRate: 100, price: 103.82, available: 53.7258, asset: 'USDT', minLimit: 103.82, maxLimit: 310, payments: ['Digital eRupee'], responseTime: 5, onlineStatus: 'online' },
-    { id: 'demo_5', advertiser: 'AMI', orders: 29, completionRate: 96, price: 103.84, available: 962.3481, asset: 'USDT', minLimit: 10000, maxLimit: 99930.22, payments: ['Cash Deposit to Bank'], responseTime: 12 },
-    { id: 'demo_6', advertiser: 'Shan23023', orders: 240, completionRate: 96, price: 103.85, available: 300, asset: 'USDT', minLimit: 9000, maxLimit: 30000, payments: ['Cash Deposit to Bank'], responseTime: 7 },
-    { id: 'demo_7', advertiser: 'RajeshP2P', orders: 874, completionRate: 99, price: 104.10, available: 5200, asset: 'USDT', minLimit: 1000, maxLimit: 500000, payments: ['UPI', 'IMPS', 'Bank Transfer'], responseTime: 2, onlineStatus: 'online' },
-    { id: 'demo_8', advertiser: 'CryptoRavi_IN', orders: 412, completionRate: 98, price: 104.35, available: 1180, asset: 'USDT', minLimit: 5000, maxLimit: 200000, payments: ['UPI', 'Paytm'], responseTime: 4 },
-    { id: 'demo_9', advertiser: 'IndiaExchange', orders: 1560, completionRate: 99, price: 104.55, available: 8300, asset: 'USDT', minLimit: 2000, maxLimit: 1000000, payments: ['UPI', 'NEFT', 'Bank Transfer'], responseTime: 6 },
-    { id: 'demo_10', advertiser: 'SafeTrade_IN', orders: 189, completionRate: 95, price: 104.80, available: 750, asset: 'USDT', minLimit: 500, maxLimit: 75000, payments: ['PhonePe', 'Google Pay'], responseTime: 9 },
-  ];
-  const sellOffers = [
-    { id: 'demo_s1', advertiser: 'Psarkar', orders: 1237, completionRate: 97, price: 101.50, available: 7.49, asset: 'USDT', minLimit: 109, maxLimit: 819, payments: ['UPI', 'Paytm', 'PhonePe'], releaseTime: 1, responseTime: 1, baseOrders: 0, onlineStatus: 'online' },
-    { id: 'demo_s2', advertiser: 'SwapMaster_IN', orders: 980, completionRate: 99, price: 101.20, available: 6000, asset: 'USDT', minLimit: 1000, maxLimit: 400000, payments: ['UPI', 'Bank Transfer'], responseTime: 3, onlineStatus: 'online' },
-    { id: 'demo_s3', advertiser: 'VikramTrades', orders: 554, completionRate: 97, price: 100.90, available: 2100, asset: 'USDT', minLimit: 500, maxLimit: 150000, payments: ['UPI', 'Paytm'], responseTime: 5, onlineStatus: 'online' },
-    { id: 'demo_s4', advertiser: 'KolkataP2P', orders: 234, completionRate: 96, price: 100.70, available: 800, asset: 'USDT', minLimit: 2000, maxLimit: 90000, payments: ['IMPS', 'NEFT'], responseTime: 8 },
-    { id: 'demo_s5', advertiser: 'FastSeller99', orders: 1670, completionRate: 99, price: 100.50, available: 9000, asset: 'USDT', minLimit: 5000, maxLimit: 800000, payments: ['UPI', 'IMPS'], responseTime: 2, onlineStatus: 'online' },
-    { id: 'demo_s6', advertiser: 'NitinExchange', orders: 421, completionRate: 97, price: 100.30, available: 1300, asset: 'USDT', minLimit: 1000, maxLimit: 75000, payments: ['Bank Transfer', 'UPI'], responseTime: 6 },
-    { id: 'demo_s7', advertiser: 'ChennaiCrypto', orders: 789, completionRate: 98, price: 100.10, available: 3500, asset: 'USDT', minLimit: 500, maxLimit: 250000, payments: ['Paytm', 'IMPS', 'UPI'], responseTime: 4 },
-    { id: 'demo_s8', advertiser: 'TrustTrader_IN', orders: 163, completionRate: 95, price: 99.90, available: 500, asset: 'USDT', minLimit: 2000, maxLimit: 60000, payments: ['UPI'], responseTime: 11 },
-    { id: 'demo_s9', advertiser: 'GlobalSwapIN', orders: 2210, completionRate: 99, price: 99.70, available: 18000, asset: 'USDT', minLimit: 1000, maxLimit: 1500000, payments: ['UPI', 'NEFT', 'Bank Transfer'], responseTime: 3, onlineStatus: 'online' },
-    { id: 'demo_s10', advertiser: 'SafeTrade_IN', orders: 189, completionRate: 95, price: 99.50, available: 750, asset: 'USDT', minLimit: 500, maxLimit: 75000, payments: ['PhonePe', 'Google Pay'], responseTime: 7 },
-  ];
-  return {
-    side,
-    asset: 'USDT',
-    total: 10,
-    updatedAt: new Date().toISOString(),
-    offers: side === 'buy' ? buyOffers : sellOffers
-  };
+function renderOffersLoading() {
+  if (rowsEl) rowsEl.innerHTML = '<tr><td colspan="6" class="empty-row">Loading offers…</td></tr>';
+  if (cardsEl) cardsEl.innerHTML = '<article class="p2p-offer-card"><p class="empty-row">Loading offers…</p></article>';
 }
+
 
 var _offersOffset = 0;
 var _offersHasMore = false;
@@ -3519,10 +3491,10 @@ async function loadOffers(append) {
   if (!append && metaEl && !cachedResponse) metaEl.textContent = '';
   if (!append) _offersFetching = true;
 
-  // Only show the dummy placeholder on the very first load — never flash it
+  // Only show the loading placeholder on the very first load — never flash it
   // over already-rendered real offers on periodic background refreshes.
   if (!append && !cachedResponse && !_lastOffersData) {
-    renderOffers(getDummyOffers(currentSide), false);
+    renderOffersLoading();
   }
 
   console.log('[loadOffers] fetching /api/p2p/offers side=' + currentSide + ' asset=' + currentAsset);
@@ -3541,8 +3513,7 @@ async function loadOffers(append) {
     if (!Array.isArray(data.offers) || data.offers.length === 0) {
       if (!append) {
         _offersFetching = false;
-        const _fallback = getDummyOffers(currentSide);
-        renderOffers(_fallback, false);
+        renderOffers({ offers: [], side: currentSide, asset: currentAsset }, false);
         if (metaEl) metaEl.textContent = '';
       }
       _renderPagination();
@@ -3566,7 +3537,7 @@ async function loadOffers(append) {
     if (!append) _offersFetching = false;
     console.warn('[loadOffers] error:', error && error.message);
     if (!append) {
-      renderOffers(getDummyOffers(currentSide), false);
+      renderOffers({ offers: [], side: currentSide, asset: currentAsset }, false);
       if (metaEl) metaEl.textContent = '';
     }
     _renderPagination();
@@ -6265,9 +6236,9 @@ window.addEventListener('pagehide', () => {
 
 (async function init() {
   try {
-    renderOffers(getDummyOffers(currentSide), false);
+    renderOffersLoading();
     if (metaEl) metaEl.textContent = '';
-  } catch(e) { console.warn('[init] demo render failed', e); }
+  } catch(e) { console.warn('[init] loading render failed', e); }
 
   initTheme();
   // loadCurrentUser MUST complete first so currentUser is set before other loads

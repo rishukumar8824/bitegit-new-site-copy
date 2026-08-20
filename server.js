@@ -1,5 +1,48 @@
 require('dotenv').config();
 
+const { sendViaProvider } = require('./services/auth-email-service');
+const { createAlertService } = require('./lib/alert-service');
+
+// Nothing was watching console.log/console.error in production — a stuck
+// withdrawal or a crash just sat in Render's log stream unread. This mails
+// ADMIN_EMAIL for crashes and (via the monitoring sweep below) for stuck
+// withdrawals / repeated-failure patterns, deduped so a repeating issue
+// doesn't spam the inbox every tick.
+const crashAlertService = createAlertService({
+  sendEmail: sendViaProvider,
+  adminEmail: process.env.ADMIN_EMAIL,
+  minIntervalMs: 5 * 60 * 1000
+});
+
+// Prevent an unhandled promise rejection or async throw anywhere in the app
+// (payment/withdrawal/P2P paths included) from silently killing the process
+// with no log line. uncaughtException still exits (Node's own state after one
+// is not trustworthy to keep serving from), but now it exits loudly and lets
+// the platform (Render) restart the process instead of hanging or corrupting
+// in-flight requests silently.
+process.on('unhandledRejection', (reason, promise) => {
+  const message = reason && reason.stack ? reason.stack : String(reason);
+  console.error('[unhandledRejection]', message);
+  crashAlertService.notify('unhandled_rejection', 'Unhandled promise rejection', message).catch(() => {});
+});
+process.on('uncaughtException', (error) => {
+  const message = error && error.stack ? error.stack : String(error);
+  console.error('[uncaughtException] shutting down:', message);
+  const alertPromise = crashAlertService
+    .notify('uncaught_exception', 'Uncaught exception — process exiting', message)
+    .catch(() => {});
+  // Give the alert email a few seconds to go out, but never let a slow/failed
+  // send delay the restart Render is waiting to do.
+  Promise.race([alertPromise, new Promise((resolve) => setTimeout(resolve, 3000))]).finally(() =>
+    process.exit(1)
+  );
+});
+
+// One-time first-deposit bonus rule (see /api/admin/wallet/deposits/:id/review and
+// /api/rewards/deposit-bonus for the two places that read these).
+const DEPOSIT_BONUS_THRESHOLD_USDT = 100;
+const DEPOSIT_BONUS_AMOUNT_USDT = 5;
+
 const crypto = require('crypto');
 let geoip = null;
 try { geoip = require('geoip-lite'); } catch(e) { /* optional */ }
@@ -20,6 +63,7 @@ const { registerPushRoutes } = require('./routes/push');
 const { createPushNotificationService } = require('./services/push-notification-service');
 const { createAuditLogService } = require('./services/audit-log-service');
 const { createP2POrderExpiryService } = require('./services/p2p-order-expiry-service');
+const { createMonitoringService } = require('./lib/monitoring-service');
 const { createAuthEmailService } = require('./services/auth-email-service');
 const { createP2PEmailService } = require('./services/p2p-email-service');
 const tokenService = require('./services/tokenService');
@@ -73,6 +117,7 @@ const P2P_ACCESS_COOKIE_NAME = 'p2p_access_token';
 const P2P_REFRESH_COOKIE_NAME = 'p2p_refresh_token';
 const P2P_ORDER_TTL_MS = 1000 * 60 * 15;
 const P2P_EXPIRY_SWEEP_INTERVAL_MS = 30 * 1000;
+const MONITORING_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 const MERCHANT_ACTIVATION_DEPOSIT = 200; // Minimum security deposit to post ads
 const MERCHANT_BADGE_MIN_DEPOSIT = 500;  // Minimum security deposit for badge eligibility
 
@@ -408,6 +453,7 @@ let httpServer = null;
 let shuttingDown = false;
 let bootRetryTimer = null;
 let p2pExpirySweepTimer = null;
+let monitoringSweepTimer = null;
 const socialFeedBootstrapConfig = readSocialFeedConfig();
 const socialFeedBootstrapStore = createSocialFeedFallbackStore();
 const socialFeedBootstrapInitPromise = socialFeedBootstrapStore
@@ -452,6 +498,80 @@ app.use('/downloads', (req, res, next) => {
 });
 const LONG_CACHE_EXTENSIONS = /\.(png|jpe?g|webp|gif|ico|svg|woff2?|ttf|mp4|webm)$/i;
 const MEDIUM_CACHE_EXTENSIONS = /\.(css|js)$/i;
+
+// Block the old, guessable admin entry points from ever being served — the
+// admin panel now only lives behind ADMIN_PANEL_SECRET_PATH (see below).
+// Without this, express.static below would still hand these files out by
+// filename even after the route handlers for them were removed.
+const BLOCKED_ADMIN_FILE_PATHS = new Set([
+  '/admin.html',
+  '/admin-login.html',
+  '/admin-dashboard.html'
+]);
+app.use((req, res, next) => {
+  if (BLOCKED_ADMIN_FILE_PATHS.has(req.path)) {
+    return res.status(404).end();
+  }
+  next();
+});
+
+// Clean-URL redirects for every page that has a raw .html filename in
+// public/. This MUST run before express.static below — static serves any
+// matching file by its exact path first, so a redirect route registered
+// after express.static (as these used to be, further down this file) never
+// actually fires and the .html stays visible in the address bar.
+const HTML_TO_CLEAN_URL = {
+  '/p2p.html': '/p2p',
+  '/index.html': '/',
+  '/market.html': '/markets',
+  '/markets.html': '/markets',
+  '/chart.html': '/chart',
+  '/auth.html': '/auth',
+  '/wallet.html': '/wallet',
+  '/p2p-order-flow.html': '/p2p-order-flow',
+  '/p2p-buy.html': '/p2p-buy',
+  '/p2p-chat.html': '/p2p-chat',
+  '/p2p-order-history.html': '/p2p-order-history',
+  '/p2p-sell-flow.html': '/p2p-sell-flow',
+  '/p2p-user-center.html': '/p2p-user-center',
+  '/trade.html': '/trade',
+  '/tradfi.html': '/futures',
+  '/futures.html': '/futures',
+  '/about.html': '/about',
+  '/settings.html': '/settings',
+  '/kyc.html': '/kyc',
+  '/forgot-password.html': '/forgot-password',
+  '/login.html': '/login',
+  '/signup.html': '/signup',
+  '/register.html': '/signup',
+  '/rewards.html': '/rewards',
+  '/p2p-appeal.html': '/p2p-appeal',
+  '/p2p-ratings.html': '/p2p-ratings',
+  '/how_to_buy.html': '/how-to-buy',
+  '/app_download.html': '/app-download',
+  '/referral.html': '/referral',
+  '/finance.html': '/finance',
+  '/credit_card.html': '/credit-card',
+  '/affiliate.html': '/affiliate',
+  '/futures_overview.html': '/futures-overview',
+  '/gate-markets.html': '/gate-markets',
+  '/gate-home.html': '/gate-home',
+  '/gate-trade.html': '/gate-trade',
+  '/terms.html': '/terms',
+  '/privacy.html': '/privacy',
+  '/rewards.html': '/rewards',
+  '/p2p-appeal.html': '/p2p-appeal',
+  '/p2p-ratings.html': '/p2p-ratings',
+  '/app.html': '/app-home'
+};
+app.use((req, res, next) => {
+  const cleanUrl = HTML_TO_CLEAN_URL[req.path];
+  if (cleanUrl) {
+    return res.redirect(301, cleanUrl);
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
   maxAge: 0,
@@ -1198,6 +1318,23 @@ function createIpAttemptLimiter({ maxAttempts, windowMs }) {
   };
 }
 
+// Mirrors sanitizeImageUrl in public/p2p-chat.js — that copy only protects
+// users of that one page. Any endpoint that stores a user-supplied "image"
+// value (P2P appeal evidence, order-chat images) must run it server-side too,
+// otherwise a value like "javascript:..." gets stored as-is and the admin
+// dashboard turns it into a clickable link/thumbnail — stored XSS in the
+// admin's session the moment they open it.
+const SAFE_DATA_IMAGE_RE = /^data:image\/(png|jpe?g|webp);base64,[a-z0-9+/=\s]+$/i;
+const SAFE_REMOTE_IMAGE_RE = /^https?:\/\/[^\s]+$/i;
+function sanitizeStoredImageUrl(rawUrl) {
+  const source = String(rawUrl || '').trim();
+  if (!source) return '';
+  if (SAFE_DATA_IMAGE_RE.test(source)) return source;
+  if (SAFE_REMOTE_IMAGE_RE.test(source)) return source;
+  if (source.startsWith('/')) return source;
+  return '';
+}
+
 function getRequestIp(req) {
   const forwardedRaw = String(req.headers['x-forwarded-for'] || '').trim();
   const firstForwarded = forwardedRaw.split(',')[0].trim();
@@ -1223,6 +1360,28 @@ function getGeoInfo(ip) {
 const loginAttemptLimiter = createIpAttemptLimiter({
   maxAttempts: 5,
   windowMs: 15 * 60 * 1000  // 15-minute lockout after 5 failed attempts
+});
+
+// A 6-digit OTP (900,000 possibilities) is brute-forceable in its 10-minute
+// validity window without a strict limiter — this caps both the requesting
+// IP and the target email independently, so an attacker can't just rotate IPs.
+const resetPasswordIpLimiter = createIpAttemptLimiter({
+  maxAttempts: 8,
+  windowMs: 15 * 60 * 1000
+});
+const resetPasswordEmailLimiter = createIpAttemptLimiter({
+  maxAttempts: 8,
+  windowMs: 15 * 60 * 1000
+});
+const MAX_RESET_OTP_ATTEMPTS = 5;
+
+// Guest support-chat tickets are looked up by ticketId with no login (by
+// design — a user without an account can still get support). That makes
+// ticketId itself a bearer token, so without a limiter here an attacker
+// could script through IDs and read/post into other people's conversations.
+const supportTicketLookupLimiter = createIpAttemptLimiter({
+  maxAttempts: 30,
+  windowMs: 5 * 60 * 1000
 });
 
 async function createSession() {
@@ -2076,9 +2235,27 @@ app.post('/api/p2p/reset-password', async (req, res) => {
   const newPassword = String(req.body.newPassword || '').trim();
   if (!email || !code || !newPassword) return res.status(400).json({ message: 'Email, code and new password required.' });
   if (newPassword.length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+
+  const requestIp = getRequestIp(req);
+  const ipCheck = resetPasswordIpLimiter(`reset_pw_ip:${requestIp}`);
+  const emailCheck = resetPasswordEmailLimiter(`reset_pw_email:${email}`);
+  if (!ipCheck.allowed || !emailCheck.allowed) {
+    const retryAfterSeconds = Math.max(ipCheck.retryAfterSeconds || 0, emailCheck.retryAfterSeconds || 0);
+    res.setHeader('Retry-After', String(retryAfterSeconds));
+    return res.status(429).json({ message: 'Too many attempts. Please try again later.', retryAfterSeconds });
+  }
+
   try {
     const otp = await repos.getSignupOtp(email, { purpose: 'p2p_password_reset' });
-    if (!otp || otp.code !== code || new Date(otp.expiresAt) < new Date()) {
+    if (!otp || new Date(otp.expiresAt) < new Date()) {
+      return res.status(400).json({ message: 'Invalid or expired reset code.' });
+    }
+    if (Number(otp.attempts || 0) >= MAX_RESET_OTP_ATTEMPTS) {
+      await repos.deleteSignupOtp(email, { purpose: 'p2p_password_reset' });
+      return res.status(400).json({ message: 'Too many incorrect attempts. Please request a new reset code.' });
+    }
+    if (otp.code !== code) {
+      await repos.incrementSignupOtpAttempts(email, { purpose: 'p2p_password_reset' });
       return res.status(400).json({ message: 'Invalid or expired reset code.' });
     }
     const hash = repos.hashPassword(newPassword);
@@ -2318,6 +2495,22 @@ app.get('/api/p2p/me', async (req, res) => {
   });
 });
 
+// ── Deposit bonus status — one-time credit for a first deposit >= threshold ──
+app.get('/api/rewards/deposit-bonus', requiresP2PUser, async (req, res) => {
+  try {
+    const cols = getCollections();
+    const claim = await cols.depositBonusClaims.findOne({ userId: req.p2pUser.id });
+    return res.json({
+      thresholdUsdt: DEPOSIT_BONUS_THRESHOLD_USDT,
+      bonusAmountUsdt: DEPOSIT_BONUS_AMOUNT_USDT,
+      claimed: Boolean(claim),
+      claimedAt: claim ? claim.createdAt : null
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while loading deposit bonus status.' });
+  }
+});
+
 app.get('/api/p2p/kyc/status', requiresP2PUser, async (req, res) => {
   try {
     const kycProfile = await getP2PKycProfileByEmail(req.p2pUser.email);
@@ -2385,21 +2578,32 @@ app.post('/api/p2p/kyc/submit', requiresP2PUser, async (req, res) => {
   }
 
   let aadhaarDigits = '';
-  // Parse image data URLs from request body
-  function parseImageField(raw) {
+  const KYC_MAX_VIDEO_BYTES = 20 * 1024 * 1024;
+  const KYC_ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+  const EMPTY_MEDIA_FIELD = { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
+  // Parse + validate a data: URL from the request body. allowedTypes/maxBytes
+  // enforce the same allowlist the strict KYC upload path already uses
+  // (extractKycImageData, KYC_ALLOWED_IMAGE_TYPES/KYC_MAX_IMAGE_BYTES above) —
+  // this path was missing that check, so a spoofed mimeType or oversized
+  // payload went straight into storage and, on review, straight into the
+  // admin's Content-Type header at the KYC image endpoint.
+  function parseMediaField(raw, allowedTypes, maxBytes) {
     const s = String(raw || '').trim();
-    if (!s || !s.startsWith('data:')) return { dataUrl: '', mimeType: '', sizeBytes: 0, sha256: '' };
+    if (!s || !s.startsWith('data:')) return EMPTY_MEDIA_FIELD;
     const mimeMatch = s.match(/^data:([^;]+);base64,/);
-    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const mimeType = mimeMatch ? mimeMatch[1].toLowerCase() : '';
+    if (!allowedTypes.includes(mimeType)) return EMPTY_MEDIA_FIELD;
     const b64 = s.replace(/^data:[^;]+;base64,/, '');
     const buf = Buffer.from(b64, 'base64');
+    if (buf.length === 0 || buf.length > maxBytes) return EMPTY_MEDIA_FIELD;
     const sha256 = crypto.createHash('sha256').update(buf).digest('hex');
     return { dataUrl: s, mimeType, sizeBytes: buf.length, sha256 };
   }
+  const parseImageField = (raw) => parseMediaField(raw, KYC_ALLOWED_IMAGE_TYPES, KYC_MAX_IMAGE_BYTES);
   const aadhaarFrontImage       = parseImageField(req.body?.aadhaarFrontImage);
   const aadhaarBackImage        = parseImageField(req.body?.aadhaarBackImage);
   const selfieWithDocumentImage = parseImageField(req.body?.selfieImage);
-  const livenessVideo           = parseImageField(req.body?.livenessVideo);
+  const livenessVideo           = parseMediaField(req.body?.livenessVideo, KYC_ALLOWED_VIDEO_TYPES, KYC_MAX_VIDEO_BYTES);
   try {
     aadhaarDigits = normalizeAadhaarNumber(req.body?.aadhaarNumber);
   } catch (error) {
@@ -4839,11 +5043,12 @@ app.get('/api/p2p/orders/:orderId', requiresP2PUser, async (req, res) => {
 app.post('/api/p2p/orders/:orderId/appeal', requiresP2PUser, async (req, res) => {
   const appealType = String(req.body.reason || req.body.appealType || '').trim();
   const appealReason = String(req.body.description || req.body.appealReason || '').trim();
-  const appealImages = Array.isArray(req.body.images)
+  const appealImages = (Array.isArray(req.body.images)
     ? req.body.images.slice(0, 3)
     : Array.isArray(req.body.appealImages)
       ? req.body.appealImages.slice(0, 3)
-      : [];
+      : []
+  ).map(sanitizeStoredImageUrl).filter(Boolean);
 
   if (!appealType) {
     return res.status(400).json({ message: 'Appeal reason is required.' });
@@ -5165,7 +5370,7 @@ app.get('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) =
 
 app.post('/api/p2p/orders/:orderId/messages', requiresP2PUser, async (req, res) => {
   const text = String(req.body.text || '').trim();
-  const imageBase64 = req.body.imageBase64 || null;
+  const imageBase64 = sanitizeStoredImageUrl(req.body.imageBase64) || null;
 
   if (!text && !imageBase64) {
     return res.status(400).json({ message: 'Message text or image is required.' });
@@ -5287,12 +5492,10 @@ app.get('/api/p2p/me/stream', requiresP2PUser, (req, res) => {
 });
 
 // ── Admin Support SSE — live notify ──────────────────────────────────────────
-app.get('/api/admin/support/live-notify', async (req, res) => {
-  // Allow admin cookie or skip auth in dev
+app.get('/api/admin/support/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminSupportSseClients.add(res);
   res.write(': connected\n\n');
@@ -5301,16 +5504,10 @@ app.get('/api/admin/support/live-notify', async (req, res) => {
 });
 
 // ── Admin: Withdrawal live-notify SSE ─────────────────────────────────────────
-app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
-  try {
-    const cookies = parseCookies(req);
-    const accessToken = String(cookies[ADMIN_ACCESS_COOKIE_NAME] || '').trim();
-    if (!accessToken) return res.status(401).end();
-  } catch(_) {}
+app.get('/api/admin/withdrawal/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminWithdrawalSseClients.add(res);
   res.write(': connected\n\n');
@@ -5319,11 +5516,10 @@ app.get('/api/admin/withdrawal/live-notify', async (req, res) => {
 });
 
 // ── Admin: New user live-notify SSE ───────────────────────────────────────────
-app.get('/api/admin/user/live-notify', async (req, res) => {
+app.get('/api/admin/user/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminUserSseClients.add(res);
   res.write(': connected\n\n');
@@ -5332,11 +5528,10 @@ app.get('/api/admin/user/live-notify', async (req, res) => {
 });
 
 // ── Admin: New deposit live-notify SSE ────────────────────────────────────────
-app.get('/api/admin/deposit/live-notify', async (req, res) => {
+app.get('/api/admin/deposit/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminDepositSseClients.add(res);
   res.write(': connected\n\n');
@@ -5345,11 +5540,10 @@ app.get('/api/admin/deposit/live-notify', async (req, res) => {
 });
 
 // ── Admin: KYC submission live-notify SSE ─────────────────────────────────────
-app.get('/api/admin/kyc/live-notify', async (req, res) => {
+app.get('/api/admin/kyc/live-notify', requiresAdminSession, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
   adminKycSseClients.add(res);
   res.write(': connected\n\n');
@@ -5529,6 +5723,47 @@ app.post('/api/admin/wallet/deposits/:depositId/review', requiresAdminSession, a
         referenceId: deposit.id,
         metadata: { source: 'admin_deposit_approval' }
       });
+
+      // One-time first-deposit bonus: deposit >= DEPOSIT_BONUS_THRESHOLD_USDT unlocks a
+      // single DEPOSIT_BONUS_AMOUNT_USDT credit per user, ever. Amount is compared in
+      // USDT terms only (non-USDT deposits don't currently qualify — no FX conversion here).
+      try {
+        const depositCoin = String(deposit.coin || 'USDT').toUpperCase();
+        const depositAmount = Number(deposit.amount || 0);
+        if (depositCoin === 'USDT' && depositAmount >= DEPOSIT_BONUS_THRESHOLD_USDT) {
+          const cols = getCollections();
+          // findOne-then-insertOne is a check-then-act race: two deposits for the
+          // same user approved within milliseconds of each other (e.g. an admin
+          // approving a backlog, or two automated confirmations landing close
+          // together) could both pass the "no existing claim" check before either
+          // insert lands, paying the one-time bonus more than once. An upsert
+          // keyed on userId is atomic at the database level — only one caller can
+          // ever be the one that actually inserts, decided by upsertedCount.
+          const claimResult = await cols.depositBonusClaims.updateOne(
+            { userId: deposit.userId },
+            {
+              $setOnInsert: {
+                userId: deposit.userId,
+                depositId: deposit.id,
+                bonusAmount: DEPOSIT_BONUS_AMOUNT_USDT,
+                currency: 'USDT',
+                createdAt: new Date().toISOString()
+              }
+            },
+            { upsert: true }
+          );
+          if (claimResult.upsertedCount === 1) {
+            await walletService.creditAvailable(deposit.userId, DEPOSIT_BONUS_AMOUNT_USDT, {
+              type: 'bonus',
+              currency: 'USDT',
+              referenceId: `deposit_bonus_${deposit.id}`,
+              metadata: { source: 'first_deposit_bonus', triggeringDepositId: deposit.id }
+            });
+          }
+        }
+      } catch (bonusError) {
+        console.error('[deposit-bonus] failed to grant deposit bonus:', bonusError.message);
+      }
     }
 
     // Send deposit success email
@@ -5580,7 +5815,10 @@ app.post('/api/support/chat', async (req, res) => {
       return res.status(400).json({ message: 'Message is required.' });
     }
     const ticketData = {
-      id: `tkt_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      // Guest tickets are looked up by this ID with no login, so it doubles
+      // as a bearer token — needs real entropy, not Math.random() + a
+      // guessable timestamp.
+      id: `tkt_${crypto.randomBytes(16).toString('hex')}`,
       userId: email || 'guest',
       subject: topic ? `[${topic}] ${String(message).slice(0, 60)}` : String(message).slice(0, 80),
       status: 'OPEN',
@@ -5620,6 +5858,11 @@ app.post('/api/support/chat', async (req, res) => {
 
 // ── Public: get ticket messages (user polling for admin replies) ──────────────
 app.get('/api/support/ticket/:ticketId/messages', async (req, res) => {
+  const ticketCheck = supportTicketLookupLimiter(`support_ticket:${getRequestIp(req)}`);
+  if (!ticketCheck.allowed) {
+    res.setHeader('Retry-After', String(ticketCheck.retryAfterSeconds));
+    return res.status(429).json({ message: 'Too many requests. Please try again later.' });
+  }
   try {
     const { ticketId } = req.params;
     if (!ticketId) return res.status(400).json({ message: 'ticketId required' });
@@ -5650,6 +5893,11 @@ app.get('/api/support/ticket/:ticketId/messages', async (req, res) => {
 
 // ── Public: user sends a reply on an existing ticket ─────────────────────────
 app.post('/api/support/ticket/:ticketId/user-reply', async (req, res) => {
+  const ticketReplyCheck = supportTicketLookupLimiter(`support_ticket:${getRequestIp(req)}`);
+  if (!ticketReplyCheck.allowed) {
+    res.setHeader('Retry-After', String(ticketReplyCheck.retryAfterSeconds));
+    return res.status(429).json({ message: 'Too many requests. Please try again later.' });
+  }
   try {
     const { ticketId } = req.params;
     const { message, name } = req.body || {};
@@ -6250,19 +6498,20 @@ app.patch('/api/admin/admins/:adminId/status', requiresAdminSession, async (req,
   return res.json({ ok: true });
 });
 
-app.get('/admin-login', (req, res) => {
-  return res.redirect('/admin/login');
-});
+// The admin panel intentionally does NOT live at /admin, /admin/login,
+// /admin-login, or /bitegit-admin anymore — those were guessable and are now
+// dead paths (the catch-all route below just serves the public homepage for
+// them, and the static-file block above stops admin-*.html being fetched by
+// filename). It lives at ADMIN_PANEL_SECRET_PATH instead. Keep this value out
+// of source control in real deployments (move it to an env var); it is
+// hardcoded here only because it replaces a previously fully-guessable path.
+const ADMIN_PANEL_SECRET_PATH = process.env.ADMIN_PANEL_SECRET_PATH || 'bcx-portal-10fd3834d3c6';
 
-app.get('/admin/login', (req, res) => {
+app.get(`/${ADMIN_PANEL_SECRET_PATH}/login`, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
 });
 
-app.get('/bitegit-admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
-});
-
-app.get('/admin', async (req, res) => {
+app.get(`/${ADMIN_PANEL_SECRET_PATH}`, async (req, res) => {
   try {
     const cookies = parseCookies(req);
     const legacySessionToken = String(cookies[SESSION_COOKIE_NAME] || '').trim();
@@ -6271,21 +6520,21 @@ app.get('/admin', async (req, res) => {
     if (!hasLegacySession && adminAuthMiddleware) {
       const accessToken = String(cookies[ADMIN_ACCESS_COOKIE_NAME] || '').trim();
       if (!accessToken) {
-        return res.redirect('/admin/login');
+        return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
       }
 
       try {
         await adminStore.verifyAdminAccessToken(accessToken);
       } catch (error) {
-        return res.redirect('/admin/login');
+        return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
       }
     } else if (!hasLegacySession && !adminAuthMiddleware) {
-      return res.redirect('/admin/login');
+      return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
     }
 
     return res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
   } catch (error) {
-    return res.redirect('/admin/login');
+    return res.redirect(`/${ADMIN_PANEL_SECRET_PATH}/login`);
   }
 });
 
@@ -6307,24 +6556,30 @@ app.get('/aboutUs', (req, res) => {
 app.get('/about', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'about.html'));
 });
-// Redirect .html URLs to clean URLs
-app.get('/p2p.html', (req, res) => res.redirect(301, '/p2p'));
-app.get('/index.html', (req, res) => res.redirect(301, '/'));
-app.get('/market.html', (req, res) => res.redirect(301, '/markets'));
-app.get('/chart.html', (req, res) => res.redirect(301, '/chart'));
-app.get('/auth.html', (req, res) => res.redirect(301, '/auth'));
-app.get('/wallet.html', (req, res) => res.redirect(301, '/wallet'));
-app.get('/p2p-order-flow.html', (req, res) => res.redirect(301, '/p2p-order-flow'));
-app.get('/p2p-buy.html', (req, res) => res.redirect(301, '/p2p-buy'));
-app.get('/p2p-chat.html', (req, res) => res.redirect(301, '/p2p-chat'));
-app.get('/p2p-order-history.html', (req, res) => res.redirect(301, '/p2p-order-history'));
-app.get('/p2p-sell-flow.html', (req, res) => res.redirect(301, '/p2p-sell-flow'));
-app.get('/p2p-user-center.html', (req, res) => res.redirect(301, '/p2p-user-center'));
-app.get('/trade.html', (req, res) => res.redirect(301, '/trade'));
-app.get('/tradfi.html', (req, res) => res.redirect(301, '/futures'));
-app.get('/futures.html', (req, res) => res.redirect(301, '/futures'));
-app.get('/markets.html', (req, res) => res.redirect(301, '/markets'));
-app.get('/market.html', (req, res) => res.redirect(301, '/markets'));
+// .html → clean URL redirects for these pages are registered up front,
+// before express.static (see HTML_TO_CLEAN_URL near the top of this file) —
+// a redirect route placed after express.static never fires, because static
+// already matches and serves the raw file first.
+const CLEAN_STATIC_PAGES = {
+  '/how-to-buy': 'how_to_buy.html',
+  '/app-download': 'app_download.html',
+  '/referral': 'referral.html',
+  '/finance': 'finance.html',
+  '/credit-card': 'credit_card.html',
+  '/affiliate': 'affiliate.html',
+  '/futures-overview': 'futures_overview.html',
+  '/gate-markets': 'gate-markets.html',
+  '/gate-home': 'gate-home.html',
+  '/gate-trade': 'gate-trade.html',
+  '/terms': 'terms.html',
+  '/privacy': 'privacy.html',
+  '/app-home': 'app.html'
+};
+Object.entries(CLEAN_STATIC_PAGES).forEach(([cleanPath, fileName]) => {
+  app.get(cleanPath, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', fileName));
+  });
+});
 
 app.get('/auth', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'auth.html'));
@@ -6335,9 +6590,6 @@ app.get('/login', (req, res) => {
 app.get('/signup', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
-app.get('/login.html', (req, res) => res.redirect(301, '/login'));
-app.get('/signup.html', (req, res) => res.redirect(301, '/signup'));
-app.get('/register.html', (req, res) => res.redirect(301, '/signup'));
 app.get('/p2p', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p.html'));
 });
@@ -6384,22 +6636,18 @@ app.get('/earn', (req, res) => {
 app.get('/rewards', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'rewards.html'));
 });
-app.get('/rewards.html', (req, res) => res.redirect(301, '/rewards'));
 
 app.get('/p2p-appeal', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p-appeal.html'));
 });
-app.get('/p2p-appeal.html', (req, res) => res.redirect(301, '/p2p-appeal'));
 
 app.get('/p2p-ratings', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'p2p-ratings.html'));
 });
-app.get('/p2p-ratings.html', (req, res) => res.redirect(301, '/p2p-ratings'));
 
 app.get('/chart', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chart.html'));
 });
-app.get('/chart.html', (req, res) => res.redirect(301, '/chart'));
 
 app.get('/futures', (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'tradfi.html'));
@@ -6586,6 +6834,11 @@ function registerShutdownHandlers() {
       if (p2pExpirySweepTimer) {
         clearInterval(p2pExpirySweepTimer);
         p2pExpirySweepTimer = null;
+      }
+
+      if (monitoringSweepTimer) {
+        clearInterval(monitoringSweepTimer);
+        monitoringSweepTimer = null;
       }
 
       const forceExitTimer = setTimeout(() => {
@@ -7076,6 +7329,25 @@ async function boot() {
     }, P2P_EXPIRY_SWEEP_INTERVAL_MS);
     if (typeof p2pExpirySweepTimer.unref === 'function') {
       p2pExpirySweepTimer.unref();
+    }
+
+    const monitoringService = createMonitoringService({
+      withdrawalRequests: getCollections().withdrawalRequests,
+      walletFailures: getCollections().walletFailures,
+      alertService: crashAlertService
+    });
+    if (monitoringSweepTimer) {
+      clearInterval(monitoringSweepTimer);
+    }
+    monitoringSweepTimer = setInterval(async () => {
+      try {
+        await monitoringService.runMonitoringSweep();
+      } catch (error) {
+        console.error('Failed to run monitoring sweep:', error.message);
+      }
+    }, MONITORING_SWEEP_INTERVAL_MS);
+    if (typeof monitoringSweepTimer.unref === 'function') {
+      monitoringSweepTimer.unref();
     }
 
     persistenceReady = true;
