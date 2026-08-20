@@ -3220,7 +3220,14 @@
       var el = document.getElementById(id);
       if (el) el.innerHTML = sellerLetter + '<div class="dot"></div>';
     });
-    ['ogSellerName','tfSellerName','cnSellerName','chatTitle'].forEach(function(id) {
+    // chatTitle deliberately excluded here - it must show the *counterparty*
+    // (buyer name when viewer is the seller, seller name when viewer is the
+    // buyer), which is handled separately below by the isSeller-aware logic.
+    // Setting it to sellerName unconditionally here was overwriting the
+    // correct value on every order refresh/poll, causing the name to
+    // flicker between correct and wrong (or blank, when sellerName resolved
+    // to the viewer's own empty/missing username).
+    ['ogSellerName','tfSellerName','cnSellerName'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.textContent = sellerName;
     });
