@@ -91,9 +91,9 @@ body{display:flex;flex-direction:column;min-height:100svh}
 .ob-mid-arr.up{color:#1db26e}
 .ob-mid-usd{font-size:11px;color:#8fa0bb;margin-left:auto}
 .ob-row{display:flex;align-items:center;padding:3px 10px;position:relative;cursor:pointer;overflow:hidden}
-.ob-depth{position:absolute;top:0;bottom:0;opacity:.14;animation:obDepthPulse 2.6s ease-in-out infinite;transition:width .25s ease}
-.ob-ask .ob-depth{right:0;background:linear-gradient(270deg,rgba(232,77,77,0.35),rgba(232,77,77,0.05))}
-.ob-bid .ob-depth{left:0;background:linear-gradient(90deg,rgba(29,178,110,0.05),rgba(29,178,110,0.35))}
+.ob-depth{position:absolute;top:0;bottom:0;opacity:.55;animation:obDepthPulse 2.6s ease-in-out infinite;transition:width .25s ease}
+.ob-ask .ob-depth{right:0;background:linear-gradient(270deg,rgba(232,77,77,0.55),rgba(232,77,77,0.12))}
+.ob-bid .ob-depth{left:0;background:linear-gradient(90deg,rgba(29,178,110,0.12),rgba(29,178,110,0.55))}
 @keyframes obDepthPulse{0%,100%{opacity:.10}50%{opacity:.22}}
 .ob-px{font-size:12px;font-weight:500;flex:1;position:relative;z-index:1}
 .ob-ask .ob-px{color:#e84d4d}
@@ -793,12 +793,12 @@ function initTV(iv){
       'paneProperties.backgroundType':'solid',
       'paneProperties.backgroundGradientStartColor':'#000000',
       'paneProperties.backgroundGradientEndColor':'#000000',
-      'paneProperties.vertGridProperties.color':'rgba(255,255,255,0.001)',
-      'paneProperties.horzGridProperties.color':'rgba(255,255,255,0.001)',
+      'paneProperties.vertGridProperties.color':'rgba(255,255,255,0.06)',
+      'paneProperties.horzGridProperties.color':'rgba(255,255,255,0.06)',
       'scalesProperties.textColor':'#848e9c',
-      'scalesProperties.lineColor':'rgba(255,255,255,0.04)',
+      'scalesProperties.lineColor':'rgba(255,255,255,0.06)',
       'scalesProperties.backgroundColor':'#000000',
-      'gridProperties.color':'rgba(255,255,255,0.001)',
+      'gridProperties.color':'rgba(255,255,255,0.06)',
       'mainSeriesProperties.style':1,
       'mainSeriesProperties.priceLineColor':'rgba(132,142,156,0.5)',
       'mainSeriesProperties.candleStyle.upColor':'#00e676',

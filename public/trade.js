@@ -1,10 +1,18 @@
-const BITCOVEX_API = (window.BITCOVEX_API_BASE || 'http://localhost:3000/api/v1');
+const BITCOVEX_API = (window.BITCOVEX_API_BASE || (window.location.origin + '/api/v1'));
+const BITCOVEX_P2P_API = BITCOVEX_API.replace(/\/v1$/, '');
 function tradeFetch(path, opts) {
   var token = localStorage.getItem('bitcovex_token') || '';
   opts = opts || {};
   var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (token) headers['Authorization'] = 'Bearer ' + token;
   return fetch(BITCOVEX_API + path, Object.assign({}, opts, { headers: headers, credentials: 'include' }));
+}
+function p2pFetch(path, opts) {
+  var token = localStorage.getItem('bitcovex_token') || '';
+  opts = opts || {};
+  var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  return fetch(BITCOVEX_P2P_API + path, Object.assign({}, opts, { headers: headers, credentials: 'include' }));
 }
 
 const pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -1293,7 +1301,7 @@ function drawCandles(data) {
 async function loadDepth() {
   const requestId = ++depthLoadSeq;
   try {
-    const response = await tradeFetch(`/market/orderbook?symbol=${encodeURIComponent(state.symbol)}&_t=${Date.now()}`, {
+    const response = await p2pFetch(`/p2p/market-depth?symbol=${encodeURIComponent(state.symbol)}&_t=${Date.now()}`, {
       cache: 'no-store'
     });
     const data = await response.json();
@@ -1378,7 +1386,7 @@ async function loadKlines() {
       interval: state.interval,
       limit: '320'
     });
-    const response = await tradeFetch(`/market/klines?${params.toString()}`);
+    const response = await p2pFetch(`/p2p/klines?${params.toString()}`);
     const data = await response.json();
 
     if (!response.ok || !Array.isArray(data.klines)) {
