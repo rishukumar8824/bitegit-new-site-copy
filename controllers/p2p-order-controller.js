@@ -217,7 +217,16 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
       } catch(_) {}
 
       const now = Date.now();
-      const offerReleaseMinutes = Math.max(1, Math.min(120, Number(offer.releaseTime) || 0));
+      // offer.releaseTime is only ever set when a merchant edits their ad
+      // (buildP2PAdDocument never stores it at creation time), so a fresh
+      // ad has it undefined. Number(undefined) is NaN, and the old
+      // `Math.max(1, ...)` clamp turned that NaN into 1 *before* the
+      // orderTtlMs fallback below could ever run - every order on a
+      // never-edited ad expired in 1 minute instead of the real default.
+      const rawReleaseTime = Number(offer.releaseTime);
+      const offerReleaseMinutes = Number.isFinite(rawReleaseTime) && rawReleaseTime > 0
+        ? Math.max(1, Math.min(120, rawReleaseTime))
+        : 0;
       const effectiveTtlMs = offerReleaseMinutes > 0 ? offerReleaseMinutes * 60 * 1000 : orderTtlMs;
       const payWindowMinutes = Math.max(1, Math.round(effectiveTtlMs / 60000));
       const orderDoc = buildP2POrderDocument({

@@ -86,12 +86,15 @@ function normalizeP2PAdPayload(payload = {}) {
     maxLimit: payload.maxLimit
   });
 
+  const releaseTime = String(payload.releaseTime || '15').trim();
+
   return {
     asset,
     type: adType,
     adType,
     side,
     payments,
+    releaseTime,
     ...pricing
   };
 }
@@ -122,6 +125,7 @@ function buildP2PAdDocument(input = {}) {
     completionRate: toAmount(input.completionRate ?? 100, 2),
     orders: Number(input.orders || 0),
     payments: Array.isArray(input.payments) ? input.payments : [],
+    releaseTime: String(input.releaseTime || '15').trim(),
     createdByUserId: String(input.createdByUserId || '').trim(),
     createdByUsername: String(input.createdByUsername || '').trim(),
     createdByEmail: String(input.createdByEmail || '').trim().toLowerCase(),
