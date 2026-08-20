@@ -671,7 +671,7 @@
     dash.style.cssText = 'padding:26px 0 0;';
     dash.innerHTML = `
       <div style="position:relative;">
-        <img src="/images/brand/loggedin-dashboard.png" alt="Estimated Balance" style="width:100%;height:auto;display:block;">
+        <img src="/images/brand/loggedin-dashboard.png?v=20260820a" alt="Estimated Balance" style="width:100%;height:auto;display:block;">
         <a href="/wallet" style="position:absolute;left:0;top:0;width:100%;height:68.7%;"></a>
         <div style="position:absolute;left:3%;top:33%;width:24%;height:19%;background:#000;"></div>
         <a href="/wallet" id="cvxHomeBalanceValue" style="position:absolute;left:4%;top:34.5%;display:flex;align-items:baseline;gap:6px;color:#fff;font-weight:700;font-size:min(7vw,32px);text-decoration:none;white-space:nowrap;line-height:1;">&nbsp;</a>
