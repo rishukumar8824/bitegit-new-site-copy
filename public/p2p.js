@@ -4817,6 +4817,14 @@ var _ORD_STATUS_MAP = {
 
 function _ordCard(order) {
   var side = getOrderDisplaySide(order);
+  console.log('[_ordCard debug]', order.id, {
+    'order.side': order && order.side,
+    'order.buyerUserId': order && order.buyerUserId,
+    'order.sellerUserId': order && order.sellerUserId,
+    'myUserId': getCurrentUserId(),
+    'resolvedRole': getOrderRole(order),
+    'finalSide': side
+  });
   var sideColor = side === 'BUY' ? '#2ebd85' : '#f6465d';
   var d = order.createdAt ? new Date(order.createdAt) : null;
   var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
