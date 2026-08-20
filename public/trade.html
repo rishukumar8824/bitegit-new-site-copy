@@ -526,7 +526,8 @@ body{padding-bottom:64px}
 
 <script>
 const g = id => document.getElementById(id);
-let _rawSym=(location.pathname.split('/').pop()||'').replace(/\.[^.]+$/,'').toUpperCase();
+let _qsSym=(new URLSearchParams(location.search).get('symbol')||'').toUpperCase();
+let _rawSym=_qsSym||(location.pathname.split('/').pop()||'').replace(/\.[^.]+$/,'').toUpperCase();
 let SYM=(/^[A-Z0-9]{3,20}$/.test(_rawSym)&&!/^(SPOT|PERP|TRADE|INDEX|HTML|PHP)$/.test(_rawSym))?_rawSym:'BTCUSDT';
 let asks=[], bids=[], trades=[];
 let obView='both', obDecimals=2;
@@ -1100,6 +1101,16 @@ async function fetchBinanceOrderbook(){
 /* ====== INIT ====== */
 document.addEventListener('DOMContentLoaded',()=>{
   updateHeaderForAuth();
+  if(SYM!=='BTCUSDT'){
+    const _base=SYM.replace(/USDT$|BUSD$/,'');
+    const _iconEl=g('hdrCoinIcon');
+    if(_iconEl){_iconEl.src=coinIconUrl(_base);_iconEl.onerror=function(){this.style.display='none';};}
+    const _lblEl=g('hdrPairLbl');if(_lblEl)_lblEl.textContent=_base+'/USDT';
+    document.title=_base+'/USDT — Bitcovex';
+    const _bb=g('btnBuy'),_bs=g('btnSell');
+    if(_bb)_bb.textContent='Buy '+_base;
+    if(_bs)_bs.textContent='Sell '+_base;
+  }
   fetchBinanceTicker();
   fetchBinanceTrades();
   fetchBinanceOrderbook();

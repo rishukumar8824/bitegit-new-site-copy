@@ -276,7 +276,7 @@
         const chgColor = !t ? 'rgba(255,255,255,0.3)' : chg >= 0 ? UP : DOWN;
 
         const card = document.createElement('a');
-        card.href = 'trade.html';
+        card.href = 'trade.html?symbol=' + encodeURIComponent(sym + 'USDT');
         card.style.cssText = 'position:relative;background:rgba(255,255,255,0.04);border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;box-sizing:border-box;width:100%;';
         card.innerHTML = `
           <div style="font-size:15px;font-weight:700;line-height:1.2;">${sym}<span style="color:rgba(255,255,255,0.35);font-weight:400;font-size:13px;"> /USDT</span></div>
@@ -325,7 +325,7 @@
 
         const tr = document.createElement('tr');
         tr.style.cssText = 'background:#000;cursor:pointer;';
-        tr.onclick = () => { window.location.href = 'trade.html'; };
+        tr.onclick = () => { window.location.href = 'trade.html?symbol=' + encodeURIComponent(sym + 'USDT'); };
 
         const tdName = document.createElement('td');
         tdName.style.cssText = 'padding:10px 2px 10px 2px;vertical-align:middle;';
@@ -950,15 +950,17 @@
 
   function wireTrade() {
     pairRows().forEach((row) => {
+      const m = (row.innerText || '').match(PAIR);
+      const dest = 'trade.html' + (m ? '?symbol=' + encodeURIComponent(m[1] + 'USDT') : '');
       [...row.querySelectorAll('*')].forEach((el) => {
         if (el.children.length === 0 && el.textContent.trim() === 'Trade' && !el.dataset.cvxNav) {
           el.dataset.cvxNav = '1'; el.style.cursor = 'pointer';
-          el.addEventListener('click', (e) => { e.stopPropagation(); location.href = 'trade.html'; });
+          el.addEventListener('click', (e) => { e.stopPropagation(); location.href = dest; });
         }
       });
       if (!row.dataset.cvxRow) {
         row.dataset.cvxRow = '1'; row.style.cursor = 'pointer';
-        row.addEventListener('click', () => { location.href = 'trade.html'; });
+        row.addEventListener('click', () => { location.href = dest; });
       }
     });
   }

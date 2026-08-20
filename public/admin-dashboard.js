@@ -3353,6 +3353,9 @@ async function upAction(action) {
     } else if (action === 'login-as') {
       if (!confirm('Login as this user? This will open the main site in a new tab with this user\'s session.')) return;
       const data = await apiRequest(`/users/${encodeURIComponent(_upUserId)}/login-as`, { method:'POST', body:JSON.stringify({}) });
+      if (data.accessToken) {
+        localStorage.setItem('bitcovex_token', data.accessToken);
+      }
       showMessage(`Impersonating ${data.user?.email || 'user'}. Opening dashboard...`, 'success');
       window.open('/', '_blank');
     } else if (action === 'unban') {
