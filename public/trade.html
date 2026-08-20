@@ -90,8 +90,8 @@ body{display:flex;flex-direction:column;min-height:100svh}
 .ob-mid-arr{font-size:12px;color:#e84d4d}
 .ob-mid-arr.up{color:#1db26e}
 .ob-mid-usd{font-size:11px;color:#8fa0bb;margin-left:auto}
-.ob-row{display:flex;align-items:center;padding:3px 10px;position:relative;cursor:pointer;overflow:hidden}
-.ob-depth{position:absolute;top:0;bottom:0;opacity:.55;animation:obDepthPulse 2.6s ease-in-out infinite;transition:width .25s ease}
+.ob-row{display:flex;align-items:center;padding:3px 10px;margin-bottom:2px;border-radius:3px;position:relative;cursor:pointer;overflow:hidden}
+.ob-depth{position:absolute;top:0;bottom:0;opacity:.55;border-radius:3px;animation:obDepthPulse 2.6s ease-in-out infinite;transition:width .5s cubic-bezier(.4,0,.2,1)}
 .ob-ask .ob-depth{right:0;background:linear-gradient(270deg,rgba(232,77,77,0.55),rgba(232,77,77,0.12))}
 .ob-bid .ob-depth{left:0;background:linear-gradient(90deg,rgba(29,178,110,0.12),rgba(29,178,110,0.55))}
 @keyframes obDepthPulse{0%,100%{opacity:.45}50%{opacity:.65}}
