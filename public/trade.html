@@ -91,10 +91,10 @@ body{display:flex;flex-direction:column;min-height:100svh}
 .ob-mid-arr.up{color:#1db26e}
 .ob-mid-usd{font-size:11px;color:#8fa0bb;margin-left:auto}
 .ob-row{display:flex;align-items:center;padding:3px 10px;margin-bottom:2px;border-radius:3px;position:relative;cursor:pointer;overflow:hidden}
-.ob-depth{position:absolute;top:0;bottom:0;opacity:.55;border-radius:3px;animation:obDepthPulse 2.6s ease-in-out infinite;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.ob-depth{position:absolute;top:0;bottom:0;opacity:var(--pk,.55);border-radius:3px;animation:obDepthPulse var(--pd,2.6s) ease-in-out infinite;transition:width .5s cubic-bezier(.4,0,.2,1)}
 .ob-ask .ob-depth{right:0;background:linear-gradient(270deg,rgba(232,77,77,0.55),rgba(232,77,77,0.12))}
 .ob-bid .ob-depth{left:0;background:linear-gradient(90deg,rgba(29,178,110,0.12),rgba(29,178,110,0.55))}
-@keyframes obDepthPulse{0%,100%{opacity:.45}50%{opacity:.65}}
+@keyframes obDepthPulse{0%,100%{opacity:calc(var(--pk,.55) - .12)}50%{opacity:calc(var(--pk,.55) + .1)}}
 .ob-px{font-size:12px;font-weight:500;flex:1;position:relative;z-index:1}
 .ob-ask .ob-px{color:#e84d4d}
 .ob-bid .ob-px{color:#1db26e}
@@ -730,8 +730,10 @@ function renderOB(){
     const p=getP(r),q=getQ(r),t=getT(r);
     const pct=mQ>0?Math.max(30,Math.sqrt(q/mQ)*100):0;
     const delay=(Math.random()*1.6).toFixed(2);
+    const peak=(0.4+Math.random()*0.35).toFixed(2);
+    const dur=(2+Math.random()*1.8).toFixed(2);
     return `<div class="ob-row ob-${side}">
-      <div class="ob-depth" data-pct="${pct.toFixed(1)}" style="width:${pct.toFixed(1)}%;animation-delay:-${delay}s"></div>
+      <div class="ob-depth" data-pct="${pct.toFixed(1)}" style="width:${pct.toFixed(1)}%;animation-delay:-${delay}s;--pk:${peak};--pd:${dur}s"></div>
       <span class="ob-px">${fmt(p,obDecimals)}</span>
       <span class="ob-qty">${q.toFixed(6)}</span>
       <span class="ob-tot">${t.toFixed(6)}</span>
@@ -793,12 +795,14 @@ function initTV(iv){
       'paneProperties.backgroundType':'solid',
       'paneProperties.backgroundGradientStartColor':'#000000',
       'paneProperties.backgroundGradientEndColor':'#000000',
-      'paneProperties.vertGridProperties.color':'rgba(255,255,255,0.001)',
-      'paneProperties.horzGridProperties.color':'rgba(255,255,255,0.001)',
+      'paneProperties.vertGridProperties.color':'rgba(255,255,255,0.035)',
+      'paneProperties.vertGridProperties.style':0,
+      'paneProperties.horzGridProperties.color':'rgba(255,255,255,0.035)',
+      'paneProperties.horzGridProperties.style':0,
       'scalesProperties.textColor':'#848e9c',
       'scalesProperties.lineColor':'rgba(255,255,255,0.04)',
       'scalesProperties.backgroundColor':'#000000',
-      'gridProperties.color':'rgba(255,255,255,0.001)',
+      'gridProperties.color':'rgba(255,255,255,0.035)',
       'mainSeriesProperties.style':1,
       'mainSeriesProperties.priceLineColor':'rgba(132,142,156,0.5)',
       'mainSeriesProperties.candleStyle.upColor':'#00e676',
