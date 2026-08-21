@@ -1809,15 +1809,24 @@
         const bidDiv=document.getElementById('cvx-bids');
         const midDiv=document.getElementById('cvx-mid');
         if (!askDiv) return;
-        const mkRow = (r, color, bg) => `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:12px;padding:4px 12px;position:relative;">
-          <div style="position:absolute;right:0;top:0;bottom:0;background:${bg};width:${Math.min(85,Math.random()*60+15)}%;z-index:0;"></div>
+        // Depth bar width reflects real cumulative volume (r.t, already a running
+        // total from genOrderBook), not a random number — the bar should grow the
+        // further a row is from the best price, like Binance/Bitcovex, and stay
+        // stable between re-renders instead of jittering.
+        const maxAskTotal = Math.max(...asks.map(r=>Number(r.t)), 1);
+        const maxBidTotal = Math.max(...bids.map(r=>Number(r.t)), 1);
+        const mkRow = (r, color, bg, maxTotal) => {
+          const pct = Math.max(2, Math.min(100, (Number(r.t)/maxTotal)*100));
+          return `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:12px;padding:4px 12px;position:relative;">
+          <div style="position:absolute;right:0;top:0;bottom:0;background:${bg};width:${pct}%;z-index:0;"></div>
           <span style="color:${color};font-weight:500;z-index:1;position:relative;">${r.p}</span>
           <span style="text-align:center;z-index:1;position:relative;">${r.a}</span>
           <span style="text-align:right;color:rgba(255,255,255,0.5);z-index:1;position:relative;">${r.t}</span>
         </div>`;
+        };
         if (midDiv) midDiv.textContent = livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-        askDiv.innerHTML = asks.map(r=>mkRow(r,'#f6465d','rgba(246,70,93,0.08)')).join('');
-        bidDiv.innerHTML = bids.map(r=>mkRow(r,'#2ebd85','rgba(46,189,133,0.08)')).join('');
+        askDiv.innerHTML = asks.map(r=>mkRow(r,'#f6465d','rgba(246,70,93,0.08)',maxAskTotal)).join('');
+        bidDiv.innerHTML = bids.map(r=>mkRow(r,'#2ebd85','rgba(46,189,133,0.08)',maxBidTotal)).join('');
       }
 
       // Recent trades
