@@ -9850,14 +9850,23 @@ window.deleteMobAd = async function(offerId) {
       _lastY = y;
       _ticking = false;
 
-      // Infinite scroll: once the mobile ad cards are within ~600px of the
-      // bottom, silently fetch the next 10 (loadOffers guards against
-      // duplicate/parallel calls and against fetching past the last page).
+      // Infinite scroll: once the last ad card is within ~600px of the
+      // viewport bottom, silently fetch the next 10 (loadOffers guards
+      // against duplicate/parallel calls and against fetching past the
+      // last page). Measuring against the LAST CARD, not the whole
+      // document, matters — #p2pCards ends with the "Buy USDT in 3 easy
+      // steps" banner, and the page keeps going after that (FAQ, footer).
+      // Comparing against document.scrollHeight meant a user would have to
+      // scroll through all of that extra content before more ads ever
+      // loaded, which in practice looked like the ad list just stopped
+      // after the first page.
       // Desktop shows the table + numbered pagination instead, so only do
       // this while the card list is actually the visible layout.
       if (cardsEl && getComputedStyle(cardsEl).display !== 'none') {
-        var doc = document.documentElement;
-        var scrolledToBottom = (window.innerHeight + y) >= (doc.scrollHeight - 600);
+        var lastCard = cardsEl.querySelector('.bbt-card:last-of-type');
+        var scrolledToBottom = lastCard
+          ? lastCard.getBoundingClientRect().bottom <= window.innerHeight + 600
+          : false;
         if (scrolledToBottom) loadOffers(true);
       }
     });
