@@ -4637,6 +4637,31 @@ body.mob-screen-open .p2p-secondary-nav {
 .p2p-pg-arrow { font-size:18px; font-weight:400; }
 .p2p-pg-dots { color:rgba(255,255,255,0.3); font-size:13px; padding:0 2px; line-height:32px; }
 
+/* Mobile ad cards use infinite scroll instead of numbered pagination —
+   see loadOffers(true) in p2p.js. Desktop keeps the table + page numbers. */
+@media (max-width: 1023px) {
+  .p2p-pagination { display: none; }
+}
+
+.p2p-infinite-loading {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 0;
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  font-family: 'Manrope', sans-serif;
+}
+.p2p-infinite-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.18);
+  border-top-color: #F68F15;
+  border-radius: 50%;
+  animation: p2p-infinite-spin 0.7s linear infinite;
+}
+@keyframes p2p-infinite-spin { to { transform: rotate(360deg); } }
+
 /* Cards container on mobile — no gap between cards */
 #p2pCards { background: #000; }
 

@@ -3277,6 +3277,12 @@ function renderOffers(data, append) {
     if (append) {
       var _exB = cardsEl.querySelector('.p2p-benefit-banner');
       if (_exB) _exB.remove();
+      // Pull the "Loading more ads…" row out before inserting the new
+      // batch, otherwise it ends up sandwiched between the old and new
+      // cards instead of trailing the list — _setInfiniteLoadingVisible()
+      // re-appends it after this if there's still more to load.
+      var _exLoading = document.getElementById('p2pInfiniteLoading');
+      if (_exLoading) _exLoading.remove();
       cardsEl.insertAdjacentHTML('beforeend', cardsHtml.join('') + _P2P_BENEFITS_HTML);
     } else {
       cardsEl.style.transition = 'opacity 0.12s';
@@ -3318,6 +3324,30 @@ var _lastOffersData = null; // last successful offers response for badge re-rend
 var _lastOffersSignature = null; // cheap fingerprint of last rendered offers, to skip no-op rebuilds
 var _p2pIsScrolling = false; // true while the page is actively scrolling — see scroll listener below
 var _p2pScrollIdleTimer = null;
+var _offersAppendFetching = false; // in-flight lock for infinite-scroll loadOffers(true) calls
+
+// Small "Loading more ads…" row shown right after the last ad card while an
+// infinite-scroll append fetch is in flight — placed *before* the benefits
+// banner (which renderOffers always keeps trailing the card list), so it
+// shows up where the user is actually scrolling instead of below the banner.
+function _setInfiniteLoadingVisible(show) {
+  var el = document.getElementById('p2pInfiniteLoading');
+  if (show) {
+    if (!el && cardsEl) {
+      el = document.createElement('div');
+      el.id = 'p2pInfiniteLoading';
+      el.className = 'p2p-infinite-loading';
+      el.innerHTML = '<span class="p2p-infinite-spinner"></span>Loading more ads…';
+    }
+    if (el && cardsEl) {
+      var banner = cardsEl.querySelector('.p2p-benefit-banner');
+      if (banner) cardsEl.insertBefore(el, banner); else cardsEl.appendChild(el);
+      el.style.display = 'flex';
+    }
+  } else if (el) {
+    el.style.display = 'none';
+  }
+}
 var _offersResponseCache = new Map();
 var _OFFERS_CACHE_TTL_MS = 10 * 1000; // 10s — keeps online status fresh for buyers
 var _P2P_SELECTED_AD_CACHE_KEY = 'p2p_selected_ad';
@@ -3483,6 +3513,12 @@ async function loadOffers(append) {
     console.log('[loadOffers] skipped — already in flight');
     return;
   }
+  // Prevent parallel/redundant infinite-scroll appends
+  if (append) {
+    if (_offersAppendFetching || !_offersHasMore) return;
+    _offersAppendFetching = true;
+    _setInfiniteLoadingVisible(true);
+  }
   if (!append) _offersOffset = (_p2pPage - 1) * 10;
 
   const params = new URLSearchParams({
@@ -3536,12 +3572,18 @@ async function loadOffers(append) {
         _offersFetching = false;
         renderOffers({ offers: [], side: currentSide, asset: currentAsset }, false);
         if (metaEl) metaEl.textContent = '';
+      } else {
+        // Infinite scroll hit the end — nothing left to append.
+        _offersAppendFetching = false;
+        _offersHasMore = false;
+        _setInfiniteLoadingVisible(false);
       }
       _renderPagination();
       return;
     }
 
     if (!append) _offersFetching = false;
+    if (append) { _offersAppendFetching = false; _setInfiniteLoadingVisible(false); }
     if (!append) _writeOffersCache(cacheKey, data);
     // Background refreshes (every 30s) re-fetch even when nothing changed.
     // Rebuilding the whole #p2pCards list (innerHTML replace + opacity fade)
@@ -3571,6 +3613,7 @@ async function loadOffers(append) {
   } catch (error) {
     clearTimeout(_offerTimer);
     if (!append) _offersFetching = false;
+    if (append) { _offersAppendFetching = false; _setInfiniteLoadingVisible(false); }
     console.warn('[loadOffers] error:', error && error.message);
     if (!append) {
       renderOffers({ offers: [], side: currentSide, asset: currentAsset }, false);
@@ -9806,6 +9849,17 @@ window.deleteMobAd = async function(offerId) {
       }
       _lastY = y;
       _ticking = false;
+
+      // Infinite scroll: once the mobile ad cards are within ~600px of the
+      // bottom, silently fetch the next 10 (loadOffers guards against
+      // duplicate/parallel calls and against fetching past the last page).
+      // Desktop shows the table + numbered pagination instead, so only do
+      // this while the card list is actually the visible layout.
+      if (cardsEl && getComputedStyle(cardsEl).display !== 'none') {
+        var doc = document.documentElement;
+        var scrolledToBottom = (window.innerHeight + y) >= (doc.scrollHeight - 600);
+        if (scrolledToBottom) loadOffers(true);
+      }
     });
 
     // Mark scrolling active so a background offers refresh (loadOffers,
