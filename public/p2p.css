@@ -2368,7 +2368,6 @@ body.p2p-kyc-open { overflow: hidden; }
   .p2p-nav-drawer, .p2p-nav-overlay { display: none !important; }
   .desktop-only { display: block; }
   .mobile-only { display: none; }
-  .p2p-mobile-bottom-nav { display: none; }
   .p2p-side-tabs { position: static; }
 }
 
