@@ -1356,6 +1356,13 @@
       // visibly drift left/right on its own.
       if (container.closest('.gt-controls-row1, .gt-side-tabs') || container.querySelector('.gt-side-tabs')) return;
 
+      // Skip page topbars (back button / title / more menu) — several
+      // screens (p2p-order-flow chat, login, kyc, etc.) wrap the topbar in
+      // an overflow:hidden screen container, and the topbar itself is a
+      // flex row with 2-3 children, which otherwise matches this carousel
+      // heuristic and auto-slides the page title every 3s.
+      if (container.querySelector(':scope > .topbar') || (container.firstElementChild && container.firstElementChild.classList.contains('topbar'))) return;
+
       // Skip any carousel that contains the app-download QR/phone content
       const hasQR = container.querySelector('img[alt="qrcode"], img[src^="data:image"]');
       const hasAppText = /scan.*download|ios.*android|trade with confidence/i.test(container.textContent || '');
