@@ -3292,6 +3292,22 @@ function renderOffersLoading() {
   if (cardsEl) cardsEl.innerHTML = '<article class="p2p-offer-card"><p class="empty-row">Loading offers…</p></article>';
 }
 
+// Cheap fingerprint of the fields renderOffers() actually shows, so a
+// background refresh with unchanged data can skip rebuilding the DOM.
+function _offersSignature(data) {
+  if (!data || !Array.isArray(data.offers)) return '';
+  return data.side + '|' + data.asset + '|' + data.offers.map(function(o) {
+    return o.id + ':' + o.price + ':' + o.available + ':' + (o.onlineStatus || '');
+  }).join(',');
+}
+
+// If a background refresh lands while the user is mid-scroll, don't rebuild
+// #p2pCards right under their finger — wait until scrolling settles.
+var _pendingOffersRender = null;
+function _deferOffersRender(data, append) {
+  _pendingOffersRender = { data: data, append: append };
+}
+
 
 var _offersOffset = 0;
 var _offersHasMore = false;
@@ -3299,6 +3315,9 @@ var _p2pPage = 1;
 var _totalOffers = 0;
 var _offersFetching = false; // in-flight lock — prevents stacked parallel calls
 var _lastOffersData = null; // last successful offers response for badge re-renders
+var _lastOffersSignature = null; // cheap fingerprint of last rendered offers, to skip no-op rebuilds
+var _p2pIsScrolling = false; // true while the page is actively scrolling — see scroll listener below
+var _p2pScrollIdleTimer = null;
 var _offersResponseCache = new Map();
 var _OFFERS_CACHE_TTL_MS = 10 * 1000; // 10s — keeps online status fresh for buyers
 var _P2P_SELECTED_AD_CACHE_KEY = 'p2p_selected_ad';
@@ -3524,9 +3543,24 @@ async function loadOffers(append) {
 
     if (!append) _offersFetching = false;
     if (!append) _writeOffersCache(cacheKey, data);
+    // Background refreshes (every 30s) re-fetch even when nothing changed.
+    // Rebuilding the whole #p2pCards list (innerHTML replace + opacity fade)
+    // on every one of those ticks is expensive and, if it lands mid-scroll,
+    // shows up as a visible stutter/freeze. Skip the rebuild when the fetched
+    // offers are identical to what's already on screen, and defer it briefly
+    // if the user is actively scrolling right now.
+    var _sig = !append ? _offersSignature(data) : null;
+    var _isBackgroundNoop = !append && _lastOffersData && _sig === _lastOffersSignature;
     if (!append) _lastOffersData = data;
+    if (!append) _lastOffersSignature = _sig;
     console.log('[loadOffers] rendered', data.offers ? data.offers.length : 0, 'offers');
-    renderOffers(data, append);
+    if (_isBackgroundNoop) {
+      // Nothing actually changed — leave the DOM alone.
+    } else if (!append && _p2pIsScrolling) {
+      _deferOffersRender(data, append);
+    } else {
+      renderOffers(data, append);
+    }
     _offersOffset += data.offers.length;
     _offersHasMore = Boolean(data.hasMore);
     _totalOffers = data.total || 0;
@@ -9773,6 +9807,21 @@ window.deleteMobAd = async function(offerId) {
       _lastY = y;
       _ticking = false;
     });
+
+    // Mark scrolling active so a background offers refresh (loadOffers,
+    // every 30s) doesn't rebuild #p2pCards mid-scroll — see loadOffers()
+    // and _deferOffersRender(). Flush any render it deferred once scrolling
+    // has been idle for a bit.
+    _p2pIsScrolling = true;
+    if (_p2pScrollIdleTimer) clearTimeout(_p2pScrollIdleTimer);
+    _p2pScrollIdleTimer = setTimeout(function() {
+      _p2pIsScrolling = false;
+      if (_pendingOffersRender) {
+        var pending = _pendingOffersRender;
+        _pendingOffersRender = null;
+        renderOffers(pending.data, pending.append);
+      }
+    }, 400);
   }, { passive: true });
 })();
 
