@@ -9830,6 +9830,18 @@ window.deleteMobAd = async function(offerId) {
 // the inner cards list, so the real scroll position lives on the document.
 (function() {
   if (!document.getElementById('p2pCards')) return;
+
+  // Android Chrome auto-hides/shows its address bar while the page scrolls,
+  // which resizes the viewport mid-scroll and made the collapsing
+  // header/filter row below (driven by the p2p-scroll-down class, which
+  // yanks .p2p-main-wrap up by 44px whenever it toggles) flicker in and out
+  // — visible as the whole card list shrinking/growing, even on a slow,
+  // steady scroll. Rather than keep chasing which viewport-resize tick
+  // caused which false toggle, just don't collapse the header on Android at
+  // all: it stays put, nothing about the layout height changes on scroll,
+  // so there's nothing left for the address-bar resize to desync.
+  var _isAndroid = /Android/i.test(navigator.userAgent);
+
   var _lastY = 0, _ticking = false, _isDown = false;
   var _lastInnerHeight = window.innerHeight;
   window.addEventListener('scroll', function() {
@@ -9839,36 +9851,35 @@ window.deleteMobAd = async function(offerId) {
       var y = window.scrollY || document.documentElement.scrollTop;
       var dy = y - _lastY;
 
-      // Android Chrome resizes the viewport (innerHeight grows/shrinks) as
-      // its address bar auto-hides/shows while the page scrolls. That
-      // resize alone shifts scrollY relative to the layout, producing a
-      // large dy here that has nothing to do with an actual user scroll —
-      // acting on it flipped the collapsing header (and the -44px margin
-      // compensation that follows it, see .p2p-main-wrap below) in and out
-      // rapidly, which looked like the whole card list shrinking/growing
-      // while scrolling. Skip processing this tick when the viewport
-      // itself just resized; just resync the baseline instead.
-      var _innerHeightNow = window.innerHeight;
-      if (_innerHeightNow !== _lastInnerHeight) {
-        _lastInnerHeight = _innerHeightNow;
+      if (_isAndroid) {
         _lastY = y;
         _ticking = false;
-        return;
-      }
+      } else {
+        // Non-Android: viewport height doesn't move around under scroll the
+        // same way, so the collapsing header is safe to keep as designed.
+        // Still guard against any stray resize (e.g. keyboard open/close).
+        var _innerHeightNow = window.innerHeight;
+        if (_innerHeightNow !== _lastInnerHeight) {
+          _lastInnerHeight = _innerHeightNow;
+          _lastY = y;
+          _ticking = false;
+          return;
+        }
 
-      // Once pinned, only unpin on a clear upward move (or back near the
-      // top) — comparing every frame's tiny delta against a small +/-2px
-      // band let momentum/rubber-band jitter flip the class many times a
-      // second, which made the sticky Buy/Sell bar visibly jump.
-      if (y <= 20) {
-        if (_isDown) { _isDown = false; document.body.classList.remove('p2p-scroll-down'); }
-      } else if (!_isDown && dy > 6) {
-        _isDown = true; document.body.classList.add('p2p-scroll-down');
-      } else if (_isDown && dy < -6) {
-        _isDown = false; document.body.classList.remove('p2p-scroll-down');
+        // Once pinned, only unpin on a clear upward move (or back near the
+        // top) — comparing every frame's tiny delta against a small +/-2px
+        // band let momentum/rubber-band jitter flip the class many times a
+        // second, which made the sticky Buy/Sell bar visibly jump.
+        if (y <= 20) {
+          if (_isDown) { _isDown = false; document.body.classList.remove('p2p-scroll-down'); }
+        } else if (!_isDown && dy > 6) {
+          _isDown = true; document.body.classList.add('p2p-scroll-down');
+        } else if (_isDown && dy < -6) {
+          _isDown = false; document.body.classList.remove('p2p-scroll-down');
+        }
+        _lastY = y;
+        _ticking = false;
       }
-      _lastY = y;
-      _ticking = false;
 
       // Infinite scroll: once the last ad card is within ~600px of the
       // viewport bottom, silently fetch the next 10 (loadOffers guards
