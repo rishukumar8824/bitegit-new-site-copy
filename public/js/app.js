@@ -12,7 +12,7 @@
   const NAV = [
     { label: 'Buy Crypto', href: '/markets', arrow: true, children: [
         { label: 'P2P Trading', href: 'p2p.html' },
-        { label: 'Quick Buy',   href: 'credit_card.html' },
+        { label: 'Quick Buy',   href: 'p2p.html' },
       ] },
     { label: 'Markets',    href: '/markets', arrow: false },
     { label: 'Trade',      href: 'trade.html',  arrow: true, children: [
@@ -676,7 +676,7 @@
         <div style="position:absolute;left:3%;top:33%;width:24%;height:19%;background:#000;"></div>
         <a href="/wallet" id="cvxHomeBalanceValue" style="position:absolute;left:4%;top:34.5%;display:flex;align-items:baseline;gap:6px;color:#fff;font-weight:700;font-size:min(7vw,32px);text-decoration:none;white-space:nowrap;line-height:1;">&nbsp;</a>
         <a href="/wallet" style="position:absolute;right:4%;top:36.6%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 18px;border-radius:17px;background:#F68F15;color:#000;font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap;">Add Funds</a>
-        <a href="/credit_card.html" style="position:absolute;left:0%;top:68.7%;width:21.8%;height:29.9%;"></a>
+        <a href="/p2p.html" style="position:absolute;left:0%;top:68.7%;width:21.8%;height:29.9%;"></a>
         <a href="/p2p.html" style="position:absolute;left:21.8%;top:68.7%;width:18.8%;height:29.9%;"></a>
         <a href="/wallet?page=deposit" style="position:absolute;left:40.6%;top:68.7%;width:18.8%;height:29.9%;"></a>
         <a href="/p2p.html?side=sell" style="position:absolute;left:59.4%;top:68.7%;width:18.8%;height:29.9%;"></a>
