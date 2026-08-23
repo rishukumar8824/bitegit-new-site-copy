@@ -3293,9 +3293,40 @@ function renderOffers(data, append) {
   }
 }
 
+// Shimmer placeholder shaped like a real .bbt-card — shown instead of a
+// plain "Loading offers…" line so the first load feels like content is
+// already there and about to fill in, not a blank wait.
+function _offersSkeletonCardHtml() {
+  return '<article class="p2p-sk-card">' +
+    '<div class="p2p-sk-hd">' +
+      '<div class="p2p-sk-block p2p-sk-avatar"></div>' +
+      '<div class="p2p-sk-block p2p-sk-name"></div>' +
+      '<div class="p2p-sk-block p2p-sk-orders"></div>' +
+    '</div>' +
+    '<div class="p2p-sk-block p2p-sk-price"></div>' +
+    '<div class="p2p-sk-block p2p-sk-line"></div>' +
+    '<div class="p2p-sk-block p2p-sk-line"></div>' +
+    '<div class="p2p-sk-ft">' +
+      '<div class="p2p-sk-block p2p-sk-pay"></div>' +
+      '<div class="p2p-sk-block p2p-sk-btn"></div>' +
+    '</div>' +
+  '</article>';
+}
+
+function _offersSkeletonRowHtml() {
+  return '<tr class="p2p-sk-row">' +
+    '<td><div class="p2p-sk-block p2p-sk-avatar" style="display:inline-block;"></div> <div class="p2p-sk-block p2p-sk-name"></div></td>' +
+    '<td><div class="p2p-sk-block" style="width:70px;height:16px;"></div></td>' +
+    '<td><div class="p2p-sk-block" style="width:110px;height:16px;"></div></td>' +
+    '<td><div class="p2p-sk-block p2p-sk-pay"></div></td>' +
+    '<td><div class="p2p-sk-block p2p-sk-btn"></div></td>' +
+  '</tr>';
+}
+
 function renderOffersLoading() {
-  if (rowsEl) rowsEl.innerHTML = '<tr><td colspan="6" class="empty-row">Loading offers…</td></tr>';
-  if (cardsEl) cardsEl.innerHTML = '<article class="p2p-offer-card"><p class="empty-row">Loading offers…</p></article>';
+  var count = 6;
+  if (rowsEl) rowsEl.innerHTML = new Array(count).fill(_offersSkeletonRowHtml()).join('');
+  if (cardsEl) cardsEl.innerHTML = new Array(count).fill(_offersSkeletonCardHtml()).join('');
 }
 
 // Cheap fingerprint of the fields renderOffers() actually shows, so a

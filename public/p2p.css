@@ -4661,6 +4661,33 @@ body.mob-screen-open .p2p-secondary-nav {
 }
 @keyframes p2p-infinite-spin { to { transform: rotate(360deg); } }
 
+/* ── Offers list skeleton (first load / "Loading offers…" replacement) ──
+   Mirrors the real .bbt-card / table-row shape so the swap-in doesn't jump. */
+@keyframes p2p-sk-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+.p2p-sk-block {
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  animation: p2p-sk-pulse 1.3s ease-in-out infinite;
+}
+.p2p-sk-card {
+  background: #000;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 10px 14px;
+}
+.p2p-sk-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.p2p-sk-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; }
+.p2p-sk-name { width: 96px; height: 13px; }
+.p2p-sk-orders { width: 68px; height: 11px; margin-left: auto; }
+.p2p-sk-price { width: 100px; height: 22px; margin-bottom: 10px; }
+.p2p-sk-line { width: 150px; height: 11px; margin-bottom: 7px; }
+.p2p-sk-line:last-of-type { width: 105px; margin-bottom: 0; }
+.p2p-sk-ft { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+.p2p-sk-pay { width: 72px; height: 20px; border-radius: 10px; }
+.p2p-sk-btn { width: 74px; height: 32px; border-radius: 6px; }
+
+.p2p-sk-row td { padding: 14px 12px; }
+.p2p-sk-row .p2p-sk-block { display: inline-block; vertical-align: middle; }
+
 /* Cards container on mobile — no gap between cards */
 #p2pCards { background: #000; }
 
