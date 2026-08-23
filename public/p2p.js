@@ -3315,6 +3315,7 @@ function _deferOffersRender(data, append) {
 }
 
 
+var _P2P_PAGE_SIZE = 20; // ads per fetch — was 10, doubled so a screen's worth loads at once
 var _offersOffset = 0;
 var _offersHasMore = false;
 var _p2pPage = 1;
@@ -3519,12 +3520,12 @@ async function loadOffers(append) {
     _offersAppendFetching = true;
     _setInfiniteLoadingVisible(true);
   }
-  if (!append) _offersOffset = (_p2pPage - 1) * 10;
+  if (!append) _offersOffset = (_p2pPage - 1) * _P2P_PAGE_SIZE;
 
   const params = new URLSearchParams({
     side: currentSide,
     asset: currentAsset,
-    limit: 10,
+    limit: _P2P_PAGE_SIZE,
     offset: _offersOffset
   });
 
@@ -3626,7 +3627,7 @@ async function loadOffers(append) {
 function _renderPagination() {
   var el = document.getElementById('p2pPagination');
   if (!el) return;
-  var totalPages = Math.max(1, Math.ceil(_totalOffers / 10));
+  var totalPages = Math.max(1, Math.ceil(_totalOffers / _P2P_PAGE_SIZE));
   if (totalPages <= 1) { el.innerHTML = ''; return; }
   var cur = _p2pPage;
   var pages = [1];
@@ -3653,7 +3654,7 @@ if (_pgEl) {
     var page = parseInt(btn.dataset.page, 10);
     if (!page || page === _p2pPage) return;
     _p2pPage = page;
-    _offersOffset = (_p2pPage - 1) * 10;
+    _offersOffset = (_p2pPage - 1) * _P2P_PAGE_SIZE;
     loadOffers(false);
     if (cardsEl) cardsEl.scrollTo({ top: 0, behavior: 'smooth' });
   });
@@ -9830,12 +9831,31 @@ window.deleteMobAd = async function(offerId) {
 (function() {
   if (!document.getElementById('p2pCards')) return;
   var _lastY = 0, _ticking = false, _isDown = false;
+  var _lastInnerHeight = window.innerHeight;
   window.addEventListener('scroll', function() {
     if (_ticking) return;
     _ticking = true;
     requestAnimationFrame(function() {
       var y = window.scrollY || document.documentElement.scrollTop;
       var dy = y - _lastY;
+
+      // Android Chrome resizes the viewport (innerHeight grows/shrinks) as
+      // its address bar auto-hides/shows while the page scrolls. That
+      // resize alone shifts scrollY relative to the layout, producing a
+      // large dy here that has nothing to do with an actual user scroll —
+      // acting on it flipped the collapsing header (and the -44px margin
+      // compensation that follows it, see .p2p-main-wrap below) in and out
+      // rapidly, which looked like the whole card list shrinking/growing
+      // while scrolling. Skip processing this tick when the viewport
+      // itself just resized; just resync the baseline instead.
+      var _innerHeightNow = window.innerHeight;
+      if (_innerHeightNow !== _lastInnerHeight) {
+        _lastInnerHeight = _innerHeightNow;
+        _lastY = y;
+        _ticking = false;
+        return;
+      }
+
       // Once pinned, only unpin on a clear upward move (or back near the
       // top) — comparing every frame's tiny delta against a small +/-2px
       // band let momentum/rubber-band jitter flip the class many times a

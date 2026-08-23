@@ -4637,11 +4637,10 @@ body.mob-screen-open .p2p-secondary-nav {
 .p2p-pg-arrow { font-size:18px; font-weight:400; }
 .p2p-pg-dots { color:rgba(255,255,255,0.3); font-size:13px; padding:0 2px; line-height:32px; }
 
-/* Mobile ad cards use infinite scroll instead of numbered pagination —
-   see loadOffers(true) in p2p.js. Desktop keeps the table + page numbers. */
-@media (max-width: 1023px) {
-  .p2p-pagination { display: none; }
-}
+/* Mobile ad cards auto-load more via infinite scroll (loadOffers(true) in
+   p2p.js), but the numbered pagination stays visible right below the card
+   list as a manual fallback — it's the same #p2pPagination element used by
+   the desktop table, already positioned right after #p2pCards in the DOM. */
 
 .p2p-infinite-loading {
   display: none;
