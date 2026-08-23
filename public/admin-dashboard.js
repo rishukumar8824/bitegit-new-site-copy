@@ -1353,9 +1353,10 @@ async function loadP2PTab(tab) {
       tbody.innerHTML = orders.map(ad => {
         const id = escapeHtml(ad.id || '-');
         const advertiser = escapeHtml(ad.advertiser || ad.userId || '-');
+        const profileId = escapeHtml(ad.createdByUserId || ad.userId || '');
         const side = (ad.side || '').toUpperCase();
         const sideColor = side === 'BUY' ? '#02c076' : '#f6465d';
-        return `<tr>
+        return `<tr class="p2p-ad-row" data-profile-id="${profileId}" style="${profileId ? 'cursor:pointer;transition:background 0.15s;' : ''}" title="${profileId ? 'Click to view advertiser profile' : ''}">
           <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${id.slice(0,12)}…</td>
           <td class="admin-td" style="color:${sideColor};font-weight:700;">${side}</td>
           <td class="admin-td">${advertiser}</td>
@@ -2641,6 +2642,13 @@ async function handleSpotAction(event) {
 async function handleP2PActions(event) {
   const button = event.target.closest('[data-p2p-action]');
   if (!button) {
+    // Row click (not on an action button) — open the advertiser's full
+    // profile, same drawer used by the Users table.
+    const row = event.target.closest('tr.p2p-ad-row');
+    if (row) {
+      const profileId = row.getAttribute('data-profile-id');
+      if (profileId) openUserProfile(profileId);
+    }
     return;
   }
 

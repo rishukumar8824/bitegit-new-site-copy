@@ -1907,6 +1907,18 @@
     return getCurrentOrderStatus(status) === 'DISPUTED';
   }
 
+  // Only the participant who actually filed the appeal may cancel it — the
+  // backend already enforces this (403 otherwise), but the Cancel button's
+  // click handlers were falling through to canCancelCurrentOrder(), which
+  // always returns false once an order is DISPUTED, so even the appeal's
+  // own filer got "already under appeal, wait for dispute" instead of
+  // their appeal actually being cancelled.
+  function isCurrentUserAppealOwner(status) {
+    if (!currentOrder || !isDisputedCurrentOrder(status)) return false;
+    var myRole = isSeller ? 'seller' : 'buyer';
+    return currentOrder.appealedByRole === myRole;
+  }
+
   function canCancelCurrentOrder(status) {
     var s = getCurrentOrderStatus(status);
     if (isSeller) {
@@ -2566,6 +2578,7 @@
     document.getElementById('ogNextBtn').addEventListener('click', _doNext);
     document.getElementById('ogNextBtn').addEventListener('touchend', function(e) { e.preventDefault(); _doNext(); });
     document.getElementById('ogCancelBtn').addEventListener('click', function() {
+      if (isCurrentUserAppealOwner()) { _doCancelAppeal(); return; }
       if (isSeller) { _doFileAppeal(); return; }
       if (!canCancelCurrentOrder()) { showCancelBlockedMessage(); return; }
       cancelSource = 'order';
@@ -2573,6 +2586,7 @@
     });
     document.getElementById('ogCancelBtn').addEventListener('touchend', function(e) {
       e.preventDefault();
+      if (isCurrentUserAppealOwner()) { _doCancelAppeal(); return; }
       if (isSeller) { _doFileAppeal(); return; }
       if (!canCancelCurrentOrder()) { showCancelBlockedMessage(); return; }
       cancelSource = 'order';
@@ -2599,6 +2613,7 @@
     document.getElementById('tfPaidBtn').addEventListener('click', _doShowPaid);
     document.getElementById('tfPaidBtn').addEventListener('touchend', function(e) { e.preventDefault(); _doShowPaid(); });
     document.getElementById('tfCancelBtn').addEventListener('click', function() {
+      if (isCurrentUserAppealOwner()) { _doCancelAppeal(); return; }
       if (isSeller) { _doFileAppeal(); return; }
       if (!canCancelCurrentOrder()) { showCancelBlockedMessage(); return; }
       cancelSource = 'transfer';
@@ -2606,6 +2621,7 @@
     });
     document.getElementById('tfCancelBtn').addEventListener('touchend', function(e) {
       e.preventDefault();
+      if (isCurrentUserAppealOwner()) { _doCancelAppeal(); return; }
       if (isSeller) { _doFileAppeal(); return; }
       if (!canCancelCurrentOrder()) { showCancelBlockedMessage(); return; }
       cancelSource = 'transfer';
@@ -2624,6 +2640,7 @@
     var _chatCancelInFlight = false;
     var _doCancelOrAppeal = mkDebounce(async function() {
       if (!currentOrder || !currentOrder.id) return;
+      if (isCurrentUserAppealOwner()) { _doCancelAppeal(); return; }
       var canCancel = canCancelCurrentOrder();
       if (!canCancel) {
         _doFileAppeal();
@@ -3561,6 +3578,20 @@
       if (disputedBar) disputedBar.style.display = 'flex';
       // Chat stays open so both parties can still communicate with admin/each other
       if (inputBar) inputBar.style.display = '';
+      // Whoever filed the appeal gets a live "Cancel Appeal" button here too
+      // (not just on the order screen) — the counterparty just sees it
+      // disabled, same as elsewhere in this flow.
+      if (cancelOrAppealBtn) {
+        cancelOrAppealBtn.style.display = '';
+        if (isCurrentUserAppealOwner(s)) {
+          _resetPaidLockButton(cancelOrAppealBtn, 'Cancel Appeal');
+          cancelOrAppealBtn.style.background = 'rgba(239,68,68,0.12)';
+          cancelOrAppealBtn.style.color = '#ef4444';
+          cancelOrAppealBtn.style.border = '1px solid rgba(239,68,68,0.35)';
+        } else {
+          _applyUnderAppealButton(cancelOrAppealBtn, 'Under Appeal');
+        }
+      }
     } else if (isCancelled) {
       if (inputBar) inputBar.style.display = 'none';
     } else {
