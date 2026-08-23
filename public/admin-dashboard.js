@@ -1332,10 +1332,53 @@ function switchP2PTab(tab) {
   loadP2PTab(tab);
 }
 
+function renderP2PAdsCards(ads) {
+  const wrap = document.getElementById('p2pTableWrap');
+  const list = document.getElementById('p2pAdsList');
+  if (wrap) wrap.style.display = 'none';
+  if (!list) return;
+  list.style.display = 'flex';
+
+  if (!ads.length) {
+    list.innerHTML = `<div style="text-align:center;color:var(--text-2);padding:40px;">No active ads found.</div>`;
+    return;
+  }
+
+  list.innerHTML = ads.map(ad => {
+    const advertiser = escapeHtml(ad.advertiser || ad.userId || '-');
+    const profileId = escapeHtml(ad.createdByUserId || ad.userId || '');
+    const email = escapeHtml(ad.advertiserEmail || ad.createdByEmail || ad.email || '');
+    const side = (ad.side || '').toUpperCase();
+    const sideColor = side === 'BUY' ? '#02c076' : '#f6465d';
+    return `<div class="p2p-ad-row" data-profile-id="${profileId}" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;background:var(--panel,#0f172a);border:1px solid var(--border);border-radius:10px;">
+      <div style="min-width:0;">
+        <div style="font-size:14px;font-weight:700;color:var(--text-1);">${advertiser} <span style="color:${sideColor};font-weight:800;">• ${side} ${escapeHtml(ad.asset || 'USDT')}</span></div>
+        ${email ? `<div style="font-size:12px;color:#3b82f6;margin-top:2px;">✉ ${email}</div>` : ''}
+        <div style="font-size:12px;color:var(--text-2);margin-top:4px;">Price ₹${formatNumber(ad.price, 2)} &nbsp;|&nbsp; Limit ₹${formatNumber(ad.minLimit,2)}–₹${formatNumber(ad.maxLimit,2)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+        ${p2pStatusBadge(ad.moderationStatus || ad.status || 'ACTIVE')}
+        ${profileId ? `<button class="btn-secondary btn-sm" data-p2p-action="view-ad-profile" data-profile-id="${profileId}">View Profile</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 async function loadP2PTab(tab) {
   const tbody = document.getElementById('p2pTradesTableBody');
+  const tableWrap = document.getElementById('p2pTableWrap');
+  const adsList = document.getElementById('p2pAdsList');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:32px;"><div class="spin" style="margin:auto;"></div></td></tr>';
+
+  if (tab === 'ads') {
+    // Ads render as cards (see renderP2PAdsCards) — the table stays hidden for this tab.
+    if (adsList) { adsList.style.display = 'flex'; adsList.innerHTML = '<div style="text-align:center;color:var(--text-2);padding:32px;"><div class="spin" style="margin:auto;"></div></div>'; }
+    if (tableWrap) tableWrap.style.display = 'none';
+  } else {
+    if (tableWrap) tableWrap.style.display = '';
+    if (adsList) adsList.style.display = 'none';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:32px;"><div class="spin" style="margin:auto;"></div></td></tr>';
+  }
 
   try {
     let orders = [];
@@ -1345,32 +1388,7 @@ async function loadP2PTab(tab) {
     } else if (tab === 'ads') {
       const data = await apiRequest('/p2p/ads?status=ACTIVE&limit=50').catch(() => ({ ads: [] }));
       orders = Array.isArray(data.ads) ? data.ads : [];
-      // Render ads as table rows (slightly different fields)
-      if (!orders.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-2);padding:40px;">No active ads found.</td></tr>';
-        return;
-      }
-      tbody.innerHTML = orders.map(ad => {
-        const id = escapeHtml(ad.id || '-');
-        const advertiser = escapeHtml(ad.advertiser || ad.userId || '-');
-        const profileId = escapeHtml(ad.createdByUserId || ad.userId || '');
-        const side = (ad.side || '').toUpperCase();
-        const sideColor = side === 'BUY' ? '#02c076' : '#f6465d';
-        return `<tr class="p2p-ad-row" data-profile-id="${profileId}" style="${profileId ? 'cursor:pointer;transition:background 0.15s;' : ''}" title="${profileId ? 'Click to view advertiser profile' : ''}">
-          <td class="admin-td" style="font-family:monospace;font-size:11px;color:var(--accent);">${id.slice(0,12)}…</td>
-          <td class="admin-td" style="color:${sideColor};font-weight:700;">${side}</td>
-          <td class="admin-td">${advertiser}</td>
-          <td class="admin-td">₹${formatNumber(ad.price, 2)}</td>
-          <td class="admin-td">${escapeHtml(ad.asset || 'USDT')}</td>
-          <td class="admin-td">${p2pStatusBadge(ad.moderationStatus || ad.status || 'ACTIVE')}</td>
-          <td class="admin-td" style="font-size:11px;">₹${formatNumber(ad.minLimit,2)} – ₹${formatNumber(ad.maxLimit,2)}</td>
-          <td class="admin-td">
-            <button class="btn-primary btn-sm" data-p2p-action="approve-ad" data-offer-id="${id}">Approve</button>
-            <button class="btn-secondary btn-sm" data-p2p-action="suspend-ad" data-offer-id="${id}">Suspend</button>
-            <button class="btn-danger btn-sm" data-p2p-action="reject-ad" data-offer-id="${id}">Reject</button>
-          </td>
-        </tr>`;
-      }).join('');
+      renderP2PAdsCards(orders);
       return;
     } else if (tab === 'completed') {
       const data = await apiRequest('/p2p/trades?status=COMPLETED&limit=50').catch(() => apiRequest('/p2p/orders?status=COMPLETED&limit=50').catch(() => ({ trades: [], orders: [] })));
@@ -2643,8 +2661,9 @@ async function handleP2PActions(event) {
   const button = event.target.closest('[data-p2p-action]');
   if (!button) {
     // Row click (not on an action button) — open the advertiser's full
-    // profile, same drawer used by the Users table.
-    const row = event.target.closest('tr.p2p-ad-row');
+    // profile, same drawer used by the Users table. Running Ads renders as
+    // <div class="p2p-ad-row"> cards; other tabs still use <tr class="p2p-ad-row">.
+    const row = event.target.closest('.p2p-ad-row');
     if (row) {
       const profileId = row.getAttribute('data-profile-id');
       if (profileId) openUserProfile(profileId);
@@ -2655,6 +2674,12 @@ async function handleP2PActions(event) {
   const action = button.getAttribute('data-p2p-action');
   const offerId = button.getAttribute('data-offer-id');
   const orderId = button.getAttribute('data-order-id');
+
+  if (action === 'view-ad-profile') {
+    const profileId = button.getAttribute('data-profile-id');
+    if (profileId) openUserProfile(profileId);
+    return;
+  }
 
   try {
     if (action === 'approve-ad' || action === 'suspend-ad' || action === 'reject-ad') {
