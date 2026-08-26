@@ -2821,7 +2821,7 @@ app.get('/api/wallet/summary', requiresP2PUser, async (req, res) => {
 
     return res.json({
       summary: {
-        total_balance: Number(wallet.totalBalance || 0),
+        total_balance: Number(wallet.availableBalance || wallet.balance || 0),
         available_balance: Number(wallet.availableBalance || wallet.balance || 0),
         locked_balance: Number(wallet.lockedBalance || wallet.p2pLocked || 0),
         spot_balance: Number(wallet.availableBalance || wallet.balance || 0),

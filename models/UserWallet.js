@@ -57,7 +57,11 @@ function sanitizeWallet(walletDoc) {
     p2pLocked: lockedBalance,
     lockedBalance,
     merchantDepositLocked: resolveMerchantDepositLocked(walletDoc),
-    totalBalance: toAmount(availableBalance + lockedBalance),
+    // totalBalance is the user's spendable total; locked funds (pending
+    // withdrawal/P2P) are excluded so a withdrawal doesn't leave the total
+    // looking unchanged. Use `combinedBalance` for available+locked.
+    totalBalance: availableBalance,
+    combinedBalance: toAmount(availableBalance + lockedBalance),
     createdAt: walletDoc.createdAt ? new Date(walletDoc.createdAt).toISOString() : null,
     updatedAt: walletDoc.updatedAt ? new Date(walletDoc.updatedAt).toISOString() : null
   };
