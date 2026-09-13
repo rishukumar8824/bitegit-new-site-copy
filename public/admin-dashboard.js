@@ -4194,6 +4194,15 @@ async function refreshWithdrawalNotifications({ silent = false } = {}) {
 
 // ── Notification Bell ──────────────────────────────────────────
 var _notifs = [];
+// Separate from _notifs.length: periodic pending-count checks (Pending Withdrawals /
+// Pending Deposits etc) call addNotif() repeatedly with the SAME title, which is
+// deduped against the existing _notifs entry and returns early every time after the
+// first. Driving the badge off _notifs.length meant that once the badge was hidden
+// (on opening the panel), nothing ever set it visible again — those periodic re-checks
+// never reach updateNotifBadge() because of the early dedupe return, so it looked
+// permanently hidden. _unreadCount is only touched when a genuinely NEW notif is
+// actually appended, and is what the badge reflects.
+var _unreadCount = 0;
 
 function toggleNotifPanel() {
   var panel = document.getElementById('notifPanel');
@@ -4203,11 +4212,9 @@ function toggleNotifPanel() {
   if (!open) {
     renderNotifPanel();
     // Opening the panel = "seen" — the list itself stays (so recent items are still
-    // visible), but the unread badge shouldn't keep showing a stale count until
-    // clearAllNotifs() is explicitly clicked. Previously the badge only ever cleared
-    // via that button, so it looked permanently "stuck" on every visit.
-    var badge = document.getElementById('notifBellBadge');
-    if (badge) badge.style.display = 'none';
+    // visible), only the unread badge count resets to 0.
+    _unreadCount = 0;
+    updateNotifBadge();
   }
 }
 
@@ -4225,15 +4232,16 @@ function addNotif(type, title, body, time) {
   if (_notifs.find(function(n){ return n.title === title && n.type === type; })) return;
   _notifs.unshift({ type: type, title: title, body: body, time: time || new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) });
   if (_notifs.length > 50) _notifs.length = 50;
+  _unreadCount += 1;
   updateNotifBadge();
 }
 
 function updateNotifBadge() {
   var badge = document.getElementById('notifBellBadge');
   if (!badge) return;
-  if (_notifs.length > 0) {
+  if (_unreadCount > 0) {
     badge.style.display = 'flex';
-    badge.textContent = _notifs.length > 99 ? '99+' : _notifs.length;
+    badge.textContent = _unreadCount > 99 ? '99+' : _unreadCount;
   } else {
     badge.style.display = 'none';
   }
@@ -4241,6 +4249,7 @@ function updateNotifBadge() {
 
 function clearAllNotifs() {
   _notifs = [];
+  _unreadCount = 0;
   updateNotifBadge();
   renderNotifPanel();
 }
