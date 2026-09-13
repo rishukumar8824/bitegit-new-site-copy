@@ -850,6 +850,7 @@ async function loadWallet() {
           <div><span class="text-slate-500">User ID:</span> ${escapeHtml(row.userId || '-')}</div>
           <div><span class="text-slate-500">Network:</span> ${escapeHtml(network)}</div>
           <div style="word-break:break-all;"><span class="text-slate-500">Address:</span> ${escapeHtml(address)}</div>
+          ${row.reason || (row.metadata && row.metadata.reason) ? `<div><span class="text-slate-500">Reason:</span> <span style="color:#f6465d;font-weight:600;">${escapeHtml(row.reason || (row.metadata && row.metadata.reason) || '')}</span></div>` : ''}
           <div><span class="text-slate-500">Created:</span> ${escapeHtml(formatDate(row.createdAt))}</div>
         </div>
         <div class="mt-3 grid grid-cols-2 gap-2">
@@ -4359,6 +4360,7 @@ function _wdRenderRows(withdrawals) {
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Request ID:</span> <span style="font-size:10px;word-break:break-all;">${escapeHtml(id || '-')}</span></div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Submitted:</span> ${escapeHtml(createdAt)}</div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Processed:</span> ${escapeHtml(processedAt)}</div>
+          ${w.reason || (w.metadata && w.metadata.reason) ? `<div style="background:rgba(246,70,93,0.1);border:1px solid rgba(246,70,93,0.3);border-radius:6px;padding:6px 10px;margin-top:4px;"><span style="color:#848e9c;font-size:11px;">Rejection Reason:</span><div style="color:#f6465d;font-weight:700;font-size:12px;margin-top:2px;">${escapeHtml(w.reason || (w.metadata && w.metadata.reason) || '')}</div></div>` : ''}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
@@ -4448,6 +4450,7 @@ async function openWithdrawalPanel() {
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Request ID:</span> <span style="font-size:10px;word-break:break-all;">${escapeHtml(id || '-')}</span></div>
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Submitted:</span> ${escapeHtml(createdAt)}</div>
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Processed:</span> ${escapeHtml(processedAt)}</div>
+            ${w.reason || (w.metadata && w.metadata.reason) ? `<div style="background:rgba(246,70,93,0.1);border:1px solid rgba(246,70,93,0.3);border-radius:6px;padding:6px 10px;margin-top:4px;"><span style="color:#848e9c;font-size:11px;">Rejection Reason:</span><div style="color:#f6465d;font-weight:700;font-size:12px;margin-top:2px;">${escapeHtml(w.reason || (w.metadata && w.metadata.reason) || '')}</div></div>` : ''}
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
             <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"

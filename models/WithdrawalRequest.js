@@ -42,6 +42,7 @@ function toWithdrawalResponse(doc) {
     currency: String(doc.currency || '').trim().toUpperCase(),
     address: String(doc.address || '').trim(),
     status: normalizeWithdrawalStatus(doc.status || 'pending'),
+    reason: String((doc.metadata && doc.metadata.reason) || doc.reason || '').trim(),
     createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : null,
     processedAt: doc.processedAt ? new Date(doc.processedAt).toISOString() : null,
     metadata: doc.metadata && typeof doc.metadata === 'object' ? doc.metadata : {}

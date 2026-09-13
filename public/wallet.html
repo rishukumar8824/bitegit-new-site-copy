@@ -1362,7 +1362,8 @@
             var net = (wd.metadata && wd.metadata.network) || wd.network || 'TRC20';
             var addr = (wd.metadata && wd.metadata.address) || wd.address || '-';
             var statusMap = { pending: 'pending', approved: '1', rejected: '3', processing: '2', completed: '1' };
-            return { amount: wd.amount || 0, status: statusMap[String(wd.status || 'pending').toLowerCase()] || 'pending', created_at: wd.createdAt || wd.submittedAt || new Date().toISOString(), charge: (wd.metadata && wd.metadata.fee) || wd.fee || 0, method: { name: net }, withdraw_information: JSON.stringify([{ value: addr }]) };
+            var reason = wd.reason || (wd.metadata && wd.metadata.reason) || '';
+            return { amount: wd.amount || 0, status: statusMap[String(wd.status || 'pending').toLowerCase()] || 'pending', created_at: wd.createdAt || wd.submittedAt || new Date().toISOString(), charge: (wd.metadata && wd.metadata.fee) || wd.fee || 0, method: { name: net }, withdraw_information: JSON.stringify([{ value: addr }]), reason: reason };
           });
           return _fakeRes({ status: 'success', data: { withdrawals: { data: wds } } });
         })
@@ -1790,7 +1791,13 @@
     return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
   }
 
-  function buildRecRow(sign, amount, network, dateStr, statusColor, statusLabel) {
+  function _escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  function buildRecRow(sign, amount, network, dateStr, statusColor, statusLabel, reason) {
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);gap:.75rem';
     row.innerHTML = usdtSvgSm +
@@ -1801,6 +1808,7 @@
         '</div>' +
         '<div style="font-size:.75rem;color:#8a9bb5;margin-top:.2rem">'+(network||'USDT')+'</div>' +
         '<div style="font-size:.72rem;color:#8a9bb5;margin-top:.1rem">'+dateStr+'</div>' +
+        (reason ? '<div style="font-size:.72rem;color:#f6465d;margin-top:.2rem">Reason: '+_escHtml(reason)+'</div>' : '') +
       '</div>';
     return row;
   }
@@ -1821,7 +1829,8 @@
           var statusColor = (status==='1'||status==='approved'||status==='completed') ? '#0ecb81' : (status==='3'||status==='rejected') ? '#f6465d' : '#f5a623';
           var statusLabel = (status==='1'||status==='approved'||status==='completed') ? 'Approved' : (status==='3'||status==='rejected') ? 'Rejected' : (status==='2'||status==='processing'||status==='sent') ? 'Processing' : 'Pending';
           var net = (w.method && w.method.name) ? w.method.name : 'TRC20';
-          el.appendChild(buildRecRow('-', w.amount, net, fmtDate(w.created_at), statusColor, statusLabel));
+          var reason = (status==='3'||status==='rejected') ? (w.reason || '') : '';
+          el.appendChild(buildRecRow('-', w.amount, net, fmtDate(w.created_at), statusColor, statusLabel, reason));
         });
       }).catch(function(){});
 
@@ -2116,6 +2125,7 @@
             }
           } catch(e){}
           var fee = Number(w.charge || 0);
+          var reason = w.reason || '';
           var detId = 'wdDet_'+idx;
           var row = document.createElement('div');
           row.style.cssText = 'border-bottom:1px solid rgba(255,255,255,.06);';
@@ -2132,6 +2142,7 @@
                 '</div>' +
                 '<div style="font-size:.75rem;color:#8a9bb5;margin-top:.2rem">'+network+'</div>' +
                 '<div style="font-size:.72rem;color:#8a9bb5;margin-top:.1rem">'+dateStr+'</div>' +
+                (reason && statusLabel === 'Rejected' ? '<div style="font-size:.72rem;color:#f6465d;margin-top:.15rem">Reason: '+_escHtml(reason)+'</div>' : '') +
               '</div>' +
             '</div>' +
             '<div id="'+detId+'" style="display:none;padding:.5rem 1rem .9rem;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.05)">' +
@@ -2142,6 +2153,7 @@
                 '<tr><td style="color:#8a9bb5;padding:.25rem 0;vertical-align:top">Address</td><td style="color:#eaecef;font-size:.72rem;word-break:break-all">'+address+'</td></tr>' +
                 '<tr><td style="color:#8a9bb5;padding:.25rem 0">Status</td><td style="color:'+statusColor+';font-weight:700">'+statusLabel+'</td></tr>' +
                 '<tr><td style="color:#8a9bb5;padding:.25rem 0">Submitted</td><td style="color:#eaecef">'+dateStr+'</td></tr>' +
+                (reason ? '<tr><td style="color:#8a9bb5;padding:.25rem 0;vertical-align:top">Reason</td><td style="color:#f6465d;font-weight:600">'+_escHtml(reason)+'</td></tr>' : '') +
               '</table>' +
             '</div>';
           el.appendChild(row);
