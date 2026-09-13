@@ -5223,10 +5223,10 @@ body.mob-screen-open .p2p-secondary-nav {
   min-width: 76px;
   padding: 1px 24px;
   border: none;
-  border-radius: 11px;
+  border-radius: 13px;
   background: #00c853;
   color: #fff;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
