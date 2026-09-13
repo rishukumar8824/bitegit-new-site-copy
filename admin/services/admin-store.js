@@ -1266,6 +1266,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       network: String(row.network || row.chain || '').trim().toUpperCase(),
       address: String(row.address || row.depositAddress || row.toAddress || '').trim(),
       txHash: String(row.txHash || row.txid || '').trim(),
+      proofUrl: String(row.proofUrl || '').trim(),
       status: String(row.status || 'PENDING').trim().toUpperCase(),
       type: String(row.type || 'ONCHAIN').trim().toUpperCase(),
       reason: String(row.reviewReason || '').trim(),
@@ -1321,6 +1322,43 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     }
 
     return _doc;
+  }
+
+  // POST /api/deposits (server.js) calls this — was referenced there but never actually
+  // defined/exported here, so every user-submitted deposit request 503'd. proofUrl can be
+  // a real URL or (as the Android/web clients send it) a base64 data: URI of a payment
+  // screenshot — stored as-is so admin-dashboard.js can render it directly in an <img>.
+  async function createDepositRequest(input = {}) {
+    const userId = String(input.userId || '').trim();
+    if (!userId) {
+      throw new Error('userId is required');
+    }
+    const amount = toNumber(input.amount, 0);
+    if (!amount || amount <= 0) {
+      throw new Error('Invalid deposit amount');
+    }
+
+    const doc = {
+      id: makeId('dep'),
+      userId,
+      email: String(input.email || '').trim(),
+      username: String(input.username || '').trim(),
+      coin: String(input.coin || 'USDT').trim().toUpperCase(),
+      currency: String(input.coin || 'USDT').trim().toUpperCase(),
+      network: String(input.network || '').trim().toUpperCase(),
+      address: String(input.address || '').trim(),
+      amount,
+      txHash: String(input.txHash || '').trim(),
+      proofUrl: String(input.proofUrl || '').trim(),
+      type: 'ONCHAIN',
+      source: 'api.deposits',
+      status: 'PENDING',
+      metadata: input.metadata && typeof input.metadata === 'object' ? input.metadata : {},
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    await adminDeposits.insertOne(doc);
+    return doc;
   }
 
   async function listWithdrawals(params = {}) {
@@ -2389,6 +2427,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     getWalletOverview,
     listDeposits,
     listUserDeposits,
+    createDepositRequest,
     reviewDeposit,
     listWithdrawals,
     createWithdrawalRequest,

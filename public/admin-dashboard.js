@@ -811,6 +811,7 @@ async function loadWallet() {
         </div>
         <p class="mt-2 text-sm text-slate-200">${row.coin || 'USDT'} • ${formatNumber(row.amount || 0, 6)}</p>
         <p class="mt-1 text-xs text-slate-500">Type: ${row.type || 'ONCHAIN'} • Tx: ${row.txHash || row.txid || '-'}</p>
+        ${row.proofUrl ? `<img src="${escapeHtml(row.proofUrl)}" alt="Deposit proof" style="margin-top:8px;max-width:180px;max-height:180px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);cursor:pointer;" onclick="window.open(this.src,'_blank')" />` : ''}
         <div class="mt-2 flex gap-2">
           <button class="btn-primary${disabledClass}" data-deposit-action="approve" data-deposit-id="${row.id}"${disabledAttr}>Approve</button>
           <button class="btn-danger${disabledClass}" data-deposit-action="reject" data-deposit-id="${row.id}"${disabledAttr}>Reject</button>
