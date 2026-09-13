@@ -3246,10 +3246,9 @@ function renderOffers(data, append) {
             </div>
             <div class="bbt-name-wrap">
               <span class="bbt-name">${escapeHtml(offer.advertiser)}${verificationBadge}</span>
-              <div class="bbt-badges">${_respTag}${_fastRelease}</div>
+              <div class="bbt-badges"><span class="bbt-orders">${repOrders} Orders (${repRate}%)</span>${_respTag}${_fastRelease}</div>
             </div>
           </div>
-          <span class="bbt-orders">${repOrders} Orders (${repRate}%)</span>
         </div>
         <div class="bbt-price-row">
           <span class="bbt-psign">₹</span><span class="bbt-pnum">${Number(offer.price).toFixed(2)}</span>
