@@ -4471,12 +4471,37 @@ function wdToggleDetail(detailId) {
   if (arr) arr.textContent = open ? '▸' : '▾';
 }
 
+function showWdRejectModal() {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:#161b2e;border:1px solid rgba(246,70,93,0.4);border-radius:16px;padding:28px 24px;width:340px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,0.6);">
+        <div style="font-size:16px;font-weight:800;color:#f6465d;margin-bottom:6px;">✕ Reject Withdrawal</div>
+        <div style="font-size:12px;color:#848e9c;margin-bottom:16px;">Reason user ko wallet mein dikhega</div>
+        <textarea id="wdRejectReasonInput" rows="3" placeholder="Reason likhein..." style="width:100%;box-sizing:border-box;background:#0d0f1a;border:1px solid rgba(246,70,93,0.4);border-radius:8px;padding:10px 12px;font-size:13px;color:#e2e8f0;outline:none;resize:vertical;font-family:inherit;">Withdrawal request rejected by admin.</textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
+          <button id="wdRejectCancelBtn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#848e9c;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">Cancel</button>
+          <button id="wdRejectConfirmBtn" style="background:#f6465d;border:none;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:800;cursor:pointer;">✕ Reject</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('wdRejectCancelBtn').onclick = () => { overlay.remove(); resolve(null); };
+    document.getElementById('wdRejectConfirmBtn').onclick = () => {
+      const val = document.getElementById('wdRejectReasonInput').value.trim();
+      overlay.remove();
+      resolve(val || 'Withdrawal request rejected by admin.');
+    };
+  });
+}
+
 async function wdAction(withdrawalId, decision, btn) {
-  let reason = decision === 'APPROVED' ? 'Approved by admin' : '';
+  let reason = '';
   if (decision === 'REJECTED') {
-    reason = window.prompt('Rejection reason:', 'Rejected by admin');
-    if (reason === null) return; // admin cancelled the prompt
-    reason = reason.trim() || 'Rejected by admin';
+    reason = await showWdRejectModal();
+    if (!reason) return;
+  } else {
+    reason = 'Approved by admin';
   }
   btn.disabled = true;
   btn.textContent = '…';
