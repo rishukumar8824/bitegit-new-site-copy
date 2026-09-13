@@ -5231,13 +5231,13 @@ body.mob-screen-open .p2p-secondary-nav {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transform: translateY(-3px);
+  transform: translateY(-3px) scale(0.85);
   transition: opacity 0.15s, transform 0.1s;
   -webkit-tap-highlight-color: transparent;
 }
 .bbt-action-btn.bbt-sell-btn { background: #ff3377; }
 .bbt-action-btn:disabled { opacity: 0.38; cursor: not-allowed; }
-.bbt-action-btn:not(:disabled):active { opacity: 0.82; transform: translateY(-3px) scale(0.95); }
+.bbt-action-btn:not(:disabled):active { opacity: 0.82; transform: translateY(-3px) scale(0.8); }
 
 /* ── Buy/Sell bar injected inside #p2pCards (scrolls away) ── */
 .bbt-bs-bar {
