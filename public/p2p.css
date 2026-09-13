@@ -1,4 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@font-face { font-family: 'Pulse'; src: url('/fonts/pulse-regular.ttf') format('truetype');  font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Pulse'; src: url('/fonts/pulse-medium.ttf') format('truetype');   font-weight: 500; font-display: swap; }
+@font-face { font-family: 'Pulse'; src: url('/fonts/pulse-semibold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Pulse'; src: url('/fonts/pulse-bold.ttf') format('truetype');     font-weight: 700; font-display: swap; }
+/* app-style numerals: the Bitegit app's Pulse face, tight + tabular */
+.gt-num {
+  font-family: 'Pulse', 'Manrope', -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  letter-spacing: -0.01em;
+}
 
 :root {
   --p2p-bg: #000;
@@ -794,14 +805,14 @@ body.p2p-kyc-open { overflow: hidden; }
   display: flex;
   gap: 2px;
   background: rgba(255,255,255,0.06);
-  border-radius: 9px;
+  border-radius: 0;
   padding: 3px;
 }
 .gt-side-tab {
   min-height: 30px;
   padding: 0 0.9rem;
   border: none;
-  border-radius: 7px;
+  border-radius: 0;
   background: transparent;
   color: #848E9C;
   font-size: 0.82rem;
@@ -811,7 +822,7 @@ body.p2p-kyc-open { overflow: hidden; }
   transition: color 0.15s, background-color 0.15s;
 }
 .gt-side-tab[data-side="buy"].active { background: #00c853; color: #06120d; }
-.gt-side-tab[data-side="sell"].active { background: #ff3b30; color: #fff; }
+.gt-side-tab[data-side="sell"].active { background: #ff3377; color: #fff; }
 .gt-controls-right { display: flex; align-items: center; gap: 0.45rem; }
 .gt-icon-btn { width: 38px; height: 38px; border-radius: 8px; border: none; background: rgba(255,255,255,0.07); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
 .gt-currency-wrap { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.08); border-radius: 8px; padding: 0 0.6rem; height: 38px; }
@@ -4563,12 +4574,27 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-adv-stats { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px; }
 
 .bbt-td-price { white-space: nowrap; }
-.bbt-price-num { font-size: 20px; font-weight: 700; color: #eaecef; }
+.bbt-price-num {
+  font-family: 'Pulse', 'Manrope', -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-size: 20px; font-weight: 700; color: #eaecef;
+}
 .bbt-price-cur { font-size: 12px; color: rgba(255,255,255,0.45); }
 
 .bbt-td-avail {}
-.bbt-avail-usdt { font-size: 13px; color: #eaecef; font-weight: 500; }
-.bbt-avail-limit { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+.bbt-avail-usdt {
+  font-family: 'Pulse', 'Manrope', -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-size: 13px; color: #eaecef; font-weight: 500;
+}
+.bbt-avail-limit {
+  font-family: 'Pulse', 'Manrope', -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px;
+}
 
 .bbt-td-pay { min-width: 140px; }
 .bbt-pay-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
@@ -4609,7 +4635,12 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* Price */
 .bbt-card-price { font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:4px; }
-.bbt-card-price-num { font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+.bbt-card-price-num {
+  font-family: 'Pulse', 'Manrope', -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.5px;
+}
 
 /* Info rows: label+value left-aligned together */
 .bbt-card-info-row { display:flex; align-items:center; gap:6px; font-size:11px; margin-bottom:3px; }
@@ -4623,7 +4654,7 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* Action button */
 .bbt-card-btn { display:block; width:82px; padding:10px 0; border-radius:6px; border:none; cursor:pointer; font-size:11px; font-weight:800; background:#2ebd85; color:#fff; transition:opacity 0.15s, transform 0.1s; white-space:nowrap; }
-.bbt-card-btn.bbt-card-btn-sell { background:#f6465d; color:#fff; }
+.bbt-card-btn.bbt-card-btn-sell { background:#ff3377; color:#fff; }
 .bbt-card-btn:disabled { opacity:0.4; cursor:not-allowed; }
 .bbt-card-btn:not(:disabled):active { opacity:0.85; transform:scale(0.97); }
 
@@ -4951,8 +4982,12 @@ body.mob-screen-open .p2p-secondary-nav {
 .bbt-card {
   background: #000;
   border-bottom: 1px solid rgba(255,255,255,0.07);
-  padding: 8px 14px 8px;
+  padding: 14px 14px 14px;
   position: relative;
+  /* GPU-composited layer so each card doesn't repaint on every scroll frame —
+     keeps the list feeling smooth on mobile. */
+  contain: content;
+  transform: translateZ(0);
 }
 /* First card — rounded box, inset from edges */
 .bbt-top-pick {
@@ -4962,7 +4997,7 @@ body.mob-screen-open .p2p-secondary-nav {
   border: none;
   border-bottom: 1px solid rgba(255,255,255,0.06);
   margin: 0;
-  padding: 8px 14px 8px;
+  padding: 14px 14px 14px;
   border-top: 1.5px solid rgba(246,143,21,0.15);
 }
 .bbt-top-pick-badge {
@@ -5004,10 +5039,10 @@ body.mob-screen-open .p2p-secondary-nav {
   flex-shrink: 0;
 }
 .bbt-avatar {
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
-  font-size: 7.5px;
+  font-size: 6px;
   font-weight: 700;
   color: #fff;
   display: flex;
@@ -5019,8 +5054,8 @@ body.mob-screen-open .p2p-secondary-nav {
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #2ebd85;
   border: 1.5px solid #000;
@@ -5116,6 +5151,9 @@ body.mob-screen-open .p2p-secondary-nav {
   line-height: 1;
 }
 .bbt-pnum {
+  font-family: 'Pulse', 'Manrope', -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
   font-size: 22px;
   font-weight: 700;
   color: #fff;
@@ -5133,7 +5171,12 @@ body.mob-screen-open .p2p-secondary-nav {
   margin-bottom: 1px;
 }
 .bbt-lbl { color: rgba(255,255,255,0.38); flex-shrink: 0; }
-.bbt-val { color: rgba(255,255,255,0.78); }
+.bbt-val {
+  color: rgba(255,255,255,0.78);
+  font-family: 'Pulse', 'Manrope', -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
 
 /* Footer: payments + Buy button on same row */
 .bbt-ft {
@@ -5176,7 +5219,7 @@ body.mob-screen-open .p2p-secondary-nav {
   min-width: 64px;
   padding: 8px 16px;
   border: none;
-  border-radius: 24px;
+  border-radius: 6px;
   background: #00c853;
   color: #fff;
   font-size: 13px;
@@ -5188,7 +5231,7 @@ body.mob-screen-open .p2p-secondary-nav {
   transition: opacity 0.15s, transform 0.1s;
   -webkit-tap-highlight-color: transparent;
 }
-.bbt-action-btn.bbt-sell-btn { background: #ff3b30; }
+.bbt-action-btn.bbt-sell-btn { background: #ff3377; }
 .bbt-action-btn:disabled { opacity: 0.38; cursor: not-allowed; }
 .bbt-action-btn:not(:disabled):active { opacity: 0.82; transform: translateY(-3px) scale(0.95); }
 

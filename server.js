@@ -715,17 +715,17 @@ async function getUsdtDepositConfigForUser() {
   const fallbackNetworks = [
     {
       network: 'TRC20',
-      address: String(process.env.USDT_TRC20_DEPOSIT_ADDRESS || '').trim(),
+      address: String(process.env.USDT_TRC20_DEPOSIT_ADDRESS || 'TGtoZDgjh2R8fo5fSuBzgUQmKzgAj4SwXy').trim(),
       minConfirmations: 20
     },
     {
       network: 'ERC20',
-      address: String(process.env.USDT_ERC20_DEPOSIT_ADDRESS || '').trim(),
+      address: String(process.env.USDT_ERC20_DEPOSIT_ADDRESS || '0x01e0bb0ae1228012899ffdddefd96329087150b5').trim(),
       minConfirmations: 12
     },
     {
       network: 'BEP20',
-      address: String(process.env.USDT_BEP20_DEPOSIT_ADDRESS || '').trim(),
+      address: String(process.env.USDT_BEP20_DEPOSIT_ADDRESS || '0x01e0bb0ae1228012899ffdddefd96329087150b5').trim(),
       minConfirmations: 15
     }
   ];

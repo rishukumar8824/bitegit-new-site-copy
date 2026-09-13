@@ -1460,6 +1460,11 @@
     document.getElementById(id).classList.remove('hidden');
     if(id === 'screenWithdrawHistory') loadWithdrawHistory();
     if(id === 'screenRecord') loadRecordData();
+    // The deposit screen shows the address/QR card full-height — the bottom
+    // app nav just eats space and never gets tapped there, so hide it and
+    // restore it on every other screen (including back-navigation).
+    var appNav = document.querySelector('.mobile-app-nav');
+    if(appNav) appNav.classList.toggle('hidden', id === 'screenDeposit' || id === 'screenDepositDetail');
   }
 
   var balVisible = true;
@@ -1586,6 +1591,8 @@
       var prev = screenHistory.pop();
       document.querySelectorAll('.screen').forEach(function(s){ s.classList.add('hidden'); });
       document.getElementById(prev).classList.remove('hidden');
+      var appNav = document.querySelector('.mobile-app-nav');
+      if(appNav) appNav.classList.toggle('hidden', prev === 'screenDeposit' || prev === 'screenDepositDetail');
     } else {
       history.back();
     }
