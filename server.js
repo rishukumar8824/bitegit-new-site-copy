@@ -83,6 +83,7 @@ const { createSocialFeedStore } = require('./modules/social-feed/mysql-store');
 const { createSocialFeedFallbackStore } = require('./modules/social-feed/fallback-store');
 const { createSocialFeedService } = require('./modules/social-feed/service');
 const { registerSocialFeedRoutes } = require('./routes/social-feed');
+const { registerAppMetaRoutes } = require('./routes/app-meta');
 const { createP2POrderController } = require('./controllers/p2p-order-controller');
 const { createAdminStore } = require('./admin/services/admin-store');
 const { createAdminExtendedStore } = require('./admin/services/admin-extended-store');
@@ -6597,6 +6598,11 @@ app.get(`/${ADMIN_PANEL_SECRET_PATH}`, async (req, res) => {
   }
 });
 
+app.get(`/${ADMIN_PANEL_SECRET_PATH}/app-config`, requiresAdminSession, (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.sendFile(path.join(__dirname, 'public', 'admin-app-config.html'));
+});
+
 app.get('/', (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -7243,6 +7249,11 @@ async function boot() {
       requiresP2PUser,
       getP2PUserFromRequest,
       requiresAdminSession
+    });
+
+    registerAppMetaRoutes(app, {
+      requiresAdminSession,
+      getCollections
     });
 
     p2pOrderController = createP2POrderController({
