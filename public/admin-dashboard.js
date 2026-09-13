@@ -4472,12 +4472,18 @@ function wdToggleDetail(detailId) {
 }
 
 async function wdAction(withdrawalId, decision, btn) {
+  let reason = decision === 'APPROVED' ? 'Approved by admin' : '';
+  if (decision === 'REJECTED') {
+    reason = window.prompt('Rejection reason:', 'Rejected by admin');
+    if (reason === null) return; // admin cancelled the prompt
+    reason = reason.trim() || 'Rejected by admin';
+  }
   btn.disabled = true;
   btn.textContent = '…';
   try {
     await apiRequest(`/wallet/withdrawals/${encodeURIComponent(withdrawalId)}/review`, {
       method: 'POST',
-      body: JSON.stringify({ decision, reason: decision === 'APPROVED' ? 'Approved by admin' : 'Rejected by admin' })
+      body: JSON.stringify({ decision, reason })
     });
     showMessage(
       decision === 'APPROVED' ? 'Withdrawal approved. Balance deducted.' : 'Withdrawal rejected. Funds returned to user.',
