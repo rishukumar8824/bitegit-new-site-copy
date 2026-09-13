@@ -11,6 +11,15 @@ function stripHtml(str) {
     .trim();
 }
 
+// A base64 image data: URI (deposit/withdrawal proof screenshots, etc) has no meaningful
+// HTML/script surface to strip — it's opaque binary data, only ever consumed via an
+// <img src="..."> attribute, never parsed as markup. Running the HTML-stripping regexes
+// below over a multi-hundred-KB base64 blob is wasted work at best; at worst, a chance
+// substring match (e.g. the \bon\w+=... event-handler pattern hitting near the base64
+// padding) silently truncates the payload, corrupting the image with no visible error
+// anywhere in the request/response cycle. Recognize and pass these through untouched.
+const DATA_IMAGE_URI_REGEX = /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/;
+
 function sanitizeValue(input) {
   if (Array.isArray(input)) {
     return input.map((item) => sanitizeValue(item));
@@ -28,6 +37,9 @@ function sanitizeValue(input) {
   }
 
   if (typeof input === 'string') {
+    if (DATA_IMAGE_URI_REGEX.test(input)) {
+      return input;
+    }
     return stripHtml(input);
   }
 

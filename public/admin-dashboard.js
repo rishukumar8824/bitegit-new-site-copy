@@ -4200,7 +4200,15 @@ function toggleNotifPanel() {
   if (!panel) return;
   var open = panel.style.display !== 'none';
   panel.style.display = open ? 'none' : 'block';
-  if (!open) renderNotifPanel();
+  if (!open) {
+    renderNotifPanel();
+    // Opening the panel = "seen" — the list itself stays (so recent items are still
+    // visible), but the unread badge shouldn't keep showing a stale count until
+    // clearAllNotifs() is explicitly clicked. Previously the badge only ever cleared
+    // via that button, so it looked permanently "stuck" on every visit.
+    var badge = document.getElementById('notifBellBadge');
+    if (badge) badge.style.display = 'none';
+  }
 }
 
 // Close panel on outside click
