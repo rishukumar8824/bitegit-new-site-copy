@@ -4832,6 +4832,43 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
   }
 });
 
+// ── Admin: Manually unlock a user's locked balance back to available ──
+// Safety-valve for cases where a withdrawal reject/cancel didn't release the
+// lock automatically (e.g. wallet doc conflict) and the user can't see funds
+// that are rightfully theirs.
+app.post('/api/admin/users/:userId/unlock-locked', requiresAdminSession, async (req, res) => {
+  const targetUserId = String(req.params.userId || '').trim();
+  if (!targetUserId) return res.status(400).json({ success: false, message: 'userId required.' });
+  try {
+    const cols = getCollections();
+    const wallet = await cols.wallets.findOne({ userId: targetUserId });
+    if (!wallet) return res.status(404).json({ success: false, message: 'Wallet not found for this user.' });
+
+    const locked = Number(wallet.p2pLocked ?? wallet.lockedBalance ?? 0);
+    if (!(locked > 0)) {
+      return res.status(400).json({ success: false, message: 'User has no locked balance to unlock.' });
+    }
+
+    await walletService.unlockFunds(targetUserId, locked, {
+      type: 'refund',
+      username: wallet.username || '',
+      referenceId: `admin_unlock_${targetUserId}_${Date.now()}`,
+      metadata: { reason: 'admin_unlock_locked_balance', by: 'Admin' }
+    });
+
+    const updated = await cols.wallets.findOne({ userId: targetUserId });
+    return res.json({
+      success: true,
+      message: `Unlocked ${locked} USDT to available balance.`,
+      unlocked: locked,
+      availableBalance: Number(updated?.availableBalance ?? updated?.balance ?? 0),
+      lockedBalance: Number(updated?.p2pLocked ?? updated?.lockedBalance ?? 0)
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: String(err?.message || 'Server error while unlocking balance.') });
+  }
+});
+
 // ── Admin: Get merchant badge status + P2P stats for a specific user ──
 app.get('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async (req, res) => {
   const targetUserId = String(req.params.userId || '').trim();

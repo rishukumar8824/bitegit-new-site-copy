@@ -2925,6 +2925,7 @@ async function loadUpOverview() {
       <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-info"><div class="stat-label">P2P Orders</div><div class="stat-value" style="font-size:18px;">${p2pCnt}</div></div></div>
       <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-info"><div class="stat-label">Trade Orders</div><div class="stat-value" style="font-size:18px;">${tradeCnt}</div></div></div>
     </div>
+    ${locked > 0 ? `<button onclick="adminUnlockLocked('${escapeHtml(user.userId||'')}')" style="width:100%;margin-bottom:10px;padding:11px;border-radius:8px;background:rgba(22,199,132,0.12);color:#16c784;border:1px solid rgba(22,199,132,0.45);font-size:13px;font-weight:700;cursor:pointer;">🔓 Unlock Locked Balance (${formatNumber(locked,4)} USDT → Available)</button>` : ''}
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn-primary" style="flex:1;" data-up-tab="kyc">🪪 View KYC</button>
       <button class="btn-secondary" style="flex:1;" data-up-tab="logins">🔐 Login History</button>
@@ -3117,6 +3118,21 @@ function kycImageBox(title, src) {
     </div>
     ${imgSrc ? `<div style="padding:6px 10px;font-size:10px;color:var(--text-2);text-align:center;background:var(--bg-card2);">Click to open full size</div>` : ''}
   </div>`;
+}
+
+async function adminUnlockLocked(userId) {
+  if (!confirm('Unlock this user\'s locked balance back to available?\nUse this if a withdrawal reject/cancel left their balance stuck as locked.')) return;
+  try {
+    const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/unlock-locked`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    const data = await res.json();
+    if (!data.success) { showMessage(data.message || 'Failed to unlock balance.', 'error'); return; }
+    showMessage(`Unlocked ${data.unlocked} USDT to available balance.`, 'success');
+    if (_upUserId === userId) await loadUpOverview();
+  } catch (e) { showMessage('Network error while unlocking balance.', 'error'); }
 }
 
 async function loadUpKyc() {

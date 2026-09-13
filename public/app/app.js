@@ -247,7 +247,7 @@ const BITEGIT_API = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
 
   async function loadUser() {
     try {
-      const { response, body } = await fetchJson(`${BITEGIT_API}/auth/me`);
+      const { response, body } = await fetchJson('/api/p2p/me');
       if (!response.ok || !body.loggedIn || !body.user) {
         drawerUserName.textContent = 'Guest User';
         drawerUserMeta.textContent = 'Login required';
@@ -270,7 +270,7 @@ const BITEGIT_API = (window.BITEGIT_API_BASE || 'http://localhost:3000/api/v1');
     assetDepositNetwork.textContent = '--';
 
     try {
-      const { response, body } = await fetchJson(`${BITEGIT_API}/wallet/balances`);
+      const { response, body } = await fetchJson('/api/wallet/summary');
       if (!response.ok || !body.summary) {
         throw new Error('Unauthorized');
       }
