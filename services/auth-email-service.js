@@ -348,6 +348,18 @@ function createAuthEmailService() {
     return sendViaProvider({ to: email, subject, text, html });
   }
 
+  async function sendWithdrawalOtpEmail(email, code, { expiresInMinutes = 10 } = {}) {
+    const subject = `[${BRAND_NAME}] Withdrawal Verification - ${new Date().toISOString().replace('T', ' ').replace('Z', ' (UTC)')}`;
+    const text = `Your ${BRAND_NAME} withdrawal verification code is ${code}. It is valid for ${expiresInMinutes} minutes.`;
+    const html = createOtpTemplate({
+      title: 'Withdrawal Verification',
+      code,
+      expiresInMinutes,
+      note: 'Never share this code with anyone. If you did not request a withdrawal, secure your account immediately.'
+    });
+    return sendViaProvider({ to: email, subject, text, html });
+  }
+
   async function sendNewDeviceLoginAlert(email, metadata = {}) {
     const loginTimeUtc = metadata.loginTimeUtc || new Date().toISOString().replace('T', ' ').replace('Z', ' (UTC)');
     const ipAddress = metadata.ipAddress || 'Unknown';
@@ -426,6 +438,7 @@ function createAuthEmailService() {
     sendSignupOtpEmail,
     sendForgotPasswordOtpEmail,
     sendLoginOtpEmail,
+    sendWithdrawalOtpEmail,
     sendNewDeviceLoginAlert,
     sendDepositSuccessEmail,
     sendWithdrawalSuccessEmail

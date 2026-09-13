@@ -3124,6 +3124,81 @@ app.post(
   }
 );
 
+const WITHDRAWAL_OTP_PURPOSE = 'withdrawal';
+const WITHDRAWAL_OTP_TTL_MS = Math.max(
+  60 * 1000,
+  Number.parseInt(String(process.env.WITHDRAWAL_OTP_TTL_MS || '600000'), 10) || 600000
+);
+const _withdrawalOtpSendState = new Map(); // userId -> resettable-at ms, simple per-user throttle
+
+function createWithdrawalOtpCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function verifyWithdrawalOtp(contact, code) {
+  const otpState = await repos.getSignupOtp(contact, { purpose: WITHDRAWAL_OTP_PURPOSE });
+  if (!otpState) {
+    return { ok: false, message: 'Verification code expired. Please request a new code.' };
+  }
+  const expiresAtMs = new Date(otpState.expiresAt).getTime();
+  if (!Number.isFinite(expiresAtMs) || expiresAtMs < Date.now()) {
+    await repos.deleteSignupOtp(contact, { purpose: WITHDRAWAL_OTP_PURPOSE });
+    return { ok: false, message: 'Verification code expired. Please request a new code.' };
+  }
+  if (String(otpState.code || '').trim() !== String(code || '').trim()) {
+    const attempts = Number(otpState.attempts || 0) + 1;
+    if (attempts >= 5) {
+      await repos.deleteSignupOtp(contact, { purpose: WITHDRAWAL_OTP_PURPOSE });
+      return { ok: false, message: 'Too many failed attempts. Request a new code.' };
+    }
+    await repos.upsertSignupOtp(contact, { ...otpState, attempts, expiresAt: expiresAtMs }, { purpose: WITHDRAWAL_OTP_PURPOSE });
+    return { ok: false, message: 'Invalid verification code.' };
+  }
+  await repos.deleteSignupOtp(contact, { purpose: WITHDRAWAL_OTP_PURPOSE });
+  return { ok: true };
+}
+
+app.post('/api/withdrawals/send-otp', requiresP2PUser, async (req, res) => {
+  const email = String(req.p2pUser.email || '').trim().toLowerCase();
+  if (!email) {
+    return res.status(400).json({ message: 'No email on file for this account.' });
+  }
+  const now = Date.now();
+  const nextAllowedAt = _withdrawalOtpSendState.get(req.p2pUser.id) || 0;
+  if (now < nextAllowedAt) {
+    return res.status(429).json({
+      message: 'Please wait before requesting another code.',
+      retryAfterSeconds: Math.ceil((nextAllowedAt - now) / 1000)
+    });
+  }
+  try {
+    const code = createWithdrawalOtpCode();
+    const expiresAt = now + WITHDRAWAL_OTP_TTL_MS;
+    await repos.upsertSignupOtp(email, { code, type: 'email', attempts: 0, expiresAt }, { purpose: WITHDRAWAL_OTP_PURPOSE });
+    _withdrawalOtpSendState.set(req.p2pUser.id, now + 60 * 1000);
+
+    const expiresInMinutes = Math.max(1, Math.floor(WITHDRAWAL_OTP_TTL_MS / (60 * 1000)));
+    let delivered = false;
+    if (authEmailService && typeof authEmailService.sendWithdrawalOtpEmail === 'function') {
+      try {
+        const result = await authEmailService.sendWithdrawalOtpEmail(email, code, { expiresInMinutes });
+        delivered = !!(result && result.delivered);
+      } catch (_) {}
+    }
+    if (!delivered) {
+      await repos.deleteSignupOtp(email, { purpose: WITHDRAWAL_OTP_PURPOSE });
+      _withdrawalOtpSendState.delete(req.p2pUser.id);
+      return res.status(503).json({ message: 'Unable to send email OTP right now. Please try again shortly.' });
+    }
+    return res.json({
+      message: 'Verification code sent to your email.',
+      expiresInSeconds: Math.floor(WITHDRAWAL_OTP_TTL_MS / 1000)
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while sending verification code.' });
+  }
+});
+
 app.post(
   '/api/withdrawals',
   requiresP2PUser,
@@ -3131,7 +3206,8 @@ app.post(
     validation.required('amount'),
     validation.amount('amount'),
     validation.required('currency'),
-    validation.required('address')
+    validation.required('address'),
+    validation.required('emailCode')
   ]),
   async (req, res) => {
     const amount = Number(req.body.amount);
@@ -3149,6 +3225,12 @@ app.post(
       return res.status(400).json({
         message: `Invalid ${network} withdrawal address format.`
       });
+    }
+
+    const otpEmail = String(req.p2pUser.email || '').trim().toLowerCase();
+    const otpCheck = await verifyWithdrawalOtp(otpEmail, req.body.emailCode);
+    if (!otpCheck.ok) {
+      return res.status(400).json({ message: otpCheck.message, code: 'EMAIL_CODE_INVALID' });
     }
 
     try {
