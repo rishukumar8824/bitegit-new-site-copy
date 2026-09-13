@@ -5220,10 +5220,10 @@ body.mob-screen-open .p2p-secondary-nav {
 
 /* Buy / Sell button — full capsule pill */
 .bbt-action-btn {
-  min-width: 44px;
-  padding: 2px 10px;
+  min-width: 72px;
+  padding: 3px 22px;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   background: #00c853;
   color: #fff;
   font-size: 11px;
