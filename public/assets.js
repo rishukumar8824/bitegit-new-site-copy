@@ -918,11 +918,16 @@ function renderDepositHistory() {
     const network = normalizeNetwork(row.network || row.chain) || 'USDT';
     const currency = String(row.currency || row.coin || 'USDT').trim().toUpperCase();
     const createdAt = formatAssetDate(row.createdAt || row.created_at);
+    const reason = String(row.reason || row.metadata?.reason || '').trim();
+    const reasonBlock = (status.tone === 'rejected' && reason)
+      ? `<div class="hist-reason"><span class="hist-reason-label">Reason:</span> ${escapeHtml(reason)}</div>`
+      : '';
     return `<div class="hist-row">
       <span class="hist-icon dep">${SVG_DEP}</span>
       <div class="hist-body">
         <div class="hist-type">Deposit</div>
         <div class="hist-meta">${escapeHtml(network)}${createdAt ? ' · ' + escapeHtml(createdAt) : ''}</div>
+        ${reasonBlock}
       </div>
       <div class="hist-right">
         <div class="hist-amount">+${escapeHtml(formatAssetAmount(row.amount))} ${escapeHtml(currency)}</div>

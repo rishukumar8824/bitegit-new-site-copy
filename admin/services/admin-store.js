@@ -1268,6 +1268,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
       txHash: String(row.txHash || row.txid || '').trim(),
       status: String(row.status || 'PENDING').trim().toUpperCase(),
       type: String(row.type || 'ONCHAIN').trim().toUpperCase(),
+      reason: String(row.reviewReason || '').trim(),
       createdAt: row.createdAt || null,
       updatedAt: row.updatedAt || null,
       reviewedAt: row.reviewedAt || null
