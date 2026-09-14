@@ -4374,6 +4374,58 @@ app.patch('/api/p2p/offers/:offerId', requiresP2PUser, async (req, res) => {
     if (status && !['ACTIVE', 'PAUSED'].includes(status)) {
       return res.status(400).json({ message: 'Status must be ACTIVE or PAUSED.' });
     }
+
+    // Changing how much USDT this ad offers has to move real escrow, not just
+    // rewrite the ad document — increasing it locks the extra funds (capped
+    // by the seller's actual available balance), decreasing it frees the
+    // difference back. Previously totalAmount only ever got written to the
+    // offer doc with no wallet-side effect, so a seller could edit an ad up
+    // to any amount regardless of what they actually held.
+    if (totalAmount !== undefined && totalAmount !== null && totalAmount !== '') {
+      const newAmount = Number(totalAmount);
+      if (!Number.isFinite(newAmount) || newAmount <= 0) {
+        return res.status(400).json({ message: 'Total amount must be a positive number.' });
+      }
+      const currentLocked = Number(offer.escrowLockedAmount || offer.availableAmount || offer.available || 0);
+      const delta = newAmount - currentLocked;
+      if (delta > 0) {
+        try {
+          await walletService.lockFunds(userId, delta, {
+            type: 'trade_sell',
+            currency: offer.asset || 'USDT',
+            username: req.p2pUser.username,
+            referenceId: `p2p_ad_edit_lock_${offerId}_${Date.now()}`,
+            metadata: { offerId }
+          });
+        } catch (lockErr) {
+          const lockMsg = String(lockErr?.message || '').toLowerCase();
+          if (lockMsg.includes('insufficient')) {
+            let stillAvailable = 0;
+            try {
+              const w = await walletService.getWallet(userId);
+              stillAvailable = Number(w?.availableBalance ?? w?.balance ?? 0);
+            } catch (_) {}
+            return res.status(400).json({
+              message: `Insufficient USDT balance — you only have ${stillAvailable} USDT available to add.`
+            });
+          }
+          throw lockErr;
+        }
+      } else if (delta < 0) {
+        try {
+          await walletService.unlockFunds(userId, -delta, {
+            type: 'p2p_ad_unlock',
+            currency: offer.asset || 'USDT',
+            username: req.p2pUser.username,
+            referenceId: `p2p_ad_edit_unlock_${offerId}_${Date.now()}`,
+            metadata: { offerId }
+          });
+        } catch (unlockErr) {
+          console.error('[p2p-offer-edit] failed to unlock escrow funds', offerId, unlockErr);
+        }
+      }
+    }
+
     const updated = await repos.updateOffer(offerId, userId, { price, minLimit, maxLimit, payments, status, remark, totalAmount, releaseTime });
     if (!updated) return res.status(404).json({ message: 'Update failed.' });
     return res.json({ offer: updated });

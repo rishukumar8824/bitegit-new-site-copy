@@ -1432,6 +1432,17 @@ async function openEditAdModal(offerId) {
   }
 
   var totalVal = o.totalAmount || o.available || o.availableAmount || '';
+  var currentLocked = Number(o.escrowLockedAmount || o.availableAmount || o.available || 0);
+  var availableBalance = 0;
+  try {
+    var balRes = await fetch('/api/wallet/balance', { credentials: 'include' });
+    var balData = await balRes.json();
+    availableBalance = Number(balData.balance || 0);
+  } catch (_) {}
+  // How much more the seller can raise this ad by: their free balance, plus
+  // whatever this ad already has locked (since lowering the field first would
+  // free that back before re-locking).
+  var maxTotal = availableBalance + currentLocked;
   var modal = document.createElement('div');
   modal.id = 'editAdModal';
   modal.className = 'edit-ad-modal-overlay';
@@ -1445,7 +1456,8 @@ async function openEditAdModal(offerId) {
         <label class="edit-ad-label">Price (INR per USDT)</label>
         <input id="eadPrice" type="number" inputmode="decimal" class="edit-ad-input" value="${o.price || ''}" placeholder="Enter price"/>
         <label class="edit-ad-label">Total Amount (USDT)</label>
-        <input id="eadTotal" type="number" inputmode="decimal" class="edit-ad-input" value="${totalVal}" placeholder="e.g. 500"/>
+        <input id="eadTotal" type="number" inputmode="decimal" class="edit-ad-input" value="${totalVal}" max="${maxTotal}" placeholder="e.g. 500"/>
+        <p style="font-size:11px;color:#8a8f8f;margin:2px 0 0;">Max ${maxTotal.toFixed(2)} USDT (your available balance)</p>
         <label class="edit-ad-label">Min Limit (INR)</label>
         <input id="eadMin" type="number" inputmode="decimal" class="edit-ad-input" value="${o.minLimit || ''}" placeholder="Min limit"/>
         <label class="edit-ad-label">Max Limit (INR)</label>
@@ -1478,7 +1490,9 @@ async function openEditAdModal(offerId) {
 
 async function submitEditAd(offerId) {
   const price = Number(document.getElementById('eadPrice')?.value);
-  const totalAmount = Number(document.getElementById('eadTotal')?.value);
+  const totalInput = document.getElementById('eadTotal');
+  const totalAmount = Number(totalInput?.value);
+  const totalMax = Number(totalInput?.getAttribute('max'));
   const minLimit = Number(document.getElementById('eadMin')?.value);
   const maxLimit = Number(document.getElementById('eadMax')?.value);
   const remark = document.getElementById('eadRemark')?.value || '';
@@ -1491,6 +1505,10 @@ async function submitEditAd(offerId) {
   }
   if (minLimit > maxLimit) {
     if (msgEl) msgEl.textContent = 'Min limit cannot exceed max limit.';
+    return;
+  }
+  if (totalAmount && totalMax && totalAmount > totalMax) {
+    if (msgEl) msgEl.textContent = `You only have ${totalMax.toFixed(2)} USDT available to put in this ad.`;
     return;
   }
   const body = { price, minLimit, maxLimit, payments, remark, releaseTime };
