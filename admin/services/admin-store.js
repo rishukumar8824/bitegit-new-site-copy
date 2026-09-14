@@ -1826,6 +1826,45 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return _doc;
   }
 
+  // Backs the admin panel's "Running Trades" / "Completed" / "Cancelled" P2P
+  // Control tabs. The frontend passes status=ACTIVE for the Running Trades
+  // tab (not a real order status — it means "not yet in a terminal state"),
+  // so that's mapped to every non-terminal status here.
+  const P2P_TERMINAL_STATUSES = ['COMPLETED', 'CANCELLED', 'EXPIRED'];
+  const P2P_NON_TERMINAL_STATUSES = ['CREATED', 'PENDING', 'PAYMENT_SENT', 'PAID', 'DISPUTED'];
+
+  async function listP2PTrades(params = {}) {
+    const { page, limit, skip } = parsePagination(params);
+    const statusParam = String(params.status || '').trim().toUpperCase();
+
+    const query = {};
+    if (statusParam === 'ACTIVE') {
+      query.status = { $in: P2P_NON_TERMINAL_STATUSES };
+    } else if (statusParam) {
+      query.status = statusParam;
+    }
+
+    const rows = await p2pOrders
+      .find(query)
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+    const total = await p2pOrders.countDocuments(query);
+    return {
+      page,
+      limit,
+      total,
+      trades: rows.map((row) => ({
+        ...row,
+        buyerUserId: String(row.buyerUserId || row.buyerId || '').trim(),
+        sellerUserId: String(row.sellerUserId || row.sellerId || '').trim(),
+        buyerUsername: String(row.buyerUsername || '').trim(),
+        sellerUsername: String(row.sellerUsername || '').trim()
+      }))
+    };
+  }
+
   async function listP2PDisputes(params = {}) {
     const { page, limit, skip } = parsePagination(params);
     const query = { status: { $in: ['DISPUTED', 'RESOLVED'] } };
@@ -2442,6 +2481,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     listSpotTrades,
     getSpotOrderBook,
     listP2PAds,
+    listP2PTrades,
     reviewP2PAd,
     listP2PDisputes,
     manualReleaseEscrow,

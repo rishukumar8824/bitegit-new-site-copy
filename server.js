@@ -6314,6 +6314,15 @@ app.get('/api/admin/p2p/ads', requiresAdminSession, async (req, res) => {
   } catch (e) { return res.status(500).json({ message: 'Failed to list P2P ads', error: e.message }); }
 });
 
+app.get('/api/admin/p2p/trades', requiresAdminSession, async (req, res) => {
+  try {
+    if (!adminStore || typeof adminStore.listP2PTrades !== 'function') return res.json({ trades: [], total: 0 });
+    const { limit = 50, page = 1, status } = req.query;
+    const result = await adminStore.listP2PTrades({ limit: Number(limit), page: Number(page), status });
+    return res.json(result || { trades: [], total: 0 });
+  } catch (e) { return res.status(500).json({ message: 'Failed to list P2P trades', error: e.message }); }
+});
+
 app.get('/api/admin/p2p/disputes', requiresAdminSession, async (req, res) => {
   try {
     if (!adminStore || typeof adminStore.listP2PDisputes !== 'function') return res.json({ disputes: [], total: 0 });
