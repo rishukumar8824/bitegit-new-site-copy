@@ -1492,7 +1492,13 @@
       var panel = document.getElementById('ovPanel'+t.charAt(0).toUpperCase()+t.slice(1));
       if(panel) panel.classList.toggle('hidden', t!==tab);
     });
-    var bal = (tab === 'earn') ? fundingBalance : (tab === 'spot' || tab === 'futures') ? spotBalance : totalBalance;
+    // "Earn" has no real holdings in this app (see the "No Data" / "Go to
+    // Bitcovex Earn" redirect below) — it was showing fundingBalance, which
+    // is actually the P2P locked/security-deposit balance (see its
+    // declaration above), an unrelated number that doesn't move when the
+    // user withdraws their spot funds. That's what made a full withdrawal
+    // still show a stale non-zero "Total Balance" under this tab.
+    var bal = (tab === 'earn') ? 0 : (tab === 'spot' || tab === 'futures') ? spotBalance : totalBalance;
     var balValEl = document.getElementById('balVal');
     var balSubEl = document.getElementById('balSub');
     if (balValEl && balVisible) balValEl.textContent = bal.toFixed(2);
