@@ -2927,7 +2927,7 @@ async function loadUpOverview() {
       <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-info"><div class="stat-label">P2P Orders</div><div class="stat-value" style="font-size:18px;">${p2pCnt}</div></div></div>
       <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-info"><div class="stat-label">Trade Orders</div><div class="stat-value" style="font-size:18px;">${tradeCnt}</div></div></div>
     </div>
-    ${locked > 0 ? `<button onclick="adminUnlockLocked('${escapeHtml(user.userId||'')}')" style="width:100%;margin-bottom:10px;padding:11px;border-radius:8px;background:rgba(22,199,132,0.12);color:#16c784;border:1px solid rgba(22,199,132,0.45);font-size:13px;font-weight:700;cursor:pointer;">🔓 Unlock Locked Balance (${formatNumber(locked,4)} USDT → Available)</button>` : ''}
+    ${locked > 0 ? `<button id="upUnlockLockedBtn" onclick="adminUnlockLocked('${escapeHtml(user.userId||'')}', this)" style="width:100%;margin-bottom:10px;padding:11px;border-radius:8px;background:rgba(22,199,132,0.12);color:#16c784;border:1px solid rgba(22,199,132,0.45);font-size:13px;font-weight:700;cursor:pointer;">🔓 Unlock Locked Balance (${formatNumber(locked,4)} USDT → Available)</button>` : ''}
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn-primary" style="flex:1;" data-up-tab="kyc">🪪 View KYC</button>
       <button class="btn-secondary" style="flex:1;" data-up-tab="logins">🔐 Login History</button>
@@ -3122,8 +3122,18 @@ function kycImageBox(title, src) {
   </div>`;
 }
 
-async function adminUnlockLocked(userId) {
+let _unlockLockedInFlight = false;
+async function adminUnlockLocked(userId, btn) {
+  // Guards against a fast double-click/double-tap firing two requests before
+  // the button re-renders (loadUpOverview() removes it once locked hits 0,
+  // but there's a window before that response comes back) — the backend's
+  // optimistic-concurrency wallet update already prevents an actual
+  // double-credit even if two requests did land, but there's no reason to
+  // rely on that as the only guard.
+  if (_unlockLockedInFlight) return;
   if (!confirm('Unlock this user\'s locked balance back to available?\nUse this if a withdrawal reject/cancel left their balance stuck as locked.')) return;
+  _unlockLockedInFlight = true;
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'default'; btn.textContent = 'Unlocking…'; }
   try {
     const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/unlock-locked`, {
       method: 'POST', credentials: 'include',
@@ -3134,7 +3144,11 @@ async function adminUnlockLocked(userId) {
     if (!data.success) { showMessage(data.message || 'Failed to unlock balance.', 'error'); return; }
     showMessage(`Unlocked ${data.unlocked} USDT to available balance.`, 'success');
     if (_upUserId === userId) await loadUpOverview();
-  } catch (e) { showMessage('Network error while unlocking balance.', 'error'); }
+  } catch (e) {
+    showMessage('Network error while unlocking balance.', 'error');
+  } finally {
+    _unlockLockedInFlight = false;
+  }
 }
 
 async function loadUpKyc() {
