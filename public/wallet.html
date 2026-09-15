@@ -1364,7 +1364,7 @@
         .then(function(r) { return r.json(); })
         .then(function(d) {
           var deps = (d.deposits || []).map(function(dep) {
-            return { amount: dep.amount || dep.usdtAmount || 0, created_at: dep.createdAt || dep.submittedAt || new Date().toISOString(), wallet: { currency: { symbol: dep.coin || 'USDT' } }, status: dep.status || 'completed' };
+            return { amount: dep.amount || dep.usdtAmount || 0, created_at: dep.createdAt || dep.submittedAt || new Date().toISOString(), wallet: { currency: { symbol: dep.coin || 'USDT' } }, status: dep.status || 'PENDING' };
           });
           return _fakeRes({ status: 'success', data: { deposits: { data: deps } } });
         })
@@ -1498,7 +1498,9 @@
     // declaration above), an unrelated number that doesn't move when the
     // user withdraws their spot funds. That's what made a full withdrawal
     // still show a stale non-zero "Total Balance" under this tab.
-    var bal = (tab === 'earn') ? 0 : (tab === 'spot' || tab === 'futures') ? spotBalance : totalBalance;
+    // 'overview' also shows spotBalance (available), not spot+locked — see the
+    // reasoning in loadWalletBalances() above.
+    var bal = (tab === 'earn') ? 0 : spotBalance;
     var balValEl = document.getElementById('balVal');
     var balSubEl = document.getElementById('balSub');
     if (balValEl && balVisible) balValEl.textContent = bal.toFixed(2);
@@ -1877,7 +1879,12 @@
         empty.classList.add('hidden');
         list.forEach(function(d) {
           var coin = (d.wallet && d.wallet.currency) ? d.wallet.currency.symbol : 'USDT';
-          el.appendChild(buildRecRow('+', d.amount, coin, fmtDate(d.created_at||d.date), '#0ecb81', 'Successful'));
+          // Was hardcoded to green/"Successful" regardless of d.status — every
+          // deposit showed as approved here even while still PENDING review.
+          var depStatus = String(d.status || 'PENDING').toUpperCase();
+          var depStatusLabel = depStatus === 'COMPLETED' ? 'Successful' : depStatus === 'REJECTED' ? 'Rejected' : 'Pending';
+          var depStatusColor = depStatus === 'COMPLETED' ? '#0ecb81' : depStatus === 'REJECTED' ? '#f6465d' : '#f5a623';
+          el.appendChild(buildRecRow('+', d.amount, coin, fmtDate(d.created_at||d.date), depStatusColor, depStatusLabel));
         });
       }).catch(function(){});
   }
@@ -2152,7 +2159,11 @@
           var dt = new Date(d.created_at || d.date || Date.now());
           var dateStr = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
           var coin = (d.wallet && d.wallet.currency) ? d.wallet.currency.symbol : 'USDT';
-          row.innerHTML = '<div class="dep-hist-left"><div class="dep-hist-coin-name">'+coin+'</div><div class="dep-hist-time">'+dateStr+'</div></div><div class="dep-hist-right"><div class="dep-hist-amount">+'+(d.amount||0)+'</div><div class="dep-hist-status">Successful</div></div>';
+          // Was hardcoded to "Successful" regardless of the deposit's real status.
+          var depStatus = String(d.status || 'PENDING').toUpperCase();
+          var depStatusLabel = depStatus === 'COMPLETED' ? 'Successful' : depStatus === 'REJECTED' ? 'Rejected' : 'Pending';
+          var depStatusColor = depStatus === 'COMPLETED' ? '#0ecb81' : depStatus === 'REJECTED' ? '#f6465d' : '#f5a623';
+          row.innerHTML = '<div class="dep-hist-left"><div class="dep-hist-coin-name">'+coin+'</div><div class="dep-hist-time">'+dateStr+'</div></div><div class="dep-hist-right"><div class="dep-hist-amount">+'+(d.amount||0)+'</div><div class="dep-hist-status" style="color:'+depStatusColor+'">'+depStatusLabel+'</div></div>';
           el.appendChild(row);
         });
       })
@@ -2240,27 +2251,35 @@
       .then(function(data) {
         if (!data || data.status !== 'success') return;
         spotBalance    = Number(data.data.estimated_balance || 0);   // available
-        fundingBalance = Number(data.data.funding_balance   || 0);   // locked
+        fundingBalance = Number(data.data.funding_balance   || 0);   // locked (pending withdrawals, P2P security deposit, etc.)
         totalBalance   = Number(data.data.total_balance     || spotBalance + fundingBalance);
-        ovTotalUsdt    = totalBalance;
+        // The displayed "balance" is the user's *available/spendable* amount,
+        // not spot+locked — otherwise submitting a withdrawal (which moves the
+        // amount into "locked" until it's actually sent, not out of the
+        // account) left the balance looking unchanged even after withdrawing
+        // everything. Same reasoning for P2P security-deposit locks.
+        ovTotalUsdt    = spotBalance;
 
-        // Overview tab shows total by default
+        // Overview tab shows available balance by default
         var usdtBal = document.getElementById('ovBal_USDT');
         var usdtSub = document.getElementById('ovSub_USDT');
-        if (usdtBal) usdtBal.textContent = totalBalance.toFixed(2);
-        if (usdtSub) usdtSub.textContent = '≈' + totalBalance.toFixed(2) + ' USDT';
+        if (usdtBal) usdtBal.textContent = spotBalance.toFixed(2);
+        if (usdtSub) usdtSub.textContent = '≈' + spotBalance.toFixed(2) + ' USDT';
 
         // Top balance display
         var balValEl = document.getElementById('balVal');
         var balSubEl = document.getElementById('balSub');
-        if (balValEl && balVisible) balValEl.textContent = totalBalance.toFixed(2);
-        if (balSubEl) balSubEl.textContent = '≈$' + totalBalance.toFixed(2);
+        if (balValEl && balVisible) balValEl.textContent = spotBalance.toFixed(2);
+        if (balSubEl) balSubEl.textContent = '≈$' + spotBalance.toFixed(2);
 
         // Spot Account row in Overview panel
         var acctSpot = document.getElementById('acctSpotBal');
         if(acctSpot) acctSpot.textContent = spotBalance.toFixed(2) + ' USDT';
 
         // "No assets" placeholder should only show when there's actually nothing
+        // at all (including locked funds) — this one intentionally still looks
+        // at the total, since money tied up in a pending withdrawal/deposit
+        // isn't "no assets".
         var emptyState = document.getElementById('ovEmptyState');
         if (emptyState) emptyState.style.display = (totalBalance > 0) ? 'none' : '';
 
