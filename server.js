@@ -6052,6 +6052,45 @@ app.post('/api/support/chat', async (req, res) => {
   }
 });
 
+// ── User typing ping — admin panel shows three-dots while user types ──────────
+app.post('/api/support/ticket/:ticketId/typing', (req, res) => {
+  try {
+    const ticketId = String(req.params.ticketId || '').trim();
+    if (!app.locals.supportTypingState) app.locals.supportTypingState = new Map();
+    if (ticketId) {
+      app.locals.supportTypingState.set(ticketId, Date.now());
+      // Light cleanup so the map doesn't grow forever
+      if (app.locals.supportTypingState.size > 2000) {
+        const cutoff = Date.now() - 30000;
+        for (const [k, ts] of app.locals.supportTypingState) {
+          if (ts < cutoff) app.locals.supportTypingState.delete(k);
+        }
+      }
+    }
+    return res.json({ ok: true });
+  } catch (_) {
+    return res.json({ ok: false });
+  }
+});
+
+// ── Support widget heartbeat (keeps map fresh; harmless no-op record) ─────────
+app.post('/api/support/ticket/:ticketId/heartbeat', (req, res) => {
+  return res.json({ ok: true });
+});
+
+// ── User marks admin messages as read ──────────────────────────────────────────
+app.post('/api/support/ticket/:ticketId/read', async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    if (adminStore && typeof adminStore.markTicketReadByUser === 'function') {
+      await adminStore.markTicketReadByUser(String(ticketId).trim());
+    }
+    return res.json({ ok: true });
+  } catch (e) {
+    return res.json({ ok: true });
+  }
+});
+
 // ── Public: get ticket messages (user polling for admin replies) ──────────────
 app.get('/api/support/ticket/:ticketId/messages', async (req, res) => {
   const ticketCheck = supportTicketLookupLimiter(`support_ticket:${getRequestIp(req)}`);

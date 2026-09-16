@@ -2399,6 +2399,13 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return ticket;
   }
 
+  async function markTicketReadByUser(ticketId) {
+    await adminSupportTickets.updateOne(
+      { id: String(ticketId) },
+      { $set: { lastReadByUserAt: new Date() } }
+    );
+  }
+
   async function getMonitoringOverview() {
     const now = new Date();
     const last10Min = new Date(Date.now() - 10 * 60 * 1000);
@@ -2500,6 +2507,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     exportTransactionsCsv,
     listSupportTickets,
     getSupportTicket,
+    markTicketReadByUser,
     ensureDemoSupportTicket,
     createSupportTicket,
     replySupportTicket,
