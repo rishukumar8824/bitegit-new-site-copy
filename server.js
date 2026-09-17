@@ -4268,6 +4268,28 @@ async function createP2PAdController(req, res) {
     if (!requestedType || !['buy', 'sell'].includes(requestedType)) {
       return res.status(400).json({ message: 'Ad type must be buy or sell.' });
     }
+
+    // Per-user admin toggles — sellRestricted/buyRestricted, set from the admin
+    // Users table. Existing live ads are untouched either way — this only
+    // blocks posting a *new* one of the restricted type.
+    if (requestedType === 'sell' || requestedType === 'buy') {
+      try {
+        const profile = await cols.adminUserProfiles.findOne({ userId });
+        if (requestedType === 'sell' && profile?.sellRestricted === true) {
+          return res.status(403).json({
+            message: 'You cannot post sell ads right now. Contact support if you believe this is a mistake.',
+            code: 'SELL_RESTRICTED'
+          });
+        }
+        if (requestedType === 'buy' && profile?.buyRestricted === true) {
+          return res.status(403).json({
+            message: 'You cannot post buy ads right now. Contact support if you believe this is a mistake.',
+            code: 'BUY_RESTRICTED'
+          });
+        }
+      } catch (_) {}
+    }
+
     const existingOfType = await cols.p2pOffers.countDocuments({
       $or: [{ createdByUserId: userId }, { advertiser: username }],
       adType: requestedType,
@@ -5001,6 +5023,75 @@ app.post('/api/admin/users/:userId/unlock-locked', requiresAdminSession, async (
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: String(err?.message || 'Server error while unlocking balance.') });
+  }
+});
+
+// ── Admin: Restrict/allow a specific user from cancelling their own P2P orders ──
+// Per-user admin override, enforced in walletService.cancelOrder() via
+// adminUserProfiles.cancelDisabled.
+app.post('/api/admin/users/:userId/cancel-restriction', requiresAdminSession, async (req, res) => {
+  const targetUserId = String(req.params.userId || '').trim();
+  const disabled = req.body?.disabled === true;
+  if (!targetUserId) return res.status(400).json({ success: false, message: 'userId required.' });
+  try {
+    const cols = getCollections();
+    await cols.adminUserProfiles.updateOne(
+      { userId: targetUserId },
+      { $set: { cancelDisabled: disabled, updatedAt: new Date() } },
+      { upsert: true }
+    );
+    return res.json({
+      success: true,
+      message: disabled ? 'User can no longer cancel their own orders.' : 'User can cancel their own orders again.',
+      cancelDisabled: disabled
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: String(err?.message || 'Server error while updating cancel restriction.') });
+  }
+});
+
+// ── Admin: Restrict/allow a specific user from posting new P2P sell ads ──
+app.post('/api/admin/users/:userId/sell-restriction', requiresAdminSession, async (req, res) => {
+  const targetUserId = String(req.params.userId || '').trim();
+  const disabled = req.body?.disabled === true;
+  if (!targetUserId) return res.status(400).json({ success: false, message: 'userId required.' });
+  try {
+    const cols = getCollections();
+    await cols.adminUserProfiles.updateOne(
+      { userId: targetUserId },
+      { $set: { sellRestricted: disabled, sellRestrictedReason: disabled ? 'admin_manual' : '', updatedAt: new Date() } },
+      { upsert: true }
+    );
+    return res.json({
+      success: true,
+      message: disabled ? 'User can no longer post P2P sell ads.' : 'User can post P2P sell ads again.',
+      sellRestricted: disabled
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: String(err?.message || 'Server error while updating sell restriction.') });
+  }
+});
+
+// ── Admin: Restrict/allow a specific user from posting new P2P buy ads or
+// taking someone else's sell ad (i.e. buying) ──
+app.post('/api/admin/users/:userId/buy-restriction', requiresAdminSession, async (req, res) => {
+  const targetUserId = String(req.params.userId || '').trim();
+  const disabled = req.body?.disabled === true;
+  if (!targetUserId) return res.status(400).json({ success: false, message: 'userId required.' });
+  try {
+    const cols = getCollections();
+    await cols.adminUserProfiles.updateOne(
+      { userId: targetUserId },
+      { $set: { buyRestricted: disabled, updatedAt: new Date() } },
+      { upsert: true }
+    );
+    return res.json({
+      success: true,
+      message: disabled ? 'User can no longer buy on P2P.' : 'User can buy on P2P again.',
+      buyRestricted: disabled
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: String(err?.message || 'Server error while updating buy restriction.') });
   }
 });
 
@@ -7461,6 +7552,25 @@ async function boot() {
           });
           if (activeCount >= 1) {
             return res.status(400).json({ success: false, message: 'You already have an active order. Complete or cancel it first.' });
+          }
+
+          // Per-user admin toggle, on the *action* side (not just ad posting):
+          // taking a SELL ad makes you the buyer, taking a BUY ad makes you
+          // the seller in this trade — check the restriction that matches
+          // what the current user would actually be doing.
+          const adId = String(req.body.adId || req.body.offerId || '').trim();
+          if (adId) {
+            const offer = await cols.p2pOffers.findOne({ id: adId });
+            const offerType = String(offer?.type || '').trim().toUpperCase();
+            if (offerType === 'SELL' || offerType === 'BUY') {
+              const profile = await cols.adminUserProfiles.findOne({ userId });
+              if (offerType === 'SELL' && profile?.buyRestricted === true) {
+                return res.status(403).json({ success: false, message: 'You cannot buy on P2P right now. Contact support if you believe this is a mistake.', code: 'BUY_RESTRICTED' });
+              }
+              if (offerType === 'BUY' && profile?.sellRestricted === true) {
+                return res.status(403).json({ success: false, message: 'You cannot sell on P2P right now. Contact support if you believe this is a mistake.', code: 'SELL_RESTRICTED' });
+              }
+            }
           }
         }
       } catch (_) {}

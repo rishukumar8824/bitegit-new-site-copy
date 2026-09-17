@@ -725,11 +725,14 @@ function renderUsersTable(users, merchantMap) {
       <td class="admin-td">${statusBadge(user.kycStatus)}</td>
       <td class="admin-td" id="mbadge-${user.userId}">${merchantCell}</td>
       <td class="admin-td" style="text-align:right;color:var(--green);font-weight:600;">${formatNumber(user.balance, 4)}</td>
-      <td class="admin-td">
+      <td class="admin-td" style="min-width:160px;max-width:220px;">
         <div style="display:flex;flex-wrap:wrap;gap:4px;">
           <button class="btn-primary btn-sm" data-user-action="profile" data-user-id="${user.userId}">👤 Profile</button>
           <button class="btn-secondary btn-sm" data-user-action="freeze" data-user-id="${user.userId}">Freeze</button>
           <button class="btn-danger btn-sm" data-user-action="ban" data-user-id="${user.userId}">Ban</button>
+          <button class="${user.cancelDisabled ? 'btn-secondary' : 'btn-danger'} btn-sm" data-user-action="toggle-cancel" data-user-id="${user.userId}" data-cancel-disabled="${user.cancelDisabled ? '1' : '0'}" title="${user.cancelDisabled ? 'This user cannot cancel a paid order — click to re-allow' : 'Block this user from cancelling an order after payment has been marked sent'}">${user.cancelDisabled ? 'Allow' : 'No-Cancel'}</button>
+          <button class="${user.sellRestricted ? 'btn-secondary' : 'btn-danger'} btn-sm" data-user-action="toggle-sell" data-user-id="${user.userId}" data-sell-restricted="${user.sellRestricted ? '1' : '0'}" title="${user.sellRestricted ? 'This user cannot post P2P sell ads — click to re-allow' : 'Block this user from posting new P2P sell ads'}">${user.sellRestricted ? 'Allow Sell' : 'No-Sell'}</button>
+          <button class="${user.buyRestricted ? 'btn-secondary' : 'btn-danger'} btn-sm" data-user-action="toggle-buy" data-user-id="${user.userId}" data-buy-restricted="${user.buyRestricted ? '1' : '0'}" title="${user.buyRestricted ? 'This user cannot buy on P2P — click to re-allow' : 'Block this user from posting new P2P buy ads or buying from a sell ad'}">${user.buyRestricted ? 'Allow Buy' : 'No-Buy'}</button>
         </div>
       </td>
     </tr>`;
@@ -2489,6 +2492,45 @@ async function handleUsersAction(event) {
 
     if (action === 'view-docs') {
       await viewKycDocuments(userId);
+    }
+
+    if (action === 'toggle-cancel') {
+      const currentlyDisabled = button.getAttribute('data-cancel-disabled') === '1';
+      const next = !currentlyDisabled;
+      if (!confirm(next ? 'Block this user from cancelling an order once payment is marked sent?' : 'Allow this user to cancel orders normally again?')) return;
+      await apiRequest(`/users/${encodeURIComponent(userId)}/cancel-restriction`, {
+        method: 'POST',
+        body: JSON.stringify({ disabled: next })
+      });
+      showMessage(next ? 'User can no longer cancel paid orders.' : 'User can cancel orders again.', 'success');
+      await loadUsers();
+      return;
+    }
+
+    if (action === 'toggle-sell') {
+      const currentlyRestricted = button.getAttribute('data-sell-restricted') === '1';
+      const next = !currentlyRestricted;
+      if (!confirm(next ? 'Block this user from posting new P2P sell ads?' : 'Allow this user to post P2P sell ads again?')) return;
+      await apiRequest(`/users/${encodeURIComponent(userId)}/sell-restriction`, {
+        method: 'POST',
+        body: JSON.stringify({ disabled: next })
+      });
+      showMessage(next ? 'User can no longer post sell ads.' : 'User can post sell ads again.', 'success');
+      await loadUsers();
+      return;
+    }
+
+    if (action === 'toggle-buy') {
+      const currentlyRestricted = button.getAttribute('data-buy-restricted') === '1';
+      const next = !currentlyRestricted;
+      if (!confirm(next ? 'Block this user from buying on P2P?' : 'Allow this user to buy on P2P again?')) return;
+      await apiRequest(`/users/${encodeURIComponent(userId)}/buy-restriction`, {
+        method: 'POST',
+        body: JSON.stringify({ disabled: next })
+      });
+      showMessage(next ? 'User can no longer buy on P2P.' : 'User can buy on P2P again.', 'success');
+      await loadUsers();
+      return;
     }
   } catch (error) {
     showMessage(error.message || 'User action failed.', 'error');

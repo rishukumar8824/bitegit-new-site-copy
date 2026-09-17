@@ -878,6 +878,9 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
         // whether they'd actually submitted documents, so the real PENDING_REVIEW state
         // never surfaced in this list.
         kycStatus: String(item.kycStatus || profile?.kycStatus || 'NOT_SUBMITTED').toUpperCase(),
+        cancelDisabled: profile?.cancelDisabled === true,
+        sellRestricted: profile?.sellRestricted === true,
+        buyRestricted: profile?.buyRestricted === true,
         balance: getAvailableBalance(wallet),
         lockedBalance: toNumber(wallet?.lockedBalance, 0),
         updatedAt: toDate(item.updatedAt || item.createdAt || Date.now()).toISOString(),
