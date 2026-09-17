@@ -6668,44 +6668,15 @@ app.post('/api/admin/p2p/orders/:orderId/resolve-dispute', requiresAdminSession,
   }
 });
 
-// ── Support Tickets ───────────────────────────────────────────────
-app.get('/api/admin/support/tickets', requiresAdminSession, async (req, res) => {
-  try {
-    if (!adminStore || typeof adminStore.listSupportTickets !== 'function') return res.json({ tickets: [], total: 0 });
-    const { limit = 20, page = 1, status } = req.query;
-    const result = await adminStore.listSupportTickets({ limit: Number(limit), page: Number(page), status });
-    return res.json(result || { tickets: [], total: 0 });
-  } catch (e) { return res.status(500).json({ message: 'Failed to list tickets', error: e.message }); }
-});
-
-app.get('/api/admin/support/tickets/:ticketId', requiresAdminSession, async (req, res) => {
-  try {
-    if (!adminStore || typeof adminStore.getSupportTicket !== 'function') return res.status(404).json({ message: 'Not found' });
-    const ticket = await adminStore.getSupportTicket(req.params.ticketId);
-    if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
-    return res.json({ ticket });
-  } catch (e) { return res.status(500).json({ message: 'Failed to get ticket', error: e.message }); }
-});
-
-app.post('/api/admin/support/tickets/:ticketId/reply', requiresAdminSession, async (req, res) => {
-  try {
-    if (!adminStore || typeof adminStore.replySupportTicket !== 'function') return res.json({ ok: true });
-    const { message } = req.body;
-    if (!message) return res.status(400).json({ message: 'message required' });
-    const actor = { id: req.adminUser?.id, username: req.adminUser?.username || 'admin' };
-    await adminStore.replySupportTicket(req.params.ticketId, message, actor);
-    return res.json({ ok: true });
-  } catch (e) { return res.status(500).json({ message: 'Failed to reply', error: e.message }); }
-});
-
-app.patch('/api/admin/support/tickets/:ticketId/status', requiresAdminSession, async (req, res) => {
-  try {
-    if (!adminStore || typeof adminStore.updateSupportTicketStatus !== 'function') return res.json({ ok: true });
-    const { status } = req.body;
-    await adminStore.updateSupportTicketStatus(req.params.ticketId, status);
-    return res.json({ ok: true });
-  } catch (e) { return res.status(500).json({ message: 'Failed to update ticket status', error: e.message }); }
-});
+// Support Tickets admin endpoints (list/get/reply/status/assign) are
+// registered by registerAdminRoutes() -> admin/routes/admin-routes.js, which
+// mounts admin/controllers/admin-controller.js's versions at /api/admin. A
+// duplicate, buggier set used to be registered directly on `app` here (this
+// comment marks where) — being registered earlier, Express matched those
+// first and shadowed the real ones, so e.g. GET .../tickets/:ticketId
+// returned `{ ticket }` (wrapped) while the admin dashboard's JS reads the
+// ticket fields off the response directly, showing "Unknown User" / no
+// messages regardless of what was actually in the ticket.
 
 // ── Revenue ───────────────────────────────────────────────────────
 app.get('/api/admin/revenue/summary', requiresAdminSession, async (req, res) => {
