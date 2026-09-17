@@ -118,14 +118,15 @@ function createP2POrderController({ repos, walletService, orderTtlMs = 15 * 60 *
         return res.status(400).json({ success: false, message: 'adId is required.' });
       }
 
-      // Block if user already has an active or disputed order
+      // Up to 2 active/disputed orders at once — a dispute stuck on one order
+      // shouldn't stop the user placing another.
       const myActive = await repos.listMyActiveOrders(req.p2pUser.id);
-      const hasActiveOrder = myActive.some(o => ['CREATED', 'PENDING', 'PAYMENT_SENT', 'PAID', 'DISPUTED'].includes(o.status));
-      if (hasActiveOrder) {
-        const disputed = myActive.some(o => o.status === 'DISPUTED');
+      const activeOrders = myActive.filter(o => ['CREATED', 'PENDING', 'PAYMENT_SENT', 'PAID', 'DISPUTED'].includes(o.status));
+      if (activeOrders.length >= 2) {
+        const disputed = activeOrders.some(o => o.status === 'DISPUTED');
         const msg = disputed
-          ? 'You have an ongoing dispute. Resolve it before placing a new order.'
-          : 'You already have an active order. Complete or cancel it first.';
+          ? 'You already have 2 active orders, including one in dispute. Resolve or complete one before placing another.'
+          : 'You already have 2 active orders. Complete or cancel one first.';
         return res.status(409).json({ success: false, message: msg, code: 'ACTIVE_ORDER_EXISTS' });
       }
 

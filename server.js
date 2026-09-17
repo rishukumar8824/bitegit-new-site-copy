@@ -7536,9 +7536,10 @@ async function boot() {
       p2pEmailService,
       broadcastUserEvent
     });
-    // One active order per user check
+    // Up to 2 active orders per user — e.g. one order stuck in a dispute
+    // shouldn't stop them placing another.
     app.post('/api/p2p/orders', requiresP2PUser, async (req, res, next) => {
-      // Prevent a buyer from placing a new order while they already have one in progress.
+      // Prevent a buyer from placing a new order once they have 2 already in progress.
       // Uses correct field names (buyerUserId) and excludes expired orders.
       try {
         const userId = String(req.p2pUser?.id || '').trim();
@@ -7550,8 +7551,8 @@ async function boot() {
             status: { $in: ['CREATED', 'PAYMENT_SENT', 'PAID'] },
             expiresAt: { $gt: now }
           });
-          if (activeCount >= 1) {
-            return res.status(400).json({ success: false, message: 'You already have an active order. Complete or cancel it first.' });
+          if (activeCount >= 2) {
+            return res.status(400).json({ success: false, message: 'You already have 2 active orders. Complete or cancel one first.' });
           }
 
           // Per-user admin toggle, on the *action* side (not just ad posting):
