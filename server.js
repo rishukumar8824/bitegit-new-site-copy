@@ -1385,6 +1385,20 @@ const supportTicketLookupLimiter = createIpAttemptLimiter({
   windowMs: 5 * 60 * 1000
 });
 
+// SECURITY: validate support-ticket/chat `image` fields as a *whole-string* match, not a
+// startsWith('data:image/') prefix check — a prefix check lets anything after the prefix
+// (including quotes/attribute-breakout text) through untouched, which becomes stored XSS
+// once the value is interpolated into an `src="..."` attribute in the admin dashboard or
+// the p2p.html support widget. This regex requires the entire string to be a well-formed
+// base64 data URL.
+const SUPPORT_IMAGE_DATA_URL_RE = /^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/]+=*$/;
+function isValidSupportImage(value) {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 6 * 1024 * 1024) return false; // ~6MB base64 ceiling
+  return SUPPORT_IMAGE_DATA_URL_RE.test(trimmed);
+}
+
 async function createSession() {
   const token = createToken();
   await repos.createAdminSession(token, Date.now() + SESSION_TTL_MS);
@@ -6098,7 +6112,14 @@ app.get('/api/admin/wallet/deposits', requiresAdminSession, async (req, res) => 
 app.post('/api/support/chat', async (req, res) => {
   try {
     const { message, topic, email, name } = req.body || {};
-    if (!message || !String(message).trim()) {
+    // SECURITY: strict whole-string validation (see isValidSupportImage) — not just a
+    // startsWith('data:image/') prefix check — to close a stored-XSS attribute-breakout.
+    if (req.body?.image !== undefined && req.body?.image !== null && req.body.image !== '' && !isValidSupportImage(req.body.image)) {
+      return res.status(400).json({ message: 'Invalid image data.' });
+    }
+    const hasImage = isValidSupportImage(req.body?.image);
+    const image = req.body?.image;
+    if ((!message || !String(message).trim()) && !hasImage) {
       return res.status(400).json({ message: 'Message is required.' });
     }
     const ticketData = {
@@ -6107,7 +6128,7 @@ app.post('/api/support/chat', async (req, res) => {
       // guessable timestamp.
       id: `tkt_${crypto.randomBytes(16).toString('hex')}`,
       userId: email || 'guest',
-      subject: topic ? `[${topic}] ${String(message).slice(0, 60)}` : String(message).slice(0, 80),
+      subject: topic ? `[${topic}] ${String(message || '📷 Photo').slice(0, 60)}` : String(message || '📷 Photo').slice(0, 80),
       status: 'OPEN',
       priority: 'MEDIUM',
       assignedTo: '',
@@ -6117,7 +6138,8 @@ app.post('/api/support/chat', async (req, res) => {
         id: `tmsg_${Date.now()}`,
         sender: 'user',
         senderName: name || 'User',
-        text: String(message).trim(),
+        text: message ? String(message).trim() : '',
+        image: hasImage ? image : undefined,
         createdAt: new Date()
       }],
       createdAt: new Date(),
@@ -6135,7 +6157,7 @@ app.post('/api/support/chat', async (req, res) => {
       subject: ticketData.subject,
       agentName: name || 'User',
       email: email || 'guest',
-      message: String(message).trim().slice(0, 100)
+      message: String(message || '').trim().slice(0, 100)
     });
     return res.json({ success: true, ticketId: savedId, message: 'Support request submitted.' });
   } catch (err) {
@@ -6207,6 +6229,7 @@ app.get('/api/support/ticket/:ticketId/messages', async (req, res) => {
           sender: isUser ? 'user' : 'admin',
           senderName: m.senderName || (isUser ? 'You' : 'Support Agent'),
           text: m.text,
+          image: m.image,
           createdAt: m.createdAt
         };
       })
@@ -6226,8 +6249,14 @@ app.post('/api/support/ticket/:ticketId/user-reply', async (req, res) => {
   }
   try {
     const { ticketId } = req.params;
-    const { message, name } = req.body || {};
-    if (!ticketId || !message || !String(message).trim()) {
+    const { message, name, image } = req.body || {};
+    // SECURITY: strict whole-string validation (see isValidSupportImage) — not just a
+    // startsWith('data:image/') prefix check — to close a stored-XSS attribute-breakout.
+    if (image !== undefined && image !== null && image !== '' && !isValidSupportImage(image)) {
+      return res.status(400).json({ message: 'Invalid image data.' });
+    }
+    const hasImage = isValidSupportImage(image);
+    if (!ticketId || ((!message || !String(message).trim()) && !hasImage)) {
       return res.status(400).json({ message: 'ticketId and message required' });
     }
     if (!adminStore || typeof adminStore.getSupportTicket !== 'function') {
@@ -6238,7 +6267,8 @@ app.post('/api/support/ticket/:ticketId/user-reply', async (req, res) => {
       id: `tmsg_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
       sender: 'user',
       senderName: name || ticket.name || 'User',
-      text: String(message).trim(),
+      text: message ? String(message).trim() : '',
+      image: hasImage ? image : undefined,
       createdAt: new Date()
     };
     // Push message to ticket's messages array in DB

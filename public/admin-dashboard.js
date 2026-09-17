@@ -1694,6 +1694,8 @@ async function renderTicketChat(ticketId, silent = false) {
               ? (msg.senderRole ? `${msg.sender || 'Admin'} (${msg.senderRole})` : (msg.sender || 'Admin'))
               : '👤 User';
             const text = String(msg.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const rawImg = String(msg.image || '');
+            const hasImg = rawImg.startsWith('data:image/');
             return `<div style="display:flex;flex-direction:column;max-width:80%;
                     ${isAdmin ? 'align-self:flex-end;align-items:flex-end;' : 'align-self:flex-start;align-items:flex-start;'}">
               <div style="background:${isAdmin ? 'rgba(0,229,255,0.10)' : 'var(--bg-card2)'};
@@ -1701,7 +1703,8 @@ async function renderTicketChat(ticketId, silent = false) {
                            border-radius:${isAdmin ? '14px 14px 2px 14px' : '14px 14px 14px 2px'};
                            padding:9px 14px;">
                 <p style="font-size:11px;font-weight:700;margin:0 0 4px;color:${isAdmin ? 'var(--accent)' : 'var(--green)'};">${senderName}</p>
-                <p style="font-size:13px;color:var(--text-1);margin:0;white-space:pre-wrap;line-height:1.55;">${text}</p>
+                ${hasImg ? '<img src="' + escapeHtml(rawImg) + '" alt="Photo" style="max-width:220px;max-height:280px;border-radius:8px;display:block;cursor:zoom-in;' + (text ? 'margin-bottom:6px;' : '') + '" onerror="this.style.display=\'none\'" onclick="window.open(this.src,\'_blank\')"/>' : ''}
+                ${text ? `<p style="font-size:13px;color:var(--text-1);margin:0;white-space:pre-wrap;line-height:1.55;">${text}</p>` : ''}
               </div>
               <span style="font-size:10px;color:var(--text-2);margin-top:4px;opacity:.55;">${formatDate(msg.createdAt)}</span>
             </div>`;
