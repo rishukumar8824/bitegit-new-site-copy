@@ -778,6 +778,18 @@ function createAdminControllers({
     return res.json({ message: 'Ticket status updated.', ticket });
   }
 
+  async function closeAllSupportTickets(req, res) {
+    const result = await adminStore.closeAllSupportTickets();
+    await logAudit(req, {
+      module: 'support',
+      action: 'close_all_tickets',
+      entityType: 'support_ticket',
+      entityId: 'ALL',
+      meta: { closed: result.closed }
+    });
+    return res.json({ message: `Closed ${result.closed} tickets.`, closed: result.closed });
+  }
+
   async function assignSupportTicket(req, res) {
     const assignedTo = String(req.body?.assignedTo || '').trim();
     if (!assignedTo) {
@@ -914,6 +926,7 @@ function createAdminControllers({
     getSupportTicket,
     replySupportTicket,
     updateSupportTicketStatus,
+    closeAllSupportTickets,
     assignSupportTicket,
     monitoringOverview,
     monitoringApiLogs,

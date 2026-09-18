@@ -427,6 +427,7 @@ function registerAdminRoutes(app, deps) {
   // Support System
   // -------------------------
   router.get('/support/tickets', protect(ROLE_GROUPS.SUPPORT), withLogging({ module: 'support', action: 'list_tickets' }, adminControllers.listSupportTickets));
+  router.post('/support/tickets/close-all', protect(ROLE_GROUPS.SUPPORT), withLogging({ module: 'support', action: 'close_all_tickets' }, adminControllers.closeAllSupportTickets));
   router.get('/support/tickets/:ticketId', protect(ROLE_GROUPS.SUPPORT), withLogging({ module: 'support', action: 'get_ticket', audit: false }, adminControllers.getSupportTicket));
   router.post('/support/tickets/:ticketId/reply', protect(ROLE_GROUPS.SUPPORT), withLogging({ module: 'support', action: 'reply_ticket' }, adminControllers.replySupportTicket));
   router.patch('/support/tickets/:ticketId/status', protect(ROLE_GROUPS.SUPPORT), withLogging({ module: 'support', action: 'update_ticket_status' }, adminControllers.updateSupportTicketStatus));

@@ -2328,6 +2328,15 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return { page, limit, total, tickets: rows };
   }
 
+  // Bulk-close every non-closed ticket in one DB op (used by the "✓ All" button).
+  async function closeAllSupportTickets() {
+    const result = await adminSupportTickets.updateMany(
+      { status: { $ne: 'CLOSED' } },
+      { $set: { status: 'CLOSED', updatedAt: new Date() } }
+    );
+    return { closed: result.modifiedCount || 0 };
+  }
+
   async function createSupportTicket(data) {
     await adminSupportTickets.insertOne(data);
     return data;
@@ -2549,6 +2558,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     getSupportTicket,
     markTicketReadByUser,
     ensureDemoSupportTicket,
+    closeAllSupportTickets,
     createSupportTicket,
     replySupportTicket,
     updateSupportTicketStatus,

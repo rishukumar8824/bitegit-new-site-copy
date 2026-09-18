@@ -1657,6 +1657,25 @@ async function loadP2P() {
 // Support Tickets — Full Chat Interface
 // ─────────────────────────────────────────────────────────────────────────────
 
+async function markAllTicketsRead() {
+  const btn = document.getElementById('supportMarkAllReadBtn');
+  if (!confirm('Close ALL open tickets? This marks every ticket as resolved.')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const res = await apiRequest('/support/tickets/close-all', { method: 'POST', body: '{}' });
+    const closed = Number(res.closed || 0);
+    _lastKnownOpenTicketCount = 0;
+    const badge = document.getElementById('supportBadge');
+    if (badge) { badge.style.display = 'none'; badge.textContent = '0'; }
+    showMessage(`Closed ${closed} ticket${closed !== 1 ? 's' : ''}`, 'success');
+    await loadSupport();
+  } catch (e) {
+    showMessage('Failed to close tickets: ' + (e.message || ''), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✓ All'; }
+  }
+}
+
 async function loadSupport() {
   const statusFilter = document.getElementById('supportStatusFilter')?.value || '';
   const query = new URLSearchParams({ limit: '50' });
@@ -3791,6 +3810,7 @@ function wireEventListeners() {
 
   // Support chat
   document.getElementById('supportReloadBtn').addEventListener('click', async () => loadSupport());
+  document.getElementById('supportMarkAllReadBtn')?.addEventListener('click', async () => markAllTicketsRead());
   document.getElementById('supportStatusFilter').addEventListener('change', async () => loadSupport());
   document.getElementById('sendReplyBtn').addEventListener('click', async () => sendAdminReply());
   document.getElementById('chatCloseTicketBtn').addEventListener('click', async () => {
