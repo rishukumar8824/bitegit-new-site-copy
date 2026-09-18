@@ -2052,9 +2052,7 @@
   function startWithdrawOtp() {
     if(!_pendingWithdraw) return;
     document.getElementById('modalWdConfirm').classList.add('hidden');
-    document.getElementById('wdOtpInput').value = '';
-    document.getElementById('modalWdOtp').classList.remove('hidden');
-    requestWithdrawOtp(false);
+    doWithdraw();
   }
 
   function resendWithdrawOtp() {
@@ -2067,8 +2065,6 @@
 
   function doWithdraw() {
     if(!_pendingWithdraw) return;
-    var emailCode = document.getElementById('wdOtpInput').value.trim();
-    if(!/^\d{6}$/.test(emailCode)) { showToast('Enter the 6-digit code sent to your email'); return; }
     var p = _pendingWithdraw;
     var addr = p.addr;
     document.getElementById('modalWdOtp').classList.add('hidden');
@@ -2106,7 +2102,6 @@
       // Always send common fallback field names
       confirmBody['wallet_address'] = addr;
       confirmBody['address'] = addr;
-      confirmBody['emailCode'] = emailCode;
       console.log('[WD Step2 body]', JSON.stringify(confirmBody));
       // Step 2: confirm — deducts balance + notifies admin
       return bcvFetch('/withdraw-request/confirm', {
@@ -2126,10 +2121,6 @@
           var errs = d2.message && d2.message.error;
           var msg2 = Array.isArray(errs) ? errs.join(', ') : (errs || d2.message || 'Confirmation failed');
           showToast(String(msg2));
-          // Keep _pendingWithdraw + re-open the OTP modal so the user can retry
-          // (e.g. wrong/expired code) without redoing the whole withdraw form.
-          document.getElementById('wdOtpInput').value = '';
-          document.getElementById('modalWdOtp').classList.remove('hidden');
         }
       });
     })

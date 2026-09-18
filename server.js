@@ -3241,11 +3241,9 @@ app.post(
       });
     }
 
-    const otpEmail = String(req.p2pUser.email || '').trim().toLowerCase();
-    const otpCheck = await verifyWithdrawalOtp(otpEmail, req.body.emailCode);
-    if (!otpCheck.ok) {
-      return res.status(400).json({ message: otpCheck.message, code: 'EMAIL_CODE_INVALID' });
-    }
+    // Email-OTP step intentionally not required for withdrawals (removed on
+    // request). /api/withdrawals/send-otp + verifyWithdrawalOtp() remain in
+    // place, unused, so it can be switched back on by restoring the check here.
 
     try {
       // Block withdrawal if user has an active or disputed order
