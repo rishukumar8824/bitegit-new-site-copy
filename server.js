@@ -3220,8 +3220,7 @@ app.post(
     validation.required('amount'),
     validation.amount('amount'),
     validation.required('currency'),
-    validation.required('address'),
-    validation.required('emailCode')
+    validation.required('address')
   ]),
   async (req, res) => {
     const amount = Number(req.body.amount);
