@@ -969,6 +969,38 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     return getUserById(normalizedUserId);
   }
 
+  // Direct $set — upsertUserProfile would reset status to ACTIVE.
+  async function setUserAccessBlock(userId, kind, blocked) {
+    const normalizedUserId = String(userId || '').trim();
+    const existing = await adminUserProfiles.findOne({ userId: normalizedUserId });
+    const $set = { updatedAt: new Date() };
+    if (kind === 'device') {
+      $set.deviceBlocked = blocked;
+    } else {
+      $set.ipBlocked = blocked;
+      let blockedIp = '';
+      if (blocked) {
+        const email = String(existing?.email || '').trim().toLowerCase();
+        const credential = email ? await p2pCredentials.findOne({ email }) : null;
+        blockedIp = String(credential?.lastLoginIp || '').trim();
+        if (!blockedIp) {
+          throw new Error('No known login IP for this user.');
+        }
+      }
+      $set.blockedIp = blockedIp;
+    }
+    await adminUserProfiles.updateOne({ userId: normalizedUserId }, { $set }, { upsert: true });
+    if (blocked) {
+      await p2pUserSessions.deleteMany({ userId: normalizedUserId });
+    }
+    return getUserById(normalizedUserId);
+  }
+
+  const blockUserDevice = (userId) => setUserAccessBlock(userId, 'device', true);
+  const unblockUserDevice = (userId) => setUserAccessBlock(userId, 'device', false);
+  const blockUserIp = (userId) => setUserAccessBlock(userId, 'ip', true);
+  const unblockUserIp = (userId) => setUserAccessBlock(userId, 'ip', false);
+
   async function resetUserPassword(userId, newPassword) {
     const normalizedUserId = String(userId || '').trim();
     const profile = await adminUserProfiles.findOne({ userId: normalizedUserId });
@@ -2469,6 +2501,10 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
     getUserById,
     upsertUserProfile,
     updateUserStatus,
+    blockUserDevice,
+    unblockUserDevice,
+    blockUserIp,
+    unblockUserIp,
     resetUserPassword,
     adjustUserBalance,
     getUserKyc,

@@ -308,6 +308,50 @@ function createAdminControllers({
     return res.json({ message: 'User status updated.', user });
   }
 
+  async function blockUserDevice(req, res) {
+    let user;
+    try {
+      user = await adminStore.blockUserDevice(req.params.userId);
+    } catch (error) {
+      return res.status(400).json({ message: String(error?.message || 'Action failed.') });
+    }
+    await logAudit(req, { module: 'users', action: 'block_device', entityType: 'user', entityId: req.params.userId, meta: {} });
+    return res.json({ message: 'Device blocked. All sessions revoked.', user });
+  }
+
+  async function unblockUserDevice(req, res) {
+    let user;
+    try {
+      user = await adminStore.unblockUserDevice(req.params.userId);
+    } catch (error) {
+      return res.status(400).json({ message: String(error?.message || 'Action failed.') });
+    }
+    await logAudit(req, { module: 'users', action: 'unblock_device', entityType: 'user', entityId: req.params.userId, meta: {} });
+    return res.json({ message: 'Device unblocked.', user });
+  }
+
+  async function blockUserIp(req, res) {
+    let user;
+    try {
+      user = await adminStore.blockUserIp(req.params.userId);
+    } catch (error) {
+      return res.status(400).json({ message: String(error?.message || 'Action failed.') });
+    }
+    await logAudit(req, { module: 'users', action: 'block_ip', entityType: 'user', entityId: req.params.userId, meta: {} });
+    return res.json({ message: 'IP blocked. All sessions revoked.', user });
+  }
+
+  async function unblockUserIp(req, res) {
+    let user;
+    try {
+      user = await adminStore.unblockUserIp(req.params.userId);
+    } catch (error) {
+      return res.status(400).json({ message: String(error?.message || 'Action failed.') });
+    }
+    await logAudit(req, { module: 'users', action: 'unblock_ip', entityType: 'user', entityId: req.params.userId, meta: {} });
+    return res.json({ message: 'IP unblocked.', user });
+  }
+
   async function resetUserPassword(req, res) {
     const newPassword = String(req.body?.newPassword || '').trim();
     if (!isValidPassword(newPassword)) {
@@ -828,6 +872,10 @@ function createAdminControllers({
     listUsers,
     getUser,
     setUserStatus,
+    blockUserDevice,
+    unblockUserDevice,
+    blockUserIp,
+    unblockUserIp,
     resetUserPassword,
     adjustUserBalance,
     getUserKyc,

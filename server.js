@@ -1746,6 +1746,17 @@ async function requiresP2PUser(req, res, next) {
       return res.status(401).json({ message: 'Please login to continue.' });
     }
 
+    const accessProfile = await getCollections().adminUserProfiles.findOne(
+      { userId: user.id },
+      { projection: { deviceBlocked: 1, ipBlocked: 1, blockedIp: 1 } }
+    ).catch(() => null);
+    if (accessProfile && (
+      accessProfile.deviceBlocked === true ||
+      (accessProfile.ipBlocked === true && accessProfile.blockedIp && accessProfile.blockedIp === getRequestIp(req))
+    )) {
+      return res.status(403).json({ message: 'Access blocked. Contact support.', code: 'ACCESS_BLOCKED' });
+    }
+
     req.authUser = {
       id: user.id,
       username: user.username,

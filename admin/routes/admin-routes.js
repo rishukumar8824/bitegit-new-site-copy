@@ -251,6 +251,10 @@ function registerAdminRoutes(app, deps) {
   });
 
   router.patch('/users/:userId/status', protect(ROLE_GROUPS.OPS), withLogging({ module: 'users', action: 'set_user_status' }, adminControllers.setUserStatus));
+  router.post('/users/:userId/block-device', protect(ROLE_GROUPS.OPS), withLogging({ module: 'users', action: 'block_device' }, adminControllers.blockUserDevice));
+  router.post('/users/:userId/unblock-device', protect(ROLE_GROUPS.OPS), withLogging({ module: 'users', action: 'unblock_device' }, adminControllers.unblockUserDevice));
+  router.post('/users/:userId/block-ip', protect(ROLE_GROUPS.OPS), withLogging({ module: 'users', action: 'block_ip' }, adminControllers.blockUserIp));
+  router.post('/users/:userId/unblock-ip', protect(ROLE_GROUPS.OPS), withLogging({ module: 'users', action: 'unblock_ip' }, adminControllers.unblockUserIp));
   router.post('/users/:userId/login-as', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'users', action: 'login_as_user', entityType: 'user' }, adminControllers.loginAsUser));
   router.post('/users/:userId/reset-password', protect(ROLE_GROUPS.SUPER), withLogging({ module: 'users', action: 'reset_user_password' }, adminControllers.resetUserPassword));
   router.post('/users/:userId/adjust-balance', protect(ROLE_GROUPS.FINANCE), withLogging({ module: 'users', action: 'adjust_user_balance' }, adminControllers.adjustUserBalance));
