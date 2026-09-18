@@ -11,7 +11,7 @@ const { createAlertService } = require('./lib/alert-service');
 const crashAlertService = createAlertService({
   sendEmail: sendViaProvider,
   adminEmail: process.env.ADMIN_EMAIL,
-  minIntervalMs: 5 * 60 * 1000
+  minIntervalMs: 6 * 60 * 60 * 1000
 });
 
 // Prevent an unhandled promise rejection or async throw anywhere in the app
