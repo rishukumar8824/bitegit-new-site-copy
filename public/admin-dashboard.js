@@ -1334,6 +1334,7 @@ function renderP2PTradesTable(orders, tab) {
     let actions = `<button onclick="openP2PChat('${escapeHtml(o.id)}')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text-2);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">💬 Chat</button>`;
     if (status === 'DISPUTED') {
       actions += ` <button onclick="openP2PChat('${escapeHtml(o.id)}')" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.1);color:#f59e0b;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">Dispute ⚠️</button>`;
+      actions += ` <button onclick="adminCancelEscrow('${escapeHtml(o.id)}',this)" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(246,70,93,0.4);background:rgba(246,70,93,0.1);color:#f6465d;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">Return escrow to seller</button>`;
     } else if (status === 'PAYMENT_SENT' || status === 'PAID') {
       actions += ` <button onclick="adminReleaseEscrow('${escapeHtml(o.id)}',this)" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(2,192,118,0.4);background:rgba(2,192,118,0.12);color:#02c076;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">Release</button>`;
     } else if (status === 'ACTIVE') {
@@ -1364,6 +1365,8 @@ function switchP2PTab(tab) {
   // Show/hide sub-filters
   const subFilters = document.getElementById('p2pSubFilters');
   if (subFilters) subFilters.style.display = tab === 'trades' ? 'flex' : 'none';
+  const disputedBar = document.getElementById('p2pDisputedBar');
+  if (disputedBar) disputedBar.style.display = tab === 'disputed' ? '' : 'none';
   loadP2PTab(tab);
 }
 
@@ -1498,6 +1501,58 @@ async function sendP2PChatMessage() {
   } catch (err) {
     showMessage(err.message || 'Failed to send message.', 'error');
   }
+}
+
+async function adminCancelEscrow(orderId, btn) {
+  if (!confirm('Return the escrowed crypto to the SELLER and cancel this order? The buyer gets nothing.')) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Returning…'; }
+  try {
+    await apiRequest(`/p2p/orders/${encodeURIComponent(orderId)}/admin-cancel`, { method: 'POST', body: JSON.stringify({}) });
+    showMessage('Escrow returned to seller. Order cancelled.', 'success');
+    loadP2P().catch(() => {});
+  } catch (err) {
+    showMessage('Return failed: ' + (err.message || 'Unknown error'), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Return escrow to seller'; }
+  }
+}
+
+// One confirm for the whole batch; meant for clearing disputes already reviewed
+// (e.g. off-platform test orders where no real money changed hands).
+async function adminCancelAllDisputes() {
+  const btn = document.getElementById('p2pCancelAllDisputedBtn');
+  let orders = [];
+  try {
+    const data = await apiRequest('/p2p/disputes?limit=200');
+    orders = Array.isArray(data.disputes) ? data.disputes : Array.isArray(data.trades) ? data.trades : [];
+  } catch (err) {
+    showMessage(err.message || 'Failed to load disputes.', 'error');
+    return;
+  }
+  orders = orders.filter(o => String(o.status || '').toUpperCase() === 'DISPUTED' && o.id);
+  if (!orders.length) { showMessage('No disputed orders to cancel.', 'error'); return; }
+  if (!confirm(`Cancel all ${orders.length} disputed orders and return escrow to each seller?\n\nThis cannot be undone. Only do this if you've already reviewed these disputes and confirmed no real payment changed hands.`)) return;
+
+  const idleLabel = btn ? btn.textContent : '';
+  if (btn) btn.disabled = true;
+  let succeeded = 0;
+  const failed = [];
+  for (let i = 0; i < orders.length; i++) {
+    if (btn) btn.textContent = `Cancelling ${i + 1}/${orders.length}…`;
+    try {
+      await apiRequest(`/p2p/orders/${encodeURIComponent(orders[i].id)}/admin-cancel`, { method: 'POST', body: JSON.stringify({}) });
+      succeeded++;
+    } catch (err) {
+      failed.push({ orderId: orders[i].id, message: err.message || 'Unknown error' });
+    }
+  }
+  if (btn) { btn.disabled = false; btn.textContent = idleLabel; }
+  if (!failed.length) {
+    showMessage(`Cancelled all ${succeeded} disputed orders.`, 'success');
+  } else {
+    console.error('[adminCancelAllDisputes] failures', failed);
+    showMessage(`Cancelled ${succeeded}/${orders.length}. ${failed.length} failed — see console.`, 'error');
+  }
+  loadP2P().catch(() => {});
 }
 
 async function adminP2PCancelOrder(orderId, btn) {

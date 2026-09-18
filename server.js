@@ -4717,6 +4717,27 @@ app.post('/api/admin/p2p/orders/:orderId/admin-release', requiresAdminSession, a
   }
 });
 
+// ── Admin: cancel an order (typically a disputed one) and return escrow to the seller's ad ──
+app.post('/api/admin/p2p/orders/:orderId/admin-cancel', requiresAdminSession, async (req, res) => {
+  try {
+    const orderId = String(req.params.orderId || '').trim();
+    const adminLabel = req.adminAuth?.adminEmail || process.env.ADMIN_EMAIL || 'admin';
+    const order = await walletService.cancelOrder(orderId, { isSystem: true, username: adminLabel }, 'CANCELLED');
+    const { p2pOrders } = getCollections();
+    const now = Date.now();
+    await p2pOrders.updateOne({ id: orderId }, {
+      $set: { disputeStatus: 'RESOLVED', disputeWinner: 'seller', resolvedAt: now, resolvedByAdmin: adminLabel },
+      $push: { messages: { id: 'msg_' + now + '_admincancel', sender: 'system', senderRole: 'system',
+        text: 'Order cancelled by support — escrow returned to the seller.', createdAt: now } }
+    });
+    try { broadcastOrderEvent(orderId, 'order_update', { order: normalizeOrderState(order) }); } catch (_) {}
+    return res.json({ message: 'Escrow returned to seller.', order });
+  } catch (err) {
+    console.error('[admin-cancel]', err && err.message);
+    return res.status(err?.status || 500).json({ message: err?.message || 'Server error.' });
+  }
+});
+
 // ── Admin: P2P Dispute — Admin Reply ──────────────────────────────────────────
 app.post('/api/admin/p2p/orders/:orderId/admin-reply', requiresAdminSession, async (req, res) => {
   try {

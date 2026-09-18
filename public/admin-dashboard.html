@@ -566,6 +566,9 @@
         </div>
 
         <!-- Sub-filters (shown for trades tab) -->
+        <div id="p2pDisputedBar" class="panel-card" style="display:none;border-radius:0;border-top:none;border-bottom:none;padding:8px 16px;">
+          <button id="p2pCancelAllDisputedBtn" onclick="adminCancelAllDisputes()" class="btn-danger btn-sm">Cancel All Disputed (return escrow to seller)</button>
+        </div>
         <div id="p2pSubFilters" class="panel-card" style="border-radius:0;border-top:none;border-bottom:none;padding:8px 16px;display:flex;gap:8px;align-items:center;">
           <span id="p2pSubFilter-disputed" style="display:none;padding:3px 10px;border-radius:20px;background:rgba(246,70,93,0.15);color:#f6465d;border:1px solid rgba(246,70,93,0.3);font-size:11px;font-weight:700;cursor:pointer;">DISPUTED: 0</span>
           <span id="p2pSubFilter-payment" style="display:none;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);font-size:11px;font-weight:700;cursor:pointer;">PAYMENT SENT: 0</span>
@@ -1416,7 +1419,7 @@
   </div>
 </aside>
 
-<script src="/admin-dashboard.js?v=20260918b"></script>
+<script src="/admin-dashboard.js?v=20260918c"></script>
 <script>
 // ── Merchant Applications ──
 var MERCHANT_BADGE_INFO = {
