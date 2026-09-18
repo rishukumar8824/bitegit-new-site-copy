@@ -688,12 +688,42 @@ async function reviewKyc(userId, decision, reason) {
 const BADGE_COLORS = { 1: '#1a6ff4', 2: '#f7931a', 3: '#f5a623' };
 const BADGE_ICONS  = { 1: '◆ Blue V', 2: '♛ Crown', 3: '❖ Shield' };
 
-async function loadUsers(options = {}) {
-  const search = options?.search ?? document.getElementById('userSearchInput').value.trim();
-  const query = search ? `?email=${encodeURIComponent(search)}` : '';
-  const payload = await apiRequest(`/users${query}`);
+const USERS_PAGE_SIZE = 50;
+let _usersPage = 1;
 
-  state.users = Array.isArray(payload.users) ? payload.users : [];
+function adminShowLoadMoreBtn(loaded, total) {
+  const wrap = document.getElementById('usersLoadMoreWrap');
+  if (!wrap) return;
+  if (loaded < total) {
+    wrap.innerHTML = `<button class="btn-secondary" style="min-width:180px;" onclick="adminLoadMoreUsers()">Load More (${loaded} of ${total})</button>`;
+  } else if (total > 0) {
+    wrap.innerHTML = `<p style="font-size:12px;color:var(--text-2);margin:0;">All ${total} users shown</p>`;
+  } else {
+    wrap.innerHTML = '';
+  }
+}
+
+async function adminLoadMoreUsers() {
+  _usersPage++;
+  try {
+    await loadUsers({ loadMore: true });
+  } catch (error) {
+    _usersPage--;
+    showMessage(error.message || 'Failed to load more users.', 'error');
+  }
+}
+
+async function loadUsers(options = {}) {
+  const isLoadMore = options?.loadMore === true;
+  if (!isLoadMore) _usersPage = 1;
+  const search = options?.search ?? document.getElementById('userSearchInput').value.trim();
+  const params = new URLSearchParams({ page: _usersPage, limit: USERS_PAGE_SIZE });
+  if (search) params.set('email', search);
+  const payload = await apiRequest(`/users?${params.toString()}`);
+
+  const fetched = Array.isArray(payload.users) ? payload.users : [];
+  state.users = isLoadMore ? (state.users || []).concat(fetched) : fetched;
+  adminShowLoadMoreBtn(state.users.length, Number(payload.total || 0));
 
   // Render table immediately — merchant badges load async after
   renderUsersTable(state.users, {});
@@ -3139,6 +3169,7 @@ async function loadUpMerchantBadge() {
         </div>
       </div>
       <div style="font-size:11px;color:var(--text-2);margin-bottom:8px;">200 USDT deposit → can post ads. 500 USDT + good completion → badge eligible. Admin assigns badge manually.</div>
+      <button onclick="adminSyncUsername('${userId}')" style="width:100%;margin-bottom:10px;padding:9px 4px;border-radius:8px;background:rgba(0,184,212,0.12);color:#00b8d4;border:1px solid rgba(0,184,212,0.4);font-size:12px;font-weight:700;cursor:pointer;">🔄 Sync Name (fix badge/orders after rename)</button>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button onclick="adminAssignMerchantBadge('${userId}',4)" style="flex:1;min-width:72px;padding:8px 4px;border-radius:8px;background:rgba(229,53,96,0.13);color:#e53560;border:1px solid rgba(229,53,96,0.45);font-size:12px;font-weight:800;cursor:pointer;${currentBadge===4?'outline:2px solid #e53560;':''}" title="PRO Merchant — professional local crypto exchange">
           <span style="display:inline-flex;align-items:center;gap:4px;"><svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;vertical-align:middle;"><path d="M4 3 C3.4 3 3 3.4 3 4 L3 40 C3 40.6 3.4 41 4 41 L40 41 C40.6 41 41 40.6 41 40 L41 14 L30 3 Z" fill="#e53560"/><path d="M30 3 L30 13 C30 13.6 30.4 14 31 14 L41 14 Z" fill="rgba(0,0,0,0.18)"/><text x="21" y="28" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="Arial,sans-serif" font-style="italic">Pro</text></svg> PRO</span>
@@ -3290,6 +3321,23 @@ async function adminUnlockLocked(userId, btn) {
     showMessage('Network error while unlocking balance.', 'error');
   } finally {
     _unlockLockedInFlight = false;
+  }
+}
+
+async function adminSyncUsername(userId) {
+  if (!confirm('Sync this user\'s current name across their badge, ads and orders?\nFixes stale name/badge left over from a username change.')) return;
+  try {
+    const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/sync-username`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) { showMessage(data.message || 'Sync failed.', 'error'); return; }
+    showMessage(`${data.message} Offers: ${data.offers} • Merchant: ${data.merchantApps} • Orders: ${data.ordersAsBuyer + data.ordersAsSeller}`, 'success');
+    loadUpMerchantBadge();
+  } catch (e) {
+    showMessage('Network error while syncing username.', 'error');
   }
 }
 

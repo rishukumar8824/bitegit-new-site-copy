@@ -5041,6 +5041,46 @@ app.post('/api/admin/users/:userId/merchant-badge', requiresAdminSession, async 
   }
 });
 
+// ── Admin: re-sync a user's current username onto their ads, merchant badge and orders ──
+app.post('/api/admin/users/:userId/sync-username', requiresAdminSession, async (req, res) => {
+  const targetUserId = String(req.params.userId || '').trim();
+  if (!targetUserId) return res.status(400).json({ success: false, message: 'userId required.' });
+  try {
+    const cols = getCollections();
+    let cred = await cols.p2pCredentials.findOne({ userId: targetUserId });
+    if (!cred) {
+      const profile = await cols.adminUserProfiles.findOne({ userId: targetUserId });
+      const email = String(profile?.email || '').trim().toLowerCase();
+      cred = email ? await cols.p2pCredentials.findOne({ email }) : null;
+    }
+    let username = String(cred?.username || '').trim();
+    if (!username) {
+      const w = await cols.wallets.findOne({ userId: targetUserId });
+      username = String(w?.username || '').trim();
+    }
+    if (!username) return res.status(404).json({ success: false, message: 'No username found for this user.' });
+
+    const r1 = await cols.p2pOffers.updateMany({ createdByUserId: targetUserId }, { $set: { advertiser: username, createdByUsername: username } });
+    const r2 = await cols.merchantApplications.updateMany({ userId: targetUserId }, { $set: { username } });
+    const r3 = await cols.p2pOrders.updateMany({ buyerUserId: targetUserId }, { $set: { buyerUsername: username } });
+    const r4 = await cols.p2pOrders.updateMany({ sellerUserId: targetUserId }, { $set: { sellerUsername: username } });
+    for (const [, app] of merchantApplications) {
+      if (app && String(app.userId) === targetUserId) app.username = username;
+    }
+    return res.json({
+      success: true,
+      message: `Synced username "${username}" across offers, merchant badge & orders.`,
+      username,
+      offers: r1.modifiedCount || 0,
+      merchantApps: r2.modifiedCount || 0,
+      ordersAsBuyer: r3.modifiedCount || 0,
+      ordersAsSeller: r4.modifiedCount || 0
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: String(err?.message || 'Server error while syncing username.') });
+  }
+});
+
 // ── Admin: Manually unlock a user's locked balance back to available ──
 // Safety-valve for cases where a withdrawal reject/cancel didn't release the
 // lock automatically (e.g. wallet doc conflict) and the user can't see funds

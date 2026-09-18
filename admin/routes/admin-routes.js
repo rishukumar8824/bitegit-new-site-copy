@@ -14,6 +14,53 @@ function safeString(value, fallback = '') {
   return normalized || fallback;
 }
 
+// geoip-lite has no entry for many real IPs (notably Indian mobile CGNAT ranges),
+// so fall back to a live ip-api.com lookup. Promises are cached per IP so a
+// login history with many rows from one IP triggers a single request.
+const _liveGeoCache = new Map();
+const EMPTY_GEO = { country: '', region: '', city: '', timezone: '' };
+
+async function lookupLiveGeo(cleanIp) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+    const resp = await fetch(
+      `http://ip-api.com/json/${encodeURIComponent(cleanIp)}?fields=status,country,countryCode,regionName,city,timezone`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data && data.status === 'success') {
+        return {
+          country: data.countryCode || data.country || '',
+          region: data.regionName || '',
+          city: data.city || '',
+          timezone: data.timezone || ''
+        };
+      }
+    }
+  } catch (_) {}
+  return EMPTY_GEO;
+}
+
+async function resolveLoginGeo(ip) {
+  const cleanIp = String(ip || '').replace(/^::ffff:/, '').trim();
+  if (!cleanIp || cleanIp === 'unknown' || cleanIp.startsWith('127.') || cleanIp.startsWith('::1')) {
+    return EMPTY_GEO;
+  }
+  try {
+    const geo = require('geoip-lite').lookup(cleanIp);
+    if (geo && (geo.country || geo.city)) {
+      return { country: geo.country || '', region: geo.region || '', city: geo.city || '', timezone: geo.timezone || '' };
+    }
+  } catch (_) {}
+  if (!_liveGeoCache.has(cleanIp)) {
+    _liveGeoCache.set(cleanIp, lookupLiveGeo(cleanIp));
+  }
+  return _liveGeoCache.get(cleanIp);
+}
+
 function registerAdminRoutes(app, deps) {
   const { adminStore, adminAuthMiddleware, adminControllers, auditLogService, collections } = deps;
 
@@ -182,7 +229,7 @@ function registerAdminRoutes(app, deps) {
         action: { $in: ['login_success', 'login_failed', 'register_success'] }
       });
 
-      const history = docs.map(function(d) {
+      const history = await Promise.all(docs.map(async function(d) {
         const ua = d.metadata && d.metadata.userAgent ? d.metadata.userAgent : (d.userAgent || '');
         // Parse device type from userAgent
         let device = 'Unknown';
@@ -207,19 +254,12 @@ function registerAdminRoutes(app, deps) {
         let region  = (d.metadata && d.metadata.region)  || '';
         let timezone = (d.metadata && d.metadata.timezone) || '';
 
-        // Fallback: geoip-lite lookup for old records without stored geo
-        if (!country && d.ipAddress) {
-          try {
-            const geoipMod = require('geoip-lite');
-            const cleanIp = d.ipAddress.replace(/^::ffff:/, '');
-            const geo = geoipMod.lookup(cleanIp);
-            if (geo) {
-              country  = geo.country  || '';
-              region   = geo.region   || '';
-              city     = geo.city     || '';
-              timezone = geo.timezone || '';
-            }
-          } catch(e) {}
+        if (!country && !city && d.ipAddress) {
+          const geo = await resolveLoginGeo(d.ipAddress);
+          country  = geo.country;
+          region   = geo.region;
+          city     = geo.city;
+          timezone = geo.timezone;
         }
 
         // Google Maps search link from city+country
@@ -242,7 +282,7 @@ function registerAdminRoutes(app, deps) {
           mapsUrl: mapsSearchUrl,
           createdAt: d.createdAt
         };
-      });
+      }));
 
       return res.json({ history, total });
     } catch (err) {
