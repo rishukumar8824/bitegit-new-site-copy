@@ -6037,6 +6037,34 @@ app.post('/api/admin/wallet/withdrawals/:requestId/review', requiresAdminSession
 });
 
 
+// ── Admin: Correct the destination address of a still-PENDING withdrawal ──────
+app.patch('/api/admin/wallet/withdrawals/:requestId/address', requiresAdminSession, async (req, res) => {
+  const requestId = String(req.params.requestId || '').trim();
+  if (!requestId) return res.status(400).json({ message: 'requestId is required.' });
+  try {
+    const result = await walletService.updateWithdrawalRequestAddress(requestId, req.body?.address);
+    if (adminStore && typeof adminStore.writeAuditLog === 'function' && req.adminAuth) {
+      await adminStore.writeAuditLog({
+        adminId: req.adminAuth.adminId,
+        adminEmail: req.adminAuth.adminEmail,
+        adminRole: req.adminAuth.adminRole,
+        module: 'wallet',
+        action: 'edit_withdrawal_address',
+        entityType: 'withdrawal',
+        entityId: requestId,
+        status: 'SUCCESS',
+        meta: { previousAddress: result.previousAddress, newAddress: result.newAddress },
+        ip: req.adminAuth.ip,
+        userAgent: req.adminAuth.userAgent
+      }).catch(() => {});
+    }
+    return res.json({ message: 'Withdrawal address updated.', withdrawal: result.request });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ message: error.message });
+    return res.status(500).json({ message: String(error.message || 'Server error while updating address.') });
+  }
+});
+
 // ── Admin: Review deposit request (approve / reject) ──────────────────────────
 app.post('/api/admin/wallet/deposits/:depositId/review', requiresAdminSession, async (req, res) => {
   if (!adminStore) return res.status(503).json({ message: 'Store not ready' });

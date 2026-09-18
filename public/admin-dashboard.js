@@ -143,6 +143,35 @@ function statusBadge(status) {
   return `<span class="${css}">${normalized || '-'}</span>`;
 }
 
+const DEFAULT_REJECT_REASON = 'Your KYC documents could not be verified. Please resubmit with clear, valid documents.';
+
+function showRejectReasonModal(defaultReason) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    overlay.innerHTML = `
+      <div style="background:#1a1d2e;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:24px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+        <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:6px;">❌ Reject KYC</div>
+        <div style="font-size:12px;color:#848e9c;margin-bottom:14px;">Enter the rejection reason. This will be shown to the user.</div>
+        <textarea id="rejectReasonInput" rows="3" style="width:100%;box-sizing:border-box;background:#0d0f1a;border:1px solid rgba(0,184,212,0.35);border-radius:8px;padding:10px 12px;font-size:13px;color:#e2e8f0;outline:none;resize:vertical;font-family:inherit;">${defaultReason||DEFAULT_REJECT_REASON}</textarea>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button id="rejectCancelBtn" style="flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#848e9c;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+          <button id="rejectConfirmBtn" style="flex:1;padding:9px;border-radius:8px;border:none;background:linear-gradient(135deg,#f6465d,#c53030);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Reject KYC</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const input = overlay.querySelector('#rejectReasonInput');
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    overlay.querySelector('#rejectCancelBtn').onclick = () => { document.body.removeChild(overlay); resolve(null); };
+    overlay.querySelector('#rejectConfirmBtn').onclick = () => {
+      const val = input.value.trim();
+      document.body.removeChild(overlay);
+      resolve(val || DEFAULT_REJECT_REASON);
+    };
+  });
+}
+
 function showMessage(text, type = 'info') {
   dom.globalMessage.textContent = text;
   dom.globalMessage.classList.remove('hidden', 'border-emerald-500/40', 'text-emerald-300', 'bg-emerald-500/10', 'border-rose-500/40', 'text-rose-300', 'bg-rose-500/10', 'border-slate-700', 'text-slate-300', 'bg-slate-900/60');
@@ -2577,7 +2606,7 @@ async function handleKycAction(event) {
     }
 
     if (action === 'reject') {
-      const reason = window.prompt('Rejection reason:', '') || '';
+      const reason = await showRejectReasonModal();
       if (!reason) {
         return;
       }
@@ -3306,10 +3335,10 @@ async function upApproveKyc() {
 }
 
 async function upRejectKyc() {
-  const reason = window.prompt('Enter rejection reason:');
-  if (!reason || !reason.trim()) return;
+  const reason = await showRejectReasonModal();
+  if (!reason) return;
   try {
-    await reviewKyc(_upUserId, 'REJECTED', reason.trim());
+    await reviewKyc(_upUserId, 'REJECTED', reason);
     showMessage('KYC Rejected', 'success');
     await loadUpKyc();
     await loadUpOverview();
@@ -4445,18 +4474,27 @@ function _wdRenderRows(withdrawals) {
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Username:</span> <span style="color:#c9d1d9;">${userName}</span></div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Email:</span> <span style="color:#00e5ff;">${userEmail !== '-' ? userEmail : '<span style="color:#848e9c;">-</span>'}</span></div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Network:</span> ${escapeHtml(w.network || '-')}</div>
-          <div style="word-break:break-all;"><span style="color:#848e9c;min-width:90px;display:inline-block;">Address:</span> ${escapeHtml(address)}</div>
+          <div style="word-break:break-all;"><span style="color:#848e9c;min-width:90px;display:inline-block;">Address:</span> <span id="wdAddr_${idx}">${escapeHtml(address)}</span></div>
+          <div id="wdEditBox_${idx}" style="display:none;">
+            <input id="wdEditInput_${idx}" type="text" value="${escapeHtml(address)}" placeholder="New address..." style="width:100%;box-sizing:border-box;background:#0d0f1a;border:1px solid rgba(0,229,255,0.5);border-radius:7px;padding:7px 10px;font-size:12px;color:#eaecef;outline:none;font-family:monospace;" />
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+              <button onclick="wdSaveAddress('${escapeHtml(id)}','${idx}')" style="background:#00b8d4;color:#fff;border:none;border-radius:7px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;">Save</button>
+              <button onclick="wdCancelEdit('${idx}')" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#848e9c;border-radius:7px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;">Cancel</button>
+            </div>
+          </div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Fee:</span> ${escapeHtml(fee)} USDT</div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Request ID:</span> <span style="font-size:10px;word-break:break-all;">${escapeHtml(id || '-')}</span></div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Submitted:</span> ${escapeHtml(createdAt)}</div>
           <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Processed:</span> ${escapeHtml(processedAt)}</div>
           ${w.reason || (w.metadata && w.metadata.reason) ? `<div style="background:rgba(246,70,93,0.1);border:1px solid rgba(246,70,93,0.3);border-radius:6px;padding:6px 10px;margin-top:4px;"><span style="color:#848e9c;font-size:11px;">Rejection Reason:</span><div style="color:#f6465d;font-weight:700;font-size:12px;margin-top:2px;">${escapeHtml(w.reason || (w.metadata && w.metadata.reason) || '')}</div></div>` : ''}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
           <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
             style="background:#02c076;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">✓ Approve</button>
           <button onclick="wdAction('${escapeHtml(id)}','REJECTED',this)"
             style="background:#f6465d;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">✕ Reject</button>
+          <button onclick="wdShowEdit('${idx}')"
+            style="background:rgba(0,184,212,0.15);border:1px solid rgba(0,184,212,0.4);color:#00b8d4;border-radius:8px;padding:10px 8px;font-size:12px;font-weight:800;cursor:pointer;">Edit</button>
         </div>
       </div>
     </div>`;
@@ -4535,18 +4573,27 @@ async function openWithdrawalPanel() {
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Username:</span> <b style="color:#eaecef;">${userName}</b></div>
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Email:</span> ${userEmail}</div>
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Network:</span> ${escapeHtml(w.network || '-')}</div>
-            <div style="word-break:break-all;"><span style="color:#848e9c;min-width:90px;display:inline-block;">Address:</span> ${escapeHtml(address)}</div>
+            <div style="word-break:break-all;"><span style="color:#848e9c;min-width:90px;display:inline-block;">Address:</span> <span id="wdAddr_${idx}">${escapeHtml(address)}</span></div>
+          <div id="wdEditBox_${idx}" style="display:none;">
+            <input id="wdEditInput_${idx}" type="text" value="${escapeHtml(address)}" placeholder="New address..." style="width:100%;box-sizing:border-box;background:#0d0f1a;border:1px solid rgba(0,229,255,0.5);border-radius:7px;padding:7px 10px;font-size:12px;color:#eaecef;outline:none;font-family:monospace;" />
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+              <button onclick="wdSaveAddress('${escapeHtml(id)}','${idx}')" style="background:#00b8d4;color:#fff;border:none;border-radius:7px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;">Save</button>
+              <button onclick="wdCancelEdit('${idx}')" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#848e9c;border-radius:7px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;">Cancel</button>
+            </div>
+          </div>
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Fee:</span> ${escapeHtml(fee)} USDT</div>
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Request ID:</span> <span style="font-size:10px;word-break:break-all;">${escapeHtml(id || '-')}</span></div>
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Submitted:</span> ${escapeHtml(createdAt)}</div>
             <div><span style="color:#848e9c;min-width:90px;display:inline-block;">Processed:</span> ${escapeHtml(processedAt)}</div>
             ${w.reason || (w.metadata && w.metadata.reason) ? `<div style="background:rgba(246,70,93,0.1);border:1px solid rgba(246,70,93,0.3);border-radius:6px;padding:6px 10px;margin-top:4px;"><span style="color:#848e9c;font-size:11px;">Rejection Reason:</span><div style="color:#f6465d;font-weight:700;font-size:12px;margin-top:2px;">${escapeHtml(w.reason || (w.metadata && w.metadata.reason) || '')}</div></div>` : ''}
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
             <button onclick="wdAction('${escapeHtml(id)}','APPROVED',this)"
               style="background:#02c076;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Approve</button>
             <button onclick="wdAction('${escapeHtml(id)}','REJECTED',this)"
               style="background:#f6465d;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;">Reject</button>
+            <button onclick="wdShowEdit('${idx}')"
+              style="background:rgba(0,184,212,0.15);border:1px solid rgba(0,184,212,0.4);color:#00b8d4;border-radius:8px;padding:10px 8px;font-size:12px;font-weight:800;cursor:pointer;">Edit</button>
           </div>
         </div>
       </div>`;
@@ -4586,6 +4633,37 @@ function showWdRejectModal() {
       resolve(val || 'Withdrawal request rejected by admin.');
     };
   });
+}
+
+function wdShowEdit(idx) {
+  const box = document.getElementById('wdEditBox_' + idx);
+  if (box) box.style.display = box.style.display === 'none' ? '' : 'none';
+  const input = document.getElementById('wdEditInput_' + idx);
+  if (input) input.focus();
+}
+
+function wdCancelEdit(idx) {
+  const box = document.getElementById('wdEditBox_' + idx);
+  if (box) box.style.display = 'none';
+}
+
+async function wdSaveAddress(withdrawalId, idx) {
+  const input = document.getElementById('wdEditInput_' + idx);
+  const span = document.getElementById('wdAddr_' + idx);
+  const newAddr = input ? input.value.trim() : '';
+  if (!newAddr) { showMessage('Address cannot be empty.', 'error'); return; }
+  if (!confirm('Change the destination address of this withdrawal?')) return;
+  try {
+    await apiRequest(`/wallet/withdrawals/${encodeURIComponent(withdrawalId)}/address`, {
+      method: 'PATCH',
+      body: JSON.stringify({ address: newAddr })
+    });
+    if (span) span.textContent = newAddr;
+    wdCancelEdit(idx);
+    showMessage('Withdrawal address updated.', 'success');
+  } catch (e) {
+    showMessage(e.message || 'Failed to update address', 'error');
+  }
 }
 
 async function wdAction(withdrawalId, decision, btn) {
