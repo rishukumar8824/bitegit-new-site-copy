@@ -881,6 +881,7 @@ function createAdminStore({ collections, repos, walletService, tokenService, isD
         cancelDisabled: profile?.cancelDisabled === true,
         sellRestricted: profile?.sellRestricted === true,
         buyRestricted: profile?.buyRestricted === true,
+        withdrawalBanned: profile?.withdrawalBanned === true,
         balance: getAvailableBalance(wallet),
         lockedBalance: toNumber(wallet?.lockedBalance, 0),
         updatedAt: toDate(item.updatedAt || item.createdAt || Date.now()).toISOString(),

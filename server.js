@@ -3245,6 +3245,15 @@ app.post(
     // place, unused, so it can be switched back on by restoring the check here.
 
     try {
+      const wdProfile = await getCollections().adminUserProfiles.findOne({ userId: req.p2pUser.id });
+      if (wdProfile?.withdrawalBanned === true) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are restricted from making withdrawals. Contact support if you believe this is a mistake.',
+          code: 'WITHDRAWAL_BANNED'
+        });
+      }
+
       // Block withdrawal if user has an active or disputed order
       const activeOrders = await repos.listMyActiveOrders(req.p2pUser.id);
       const blockingOrder = activeOrders.find(o => ['CREATED', 'PENDING', 'PAYMENT_SENT', 'PAID', 'DISPUTED'].includes(o.status));
@@ -5080,6 +5089,28 @@ app.post('/api/admin/users/:userId/sell-restriction', requiresAdminSession, asyn
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: String(err?.message || 'Server error while updating sell restriction.') });
+  }
+});
+
+// Existing pending/approved withdrawals are untouched; only new submissions are blocked.
+app.post('/api/admin/users/:userId/withdrawal-restriction', requiresAdminSession, async (req, res) => {
+  const targetUserId = String(req.params.userId || '').trim();
+  const disabled = req.body?.disabled === true;
+  if (!targetUserId) return res.status(400).json({ success: false, message: 'userId required.' });
+  try {
+    const cols = getCollections();
+    await cols.adminUserProfiles.updateOne(
+      { userId: targetUserId },
+      { $set: { withdrawalBanned: disabled, updatedAt: new Date() } },
+      { upsert: true }
+    );
+    return res.json({
+      success: true,
+      message: disabled ? 'User can no longer submit withdrawals.' : 'User can submit withdrawals again.',
+      withdrawalBanned: disabled
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: String(err?.message || 'Server error while updating withdrawal restriction.') });
   }
 });
 

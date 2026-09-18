@@ -733,6 +733,7 @@ function renderUsersTable(users, merchantMap) {
           <button class="${user.cancelDisabled ? 'btn-secondary' : 'btn-danger'} btn-sm" data-user-action="toggle-cancel" data-user-id="${user.userId}" data-cancel-disabled="${user.cancelDisabled ? '1' : '0'}" title="${user.cancelDisabled ? 'This user cannot cancel a paid order — click to re-allow' : 'Block this user from cancelling an order after payment has been marked sent'}">${user.cancelDisabled ? 'Allow' : 'No-Cancel'}</button>
           <button class="${user.sellRestricted ? 'btn-secondary' : 'btn-danger'} btn-sm" data-user-action="toggle-sell" data-user-id="${user.userId}" data-sell-restricted="${user.sellRestricted ? '1' : '0'}" title="${user.sellRestricted ? 'This user cannot post P2P sell ads — click to re-allow' : 'Block this user from posting new P2P sell ads'}">${user.sellRestricted ? 'Allow Sell' : 'No-Sell'}</button>
           <button class="${user.buyRestricted ? 'btn-secondary' : 'btn-danger'} btn-sm" data-user-action="toggle-buy" data-user-id="${user.userId}" data-buy-restricted="${user.buyRestricted ? '1' : '0'}" title="${user.buyRestricted ? 'This user cannot buy on P2P — click to re-allow' : 'Block this user from posting new P2P buy ads or buying from a sell ad'}">${user.buyRestricted ? 'Allow Buy' : 'No-Buy'}</button>
+          <button class="${user.withdrawalBanned ? 'btn-secondary' : 'btn-danger'} btn-sm" data-user-action="toggle-withdraw" data-user-id="${user.userId}" data-withdrawal-banned="${user.withdrawalBanned ? '1' : '0'}" title="${user.withdrawalBanned ? 'This user cannot submit withdrawals — click to re-allow' : 'Block this user from submitting new withdrawal requests'}">${user.withdrawalBanned ? 'Allow WD' : 'No-WD'}</button>
         </div>
       </td>
     </tr>`;
@@ -2532,6 +2533,18 @@ async function handleUsersAction(event) {
         body: JSON.stringify({ disabled: next })
       });
       showMessage(next ? 'User can no longer buy on P2P.' : 'User can buy on P2P again.', 'success');
+      await loadUsers();
+      return;
+    }
+
+    if (action === 'toggle-withdraw') {
+      const next = button.getAttribute('data-withdrawal-banned') !== '1';
+      if (!confirm(next ? 'Block this user from submitting withdrawals?' : 'Let this user submit withdrawals again?')) return;
+      await apiRequest(`/users/${encodeURIComponent(userId)}/withdrawal-restriction`, {
+        method: 'POST',
+        body: JSON.stringify({ disabled: next })
+      });
+      showMessage(next ? 'User can no longer submit withdrawals.' : 'User can submit withdrawals again.', 'success');
       await loadUsers();
       return;
     }
