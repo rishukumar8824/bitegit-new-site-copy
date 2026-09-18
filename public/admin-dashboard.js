@@ -203,17 +203,82 @@ function setActionButtonLoading(button, loading, loadingText = 'Processing...') 
   }
 }
 
-async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    },
-    ...options
-  });
+let _adminRefreshInFlight = null;
+let _serverRestartOverlay = null;
 
-  if (response.status === 401) {
+function _showRestartOverlay() {
+  if (_serverRestartOverlay) return;
+  _serverRestartOverlay = document.createElement('div');
+  _serverRestartOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,12,24,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+  _serverRestartOverlay.innerHTML = `
+    <div style="width:40px;height:40px;border:3px solid rgba(0,184,212,0.2);border-top-color:#00b8d4;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+    <div style="color:#e2e8f0;font-size:15px;font-weight:600;">Server is restarting after deploy…</div>
+    <div style="color:#848e9c;font-size:12px;">Reconnecting automatically, please wait.</div>`;
+  document.body.appendChild(_serverRestartOverlay);
+}
+
+function _hideRestartOverlay() {
+  if (_serverRestartOverlay) { _serverRestartOverlay.remove(); _serverRestartOverlay = null; }
+}
+
+function _tryRefreshAdminToken() {
+  if (_adminRefreshInFlight) return _adminRefreshInFlight;
+  _adminRefreshInFlight = fetch(`${API_BASE}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' }
+  }).then(r => r.ok).catch(() => false).finally(() => { _adminRefreshInFlight = null; });
+  return _adminRefreshInFlight;
+}
+
+function _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function apiRequest(path, options = {}, _retried = false) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      },
+      ...options
+    });
+  } catch (_netErr) {
+    // Network error — server may be restarting after a deploy.
+    if (!_retried) {
+      _showRestartOverlay();
+      await _sleep(4000);
+      _hideRestartOverlay();
+      return apiRequest(path, options, true);
+    }
+    throw new Error('Network error');
+  }
+
+  if (response.status === 401 || response.status === 503) {
+    if (!_retried && !path.includes('/auth/refresh')) {
+      if (await _tryRefreshAdminToken()) return apiRequest(path, options, true);
+
+      // Refresh failed — the server may be restarting; wait up to 45s for it to come back.
+      _showRestartOverlay();
+      const deadline = Date.now() + 45000;
+      while (Date.now() < deadline) {
+        await _sleep(4000);
+        try {
+          const retryResp = await fetch(`${API_BASE}/auth/refresh`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          if (retryResp.ok) {
+            _hideRestartOverlay();
+            return apiRequest(path, options, true);
+          }
+          // 401 means the server is up but the token is genuinely invalid — stop waiting.
+          if (retryResp.status === 401) break;
+        } catch (_) { /* still down */ }
+      }
+      _hideRestartOverlay();
+    }
     window.location.href = adminLoginUrl();
     throw new Error('Unauthorized');
   }
@@ -4234,11 +4299,29 @@ function showDisputeNotification(info) {
   setTimeout(() => { if (n.isConnected) n.remove(); }, 15000);
 }
 
+// Inactivity logout (5 hours)
+const INACTIVITY_MS = 5 * 60 * 60 * 1000;
+let _inactivityTimer = null;
+function resetInactivityTimer() {
+  clearTimeout(_inactivityTimer);
+  _inactivityTimer = setTimeout(async () => {
+    try { await apiRequest('/auth/logout', { method: 'POST' }); } catch (_) {}
+    window.location.href = adminLoginUrl();
+  }, INACTIVITY_MS);
+}
+function setupInactivityWatcher() {
+  ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll', 'click'].forEach((ev) => {
+    document.addEventListener(ev, resetInactivityTimer, { passive: true });
+  });
+  resetInactivityTimer();
+}
+
 async function init() {
   try {
     startLiveClock();
     await ensureAdminSession();
     wireEventListeners();
+    setupInactivityWatcher();
     await changeView('users');
 
     // Refresh current view every 30s
